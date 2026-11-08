@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- 상태 ---------- */
 var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
-var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,speed:1,fold:false,confirmNew:false};
+var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],speed:1,fold:false,confirmNew:false};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 function newState(){
@@ -14,11 +14,14 @@ function newState(){
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
   occ=[];for(var y=0;y<ROWS;y++){occ.push(new Array(COLS).fill(0));}
-  S.buildings.forEach(function(b){var d=D[b.def];for(var j=0;j<d.h;j++)for(var i=0;i<d.w;i++)occ[b.y+j][b.x+i]=b.id;});
+  S.buildings.forEach(function(b){
+    if(isRoom(b)){b.tiles.forEach(function(t){occ[t.y][t.x]=b.id;});return;}
+    var d=D[b.def];for(var j=0;j<d.h;j++)for(var i=0;i<d.w;i++)occ[b.y+j][b.x+i]=b.id;
+  });
 }
 function agg(){
   var a={seats:0,fcap:0,ccap:0,kcap:0,park:0,beauty:0,vis:0,up:0,rep:0};
-  S.buildings.forEach(function(b){var d=D[b.def];a.seats+=d.seats;a.fcap+=d.fcap;a.ccap+=d.ccap;a.kcap+=d.kcap;a.park+=d.park;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up;a.rep+=d.rep;});
+  S.buildings.forEach(function(b){var d=defOf(b);a.seats+=d.seats;a.fcap+=d.fcap;a.ccap+=d.ccap;a.kcap+=d.kcap;a.park+=d.park;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up;a.rep+=d.rep;});
   return a;
 }
 function calcMood(){

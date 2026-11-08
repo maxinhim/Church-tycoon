@@ -150,6 +150,66 @@ async function seededRun(browser, url) {
   return { ...out, errs };
 }
 
+// 직접 짓는 예배실: 칸 연결·2층·분리·병합·방문자 이용·회전 그리기
+async function modularChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 777;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.money = 99999;
+    const rooms = () => S.buildings.filter(b => b.def === 'mroom');
+    // 왼쪽부터 5칸이 비어 있는 줄을 찾는다
+    let X = -1, Y = -1;
+    for (let y = 1; y < ROWS - 2 && X < 0; y++) for (let x = 0; x + 5 <= COLS; x++) {
+      let free = true; for (let i = 0; i < 5; i++) if (occ[y][x + i]) free = false;
+      if (free) { X = x; Y = y; break; }
+    }
+    const o = {};
+    placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y);
+    o.merged = rooms().length === 1 && rooms()[0].tiles.length === 3;
+    placeTile(X + 1, Y);
+    o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === MROOM.seats * 4;
+    o.maxFloor = !tilePlan(X + 1, Y).ok;
+    removeTile(X + 1, Y, 1);
+    o.floorDown = tileOf(rooms()[0], X + 1, Y).f === 1;
+    removeTile(X + 1, Y, 1);
+    o.split = rooms().length === 2;
+    placeTile(X + 1, Y);
+    o.rejoined = rooms().length === 1 && rooms()[0].tiles.length === 3;
+    const before = S.money; placeTile(X + 4, Y); placeTile(X + 3, Y);
+    o.joinTwo = rooms().length === 1 && rooms()[0].tiles.length === 5 && S.money === before - 2 * D.mroom.cost;
+    o.occ = [0, 1, 2, 3, 4].every(i => occ[Y][X + i] === rooms()[0].id);
+    // 방문자는 가까운 곳부터 가므로, 입구 근처의 기본 예배실을 치워 이 예배실을 쓰게 한다
+    S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
+    for (let i = 0; i < 4000; i++) update(0.1);
+    o.used = rooms()[0].uses > 0;
+    save();
+    const loaded = load().buildings.filter(b => b.def === 'mroom').map(b => JSON.stringify(b.tiles));
+    o.saveLoad = JSON.stringify(loaded) === JSON.stringify(rooms().map(b => JSON.stringify(b.tiles)));
+    for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
+    window.__ct.setRot(0);
+    return o;
+  });
+  check(r.merged, '예배실 칸: 이어 지은 3칸이 하나의 예배실로 합쳐짐');
+  check(r.floor, '예배실 칸: 2층을 올리면 좌석이 층 면적만큼 늘어남');
+  check(r.maxFloor, '예배실 칸: 최대 층수 위로는 올릴 수 없음');
+  check(r.floorDown, '예배실 칸: 위층부터 철거됨');
+  check(r.split, '예배실 칸: 가운데 칸을 지우면 두 예배실로 나뉨');
+  check(r.rejoined && r.joinTwo, '예배실 칸: 다시 이으면 하나로 합쳐짐');
+  check(r.occ, '예배실 칸: 점유 지도에 모든 칸이 등록됨');
+  check(r.used, '예배실 칸: 방문자가 실제로 이용함');
+  check(r.saveLoad, '예배실 칸: 저장 후 불러와도 칸·층이 유지됨');
+  check(errs.length === 0, '예배실 칸: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -157,6 +217,7 @@ async function seededRun(browser, url) {
   const browser = await chromium.launch();
   try {
     await playChecks(browser, url);
+    await modularChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

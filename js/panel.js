@@ -47,7 +47,14 @@ function refreshCards(){
 function renderDetail(){
   var el=$('#detail');if(!el)return;
   var h='';
-  if(UI.tool&&D[UI.tool]){
+  if(UI.tool==='mroom'){
+    var p=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y):null,line;
+    if(!p)line='빈 땅을 누르면 칸이 생기고, 이어 붙이면 하나의 예배실이 됩니다. 지은 칸을 다시 누르면 2층이 올라갑니다';
+    else if(!p.ok)line='<span style="color:var(--bad)">'+p.why+'</span>';
+    else if(S.money<p.cost)line='<span style="color:var(--bad)">자금이 부족해요</span>';
+    else line=(p.kind==='floor'?'이 칸을 누르면 2층을 올려요 · ':'이 칸을 누르면 칸을 지어요 · ')+fmt(p.cost);
+    h='<div class="tx"><b>예배실 칸 '+fmt(D.mroom.cost)+' · 2층 '+fmt(MROOM.floorCost)+'</b><br>'+line+'</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
+  }else if(UI.tool&&D[UI.tool]){
     var d=D[UI.tool];
     if(UI.ghost){
       var ok=canPlace(d,UI.ghost.x,UI.ghost.y),afford=S.money>=d.cost;
@@ -57,8 +64,9 @@ function renderDetail(){
       h='<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b> ('+d.w+'×'+d.h+')<br>'+d.desc+'. 지도를 눌러 위치를 고르세요</div>';
     }
   }else if(UI.sel&&bById(UI.sel)){
-    var b=bById(UI.sel),bd=D[b.def];
-    h='<div class="tx"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+effText(bd)+'</div><div class="btns"><button class="btn bad" data-act="demolish">철거 +'+fmt(bd.cost*0.5)+'</button></div>';
+    var b=bById(UI.sel),bd=defOf(b),st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
+    var tileBtn=st?'<button class="btn" data-act="demtile">'+(st.f>1?'2층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D.mroom.cost)*0.5)+'</button>':'';
+    h='<div class="tx"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+effText(bd)+'</div><div class="btns">'+tileBtn+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
   }else{
     h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물을 눌러보세요.':'건물을 고른 뒤 지도를 눌러 지으세요. 지도는 끌어서 옮기고 두 손가락으로 확대합니다.')+'</div>';
   }

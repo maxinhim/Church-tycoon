@@ -2,11 +2,12 @@
 /* ---------- 입력 ---------- */
 function groundTile(px,py){var w=toWorld(px,py,0);return {x:Math.floor(w[0]),y:Math.floor(w[1])};}
 function pickBuilding(px,py){
+  UI.selTile=null;
   for(var z=3.8;z>=0;z-=0.06){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
     var id=occ[ty][tx];
-    if(id){var b=bById(id);if(b&&z<=heightOf(b.def)+.05)return id;}
+    if(id){var b=bById(id);if(b&&z<=bHeightAt(b,tx,ty)+.05){if(isRoom(b))UI.selTile={x:tx,y:ty};return id;}}
   }
   return null;
 }
@@ -15,11 +16,12 @@ function placeGhost(t){
   UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-1-d.h)};
 }
 function onGhostTile(t){
-  if(!UI.ghost||!UI.tool||!D[UI.tool])return false;
+  if(!UI.ghost||!UI.tool||!D[UI.tool]||UI.tool==='mroom')return false;
   var d=D[UI.tool];return t.x>=UI.ghost.x&&t.x<UI.ghost.x+d.w&&t.y>=UI.ghost.y&&t.y<UI.ghost.y+d.h;
 }
 function onTap(px,py){
   if(S.over)return;
+  if(UI.tool==='mroom'){tapRoomTile(pickTile(px,py));return;}
   if(UI.tool&&D[UI.tool]){placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   UI.sel=pickBuilding(px,py);
   if(UI.sel&&(UI.tab!=='build'||UI.fold)){UI.tab='build';UI.fold=false;syncTabs();renderPanel();}
@@ -72,17 +74,35 @@ function onPanel(e){
   if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;renderBuild();}
   else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;renderBuild();}
   else if(a==='pick'){
-    UI.tool=(UI.tool===v)?null:v;UI.sel=null;
+    UI.tool=(UI.tool===v)?null:v;UI.sel=null;UI.undo=[];
     if(UI.tool){var c=viewCenter();placeGhost(groundTile(c[0],c[1]));}else UI.ghost=null;
     refreshCards();renderDetail();
   }
-  else if(a==='cancel'){UI.ghost=null;UI.tool=null;refreshCards();renderDetail();}
+  else if(a==='cancel'){UI.ghost=null;UI.tool=null;UI.undo=[];refreshCards();renderDetail();}
+  else if(a==='undo'){var u=UI.undo.pop();if(u&&removeTile(u.x,u.y,1))toast('되돌렸어요',1200);renderDetail();hud(true);}
+  else if(a==='demtile'){
+    var st=UI.selTile;
+    if(st&&removeTile(st.x,st.y,.5))toast('칸 하나를 철거했어요',1400);
+    UI.selTile=null;var rb=st&&roomAt(st.x,st.y);UI.sel=rb?rb.id:null;
+    renderDetail();hud(true);
+  }
   else if(a==='confirm'){
     if(UI.tool&&UI.ghost&&build(UI.tool,UI.ghost.x,UI.ghost.y)){toast(D[UI.tool].name+'을(를) 지었어요',1600);UI.ghost=null;}
     renderDetail();hud(true);
   }
-  else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=D[b.def].name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
+  else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
   else if(a==='hire'){var s=STAFF[v],lv=S.staff[v];if(lv<3&&S.money>=s.costs[lv]){S.money-=s.costs[lv];S.staff[v]++;recalc();save();toast(s.name+' 단계 '+S.staff[v]+'로 올렸어요',1800);}renderStaff();hud(true);}
   else if(a==='fire'){if(S.staff[v]>0){S.staff[v]--;recalc();save();}renderStaff();hud(true);}
   else if(a==='newgame'){if(UI.confirmNew){restart();}else{UI.confirmNew=true;renderMenu();}}
+}
+function tapRoomTile(t){
+  UI.ghost={x:t.x,y:t.y};
+  var p=tilePlan(t.x,t.y);
+  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y)){
+    UI.undo.push({x:t.x,y:t.y});
+    var d=defOf(roomAt(t.x,t.y));
+    toast((p.kind==='floor'?'2층을 올렸어요':'칸을 지었어요')+' · '+d.name+' 좌석 '+d.seats,1400);
+  }
+  if(!UI.fold)renderDetail();
+  hud(true);
 }

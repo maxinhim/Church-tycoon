@@ -30,11 +30,19 @@ function draw(){
   PJ.c=c;PJ.ox=cam.ox;PJ.oy=cam.oy;PJ.s=cam.z;
   drawGround();
   var sb=UI.sel?bById(UI.sel):null;
-  if(sb){var sd=D[sb.def];footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
-  var gd=UI.ghost&&UI.tool&&D[UI.tool]?D[UI.tool]:null,gok=false;
+  if(sb){
+    if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
+    else{var sd=D[sb.def];footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
+  }
+  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='mroom'?D[UI.tool]:null,gok=false;
   if(gd){gok=canPlace(gd,UI.ghost.x,UI.ghost.y)&&S.money>=gd.cost;footprint(UI.ghost.x,UI.ghost.y,gd.w,gd.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
   S.buildings.forEach(function(b){
+    if(isRoom(b)){
+      var map=roomMap(b);
+      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.f=function(){drawRoomTile(b,t,map);};E.push(rt);});
+      return;
+    }
     var d=D[b.def],r=rrect(b.x,b.y,b.x+d.w,b.y+d.h);
     r.f=function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);};E.push(r);
   });
@@ -52,9 +60,10 @@ function draw(){
   }
   var ar=rrect(ENT,ROWS-1+.05,ENT+1,ROWS-1+.15);ar.f=drawArch;E.push(ar);
   sortEnt(E).forEach(function(e){e.f();});
+  if(UI.tool==='mroom')drawRoomGhost();
   if(gd){c.globalAlpha=.78;drawEntity({x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0},Math.round(gd.park*.5));c.globalAlpha=1;}
   if(sb){
-    var sd2=D[sb.def],mp=rotPt(sb.x+sd2.w/2,sb.y+sd2.h/2),q=P(mp[0],mp[1],heightOf(sb.def)+.45+Math.sin(S.clock*4)*.06),s=Math.max(.7,cam.z);
+    var sd2=defOf(sb),mp=rotPt(sb.x+sd2.w/2,sb.y+sd2.h/2),q=P(mp[0],mp[1],bHeight(sb)+.45+Math.sin(S.clock*4)*.06),s=Math.max(.7,cam.z);
     c.fillStyle='#ffd23f';c.strokeStyle='rgba(30,30,30,.6)';c.lineWidth=1.5;c.beginPath();
     c.moveTo(q[0]-7*s,q[1]-10*s);c.lineTo(q[0]+7*s,q[1]-10*s);c.lineTo(q[0],q[1]);c.closePath();c.fill();c.stroke();
   }

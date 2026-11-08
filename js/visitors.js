@@ -22,14 +22,14 @@ function arrive(v){
   if(!v.target){v.state='idle';v.t=0.8+Math.random();return;}
   var b=bById(v.target);
   if(!b){v.state='idle';v.t=0.2;v.target=0;return;}
-  if(b.inUse<D[b.def].cap)enter(v,b);
+  if(b.inUse<defOf(b).cap)enter(v,b);
   else{v.state='wait';v.wait=5;}
 }
-function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=D[b.def].dur*(0.8+Math.random()*0.4);}
+function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*(0.8+Math.random()*0.4);}
 function finishVisit(v){
   var b=bById(v.inside);
   if(b){
-    var d=D[b.def];b.inUse=Math.max(0,b.inUse-1);b.uses=(b.uses||0)+1;
+    var d=defOf(b);b.inUse=Math.max(0,b.inUse-1);b.uses=(b.uses||0)+1;
     for(var n in d.fill){
       var amt=d.fill[n];
       if(n==='care')amt*=1+0.15*S.staff.care;
@@ -61,7 +61,7 @@ function decide(v){
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
     if(v.needs[n]>=75)continue;
-    var cands=S.buildings.filter(function(b){var d=D[b.def];return d.fill&&d.fill[n]&&!(v.blocked[b.id]>S.clock);});
+    var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&!(v.blocked[b.id]>S.clock);});
     cands.sort(function(a,b){return (Math.abs(a.x-v.x)+Math.abs(a.y-v.y))-(Math.abs(b.x-v.x)+Math.abs(b.y-v.y));});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],p=bfs(Math.floor(v.x),Math.floor(v.y),goalFor(b));
@@ -87,7 +87,7 @@ function stepV(v,dt){
   }else if(v.state==='wait'){
     var b=bById(v.target);
     if(!b){v.state='idle';v.t=0.2;v.target=0;return;}
-    if(b.inUse<D[b.def].cap)enter(v,b);
+    if(b.inUse<defOf(b).cap)enter(v,b);
     else{v.wait-=dt;if(v.wait<=0){v.annoy++;v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
   }else if(v.state==='inside'){
     v.t-=dt;if(v.t<=0)finishVisit(v);

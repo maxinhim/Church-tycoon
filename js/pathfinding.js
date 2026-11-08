@@ -1,6 +1,10 @@
 'use strict';
 /* ---------- 길찾기 ---------- */
 function goalFor(b){
+  if(isRoom(b)){
+    var m=roomMap(b),has=function(x,y){return !!m[x+','+y];};
+    return function(x,y){return !has(x,y)&&(has(x+1,y)||has(x-1,y)||has(x,y+1)||has(x,y-1));};
+  }
   var d=D[b.def];
   return function(x,y){
     if(x<b.x-1||x>b.x+d.w||y<b.y-1||y>b.y+d.h)return false;

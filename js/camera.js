@@ -23,6 +23,6 @@ function rotateView(){
 }
 function homeView(){
   var f=fitZoom();cam.z=clamp(f*1.75,ZMIN,ZMAX);
-  var b=S.buildings.filter(function(b){return D[b.def].kind==='bld';})[0];
-  if(b){var d=D[b.def];centerOn(b.x+d.w/2,b.y+d.h/2+1.5);}else centerOn(COLS/2,ROWS/2);
+  var b=S.buildings.filter(function(b){return defOf(b).kind==='bld';})[0];
+  if(b){var d=defOf(b);centerOn(b.x+d.w/2,b.y+d.h/2+1.5);}else centerOn(COLS/2,ROWS/2);
 }

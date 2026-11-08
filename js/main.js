@@ -1,6 +1,6 @@
 'use strict';
 function restart(){
-  S=newState();V=[];F=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.confirmNew=false;UI.tab='build';UI.cat='worship';UI.fold=false;ROT=0;
+  S=newState();V=[];F=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.confirmNew=false;UI.tab='build';UI.cat='worship';UI.fold=false;ROT=0;
   $('#over').hidden=true;rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);save();toast('새 교회를 시작합니다',2000);
 }
 /* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */

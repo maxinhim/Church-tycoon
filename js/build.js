@@ -12,6 +12,7 @@ function bump(){
   });
 }
 function build(id,x,y){
+  if(id==='mroom')return placeTile(x,y);
   var d=D[id];
   if(S.money<d.cost||!canPlace(d,x,y))return false;
   S.money-=d.cost;
@@ -20,9 +21,12 @@ function build(id,x,y){
 }
 function demolish(id){
   var b=bById(id);if(!b)return;
-  var d=D[b.def];
+  var d=defOf(b);
   S.money+=Math.floor(d.cost*0.5);
   S.buildings=S.buildings.filter(function(x){return x.id!==id;});
-  V.forEach(function(v){if(v.inside===id){v.inside=0;v.state='idle';v.t=0.2;}if(v.target===id){v.target=0;if(v.state!=='leave'&&v.state!=='inside'){v.state='idle';v.t=0.2;}}});
+  releaseVisitors(id);
   rebuildOcc();bump();recalc();save();
+}
+function releaseVisitors(id){
+  V.forEach(function(v){if(v.inside===id){v.inside=0;v.state='idle';v.t=0.2;}if(v.target===id){v.target=0;if(v.state!=='leave'&&v.state!=='inside'){v.state='idle';v.t=0.2;}}});
 }

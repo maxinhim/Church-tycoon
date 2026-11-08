@@ -102,6 +102,7 @@ function drawSpire(b){
 }
 function drawEntity(b,cars){
   var k=D[b.def].kind;
+  if(k==='mroom'){drawRoom(b);return;}
   if(k==='bld')drawBld(b);else if(k==='lot')drawLot(b,cars||0);else if(k==='tree')drawTree(b);
   else if(k==='flower')drawFlower(b);else if(k==='bench')drawBench(b);else if(k==='spire')drawSpire(b);
 }

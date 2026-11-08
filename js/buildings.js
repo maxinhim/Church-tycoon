@@ -11,6 +11,7 @@ mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.9
 mk('chapel','예배당','worship',3,2,2800,24,'bld','#efe8da','#3f5ea3',{H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:70,fill:{word:60,fel:8},cap:28,dur:6,desc:'종탑이 있는 주일예배 공간'});
 mk('grand','대예배당','worship',4,3,7600,60,'bld','#f2ece0','#34508f',{H:1.5,roof:'gable',rh:.95,deco:'tower',towerH:3.0,stained:1,seats:190,fill:{word:70,fel:10},cap:70,dur:7,desc:'수백 명이 모이는 큰 예배당'});
 mk('pray','기도실','worship',1,1,420,3,'bld','#ece5d6','#6a7fb0',{H:.8,roof:'hip',rh:.55,deco:'crossApex',seats:4,fill:{word:28,comf:12},cap:2,dur:4,desc:'조용히 머무는 작은 기도 공간'});
+mk('mroom','예배실 칸','worship',1,1,400,3,'mroom','#efe8da','#4f6db0',{seats:10,fill:{word:43},cap:4,dur:5,desc:'칸을 이어 붙이면 하나의 예배실이 되고, 지은 칸을 다시 누르면 2층이 올라갑니다'});
 mk('cafe','카페','fellow',2,1,700,10,'bld','#eadfce','#7d5440',{H:.8,roof:'flat',deco:'awning',fcap:8,ccap:4,fill:{fel:38,comf:16},cap:6,dur:4,income:3,desc:'커피 한 잔의 교제. 이용마다 소액 수입'});
 mk('cell','소그룹실','fellow',2,2,1300,14,'bld','#e9e2d2','#5f8a5a',{H:.95,roof:'gable',rh:.5,fcap:16,fill:{fel:46,word:16},cap:10,dur:6,desc:'속 깊은 나눔이 이뤄지는 방'});
 mk('hall','친교실','fellow',3,2,2600,28,'bld','#eadfcd','#a0603f',{H:1.0,roof:'flat',bigwin:1,fcap:34,ccap:6,fill:{fel:62,comf:10},cap:24,dur:6,desc:'식사와 모임을 위한 넓은 공간'});
