@@ -3,6 +3,16 @@ function restart(){
   S=newState();V=[];F=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.confirmNew=false;UI.tab='build';UI.cat='worship';UI.fold=false;ROT=0;
   $('#over').hidden=true;rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);save();toast('새 교회를 시작합니다',2000);
 }
+/* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */
+var portraitMQ=window.matchMedia('(orientation: portrait)');
+function isPortrait(){return portraitMQ.matches;}
+function syncOrientation(){
+  var p=isPortrait();
+  ['#stage','#ui','#over'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
+}
+function lockLandscape(){
+  try{var o=screen.orientation;if(o&&o.lock)o.lock('landscape').catch(function(){});}catch(e){}
+}
 var sized=false;
 function resize(){
   var st=$('#stage'),w=st.clientWidth,h=st.clientHeight;
@@ -19,7 +29,7 @@ function resize(){
 var last=0;
 function frame(ts){
   var dt=Math.min(0.25,(ts-last)/1000||0);last=ts;
-  if(UI.speed>0&&!document.hidden){var sim=dt*UI.speed;while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
+  if(UI.speed>0&&!document.hidden&&!isPortrait()){var sim=dt*UI.speed;while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
   draw();hud(false);
   requestAnimationFrame(frame);
 }
@@ -44,6 +54,9 @@ function init(){
   setupInput();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
+  if(portraitMQ.addEventListener)portraitMQ.addEventListener('change',syncOrientation);else portraitMQ.addListener(syncOrientation);
+  syncOrientation();lockLandscape();
+  document.addEventListener('pointerdown',lockLandscape,{once:true});
   document.addEventListener('visibilitychange',function(){if(document.hidden)save();});
   resize();renderPanel();hud(true);
   setInterval(function(){if(UI.tab==='status'&&!UI.fold&&!S.over)renderStatus();},1500);
