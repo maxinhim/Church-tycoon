@@ -5,7 +5,7 @@ var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,und
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 function newState(){
-  return {name:'새빛교회',money:6000,members:6,rep:30,week:0,t:0,clock:0,
+  return {name:'새빛교회',money:50000,members:6,rep:30,week:0,t:0,clock:0,
     buildings:[{id:1,def:'room',x:6,y:9,inUse:0,uses:0},{id:2,def:'tree',x:2,y:3,inUse:0,uses:0},{id:3,def:'tree',x:12,y:2,inUse:0,uses:0},
       {id:4,def:'tree',x:13,y:11,inUse:0,uses:0},{id:5,def:'tree',x:1,y:12,inUse:0,uses:0},{id:6,def:'tree',x:9,y:5,inUse:0,uses:0}],nextId:7,paths:[],nextPid:1,
     staff:{evang:0,praise:0,care:0},mood:80,cov:{seat:1,fel:1,care:1,comf:1,park:1},
