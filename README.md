@@ -6,7 +6,13 @@
 - `index.html`을 브라우저로 열거나, 저장소 폴더에서 `python3 -m http.server 8000` 후 접속
 
 ## 구조
-- 현재는 `index.html` 한 파일 (HTML/CSS/JS 포함)
+- `index.html` — 마크업과 CSS/JS 로드만 담당
+- `css/` — `theme.css`(색·기본 스타일), `hud.css`(상단바·지도 도구·상태바), `panel.css`(하단 패널·오버레이), `responsive.css`(가로 화면 등)
+- `js/` — 빌드 도구 없이 클래식 `<script>`로 순서대로 로드하며, 전역 스코프를 공유합니다. `index.html`의 로드 순서를 바꾸지 마세요.
+  - 데이터·상태: `config` → `buildings` → `state`
+  - 게임 로직: `pathfinding` → `visitors` → `sim` → `build` → `save`
+  - 렌더링: `render-core`(투영·도형) → `render-entities`(건물·방문자) → `render-scene`(장면 합성)
+  - UI·진입점: `camera` → `hud` → `panel` → `input` → `main`(`init`은 마지막 파일에서 실행)
 
 ## 출처
 - 그래픽과 시스템은 이 프로젝트의 코드로 새로 그렸습니다. 외부 이미지·소리·소스는 사용하지 않습니다.

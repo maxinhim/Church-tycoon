@@ -1,0 +1,11 @@
+'use strict';
+var COLS=16, ROWS=16, ENT=7, WEEK=24, SAVE_KEY='church-tycoon-iso-v1';
+var HW=32, HH=16, ZH=30;
+var $=function(s){return document.querySelector(s);};
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
+var fmt=function(n){return Math.round(n).toLocaleString('ko-KR');};
+var NEEDS=['word','fel','care','comf'];
+var NK={word:'말씀',fel:'교제',care:'돌봄',comf:'편의'};
+var NC={word:'#3f6fe0',fel:'#e8892c',care:'#d9467a',comf:'#1c9c8c'};
+var CATS=[['worship','예배'],['fellow','교제'],['care','돌봄'],['comfort','편의'],['garden','조경']];
+var DAYS=['월요일','화요일','수요일','목요일','금요일','토요일','주일'];
