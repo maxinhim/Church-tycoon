@@ -44,33 +44,67 @@ function refreshCards(){
   var cs=document.querySelectorAll('#cards .card');
   for(var i=0;i<cs.length;i++){var d=D[cs[i].dataset.v];cs[i].classList.toggle('poor',S.money<d.cost);cs[i].classList.toggle('sel',UI.tool===d.id);}
 }
+function dirPad(act,cur){
+  var lab=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'],rot=[45,135,225,315];
+  return '<div class="dpad">'+[2,3,1,0].map(function(i){
+    return '<button class="btn dbtn'+(i===cur?' on':'')+'" data-act="'+act+'" data-v="'+i+'" aria-label="'+lab[i]+'" aria-pressed="'+(i===cur)+'">'+
+      '<svg viewBox="0 0 24 24" style="transform:rotate('+rot[i]+'deg)" aria-hidden="true"><path d="M5 12h12M12 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+  }).join('')+'</div>';
+}
+function segBtns(act,val,items){
+  return '<div class="seg">'+items.map(function(it){var on=String(val)===String(it[0]);return '<button class="btn'+(on?' on':'')+'" data-act="'+act+'" data-v="'+it[0]+'" aria-pressed="'+on+'">'+it[1]+'</button>';}).join('')+'</div>';
+}
+function bad(t){return '<span style="color:var(--bad)">'+t+'</span>';}
 function renderDetail(){
   var el=$('#detail');if(!el)return;
-  var h='';
-  if(UI.tool==='mroom'){
-    var p=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y):null,line;
-    if(!p)line='빈 땅을 누르면 칸이 생기고, 이어 붙이면 하나의 예배실이 됩니다. 지은 칸을 다시 누르면 2층이 올라갑니다';
-    else if(!p.ok)line='<span style="color:var(--bad)">'+p.why+'</span>';
-    else if(S.money<p.cost)line='<span style="color:var(--bad)">자금이 부족해요</span>';
-    else line=(p.kind==='floor'?'이 칸을 누르면 2층을 올려요 · ':'이 칸을 누르면 칸을 지어요 · ')+fmt(p.cost);
+  var h='',d,b;
+  if(UI.tool==='path'){
+    var c=UI.pc,p=pcPiece(),why=p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'';
+    var info=!p?'지도를 눌러 시작할 곳을 고르세요. 지어 둔 길을 누르면 그 끝에서 이어 짓습니다':
+      (why?bad(why):'다음: '+pieceName(p)+' · 높이 '+c.l+(c.slope?'→'+(c.l+c.slope):'')+' · '+fmt(pieceCost(p)));
+    h='<div class="pb"><div class="pg"><span class="lbl">방향</span>'+dirPad('pdir',worldToScreenDir(c.dir))+'</div>'+
+      '<div class="pg"><span class="lbl">경사</span>'+segBtns('pslope',c.slope,[[-1,'내리막'],[0,'평지'],[1,'오르막']])+
+      '<span class="lbl">종류</span>'+segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크']])+'</div></div>'+
+      '<div class="tx">'+info+'</div><div class="btns">'+(c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+
+      '<button class="btn pri" data-act="pbuild"'+(p&&!why?'':' disabled')+'>건설하기</button><button class="btn" data-act="cancel">완료</button></div>';
+  }else if(UI.tool==='mroom'){
+    var rp=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y):null,line;
+    if(!rp)line='빈 땅을 누르면 칸이 생기고, 이어 붙이면 하나의 예배실이 됩니다. 지은 칸을 다시 누르면 2층이 올라갑니다';
+    else if(!rp.ok)line=bad(rp.why);
+    else if(S.money<rp.cost)line=bad('자금이 부족해요');
+    else line=(rp.kind==='floor'?'이 칸을 누르면 2층을 올려요 · ':'이 칸을 누르면 칸을 지어요 · ')+fmt(rp.cost);
     h='<div class="tx"><b>예배실 칸 '+fmt(D.mroom.cost)+' · 2층 '+fmt(MROOM.floorCost)+'</b><br>'+line+'</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else if(UI.tool&&D[UI.tool]){
-    var d=D[UI.tool];
+    d=D[UI.tool];
+    var facing=(d.fill||d.w!==d.h)?'<div class="pb"><div class="pg"><span class="lbl">정면 방향 (기본 출입구 쪽)</span>'+dirPad('face',worldToScreenDir(UI.face))+'</div></div>':'';
     if(UI.ghost){
-      var ok=canPlace(d,UI.ghost.x,UI.ghost.y),afford=S.money>=d.cost;
-      var why=!ok?'<span style="color:var(--bad)">이곳에는 지을 수 없어요. 건물을 끌어서 옮겨 보세요</span>':(!afford?'<span style="color:var(--bad)">자금이 부족해요</span>':effText(d));
-      h='<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b><br>'+why+'</div><div class="btns"><button class="btn" data-act="cancel">취소</button><button class="btn pri" data-act="confirm"'+((ok&&afford)?'':' disabled')+'>짓기</button></div>';
+      var ok=canPlace(d,UI.ghost.x,UI.ghost.y,UI.face),afford=S.money>=d.cost;
+      var why2=!ok?bad('이곳에는 지을 수 없어요. 건물을 끌어서 옮겨 보세요'):(!afford?bad('자금이 부족해요'):effText(d));
+      h=facing+'<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b><br>'+why2+'</div><div class="btns"><button class="btn" data-act="cancel">취소</button><button class="btn pri" data-act="confirm"'+((ok&&afford)?'':' disabled')+'>짓기</button></div>';
     }else{
-      h='<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b> ('+d.w+'×'+d.h+')<br>'+d.desc+'. 지도를 눌러 위치를 고르세요</div>';
+      h=facing+'<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b> ('+d.w+'×'+d.h+')<br>'+d.desc+'. 지도를 눌러 위치를 고르세요</div>';
     }
   }else if(UI.sel&&bById(UI.sel)){
-    var b=bById(UI.sel),bd=defOf(b),st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
+    b=bById(UI.sel);var bd=defOf(b),st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
     var tileBtn=st?'<button class="btn" data-act="demtile">'+(st.f>1?'2층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D.mroom.cost)*0.5)+'</button>':'';
-    h='<div class="tx"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+effText(bd)+'</div><div class="btns">'+tileBtn+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
+    var lines=[effText(bd)],doorUI='';
+    if(b.door){
+      var warn=!b.acc?'':(!b.acc.ent?'입구까지 이어진 길이 없어요':(!b.acc.ext?'출구에서 나갈 길이 없어요':''));
+      lines.push(doorText(b)+(warn?' · '+bad(warn+'. 방문자가 이용하지 못해요'):''));
+      doorUI='<div class="doors"><span class="lbl">입구</span><button class="btn sm" data-act="door" data-v="ent:-1" aria-label="입구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ent:1" aria-label="입구를 다음 자리로">▶</button>'+
+        '<span class="lbl">출구</span><button class="btn sm" data-act="door" data-v="ext:-1" aria-label="출구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ext:1" aria-label="출구를 다음 자리로">▶</button></div>';
+    }
+    if(isRoom(b)&&roomMaxF(b)>1)lines.push(b.upOk?'2층이 계단·다리로 이어져 있어요':bad('2층 좌석을 쓰려면 2층에 입구나 출구를 두고 계단·다리로 땅과 이으세요'));
+    h='<div class="tx full"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+lines.join('<br>')+'</div>'+doorUI+
+      '<div class="btns">'+tileBtn+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
+  }else if(UI.selPiece&&pieceById(UI.selPiece)){
+    var sp=pieceById(UI.selPiece);
+    h='<div class="tx"><b>'+pieceName(sp)+'</b> · 높이 '+sp.l+(sp.s?'→'+(sp.l+1):'')+'</div><div class="btns"><button class="btn bad" data-act="dempiece">철거 +'+fmt(pieceCost(sp)*0.5)+'</button></div>';
   }else{
-    h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물을 눌러보세요.':'건물을 고른 뒤 지도를 눌러 지으세요. 지도는 끌어서 옮기고 두 손가락으로 확대합니다.')+'</div>';
+    h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'건물을 고른 뒤 지도를 눌러 지으세요. 지은 건물을 누르면 입구·출구를 옮길 수 있어요.')+'</div>';
   }
   el.innerHTML=h;
+  var cs=$('#cards');if(cs)cs.hidden=UI.tool==='path'||(!UI.tool&&!!(UI.sel||UI.selPiece));
 }
 function renderStaff(){
   var h='<div class="staff">';
@@ -111,7 +145,7 @@ function chart(){
 function renderMenu(){
   panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="14" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
     '<div class="btns"><button class="btn'+(UI.confirmNew?' bad':'')+'" data-act="newgame">'+(UI.confirmNew?'정말 처음부터 시작할까요? 한 번 더 누르세요':'새로 시작')+'</button></div>'+
-    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li></ul>'+
+    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 정면 방향을 고르고, 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li><li>길 탭: 시작할 곳을 누르고 방향·경사·종류를 고른 뒤 건설하기로 한 칸씩 잇습니다. 오르막을 이어 다리를 놓을 수 있어요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
     '<div class="sec">만든 방식과 참고 자료</div>'+
     '<p class="hint" style="padding:0 0 4px">그래픽과 시스템은 모두 이 페이지의 코드로 새로 그렸고, 외부 이미지·소리·소스를 가져오지 않았습니다. 개발 중 참고한 공개 자료입니다.</p>'+
     '<ul class="refs"><li><a href="https://kenney.nl/assets/isometric-landscape" target="_blank" rel="noopener">Kenney 아이소메트릭 에셋 (CC0)</a> · 나중에 그림을 바꿀 때 쓸 후보</li>'+

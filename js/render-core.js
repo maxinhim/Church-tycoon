@@ -40,16 +40,9 @@ function feats(r,H,d){
     var n=Math.max(1,Math.round(len/(d.bigwin?0.75:0.55)));
     for(var i=0;i<n;i++){
       var cx=a0+(i+.5)*len/n;
-      if(f==='L'&&Math.abs(cx-mid)<0.3)continue;
       var ww=d.bigwin?0.26:(d.stained?0.1:0.11),z0=H*(d.stained?0.28:0.38),z1=H*(d.stained?0.8:0.72);
       var col=d.stained?['#5b82d6','#d6604f','#e3b341','#4fa37a'][i%4]:'#9cc3e3';
       fr(f,r,cx-ww,cx+ww,z0,z1,f==='R'?shade(col,.82):col);
-    }
-    if(f==='L'){
-      var dw=d.deco==='barn'?0.24:0.13,dz=Math.min(H*0.58,0.55);
-      fr('L',r,mid-dw,mid+dw,0.05,dz,d.deco==='barn'?'#6b4423':'#4a3628');
-      if(d.deco==='barn'){var c=PJ.c,p1=P(mid-dw,r.y1,0.05),p2=P(mid+dw,r.y1,dz),p3=P(mid-dw,r.y1,dz),p4=P(mid+dw,r.y1,0.05);
-        c.strokeStyle='rgba(255,230,190,.55)';c.lineWidth=Math.max(.6,PJ.s);c.beginPath();c.moveTo(p1[0],p1[1]);c.lineTo(p2[0],p2[1]);c.moveTo(p3[0],p3[1]);c.lineTo(p4[0],p4[1]);c.stroke();}
     }
   });
 }

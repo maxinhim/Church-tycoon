@@ -57,3 +57,18 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 #over .box{background:var(--glass);border-radius:14px;padding:20px;max-width:320px;text-align:center;display:flex;flex-direction:column;gap:10px}
 #over h2{margin:0;font-family:var(--f-display);font-size:20px}
 #over p{margin:0;color:var(--muted)}
+
+/* 길 짓기·방향 고르기·문 옮기기 */
+#panel.build{overflow-y:auto}
+.pb{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-start}
+.pg{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pg .lbl,.doors .lbl{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.dpad{display:grid;grid-template-columns:repeat(2,36px);gap:4px}
+.btn.dbtn{width:36px;height:36px;padding:0;display:grid;place-items:center}
+.dbtn svg{width:18px;height:18px}
+.btn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg .btn{height:30px;padding:0 9px;font-size:12px}
+.doors{flex:1 1 100%;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.btn.sm{height:30px;min-width:34px;padding:0 8px}
+.detail .tx.full{display:block;-webkit-line-clamp:unset}

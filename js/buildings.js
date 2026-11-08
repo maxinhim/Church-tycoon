@@ -25,6 +25,7 @@ mk('tree','나무','garden',1,1,110,0,'tree','#3d7a3d','#3d7a3d',{beauty:1,desc:
 mk('flower','화단','garden',1,1,70,0,'flower','#6b4f3a','#d9567a',{beauty:1,desc:'꽃이 피는 작은 화단'});
 mk('bench','벤치','garden',1,1,160,0,'bench','#8a6a46','#8a6a46',{ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
+mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 function heightOf(id){
   var d=D[id];

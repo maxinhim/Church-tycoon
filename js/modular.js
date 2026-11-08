@@ -12,12 +12,13 @@ function roomAt(x,y){
   if(x<0||y<0||x>=COLS||y>=ROWS||!occ[y][x])return null;
   var b=bById(occ[y][x]);return isRoom(b)?b:null;
 }
-function roomArea(b){var n=0;b.tiles.forEach(function(t){n+=t.f;});return n;}
+// 2층은 2층 문이 계단·다리로 땅과 이어졌을 때만 면적에 들어간다
+function roomArea(b){var n=0;b.tiles.forEach(function(t){n+=b.upOk?t.f:1;});return n;}
 function roomMaxF(b){var m=0;b.tiles.forEach(function(t){m=Math.max(m,t.f);});return m;}
 
 /* 칸 수·층수에 따라 좌석, 수용 인원, 유지비, 말씀 효과가 정해진다 */
 function roomDef(b){
-  var key=b.tiles.map(function(t){return t.x+','+t.y+','+t.f;}).join(';');
+  var key=b.tiles.map(function(t){return t.x+','+t.y+','+t.f;}).join(';')+(b.upOk?'|u':'');
   var c=RDC[b.id];if(c&&c.key===key)return c.d;
   var base=D.mroom,n=roomArea(b),x0=COLS,y0=ROWS,x1=0,y1=0,cost=0,d={},k;
   for(k in base)d[k]=base[k];
@@ -26,7 +27,7 @@ function roomDef(b){
     cost+=base.cost+(t.f-1)*MROOM.floorCost;
   });
   var mf=roomMaxF(b);
-  d.name='예배실 ('+b.tiles.length+'칸'+(mf>1?' · 2층':'')+')';
+  d.name='예배실 ('+b.tiles.length+'칸'+(mf>1?' · 2층'+(b.upOk?'':' 미연결'):'')+')';
   d.w=x1-x0+1;d.h=y1-y0+1;d.cost=cost;
   d.seats=MROOM.seats*n;d.cap=MROOM.cap*n;d.up=MROOM.up*n;
   d.fill={word:Math.min(MROOM.wordMax,MROOM.word0+MROOM.wordPer*n)};
@@ -56,6 +57,7 @@ function tilePlan(x,y){
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};
+  if(piecesAt(x,y).length)return {ok:false,why:'길이 있어요'};
   return {ok:true,kind:'new',cost:D.mroom.cost};
 }
 function placeTile(x,y){
@@ -155,6 +157,7 @@ function drawRoomTile(b,t,map){
       fr('R',body,my-.13,my+.13,z1+.3,z1+.66,shade(glass,.78));
     }
   }
+  drawDoorsOn(b,t);
   quad([[body.x0,body.y0,H],[body.x1,body.y0,H],[body.x1,body.y1,H],[body.x0,body.y1,H]],shade(d.roofc,1.05));
   // 지붕 테두리: 같은 높이로 이어진 쪽에는 선을 긋지 않아 한 건물로 보이게 한다
   c.strokeStyle=EDGE;c.lineWidth=Math.max(.5,PJ.s*.9);c.beginPath();

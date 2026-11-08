@@ -13,7 +13,13 @@ function sortEnt(E){
     var a=E[i],b=E[j];
     var ab=a.x1<=b.x0+1e-4||a.y1<=b.y0+1e-4,ba=b.x1<=a.x0+1e-4||b.y1<=a.y0+1e-4;
     if(ab&&ba)continue;
-    if(!ab&&!ba){if(a.x0+a.x1+a.y0+a.y1<=b.x0+b.x1+b.y0+b.y1)ab=true;else ba=true;}
+    if(!ab&&!ba){
+      // 겹칠 때: 방문자가 서 있는 길 조각을 먼저, 그다음 높이(아래에 있는 것 먼저), 마지막으로 앞뒤
+      var az0=a.zb||0,az1=a.zt==null?99:a.zt,bz0=b.zb||0,bz1=b.zt==null?99:b.zt;
+      if(a.pid&&b.on===a.pid)ab=true;else if(b.pid&&a.on===b.pid)ba=true;
+      else if(az1<=bz0+1e-3)ab=true;else if(bz1<=az0+1e-3)ba=true;
+      else if(a.x0+a.x1+a.y0+a.y1<=b.x0+b.x1+b.y0+b.y1)ab=true;else ba=true;
+    }
     if(ab)adj[j].push(i);else adj[i].push(j);
   }
   var out=[],mark=new Uint8Array(n);
@@ -32,10 +38,10 @@ function draw(){
   var sb=UI.sel?bById(UI.sel):null;
   if(sb){
     if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
-    else{var sd=D[sb.def];footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
+    else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
   }
-  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='mroom'?D[UI.tool]:null,gok=false;
-  if(gd){gok=canPlace(gd,UI.ghost.x,UI.ghost.y)&&S.money>=gd.cost;footprint(UI.ghost.x,UI.ghost.y,gd.w,gd.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
+  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='mroom'&&UI.tool!=='path'?D[UI.tool]:null,gok=false;
+  if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&S.money>=gd.cost;footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
   S.buildings.forEach(function(b){
     if(isRoom(b)){
@@ -46,9 +52,14 @@ function draw(){
     var d=D[b.def],r=rrect(b.x,b.y,b.x+d.w,b.y+d.h);
     r.f=function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);};E.push(r);
   });
+  S.paths.forEach(function(p){
+    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>0?p.l*LV-.14:0;rp.zt=(p.l===0&&!p.s)?0:pieceTop(p)*LV;
+    rp.f=function(){drawPiece(p);};E.push(rp);
+  });
   V.forEach(function(v){
     if(v.state==='inside')return;
-    var p=rotPt(v.x,v.y);E.push({x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,f:function(){drawVisitor(v);}});
+    var p=rotPt(v.x,v.y),z=v.z||0;
+    E.push({x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,zb:z,zt:z+.7,on:v.node>=1000?v.node-1000:0,f:function(){drawVisitor(v);}});
   });
   for(var k=0;k<2;k++){
     var span=COLS+8,wx=k===0?((S.clock*1.6+3)%span)-4:COLS+4-((S.clock*1.25+9)%span),ly=k===0?ROWS-1+.58:ROWS-1+.14;
@@ -61,9 +72,16 @@ function draw(){
   var ar=rrect(ENT,ROWS-1+.05,ENT+1,ROWS-1+.15);ar.f=drawArch;E.push(ar);
   sortEnt(E).forEach(function(e){e.f();});
   if(UI.tool==='mroom')drawRoomGhost();
-  if(gd){c.globalAlpha=.78;drawEntity({x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0},Math.round(gd.park*.5));c.globalAlpha=1;}
+  if(UI.tool==='path')drawPathGhost();
+  if(gd){
+    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:UI.face};
+    c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;
+    ensureDoors(gb);drawDoorPads(gb);
+  }
+  if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.55;drawPiece(spc,'#ffd23f');c.globalAlpha=1;}}
   if(sb){
-    var sd2=defOf(sb),mp=rotPt(sb.x+sd2.w/2,sb.y+sd2.h/2),q=P(mp[0],mp[1],bHeight(sb)+.45+Math.sin(S.clock*4)*.06),s=Math.max(.7,cam.z);
+    drawDoorPads(sb);
+    var sd2=bDims(sb),mp=rotPt(sb.x+sd2.w/2,sb.y+sd2.h/2),q=P(mp[0],mp[1],bHeight(sb)+.45+Math.sin(S.clock*4)*.06),s=Math.max(.7,cam.z);
     c.fillStyle='#ffd23f';c.strokeStyle='rgba(30,30,30,.6)';c.lineWidth=1.5;c.beginPath();
     c.moveTo(q[0]-7*s,q[1]-10*s);c.lineTo(q[0]+7*s,q[1]-10*s);c.lineTo(q[0],q[1]);c.closePath();c.fill();c.stroke();
   }

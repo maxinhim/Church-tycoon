@@ -175,7 +175,8 @@ async function modularChecks(browser, url) {
     placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y);
     o.merged = rooms().length === 1 && rooms()[0].tiles.length === 3;
     placeTile(X + 1, Y);
-    o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === MROOM.seats * 4;
+    // 계단·다리로 잇지 않은 2층은 좌석에 들어가지 않는다
+    o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === MROOM.seats * 3 && /미연결/.test(defOf(rooms()[0]).name);
     o.maxFloor = !tilePlan(X + 1, Y).ok;
     removeTile(X + 1, Y, 1);
     o.floorDown = tileOf(rooms()[0], X + 1, Y).f === 1;
@@ -198,7 +199,7 @@ async function modularChecks(browser, url) {
     return o;
   });
   check(r.merged, '예배실 칸: 이어 지은 3칸이 하나의 예배실로 합쳐짐');
-  check(r.floor, '예배실 칸: 2층을 올리면 좌석이 층 면적만큼 늘어남');
+  check(r.floor, '예배실 칸: 2층을 올려도 연결 전에는 2층 좌석이 열리지 않음');
   check(r.maxFloor, '예배실 칸: 최대 층수 위로는 올릴 수 없음');
   check(r.floorDown, '예배실 칸: 위층부터 철거됨');
   check(r.split, '예배실 칸: 가운데 칸을 지우면 두 예배실로 나뉨');
@@ -210,6 +211,90 @@ async function modularChecks(browser, url) {
   await ctx.close();
 }
 
+// 길·계단·다리, 문(입구·출구), 높이 있는 길찾기, 정면 방향
+async function pathChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 4242;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.money = 99999;
+    const o = {};
+    const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
+    const starter = S.buildings.find(b => b.def === 'room');
+    o.defaultDoor = !!(starter.door && starter.acc && starter.acc.ok);
+    // 3칸 예배실 + 가운데 앞쪽으로 계단 자리
+    let X = -1, Y = -1;
+    for (let y = 1; y < ROWS - 5 && X < 0; y++) for (let x = 0; x + 3 <= COLS; x++) {
+      if ([0, 1, 2].every(i => free(x + i, y)) && [1, 2, 3].every(k => free(x + 1, y + k))) { X = x; Y = y; break; }
+    }
+    o.found = X >= 0;
+    placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y); placeTile(X + 1, Y);
+    const room = S.buildings.find(b => b.def === 'mroom');
+    o.unconnected = !room.upOk && defOf(room).seats === MROOM.seats * 3;
+    // 땅에서 방 쪽(-y)으로 오르막 1칸, 이어서 평지 다리 1칸
+    UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 2; UI.pc.l = 0; UI.pc.dir = 3; UI.pc.slope = 1;
+    const b1 = pcBuild(); UI.pc.slope = 0; const b2 = pcBuild();
+    o.built = b1 === '' && b2 === '' && S.paths.length === 2 && S.paths[0].s === 1 && S.paths[1].l === 1 && UI.pc.l === 1;
+    o.undo = pcUndo() && S.paths.length === 1 && UI.pc.l === 1 && UI.pc.y === Y + 1;
+    pcBuild();
+    o.noOverlap = pieceFits({ x: X + 1, y: Y + 1, l: 1, s: 0, d: 0, k: 'stone' }) !== '' && pieceFits({ x: X, y: Y, l: 0, s: 0, d: 0, k: 'stone' }) !== '';
+    o.bridgeOverPath = pieceFits({ x: X + 1, y: Y + 1, l: 0, s: 0, d: 0, k: 'stone' }) === '';
+    o.ground = groundOk(X + 1, Y + 1) && !groundOk(X + 1, Y + 2);
+    // 2층 입구를 다리 쪽으로
+    room.door.ent = { x: X + 1, y: Y, d: 2, l: 1 }; recalc();
+    o.connected = room.upOk && room.acc.ok && defOf(room).seats === MROOM.seats * 4;
+    const dn = doorNode(room.door.ent), path = navPath(gateNode(), m => m === dn);
+    o.navUp = !!path && path.some(w => w.z >= LV - 0.01);
+    // 방문자가 실제로 계단을 올라 2층 입구로 들어간다
+    S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
+    let maxZ = 0;
+    for (let i = 0; i < 4000; i++) { update(0.1); V.forEach(v => { if ((v.z || 0) > maxZ) maxZ = v.z; }); }
+    o.climbed = maxZ >= LV - 0.01 && room.uses > 0;
+    for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
+    window.__ct.setRot(0);
+    // 계단을 철거하면 2층 입구에 닿을 수 없어 이용 불가
+    removePiece(S.paths.find(p => p.s === 1).id, 1);
+    o.cutOff = !room.upOk && !room.acc.ent && !usable(room);
+    // 문은 둘레를 따라 옮겨도 항상 올바른 자리
+    const n = doorSpots(room).length; let ok = true;
+    for (let i = 0; i < n + 2; i++) { cycleDoor(room, 'ent', 1); if (!validSpot(room, room.door.ent)) ok = false; }
+    o.cycle = ok && n > 0;
+    // 정면 방향: 예배당(3×2)을 오른쪽(+x)을 향해 지으면 2×3을 차지하고 출입구도 그쪽
+    let fb = null;
+    for (let y = 0; y < ROWS - 4 && !fb; y++) for (let x = 0; x < COLS - 3; x++) {
+      if (canPlace(D.chapel, x, y, 0) && free(x + 2, y + 1)) { build('chapel', x, y, 0); fb = S.buildings[S.buildings.length - 1]; break; }
+    }
+    o.facing = !!fb && fb.face === 0 && bDims(fb).w === 2 && bDims(fb).h === 3 && fb.door.ent.d === 0 &&
+      [0, 1].every(i => [0, 1, 2].every(j => occ[fb.y + j][fb.x + i] === fb.id));
+    // 모든 방문 건물에 입구·출구가 있다
+    o.allDoors = S.buildings.every(b => !defOf(b).fill || (b.door && validSpot(b, b.door.ent) && validSpot(b, b.door.ext)));
+    return o;
+  });
+  check(r.found, '길: 시험할 빈 자리를 찾음');
+  check(r.defaultDoor, '문: 기본 예배실에 출입구가 있고 이용 가능');
+  check(r.unconnected, '길: 연결 전 2층은 좌석에 들어가지 않음');
+  check(r.built, '길: 오르막·평지를 이어 지으면 높이가 올라가며 이어짐');
+  check(r.undo, '길: 되돌리기로 마지막 조각과 커서가 돌아옴');
+  check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
+  check(r.ground, '길: 다리 아래 땅은 걸을 수 있고, 땅 계단은 땅을 막음');
+  check(r.connected, '길: 2층 입구를 다리와 이으면 2층 좌석이 열림');
+  check(r.navUp, '길찾기: 입구 아치에서 계단을 올라 2층 입구까지 경로가 있음');
+  check(r.climbed, '방문자: 실제로 계단을 올라 2층 입구로 이용함');
+  check(r.cutOff, '문: 계단을 철거하면 2층 입구에 닿지 못해 이용 불가');
+  check(r.cycle, '문: 둘레를 따라 옮겨도 항상 올바른 자리');
+  check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
+  check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 입구·출구가 있음');
+  check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -218,6 +303,7 @@ async function modularChecks(browser, url) {
   try {
     await playChecks(browser, url);
     await modularChecks(browser, url);
+    await pathChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

@@ -16,7 +16,7 @@
 - `tests/` — 검증 스크립트 (게임에는 포함되지 않음)
 - `js/` — 빌드 도구 없이 클래식 `<script>`로 순서대로 로드하며, 전역 스코프를 공유합니다. `index.html`의 로드 순서를 바꾸지 마세요.
   - 데이터·상태: `config` → `buildings` → `state`
-  - 게임 로직: `pathfinding` → `visitors` → `sim` → `build` → `modular`(칸을 이어 짓는 예배실) → `save`
+  - 게임 로직: `pathfinding`(땅·계단·다리를 잇는 길찾기) → `visitors` → `sim` → `build` → `modular`(칸을 이어 짓는 예배실) → `doors`(입구·출구) → `paths`(길·계단·다리 짓기) → `save`
   - 렌더링: `render-core`(투영·도형) → `render-entities`(건물·방문자) → `render-scene`(장면 합성)
   - UI·진입점: `camera` → `hud` → `panel` → `input` → `main`(`init`은 마지막 파일에서 실행)
 

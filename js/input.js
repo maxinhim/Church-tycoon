@@ -12,19 +12,21 @@ function pickBuilding(px,py){
   return null;
 }
 function placeGhost(t){
-  var d=D[UI.tool];
+  var d=faceDims(D[UI.tool],UI.face);
   UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-1-d.h)};
 }
 function onGhostTile(t){
-  if(!UI.ghost||!UI.tool||!D[UI.tool]||UI.tool==='mroom')return false;
-  var d=D[UI.tool];return t.x>=UI.ghost.x&&t.x<UI.ghost.x+d.w&&t.y>=UI.ghost.y&&t.y<UI.ghost.y+d.h;
+  if(!UI.ghost||!UI.tool||!D[UI.tool]||UI.tool==='mroom'||UI.tool==='path')return false;
+  var d=faceDims(D[UI.tool],UI.face);return t.x>=UI.ghost.x&&t.x<UI.ghost.x+d.w&&t.y>=UI.ghost.y&&t.y<UI.ghost.y+d.h;
 }
 function onTap(px,py){
   if(S.over)return;
   if(UI.tool==='mroom'){tapRoomTile(pickTile(px,py));return;}
+  if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
   if(UI.tool&&D[UI.tool]){placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   UI.sel=pickBuilding(px,py);
-  if(UI.sel&&(UI.tab!=='build'||UI.fold)){UI.tab='build';UI.fold=false;syncTabs();renderPanel();}
+  var pp=UI.sel?null:pickPieceAt(px,py);UI.selPiece=pp?pp.id:null;
+  if((UI.sel||UI.selPiece)&&(UI.tab!=='build'||UI.fold)){UI.tab='build';UI.fold=false;syncTabs();renderPanel();}
   else renderDetail();
 }
 var ptrs=new Map(),gest=null;
@@ -71,14 +73,22 @@ function syncTabs(){
 function onPanel(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,v=el.dataset.v;
-  if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;renderBuild();}
-  else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;renderBuild();}
+  if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
+  else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='pick'){
-    UI.tool=(UI.tool===v)?null:v;UI.sel=null;UI.undo=[];
-    if(UI.tool){var c=viewCenter();placeGhost(groundTile(c[0],c[1]));}else UI.ghost=null;
+    UI.tool=(UI.tool===v)?null:v;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.pc=UI.tool==='path'?newCursor():null;
+    if(UI.tool&&UI.tool!=='path'){var c=viewCenter();placeGhost(groundTile(c[0],c[1]));}else UI.ghost=null;
     refreshCards();renderDetail();
   }
-  else if(a==='cancel'){UI.ghost=null;UI.tool=null;UI.undo=[];refreshCards();renderDetail();}
+  else if(a==='cancel'){UI.ghost=null;UI.tool=null;UI.undo=[];UI.pc=null;refreshCards();renderDetail();}
+  else if(a==='face'){UI.face=screenToWorldDir(+v);if(UI.ghost){var gd=faceDims(D[UI.tool],UI.face);UI.ghost.x=clamp(UI.ghost.x,0,COLS-gd.w);UI.ghost.y=clamp(UI.ghost.y,0,ROWS-1-gd.h);}renderDetail();}
+  else if(a==='pdir'){UI.pc.dir=screenToWorldDir(+v);renderDetail();}
+  else if(a==='pslope'){UI.pc.slope=+v;renderDetail();}
+  else if(a==='pkind'){UI.pc.k=v;renderDetail();}
+  else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
+  else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}
+  else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
+  else if(a==='dempiece'){var pc2=pieceById(UI.selPiece);if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
   else if(a==='undo'){var u=UI.undo.pop();if(u&&removeTile(u.x,u.y,1))toast('되돌렸어요',1200);renderDetail();hud(true);}
   else if(a==='demtile'){
     var st=UI.selTile;
@@ -87,7 +97,7 @@ function onPanel(e){
     renderDetail();hud(true);
   }
   else if(a==='confirm'){
-    if(UI.tool&&UI.ghost&&build(UI.tool,UI.ghost.x,UI.ghost.y)){toast(D[UI.tool].name+'을(를) 지었어요',1600);UI.ghost=null;}
+    if(UI.tool&&UI.ghost&&build(UI.tool,UI.ghost.x,UI.ghost.y,UI.face)){toast(D[UI.tool].name+'을(를) 지었어요',1600);UI.ghost=null;}
     renderDetail();hud(true);
   }
   else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}

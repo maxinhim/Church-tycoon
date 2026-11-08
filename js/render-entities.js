@@ -1,6 +1,6 @@
 'use strict';
 function drawBld(b){
-  var d=D[b.def],x=b.x,y=b.y,w=d.w,h=d.h,H=d.H,s=PJ.s;
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,H=d.H,s=PJ.s;
   box(rrect(x+.03,y+.03,x+w-.03,y+h-.03),0,.05,'#cfc8b8');
   var r=rrect(x+.1,y+.1,x+w-.1,y+h-.1);
   var alongX=(w>=h)!==(ROT%2===1);
@@ -32,7 +32,7 @@ function drawBld(b){
     if(d.deco==='crossApex'&&top)cross(top[0],top[1],top[2],.75);
   };
   if(d.deco==='tower'){
-    var tr=rrect(x+w/2-.3,y+h-.64,x+w/2+.3,y+h-.02),TH=d.towerH;
+    var tr=towerRect(b.face,x,y,w,h),TH=d.towerH;
     var tower=function(){
       box(tr,.05,TH,'#f5f0e6');
       var mx=(tr.x0+tr.x1)/2,my=(tr.y0+tr.y1)/2;
@@ -42,6 +42,15 @@ function drawBld(b){
     };
     if(tr.x0+tr.x1+tr.y0+tr.y1<r.x0+r.x1+r.y0+r.y1){tower();main();}else{main();tower();}
   }else main();
+  drawDoorsOn(b);
+}
+// 종탑은 정면 한쪽 끝에 (가운데 출입구를 가리지 않게)
+function towerRect(face,x,y,w,h){
+  var f=face==null?2:face;
+  if(f===2)return rrect(x+w-.68,y+h-.64,x+w-.08,y+h-.02);
+  if(f===3)return rrect(x+.08,y+.02,x+.68,y+.64);
+  if(f===0)return rrect(x+w-.64,y+.08,x+w-.02,y+.68);
+  return rrect(x+.02,y+h-.68,x+.64,y+h-.08);
 }
 function drawLot(b,cars){
   var d=D[b.def],x=b.x,y=b.y,c=PJ.c,cols=d.w*2,row,i;
@@ -103,11 +112,12 @@ function drawSpire(b){
 function drawEntity(b,cars){
   var k=D[b.def].kind;
   if(k==='mroom'){drawRoom(b);return;}
+  if(k==='path'){drawPiece({x:b.x,y:b.y,l:0,s:1,d:3,k:'stone'});return;}
   if(k==='bld')drawBld(b);else if(k==='lot')drawLot(b,cars||0);else if(k==='tree')drawTree(b);
   else if(k==='flower')drawFlower(b);else if(k==='bench')drawBench(b);else if(k==='spire')drawSpire(b);
 }
 function drawVisitor(v){
-  var c=PJ.c,s=PJ.s,p=rotPt(v.x,v.y),q=P(p[0],p[1],0);
+  var c=PJ.c,s=PJ.s,p=rotPt(v.x,v.y),q=P(p[0],p[1],v.z||0);
   var walking=v.state==='walk'||v.state==='leave';
   var bob=walking?Math.abs(Math.sin(S.clock*11+v.ph))*1.2*s:0;
   var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);

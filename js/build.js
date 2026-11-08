@@ -1,22 +1,24 @@
 'use strict';
 /* ---------- 건축 ---------- */
-function canPlace(d,x,y){
-  if(x<0||y<0||x+d.w>COLS||y+d.h>ROWS-1)return false;
-  for(var j=0;j<d.h;j++)for(var i=0;i<d.w;i++)if(occ[y+j][x+i])return false;
+function canPlace(d,x,y,face){
+  var dm=faceDims(d,face);
+  if(x<0||y<0||x+dm.w>COLS||y+dm.h>ROWS-1)return false;
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)if(occ[y+j][x+i]||piecesAt(x+i,y+j).length)return false;
   return true;
 }
 function bump(){
+  // 서 있던 칸이 막히거나 길이 사라진 방문자는 입구 아치로 돌려보낸다
   V.forEach(function(v){
-    var tx=Math.floor(v.x),ty=Math.floor(v.y);
-    if(occ[ty]&&occ[ty][tx]&&v.state!=='inside'){v.x=ENT+0.5;v.y=ROWS-0.5;v.state='idle';v.t=0.2;v.target=0;}
+    if(v.state==='inside')return;
+    if(!nodeOk(v.node)){placeAt(v,gateNode());v.state='idle';v.t=0.2;v.target=0;}
   });
 }
-function build(id,x,y){
+function build(id,x,y,face){
   if(id==='mroom')return placeTile(x,y);
-  var d=D[id];
-  if(S.money<d.cost||!canPlace(d,x,y))return false;
+  var d=D[id];if(face==null)face=2;
+  if(S.money<d.cost||!canPlace(d,x,y,face))return false;
   S.money-=d.cost;
-  S.buildings.push({id:S.nextId++,def:id,x:x,y:y,inUse:0,uses:0});
+  S.buildings.push({id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0});
   rebuildOcc();bump();recalc();save();return true;
 }
 function demolish(id){
