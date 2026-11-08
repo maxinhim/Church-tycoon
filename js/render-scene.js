@@ -35,12 +35,13 @@ function draw(){
   c.fillStyle=g;c.fillRect(0,0,VW,VH);
   PJ.c=c;PJ.ox=cam.ox;PJ.oy=cam.oy;PJ.s=cam.z;
   drawGround();
+  drawFloors();
   var sb=UI.sel?bById(UI.sel):null;
   if(sb){
     if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
     else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
   }
-  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='mroom'&&UI.tool!=='path'?D[UI.tool]:null,gok=false;
+  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)?D[UI.tool]:null,gok=false;
   if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&S.money>=gd.cost;footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
   S.buildings.forEach(function(b){
@@ -53,7 +54,7 @@ function draw(){
     r.f=function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);};E.push(r);
   });
   S.paths.forEach(function(p){
-    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>0?p.l*LV-.14:0;rp.zt=(p.l===0&&!p.s)?0:pieceTop(p)*LV;
+    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>0?p.l*LV-.14:0;rp.zt=p.k==='sky'?p.l*LV+.72:((p.l===0&&!p.s)?0:pieceTop(p)*LV);
     rp.f=function(){drawPiece(p);};E.push(rp);
   });
   V.forEach(function(v){
@@ -71,7 +72,8 @@ function draw(){
   }
   var ar=rrect(ENT,ROWS-1+.05,ENT+1,ROWS-1+.15);ar.f=drawArch;E.push(ar);
   sortEnt(E).forEach(function(e){e.f();});
-  if(UI.tool==='mroom')drawRoomGhost();
+  if(isRoomDef(UI.tool))drawRoomGhost();
+  if(isFloorDef(UI.tool)&&UI.ghost)footprint(UI.ghost.x,UI.ghost.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[4,3]);
   if(UI.tool==='path')drawPathGhost();
   if(gd){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:UI.face};

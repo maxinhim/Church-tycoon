@@ -1,44 +1,62 @@
 'use strict';
-/* ---------- 직접 짓는 예배실 (시험판) ----------
-   1×1 칸을 하나씩 짓는다. 상하좌우로 맞닿은 칸은 하나의 예배실로 합쳐지고,
-   지은 칸을 다시 누르면 2층이 올라간다. 칸 하나를 지우면 끊어진 부분은 따로 나뉜다.
-   건물 객체: {id, def:'mroom', x, y, tiles:[{x,y,f}], inUse, uses}  (x,y는 칸들의 좌상단) */
-var MROOM={maxF:2,floorCost:500,fh:.9,seats:10,cap:4,up:3,word0:40,wordPer:3,wordMax:66};
-var RDC={};
+/* ---------- 칸을 이어 짓는 건물 (역할별) ----------
+   1×1 칸을 하나씩 짓는다. 상하좌우로 맞닿은 같은 역할의 칸은 하나의 건물로 합쳐지고,
+   지은 칸을 다시 누르면 위층이 올라간다(최대 5층). 칸 하나를 지우면 끊어진 부분은 따로 나뉜다.
+   건물 객체: {id, def, x, y, tiles:[{x,y,f}], inUse, uses}  (def는 kind가 'mroom'인 정의, x,y는 칸들의 좌상단)
+   정의의 per(칸·층 면적당 수치), fk(채우는 필요), rname(건물 이름)으로 역할별 수치가 정해진다. */
+var MROOM={maxF:5,floorCost:500,fh:.9,fill0:40,fillPer:3,fillMax:66};
+var RDC={},PDC={};
 
-function isRoom(b){return !!b&&b.def==='mroom';}
+function isRoomDef(id){return !!D[id]&&D[id].kind==='mroom';}
+function isRoom(b){return !!b&&isRoomDef(b.def);}
 function tileOf(b,x,y){for(var i=0;i<b.tiles.length;i++){var t=b.tiles[i];if(t.x===x&&t.y===y)return t;}return null;}
-function roomAt(x,y){
+// def를 주면 그 역할의 칸 건물만
+function roomAt(x,y,def){
   if(x<0||y<0||x>=COLS||y>=ROWS||!occ[y][x])return null;
-  var b=bById(occ[y][x]);return isRoom(b)?b:null;
+  var b=bById(occ[y][x]);return isRoom(b)&&(!def||b.def===def)?b:null;
 }
-// 2층은 2층 문이 계단·다리로 땅과 이어졌을 때만 면적에 들어간다
-function roomArea(b){var n=0;b.tiles.forEach(function(t){n+=b.upOk?t.f:1;});return n;}
+// 위층도 면적에 들어간다: 1층 출입구로 들어와 건물 안에서 위층까지 쓴다
+function roomArea(b){var n=0;b.tiles.forEach(function(t){n+=t.f;});return n;}
 function roomMaxF(b){var m=0;b.tiles.forEach(function(t){m=Math.max(m,t.f);});return m;}
 
 /* 칸 수·층수에 따라 좌석, 수용 인원, 유지비, 말씀 효과가 정해진다 */
 function roomDef(b){
-  var key=b.tiles.map(function(t){return t.x+','+t.y+','+t.f;}).join(';')+(b.upOk?'|u':'');
+  var key=b.def+':'+b.tiles.map(function(t){return t.x+','+t.y+','+t.f;}).join(';');
   var c=RDC[b.id];if(c&&c.key===key)return c.d;
-  var base=D.mroom,n=roomArea(b),x0=COLS,y0=ROWS,x1=0,y1=0,cost=0,d={},k;
+  var base=D[b.def],n=roomArea(b),x0=COLS,y0=ROWS,x1=0,y1=0,cost=0,d={},k;
   for(k in base)d[k]=base[k];
   b.tiles.forEach(function(t){
     x0=Math.min(x0,t.x);y0=Math.min(y0,t.y);x1=Math.max(x1,t.x);y1=Math.max(y1,t.y);
     cost+=base.cost+(t.f-1)*MROOM.floorCost;
   });
   var mf=roomMaxF(b);
-  d.name='예배실 ('+b.tiles.length+'칸'+(mf>1?' · 2층'+(b.upOk?'':' 미연결'):'')+')';
+  d.name=base.rname+' ('+b.tiles.length+'칸'+(mf>1?' · '+mf+'층':'')+')';
   d.w=x1-x0+1;d.h=y1-y0+1;d.cost=cost;
-  d.seats=MROOM.seats*n;d.cap=MROOM.cap*n;d.up=MROOM.up*n;
-  d.fill={word:Math.min(MROOM.wordMax,MROOM.word0+MROOM.wordPer*n)};
-  d.desc='칸을 이어 붙여 지은 예배실';
+  for(k in base.per)d[k]=base.per[k]*n;
+  d.fill={};d.fill[base.fk]=Math.min(MROOM.fillMax,MROOM.fill0+MROOM.fillPer*n);
+  d.desc='칸을 이어 붙여 지은 '+base.rname;
   RDC[b.id]={key:key,d:d};
   return d;
 }
-function defOf(b){return isRoom(b)?roomDef(b):D[b.def];}
+function defOf(b){return isRoom(b)?roomDef(b):stackDef(b);}
+// 층을 올린 완성품 건물: 층수만큼 좌석·수용 인원·유지비가 늘어난다
+function stackDef(b){
+  var d=D[b.def],f=b.floors||1;if(f<=1)return d;
+  var key=b.def+'|'+f;if(PDC[key])return PDC[key];
+  var o={},k;for(k in d)o[k]=d[k];
+  ['seats','fcap','ccap','kcap','cap','up'].forEach(function(k2){o[k2]=d[k2]*f;});
+  o.cost=d.cost+(f-1)*floorCostOf(b);o.name=d.name+' ('+f+'층)';
+  return (PDC[key]=o);
+}
 function roomTop(f){return .05+f*MROOM.fh;}
-function bHeight(b){return isRoom(b)?roomTop(roomMaxF(b)):heightOf(b.def);}
-function bHeightAt(b,x,y){if(!isRoom(b))return heightOf(b.def);var t=tileOf(b,x,y);return t?roomTop(t.f):0;}
+function prefabTop(b){
+  var d=D[b.def],f=b.floors||1;if(f<=1)return heightOf(b.def);
+  return Math.max(f*LV+(d.rh||.05),d.towerH?d.towerH+f*LV-d.H+.75:0);
+}
+function bHeight(b){return isRoom(b)?roomTop(roomMaxF(b)):prefabTop(b);}
+function bHeightAt(b,x,y){if(!isRoom(b))return prefabTop(b);var t=tileOf(b,x,y);return t?roomTop(t.f):0;}
+// 그 칸에 있는 층수 (연결 다리가 닿을 수 있는지 볼 때)
+function bFloorsAt(b,x,y){if(isRoom(b)){var t=tileOf(b,x,y);return t?t.f:0;}return b.floors||1;}
 function syncRoomBox(b){
   var x0=COLS,y0=ROWS;b.tiles.forEach(function(t){x0=Math.min(x0,t.x);y0=Math.min(y0,t.y);});
   b.x=x0;b.y=y0;
@@ -48,27 +66,30 @@ function roomsChanged(){
   rebuildOcc();bump();recalc();save();
 }
 
-/* 이 칸을 누르면 무슨 일이 생기는지: 새 칸 / 2층 / 불가 */
-function tilePlan(x,y){
+/* 이 칸을 누르면 무슨 일이 생기는지: 새 칸 / 위층 / 불가 */
+function tilePlan(x,y,def){
+  def=def||'mroom';
   if(x<0||y<0||x>=COLS||y>=ROWS-1)return {ok:false,why:'부지 밖이에요'};
   var r=roomAt(x,y);
   if(r){
+    if(r.def!==def)return {ok:false,why:'역할이 다른 칸 위에는 쌓을 수 없어요'};
     if(tileOf(r,x,y).f>=MROOM.maxF)return {ok:false,why:MROOM.maxF+'층까지만 올릴 수 있어요'};
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};
   if(piecesAt(x,y).length)return {ok:false,why:'길이 있어요'};
-  return {ok:true,kind:'new',cost:D.mroom.cost};
+  return {ok:true,kind:'new',cost:D[def].cost};
 }
-function placeTile(x,y){
-  var p=tilePlan(x,y);
+function placeTile(x,y,def){
+  def=def||'mroom';
+  var p=tilePlan(x,y,def);
   if(!p.ok||S.money<p.cost)return false;
   S.money-=p.cost;
   if(p.kind==='floor'){tileOf(p.room,x,y).f++;roomsChanged();return true;}
   var nb=[];
-  DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1]);if(r&&nb.indexOf(r)<0)nb.push(r);});
+  DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1],def);if(r&&nb.indexOf(r)<0)nb.push(r);});
   if(!nb.length){
-    S.buildings.push({id:S.nextId++,def:'mroom',x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0});
+    S.buildings.push({id:S.nextId++,def:def,x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0});
   }else{
     nb.sort(function(a,b){return b.tiles.length-a.tiles.length||a.id-b.id;});
     var keep=nb[0];
@@ -90,7 +111,7 @@ function removeTile(x,y,rate){
   var b=roomAt(x,y);if(!b)return false;
   var t=tileOf(b,x,y);
   if(t.f>1){t.f--;S.money+=Math.floor(MROOM.floorCost*rate);roomsChanged();return true;}
-  S.money+=Math.floor(D.mroom.cost*rate);
+  S.money+=Math.floor(D[b.def].cost*rate);
   b.tiles=b.tiles.filter(function(q){return q!==t;});
   if(!b.tiles.length){
     S.buildings=S.buildings.filter(function(q){return q.id!==b.id;});
@@ -115,7 +136,7 @@ function splitRoom(b){
   comps.sort(function(a,c){return c.length-a.length;});
   b.tiles=comps[0];
   for(var i=1;i<comps.length;i++){
-    S.buildings.push({id:S.nextId++,def:'mroom',x:0,y:0,tiles:comps[i],inUse:0,uses:0});
+    S.buildings.push({id:S.nextId++,def:b.def,x:0,y:0,tiles:comps[i],inUse:0,uses:0});
   }
 }
 /* 화면 좌표에서 가장 위에 보이는 칸(쌓인 칸 포함) 또는 땅 칸 */
@@ -133,7 +154,7 @@ function roomMap(b){var m={};b.tiles.forEach(function(t){m[t.x+','+t.y]=t.f;});r
 // 회전된 화면 기준으로 (dx,dy) 방향 이웃 칸의 층수
 function nbF(map,r,dx,dy){var c=unrot((r.x0+r.x1)/2+dx,(r.y0+r.y1)/2+dy);return map[Math.floor(c[0])+','+Math.floor(c[1])]||0;}
 function drawRoomTile(b,t,map){
-  var d=D.mroom,r=rrect(t.x,t.y,t.x+1,t.y+1),H=roomTop(t.f),c=PJ.c;
+  var d=D[b.def],r=rrect(t.x,t.y,t.x+1,t.y+1),H=roomTop(t.f),c=PJ.c;
   var nL=nbF(map,r,-1,0),nR=nbF(map,r,1,0),nU=nbF(map,r,0,-1),nD=nbF(map,r,0,1);
   var ins=.09,body={x0:r.x0+(nL?0:ins),x1:r.x1-(nR?0:ins),y0:r.y0+(nU?0:ins),y1:r.y1-(nD?0:ins)};
   var slab={x0:r.x0+(nL?0:.03),x1:r.x1-(nR?0:.03),y0:r.y0+(nU?0:.03),y1:r.y1-(nD?0:.03)};
@@ -173,16 +194,16 @@ function drawRoomTile(b,t,map){
 function roomCrown(b){var m=roomMaxF(b);for(var i=0;i<b.tiles.length;i++)if(b.tiles[i].f===m)return b.tiles[i];return null;}
 // 아이콘·미리보기용: 칸들을 앞뒤 순서대로 한 번에 그린다
 function drawRoom(b){
-  var rb=b.tiles?b:{id:b.id,def:'mroom',x:b.x,y:b.y,tiles:[{x:b.x,y:b.y,f:1}]};
+  var rb=b.tiles?b:{id:b.id,def:b.def,x:b.x,y:b.y,tiles:[{x:b.x,y:b.y,f:1}]};
   var map=roomMap(rb);
   rb.tiles.slice().sort(function(a,c){var p=rotPt(a.x+.5,a.y+.5),q=rotPt(c.x+.5,c.y+.5);return (p[0]+p[1])-(q[0]+q[1]);})
     .forEach(function(t){drawRoomTile(rb,t,map);});
 }
 function drawRoomGhost(){
   var g=UI.ghost;if(!g)return;
-  var p=tilePlan(g.x,g.y),ok=p.ok&&S.money>=p.cost,c=PJ.c;
+  var p=tilePlan(g.x,g.y,UI.tool),ok=p.ok&&S.money>=p.cost,c=PJ.c;
   if(!p.ok&&p.why==='부지 밖이에요')return;
-  var rr=roomAt(g.x,g.y),f=rr?tileOf(rr,g.x,g.y).f:0;
+  var rr=roomAt(g.x,g.y,UI.tool),f=rr?tileOf(rr,g.x,g.y).f:0;
   var r=rrect(g.x+.06,g.y+.06,g.x+.94,g.y+.94);
   c.globalAlpha=.55;
   box(r,f?roomTop(f):.02,roomTop(f+1),ok?'#7fe0a0':'#f07a6e');

@@ -10,7 +10,7 @@ function needsDoor(b){return !!defOf(b).fill;}
 function bTiles(b){
   if(isRoom(b))return b.tiles;
   var dm=bDims(b),out=[];
-  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)out.push({x:b.x+i,y:b.y+j,f:1});
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)out.push({x:b.x+i,y:b.y+j,f:b.floors||1});
   return out;
 }
 function doorOut(s){return {x:s.x+DIRS[s.d][0],y:s.y+DIRS[s.d][1],l:s.l};}

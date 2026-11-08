@@ -51,8 +51,8 @@ function dirPad(act,cur){
       '<svg viewBox="0 0 24 24" style="transform:rotate('+rot[i]+'deg)" aria-hidden="true"><path d="M5 12h12M12 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
   }).join('')+'</div>';
 }
-function segBtns(act,val,items){
-  return '<div class="seg">'+items.map(function(it){var on=String(val)===String(it[0]);return '<button class="btn'+(on?' on':'')+'" data-act="'+act+'" data-v="'+it[0]+'" aria-pressed="'+on+'">'+it[1]+'</button>';}).join('')+'</div>';
+function segBtns(act,val,items,off){
+  return '<div class="seg">'+items.map(function(it){var on=String(val)===String(it[0]);return '<button class="btn'+(on?' on':'')+'" data-act="'+act+'" data-v="'+it[0]+'" aria-pressed="'+on+'"'+(off?' disabled':'')+'>'+it[1]+'</button>';}).join('')+'</div>';
 }
 function bad(t){return '<span style="color:var(--bad)">'+t+'</span>';}
 function renderDetail(){
@@ -60,20 +60,29 @@ function renderDetail(){
   var h='',d,b;
   if(UI.tool==='path'){
     var c=UI.pc,p=pcPiece(),why=p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'';
+    var sky=c.k==='sky',sl=sky?0:c.slope;
     var info=!p?'지도를 눌러 시작할 곳을 고르세요. 지어 둔 길을 누르면 그 끝에서 이어 짓습니다':
-      (why?bad(why):'다음: '+pieceName(p)+' · 높이 '+c.l+(c.slope?'→'+(c.l+c.slope):'')+' · '+fmt(pieceCost(p)));
-    h='<div class="pb"><div class="pg"><span class="lbl">방향</span>'+dirPad('pdir',worldToScreenDir(c.dir))+'</div>'+
-      '<div class="pg"><span class="lbl">경사</span>'+segBtns('pslope',c.slope,[[-1,'내리막'],[0,'평지'],[1,'오르막']])+
-      '<span class="lbl">종류</span>'+segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크']])+'</div></div>'+
-      '<div class="tx">'+info+'</div><div class="btns">'+(c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+
-      '<button class="btn pri" data-act="pbuild"'+(p&&!why?'':' disabled')+'>건설하기</button><button class="btn" data-act="cancel">완료</button></div>';
-  }else if(UI.tool==='mroom'){
-    var rp=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y):null,line;
-    if(!rp)line='빈 땅을 누르면 칸이 생기고, 이어 붙이면 하나의 예배실이 됩니다. 지은 칸을 다시 누르면 2층이 올라갑니다';
+      (why?bad(why):'다음: '+pieceName(p)+' · 높이 '+c.l+(sl?'→'+(c.l+sl):'')+' · '+fmt(pieceCost(p)));
+    if(sky&&!why)info+='<br>같은 역할 건물의 위층 벽끼리 이으면 방문자가 다리를 건너 옮겨 다녀요';
+    // 건설하기 버튼을 위에 두어 좁은 패널에서도 방향·경사를 바꾸며 바로 누를 수 있게
+    var ctrl='<div class="pb"><div class="pg"><span class="lbl">방향</span>'+dirPad('pdir',worldToScreenDir(c.dir))+'</div>'+
+      '<div class="pg"><span class="lbl">경사</span>'+segBtns('pslope',sl,[[-1,'내리막'],[0,'평지'],[1,'오르막']],sky)+
+      '<span class="lbl">종류</span>'+segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크'],['sky','연결 다리']])+'</div>'+
+      '<div class="pg"><span class="lbl">시작 높이</span><div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="한 층 낮게"'+(c.l<=0?' disabled':'')+'>▼</button>'+
+      '<span class="lvl">'+(c.l?c.l+1+'층':'땅')+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div></div></div>'+
+      '';
+    h='<div class="tx">'+info+'</div><div class="btns">'+(c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+
+      '<button class="btn pri" data-act="pbuild"'+(p&&!why?'':' disabled')+'>건설하기</button><button class="btn" data-act="cancel">완료</button></div>'+ctrl;
+  }else if(isRoomDef(UI.tool)){
+    var rd=D[UI.tool],rp=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y,UI.tool):null,line;
+    if(!rp)line='빈 땅을 누르면 칸이 생기고, 같은 칸끼리 이어 붙이면 하나의 '+rd.rname+'이 됩니다. 지은 칸을 다시 누르면 위층이 올라갑니다(최대 '+MROOM.maxF+'층)';
     else if(!rp.ok)line=bad(rp.why);
     else if(S.money<rp.cost)line=bad('자금이 부족해요');
-    else line=(rp.kind==='floor'?'이 칸을 누르면 2층을 올려요 · ':'이 칸을 누르면 칸을 지어요 · ')+fmt(rp.cost);
-    h='<div class="tx"><b>예배실 칸 '+fmt(D.mroom.cost)+' · 2층 '+fmt(MROOM.floorCost)+'</b><br>'+line+'</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    else line=(rp.kind==='floor'?'이 칸을 누르면 위층을 올려요 · ':'이 칸을 누르면 칸을 지어요 · ')+fmt(rp.cost);
+    h='<div class="tx"><b>'+rd.name+' '+fmt(rd.cost)+' · 위층 '+fmt(MROOM.floorCost)+'</b><br>'+line+'</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
+  }else if(isFloorDef(UI.tool)){
+    var fd=D[UI.tool];
+    h='<div class="tx"><b>'+fd.name+(fd.cost?' · 한 칸 '+fmt(fd.cost):'')+'</b><br>'+fd.desc+'. 땅을 누를 때마다 한 칸씩 칠해져요</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else if(UI.tool&&D[UI.tool]){
     d=D[UI.tool];
     var facing=(d.fill||d.w!==d.h)?'<div class="pb"><div class="pg"><span class="lbl">정면 방향 (기본 출입구 쪽)</span>'+dirPad('face',worldToScreenDir(UI.face))+'</div></div>':'';
@@ -86,7 +95,12 @@ function renderDetail(){
     }
   }else if(UI.sel&&bById(UI.sel)){
     b=bById(UI.sel);var bd=defOf(b),st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
-    var tileBtn=st?'<button class="btn" data-act="demtile">'+(st.f>1?'2층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D.mroom.cost)*0.5)+'</button>':'';
+    var tileBtn=st?'<button class="btn" data-act="demtile">'+(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5)+'</button>':'';
+    if(canStack(b)){
+      var nf=b.floors||1;
+      if(nf<MAXF)tileBtn+='<button class="btn" data-act="floorup">층 올리기 '+fmt(floorCostOf(b))+'</button>';
+      if(nf>1)tileBtn+='<button class="btn" data-act="floordown">맨 위층 철거 +'+fmt(floorCostOf(b)*0.5)+'</button>';
+    }
     var lines=[effText(bd)],doorUI='';
     if(b.door){
       var warn=!b.acc?'':(!b.acc.ent?'입구까지 이어진 길이 없어요':(!b.acc.ext?'출구에서 나갈 길이 없어요':''));
@@ -94,12 +108,13 @@ function renderDetail(){
       doorUI='<div class="doors"><span class="lbl">입구</span><button class="btn sm" data-act="door" data-v="ent:-1" aria-label="입구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ent:1" aria-label="입구를 다음 자리로">▶</button>'+
         '<span class="lbl">출구</span><button class="btn sm" data-act="door" data-v="ext:-1" aria-label="출구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ext:1" aria-label="출구를 다음 자리로">▶</button></div>';
     }
-    if(isRoom(b)&&roomMaxF(b)>1)lines.push(b.upOk?'2층이 계단·다리로 이어져 있어요':bad('2층 좌석을 쓰려면 2층에 입구나 출구를 두고 계단·다리로 땅과 이으세요'));
+    if(b.links&&b.links.length)lines.push('연결 다리로 이어짐: '+b.links.map(function(id){var o=bById(id);return o?defOf(o).name:'';}).join(', '));
     h='<div class="tx full"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+lines.join('<br>')+'</div>'+doorUI+
       '<div class="btns">'+tileBtn+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
   }else if(UI.selPiece&&pieceById(UI.selPiece)){
     var sp=pieceById(UI.selPiece);
-    h='<div class="tx"><b>'+pieceName(sp)+'</b> · 높이 '+sp.l+(sp.s?'→'+(sp.l+1):'')+'</div><div class="btns"><button class="btn bad" data-act="dempiece">철거 +'+fmt(pieceCost(sp)*0.5)+'</button></div>';
+    var sw=sp.k==='sky'&&NAV.badSky[sp.id]?'<br>'+bad('역할이 다른 건물을 잇고 있어 방문자가 건너지 않아요'):'';
+    h='<div class="tx"><b>'+pieceName(sp)+'</b> · 높이 '+sp.l+(sp.s?'→'+(sp.l+1):'')+sw+'</div><div class="btns"><button class="btn bad" data-act="dempiece">철거 +'+fmt(pieceCost(sp)*0.5)+'</button></div>';
   }else{
     h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'건물을 고른 뒤 지도를 눌러 지으세요. 지은 건물을 누르면 입구·출구를 옮길 수 있어요.')+'</div>';
   }
@@ -145,7 +160,7 @@ function chart(){
 function renderMenu(){
   panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="14" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
     '<div class="btns"><button class="btn'+(UI.confirmNew?' bad':'')+'" data-act="newgame">'+(UI.confirmNew?'정말 처음부터 시작할까요? 한 번 더 누르세요':'새로 시작')+'</button></div>'+
-    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 정면 방향을 고르고, 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li><li>길 탭: 시작할 곳을 누르고 방향·경사·종류를 고른 뒤 건설하기로 한 칸씩 잇습니다. 오르막을 이어 다리를 놓을 수 있어요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
+    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 정면 방향을 고르고, 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li><li>길 탭: 시작할 곳을 누르고 방향·경사·종류·높이를 고른 뒤 건설하기로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
     '<div class="sec">만든 방식과 참고 자료</div>'+
     '<p class="hint" style="padding:0 0 4px">그래픽과 시스템은 모두 이 페이지의 코드로 새로 그렸고, 외부 이미지·소리·소스를 가져오지 않았습니다. 개발 중 참고한 공개 자료입니다.</p>'+
     '<ul class="refs"><li><a href="https://kenney.nl/assets/isometric-landscape" target="_blank" rel="noopener">Kenney 아이소메트릭 에셋 (CC0)</a> · 나중에 그림을 바꿀 때 쓸 후보</li>'+

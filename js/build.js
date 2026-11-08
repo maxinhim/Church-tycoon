@@ -14,7 +14,8 @@ function bump(){
   });
 }
 function build(id,x,y,face){
-  if(id==='mroom')return placeTile(x,y);
+  if(isRoomDef(id))return placeTile(x,y,id);
+  if(D[id]&&D[id].kind==='floor')return !paintFloor(x,y,id);
   var d=D[id];if(face==null)face=2;
   if(S.money<d.cost||!canPlace(d,x,y,face))return false;
   S.money-=d.cost;
@@ -30,5 +31,22 @@ function demolish(id){
   rebuildOcc();bump();recalc();save();
 }
 function releaseVisitors(id){
-  V.forEach(function(v){if(v.inside===id){v.inside=0;v.state='idle';v.t=0.2;}if(v.target===id){v.target=0;if(v.state!=='leave'&&v.state!=='inside'){v.state='idle';v.t=0.2;}}});
+  V.forEach(function(v){
+    if(v.state==='xfer'&&v.target===id){placeAt(v,gateNode());v.state='idle';v.t=0.2;v.target=0;return;}if(v.inside===id){v.inside=0;v.state='idle';v.t=0.2;}if(v.target===id){v.target=0;if(v.state!=='leave'&&v.state!=='inside'){v.state='idle';v.t=0.2;}}});
+}
+
+/* ---------- 완성품 건물 층 올리기 (같은 건물을 위로, 최대 5층) ---------- */
+var MAXF=5,STACK_CATS=['worship','fellow','care','comfort'];
+function canStack(b){var d=D[b.def];return !!d&&d.kind==='bld'&&STACK_CATS.indexOf(d.cat)>=0;}
+function floorCostOf(b){return Math.round(D[b.def].cost*0.75/10)*10;}
+function structureChanged(){rebuildOcc();bump();recalc();save();}
+function addFloor(b){
+  if(!b||!canStack(b))return '층을 올릴 수 없는 건물이에요';
+  var f=b.floors||1;if(f>=MAXF)return MAXF+'층까지만 올릴 수 있어요';
+  var c=floorCostOf(b);if(S.money<c)return '자금이 부족해요';
+  S.money-=c;b.floors=f+1;structureChanged();return '';
+}
+function removeFloor(b,rate){
+  if(!b||(b.floors||1)<=1)return false;
+  b.floors--;S.money+=Math.floor(floorCostOf(b)*rate);structureChanged();return true;
 }

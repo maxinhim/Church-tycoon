@@ -3,18 +3,19 @@
    노드: 땅 칸 = y*COLS+x, 높이가 있는 길 조각(다리·계단) = 1000+조각 id.
    땅 높이의 평지 길은 땅 칸과 같은 노드로 본다.
    두 노드는 맞닿은 면의 높이(포트)가 같을 때만 이어진다. */
-var GB=[],NAV={reach:{}};
+var NAV={reach:{},badSky:{}};
 function gid(x,y){return y*COLS+x;}
 function gateNode(){return gid(ENT,ROWS-1);}
 function isPieceNode(n){return n>=1000;}
 function nodePiece(n){return pieceById(n-1000);}
-function groundOk(x,y){return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x]&&!(GB[y]&&GB[y][x]);}
+function groundOk(x,y){return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x];}
 function nodeOk(n){return isPieceNode(n)?!!nodePiece(n):groundOk(n%COLS,(n/COLS)|0);}
 function nodePos(n){
   if(!isPieceNode(n))return {x:n%COLS+.5,y:((n/COLS)|0)+.5,z:0};
   var p=nodePiece(n);return {x:p.x+.5,y:p.y+.5,z:(p.l+.5*p.s)*LV};
 }
-function isNodePiece(p){return p.l>0||p.s>0;}
+// 연결 다리는 건물 안 통로라 바깥 길찾기에서 뺀다
+function isNodePiece(p){return p.k!=='sky'&&(p.l>0||p.s>0);}
 // (x,y) 칸에서 d 방향 면이 lvl 높이로 열린 다리·계단 노드
 function pieceNodeAt(x,y,d,lvl){
   var ps=piecesAt(x,y);
@@ -80,12 +81,12 @@ function doorNode(s){
 /* 문 정리 → 입구 아치에서 닿는 곳 계산 → 건물마다 입구·출구 이용 가능 여부 */
 function refreshNav(){
   S.buildings.forEach(ensureDoors);
+  refreshLinks();
   NAV.reach=navReach(gateNode());
   S.buildings.forEach(function(b){
     if(!b.door){b.acc=null;return;}
     var en=doorNode(b.door.ent),ex=doorNode(b.door.ext);
     b.acc={ent:en>=0&&!!NAV.reach[en],ext:ex>=0&&!!NAV.reach[ex]};
     b.acc.ok=b.acc.ent&&b.acc.ext;
-    if(isRoom(b))b.upOk=[b.door.ent,b.door.ext].some(function(s){var n=doorNode(s);return s.l>=1&&n>=0&&!!NAV.reach[n];});
   });
 }

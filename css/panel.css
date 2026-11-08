@@ -72,3 +72,4 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 .doors{flex:1 1 100%;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .btn.sm{height:30px;min-width:34px;padding:0 8px}
 .detail .tx.full{display:block;-webkit-line-clamp:unset}
+.seg .lvl{min-width:34px;text-align:center;align-self:center;font-size:12px;font-variant-numeric:tabular-nums}

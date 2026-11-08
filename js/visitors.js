@@ -1,7 +1,9 @@
 'use strict';
 /* ---------- 방문자 ----------
    방문자는 길찾기 노드(땅 칸·길 조각)를 따라 움직이고, 건물에는 입구로 들어가 출구로 나온다.
-   입구·출구가 입구 아치에서 닿지 않는 건물은 고르지 않는다. */
+   입구·출구가 입구 아치에서 닿지 않는 건물은 고르지 않는다.
+   연결 다리로 이어진 같은 역할 건물은 한 묶음: 들어간 건물이 꽉 차면 다리를 건너 옆 건물로 가고,
+   자기 출구가 막혀 있어도 묶음의 다른 출구로 나올 수 있다. */
 function spawnV(){
   var needs={};NEEDS.forEach(function(n){needs[n]=22+Math.random()*34;});
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
@@ -21,13 +23,40 @@ function moveAlong(v,dt){
   }
   return v.pi>=v.path.length;
 }
-function usable(b){return !!(b&&b.acc&&b.acc.ok);}
+function usable(b){
+  if(!b||!b.acc||!b.acc.ent)return false;
+  return b.acc.ext||(b.links||[]).some(function(id){var o=bById(id);return !!(o&&o.acc&&o.acc.ext);});
+}
+function linkWithSpace(b){
+  var ids=b.links||[];
+  for(var i=0;i<ids.length;i++){var o=bById(ids[i]);if(o&&o.inUse<defOf(o).cap)return o;}
+  return null;
+}
+// 꽉 찬 건물 안에서 연결 다리를 건너 옆 건물로. 자리는 미리 잡아 둔다
+function startXfer(v,from,to){
+  var r=skyRoute(from,to);if(!r)return false;
+  to.inUse++;
+  v.state='xfer';v.target=to.id;v.path=r;v.pi=1;
+  v.x=r[0].x;v.y=r[0].y;v.z=r[0].z;v.node=r[0].n;
+  return true;
+}
+// 나올 곳: 자기 출구 → 묶음의 다른 출구 → 자기 입구 → 묶음의 입구 → 입구 아치
+function exitNodeFor(b){
+  if(!b)return gateNode();
+  var mates=(b.links||[]).map(bById).filter(function(o){return o&&o.door;}),cand=[];
+  if(b.door)cand.push(b.door.ext);
+  mates.forEach(function(o){cand.push(o.door.ext);});
+  if(b.door)cand.push(b.door.ent);
+  mates.forEach(function(o){cand.push(o.door.ent);});
+  for(var i=0;i<cand.length;i++){var n=doorNode(cand[i]);if(n>=0&&NAV.reach[n])return n;}
+  return gateNode();
+}
 function arrive(v){
   if(!v.target){v.state='idle';v.t=0.8+Math.random();return;}
   var b=bById(v.target);
   if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
   if(b.inUse<defOf(b).cap)enter(v,b);
-  else{v.state='wait';v.wait=5;}
+  else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=5;}}
 }
 function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*(0.8+Math.random()*0.4);}
 function finishVisit(v){
@@ -41,10 +70,7 @@ function finishVisit(v){
       v.needs[n]=Math.min(100,v.needs[n]+amt);
     }
     if(d.income){S.money+=d.income;S.weekInc+=d.income;}
-    // 출구로 나온다. 출구가 막혔으면 입구로, 둘 다 막혔으면 입구 아치로
-    var out=b.door?doorNode(b.door.ext):-1;
-    if(out<0&&b.door)out=doorNode(b.door.ent);
-    placeAt(v,out>=0?out:gateNode());
+    placeAt(v,exitNodeFor(b));
   }
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
 }
@@ -96,7 +122,12 @@ function stepV(v,dt){
     var b=bById(v.target);
     if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
     if(b.inUse<defOf(b).cap)enter(v,b);
+    else if(linkWithSpace(b)&&startXfer(v,b,linkWithSpace(b))){}
     else{v.wait-=dt;if(v.wait<=0){v.annoy++;v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
+  }else if(v.state==='xfer'){
+    var to=bById(v.target),r2=moveAlong(v,dt);
+    if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}
+    if(r2===true){v.state='inside';v.inside=to.id;v.t=defOf(to).dur*(0.8+Math.random()*0.4);}
   }else if(v.state==='inside'){
     v.t-=dt;if(v.t<=0)finishVisit(v);
   }else if(v.state==='idle'){

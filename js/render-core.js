@@ -34,7 +34,8 @@ function fr(f,r,a,b,z0,z1,col){
   if(f==='L')quad([[a,r.y1,z0],[b,r.y1,z0],[b,r.y1,z1],[a,r.y1,z1]],col);
   else quad([[r.x1,a,z0],[r.x1,b,z0],[r.x1,b,z1],[r.x1,a,z1]],col);
 }
-function feats(r,H,d){
+function feats(r,H,d,zo){
+  zo=zo||0;
   ['L','R'].forEach(function(f){
     var a0=f==='L'?r.x0:r.y0,a1=f==='L'?r.x1:r.y1,len=a1-a0,mid=(a0+a1)/2;
     var n=Math.max(1,Math.round(len/(d.bigwin?0.75:0.55)));
@@ -42,7 +43,7 @@ function feats(r,H,d){
       var cx=a0+(i+.5)*len/n;
       var ww=d.bigwin?0.26:(d.stained?0.1:0.11),z0=H*(d.stained?0.28:0.38),z1=H*(d.stained?0.8:0.72);
       var col=d.stained?['#5b82d6','#d6604f','#e3b341','#4fa37a'][i%4]:'#9cc3e3';
-      fr(f,r,cx-ww,cx+ww,z0,z1,f==='R'?shade(col,.82):col);
+      fr(f,r,cx-ww,cx+ww,z0+zo,z1+zo,f==='R'?shade(col,.82):col);
     }
   });
 }

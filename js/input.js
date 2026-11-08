@@ -3,7 +3,7 @@
 function groundTile(px,py){var w=toWorld(px,py,0);return {x:Math.floor(w[0]),y:Math.floor(w[1])};}
 function pickBuilding(px,py){
   UI.selTile=null;
-  for(var z=3.8;z>=0;z-=0.06){
+  for(var z=6.4;z>=0;z-=0.06){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
     var id=occ[ty][tx];
@@ -16,12 +16,13 @@ function placeGhost(t){
   UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-1-d.h)};
 }
 function onGhostTile(t){
-  if(!UI.ghost||!UI.tool||!D[UI.tool]||UI.tool==='mroom'||UI.tool==='path')return false;
+  if(!UI.ghost||!UI.tool||!D[UI.tool]||isRoomDef(UI.tool)||isFloorDef(UI.tool)||UI.tool==='path')return false;
   var d=faceDims(D[UI.tool],UI.face);return t.x>=UI.ghost.x&&t.x<UI.ghost.x+d.w&&t.y>=UI.ghost.y&&t.y<UI.ghost.y+d.h;
 }
 function onTap(px,py){
   if(S.over)return;
-  if(UI.tool==='mroom'){tapRoomTile(pickTile(px,py));return;}
+  if(isRoomDef(UI.tool)){tapRoomTile(pickTile(px,py));return;}
+  if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:ft.x,y:ft.y};var fw=paintFloor(ft.x,ft.y,UI.tool);if(fw)toast(fw,1200);if(!UI.fold)renderDetail();hud(true);return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
   if(UI.tool&&D[UI.tool]){placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   UI.sel=pickBuilding(px,py);
@@ -89,7 +90,13 @@ function onPanel(e){
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
   else if(a==='dempiece'){var pc2=pieceById(UI.selPiece);if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
-  else if(a==='undo'){var u=UI.undo.pop();if(u&&removeTile(u.x,u.y,1))toast('되돌렸어요',1200);renderDetail();hud(true);}
+  else if(a==='undo'){
+    var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();return !!u&&removeTile(u.x,u.y,1);})();
+    if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
+  }
+  else if(a==='floorup'){var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);renderDetail();hud(true);}
+  else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
+  else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
     var st=UI.selTile;
     if(st&&removeTile(st.x,st.y,.5))toast('칸 하나를 철거했어요',1400);
@@ -107,11 +114,11 @@ function onPanel(e){
 }
 function tapRoomTile(t){
   UI.ghost={x:t.x,y:t.y};
-  var p=tilePlan(t.x,t.y);
-  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y)){
+  var p=tilePlan(t.x,t.y,UI.tool);
+  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){
     UI.undo.push({x:t.x,y:t.y});
-    var d=defOf(roomAt(t.x,t.y));
-    toast((p.kind==='floor'?'2층을 올렸어요':'칸을 지었어요')+' · '+d.name+' 좌석 '+d.seats,1400);
+    var rb=roomAt(t.x,t.y,UI.tool),d=defOf(rb);
+    toast((p.kind==='floor'?tileOf(rb,t.x,t.y).f+'층으로 올렸어요':'칸을 지었어요')+' · '+d.name,1400);
   }
   if(!UI.fold)renderDetail();
   hud(true);

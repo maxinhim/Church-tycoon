@@ -176,9 +176,11 @@ async function modularChecks(browser, url) {
     o.merged = rooms().length === 1 && rooms()[0].tiles.length === 3;
     placeTile(X + 1, Y);
     // 계단·다리로 잇지 않은 2층은 좌석에 들어가지 않는다
-    o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === MROOM.seats * 3 && /미연결/.test(defOf(rooms()[0]).name);
-    o.maxFloor = !tilePlan(X + 1, Y).ok;
-    removeTile(X + 1, Y, 1);
+    // 위층은 1층 출입구만 있어도 바로 좌석에 들어간다
+    o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === D.mroom.per.seats * 4;
+    for (let k = 0; k < 3; k++) placeTile(X + 1, Y);
+    o.maxFloor = tileOf(rooms()[0], X + 1, Y).f === 5 && !tilePlan(X + 1, Y).ok;
+    for (let k = 0; k < 4; k++) removeTile(X + 1, Y, 1);
     o.floorDown = tileOf(rooms()[0], X + 1, Y).f === 1;
     removeTile(X + 1, Y, 1);
     o.split = rooms().length === 2;
@@ -199,8 +201,8 @@ async function modularChecks(browser, url) {
     return o;
   });
   check(r.merged, '예배실 칸: 이어 지은 3칸이 하나의 예배실로 합쳐짐');
-  check(r.floor, '예배실 칸: 2층을 올려도 연결 전에는 2층 좌석이 열리지 않음');
-  check(r.maxFloor, '예배실 칸: 최대 층수 위로는 올릴 수 없음');
+  check(r.floor, '예배실 칸: 2층을 올리면 1층 출입구만으로 2층 좌석까지 쓰임');
+  check(r.maxFloor, '예배실 칸: 5층까지 쌓이고 그 위로는 못 올림');
   check(r.floorDown, '예배실 칸: 위층부터 철거됨');
   check(r.split, '예배실 칸: 가운데 칸을 지우면 두 예배실로 나뉨');
   check(r.rejoined && r.joinTwo, '예배실 칸: 다시 이으면 하나로 합쳐짐');
@@ -237,7 +239,7 @@ async function pathChecks(browser, url) {
     o.found = X >= 0;
     placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y); placeTile(X + 1, Y);
     const room = S.buildings.find(b => b.def === 'mroom');
-    o.unconnected = !room.upOk && defOf(room).seats === MROOM.seats * 3;
+    o.unconnected = room.acc.ok && defOf(room).seats === D.mroom.per.seats * 4;
     // 땅에서 방 쪽(-y)으로 오르막 1칸, 이어서 평지 다리 1칸
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 2; UI.pc.l = 0; UI.pc.dir = 3; UI.pc.slope = 1;
     const b1 = pcBuild(); UI.pc.slope = 0; const b2 = pcBuild();
@@ -246,10 +248,10 @@ async function pathChecks(browser, url) {
     pcBuild();
     o.noOverlap = pieceFits({ x: X + 1, y: Y + 1, l: 1, s: 0, d: 0, k: 'stone' }) !== '' && pieceFits({ x: X, y: Y, l: 0, s: 0, d: 0, k: 'stone' }) !== '';
     o.bridgeOverPath = pieceFits({ x: X + 1, y: Y + 1, l: 0, s: 0, d: 0, k: 'stone' }) === '';
-    o.ground = groundOk(X + 1, Y + 1) && !groundOk(X + 1, Y + 2);
+    o.ground = groundOk(X + 1, Y + 1) && groundOk(X + 1, Y + 2);
     // 2층 입구를 다리 쪽으로
     room.door.ent = { x: X + 1, y: Y, d: 2, l: 1 }; recalc();
-    o.connected = room.upOk && room.acc.ok && defOf(room).seats === MROOM.seats * 4;
+    o.connected = room.acc.ok && room.door.ent.l === 1;
     const dn = doorNode(room.door.ent), path = navPath(gateNode(), m => m === dn);
     o.navUp = !!path && path.some(w => w.z >= LV - 0.01);
     // 방문자가 실제로 계단을 올라 2층 입구로 들어간다
@@ -261,7 +263,7 @@ async function pathChecks(browser, url) {
     window.__ct.setRot(0);
     // 계단을 철거하면 2층 입구에 닿을 수 없어 이용 불가
     removePiece(S.paths.find(p => p.s === 1).id, 1);
-    o.cutOff = !room.upOk && !room.acc.ent && !usable(room);
+    o.cutOff = !room.acc.ent && !usable(room);
     // 문은 둘레를 따라 옮겨도 항상 올바른 자리
     const n = doorSpots(room).length; let ok = true;
     for (let i = 0; i < n + 2; i++) { cycleDoor(room, 'ent', 1); if (!validSpot(room, room.door.ent)) ok = false; }
@@ -279,12 +281,12 @@ async function pathChecks(browser, url) {
   });
   check(r.found, '길: 시험할 빈 자리를 찾음');
   check(r.defaultDoor, '문: 기본 예배실에 출입구가 있고 이용 가능');
-  check(r.unconnected, '길: 연결 전 2층은 좌석에 들어가지 않음');
+  check(r.unconnected, '길: 1층 출입구만 있어도 2층 좌석이 들어감');
   check(r.built, '길: 오르막·평지를 이어 지으면 높이가 올라가며 이어짐');
   check(r.undo, '길: 되돌리기로 마지막 조각과 커서가 돌아옴');
   check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
-  check(r.ground, '길: 다리 아래 땅은 걸을 수 있고, 땅 계단은 땅을 막음');
-  check(r.connected, '길: 2층 입구를 다리와 이으면 2층 좌석이 열림');
+  check(r.ground, '길: 다리 아래와 철골 계단 밑 땅으로 걸어 다닐 수 있음');
+  check(r.connected, '길: 2층에 단 입구도 다리와 이으면 이용 가능');
   check(r.navUp, '길찾기: 입구 아치에서 계단을 올라 2층 입구까지 경로가 있음');
   check(r.climbed, '방문자: 실제로 계단을 올라 2층 입구로 이용함');
   check(r.cutOff, '문: 계단을 철거하면 2층 입구에 닿지 못해 이용 불가');
@@ -292,6 +294,101 @@ async function pathChecks(browser, url) {
   check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
   check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 입구·출구가 있음');
   check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
+// 건물 쌓기, 역할별 칸, 연결 다리 이동, 바닥 타일, 새 건물 전부 짓고 그리기
+async function stackChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 99;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.money = 999999;
+    const o = {};
+    const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
+    // 완성품 건물 층 올리기
+    let cell = null;
+    for (let y = 0; y < ROWS - 3 && !cell; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.cell, x, y, 2)) { build('cell', x, y, 2); cell = S.buildings[S.buildings.length - 1]; break; }
+    for (let k = 0; k < 4; k++) addFloor(cell);
+    o.stack = cell.floors === 5 && defOf(cell).fcap === D.cell.fcap * 5 && addFloor(cell) !== '' && removeFloor(cell, .5) && cell.floors === 4;
+    o.noStackGarden = !canStack({ def: 'tree' });
+    // 역할이 다른 칸은 합쳐지지도, 쌓이지도 않는다
+    let X = -1, Y = -1;
+    for (let y = 1; y < ROWS - 3 && X < 0; y++) for (let x = 0; x + 5 <= COLS; x++) {
+      if ([0, 1, 2, 3, 4].every(i => free(x + i, y) && free(x + i, y + 1))) { X = x; Y = y; break; }
+    }
+    placeTile(X, Y, 'mfel'); placeTile(X + 1, Y, 'mcare');
+    o.roles = S.buildings.filter(b => b.def === 'mfel').length === 1 && S.buildings.filter(b => b.def === 'mcare').length === 1 && !tilePlan(X + 1, Y, 'mfel').ok;
+    removeTile(X + 1, Y, 1);
+    // 교제실 두 채(2층)를 한 칸 띄우고 연결 다리로 잇는다
+    placeTile(X + 2, Y, 'mfel'); placeTile(X, Y, 'mfel'); placeTile(X + 2, Y, 'mfel');
+    const A = S.buildings.find(b => b.def === 'mfel' && b.tiles.some(t => t.x === X)), B = S.buildings.find(b => b.def === 'mfel' && b.tiles.some(t => t.x === X + 2));
+    UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky';
+    o.skyBuilt = pcBuild() === '' && S.paths.some(p => p.k === 'sky');
+    o.linked = A.links.indexOf(B.id) >= 0 && B.links.indexOf(A.id) >= 0;
+    o.skyNotNav = !NAV.reach[1000 + S.paths.find(p => p.k === 'sky').id];
+    // A가 꽉 차면 다리를 건너 B로
+    A.inUse = defOf(A).cap;
+    spawnV(); const v = V[V.length - 1]; v.target = A.id; arrive(v);
+    o.xferStart = v.state === 'xfer' && B.inUse === 1;
+    let maxZ = 0; for (let i = 0; i < 60 && v.state === 'xfer'; i++) { stepV(v, 0.1); maxZ = Math.max(maxZ, v.z); }
+    o.xferDone = v.state === 'inside' && v.inside === B.id && maxZ >= LV - 0.01;
+    A.inUse = 0;
+    // 역할이 다른 건물을 이으면 연결되지 않고 경고 표시
+    placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X, Y + 1, 'mcare'); placeTile(X, Y + 1, 'mcare');
+    UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 1; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky'; pcBuild();
+    const sk2 = S.paths.find(p => p.k === 'sky' && p.y === Y + 1);
+    o.badLink = !!sk2 && !!NAV.badSky[sk2.id];
+    o.skyRules = pieceFits({ x: X + 1, y: Y + 3, l: 0, s: 0, d: 0, k: 'sky' }) !== '' && pieceFits({ x: X + 1, y: Y + 3, l: 1, s: 1, d: 0, k: 'sky' }) !== '';
+    // 바닥 타일
+    let fx = -1, fy = -1;
+    for (let y = 0; y < ROWS - 1 && fx < 0; y++) for (let x = 0; x < COLS; x++) if (free(x, y)) { fx = x; fy = y; break; }
+    const b0 = agg().beauty, m0 = S.money;
+    UI.undo = [];
+    o.floorPaint = paintFloor(fx, fy, 'f_clover') === '' && S.floor[fx + ',' + fy] === 'f_clover' && agg().beauty > b0 && S.money === m0 - D.f_clover.cost && groundOk(fx, fy);
+    o.floorUndo = floorUndo() && !S.floor[fx + ',' + fy] && S.money === m0;
+    paintFloor(fx, fy, 'f_brick');
+    o.floorErase = paintFloor(fx, fy, 'f_erase') === '' && !S.floor[fx + ',' + fy];
+    o.floorBlocked = paintFloor(cell.x, cell.y, 'f_brick') !== '';
+    paintFloor(fx, fy, 'f_wood');
+    // 새로 넣은 건물·요소를 모두 지어 본다
+    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor');
+    const missing = [];
+    want.forEach(d => {
+      if (S.buildings.some(b => b.def === d.id)) return;
+      let done = false;
+      for (let y = 0; y < ROWS - 1 && !done; y++) for (let x = 0; x < COLS && !done; x++) if (canPlace(d, x, y, 2)) { done = build(d.id, x, y, 2); }
+      if (!done) missing.push(d.id);
+    });
+    o.allBuilt = missing.length === 0 ? '' : missing.join(',');
+    o.allDoors = S.buildings.every(b => !defOf(b).fill || (b.door && validSpot(b, b.door.ent)));
+    for (let i = 0; i < 1500; i++) update(0.1);
+    for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
+    window.__ct.setRot(0);
+    // 카드 아이콘: 모든 분류의 건축 패널을 그려 본다
+    CATS.forEach(c => { UI.cat = c[0]; UI.tool = null; renderBuild(); });
+    o.cats = CATS.length;
+    return o;
+  });
+  check(r.stack, '쌓기: 완성품 건물을 5층까지 올리고 수용 인원이 층수만큼 늘며, 위층 철거 가능');
+  check(r.noStackGarden, '쌓기: 조경 요소는 층을 올릴 수 없음');
+  check(r.roles, '칸 건물: 역할이 다른 칸은 합쳐지지도 쌓이지도 않음');
+  check(r.skyBuilt && r.linked, '연결 다리: 같은 역할 건물의 2층끼리 이으면 서로 연결됨');
+  check(r.skyNotNav, '연결 다리: 바깥 길찾기에는 들어가지 않음');
+  check(r.xferStart && r.xferDone, '연결 다리: 건물이 꽉 차면 방문자가 다리를 건너 옆 건물로 감');
+  check(r.badLink, '연결 다리: 역할이 다른 건물을 이으면 연결되지 않고 경고');
+  check(r.skyRules, '연결 다리: 땅 높이·경사로는 지을 수 없음');
+  check(r.floorPaint && r.floorUndo && r.floorErase && r.floorBlocked, '바닥: 칠하기·되돌리기·지우기, 건물 위 금지, 분위기 반영, 걸을 수 있음');
+  check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
+  check(r.allDoors, '문: 새 건물에도 모두 입구·출구가 있음');
+  check(errs.length === 0, '새 건물·요소: 시뮬레이션·4방향 그리기·패널 ' + r.cats + '개 분류 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
 
@@ -304,6 +401,7 @@ async function pathChecks(browser, url) {
     await playChecks(browser, url);
     await modularChecks(browser, url);
     await pathChecks(browser, url);
+    await stackChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);
