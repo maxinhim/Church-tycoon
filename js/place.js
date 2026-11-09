@@ -22,7 +22,8 @@ function placeKind(){
             울타리·생울타리는 짓는 방향을 따라 눕는다
    · 'none' 화살표 없음: 방향이 상관없는 것을 옮길 때
    방향이 상관없는 것(나무·분수·파라솔 등)은 입구 아치 쪽을 보게 저절로 정한다 (문이 있으면 문도 그쪽) */
-function isDecoCat(d){return REPEAT_CATS.indexOf(d.cat)>=0;}
+// 조경·꾸미기와 편의 소품(벤치·쓰레기통 등)은 이어 놓기·방향 화살표로 놓는다
+function isDecoCat(d){return REPEAT_CATS.indexOf(d.cat)>=0||!!d.prop;}
 function isLineKind(d){return LINE_KINDS.indexOf(d.kind)>=0||d.dir==='axis';}
 function faceMatters(d){
   if(d.dir)return d.dir==='face';
@@ -223,7 +224,7 @@ function plOk(){
   if(!build(UI.tool,g.x,g.y,plFace()))return;
   var nb=S.buildings[S.buildings.length-1];
   plBuzz();plLock=now+350;sfx(isDecoCat(d)?'place':'build',.8);
-  if(REPEAT_CATS.indexOf(d.cat)>=0){
+  if(isDecoCat(d)){
     // 조경·꾸미기는 길처럼 이어서: 한 칸 나아가고 되돌리기를 쌓는다 (막힌 칸이면 회색 ✓로 알려 준다)
     UI.undo.push({bid:nb.id,cost:d.cost,w:S.week});
     var dm=faceDims(d,UI.face),st=plStep(d),nx=g.x+st[0]*dm.w,ny=g.y+st[1]*dm.h;

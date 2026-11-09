@@ -1043,6 +1043,8 @@ async function gripeChecks(browser, url) {
     const o = {};
     // 가격: 기능 건물 1.5배, 꾸미기는 그대로, 초기 자금 두 배
     o.price = S.money === 12000 && DIFF.hard.money === 8000 && D.wc.cost === 540 && D.chapel.cost === 4200 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 750;
+    // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
+    o.props = ['bench', 'picnic', 'parasol', 'swing', 'sunbed', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
     S.money = 999999; S.goal = GOALS.length; recalc();
     const put = id => { for (let y = PZ - 3; y > 0; y--) for (let x = 2; x < COLS - 3; x++) if (canPlace(D[id], x, y, 2)) { build(id, x, y, 2); const nb = S.buildings[S.buildings.length - 1]; recalc(); return nb; } return null; };
     // 길 잇기: 고른 바닥으로 깔고 값은 칸 수 × 그 바닥 값
@@ -1085,6 +1087,7 @@ async function gripeChecks(browser, url) {
     return o;
   });
   check(r.price, '가격: 초기 자금 두 배, 기능 건물·칸 위층 1.5배, 꾸미기·바닥은 그대로');
+  check(r.props, '편의 소품: 벤치·피크닉·파라솔·그네·선베드·식수대·쓰레기통·정자는 편의 분류, 값 그대로, 이어 놓기');
   check(r.link, '길 잇기: 카드에서 바닥 종류를 골라 그 바닥으로 깔고, 값은 칸 수 × 그 바닥 값');
   check(r.noWc && r.goWc, '불편: 화장실이 급하면 찾아가고, 없으면 불편을 겪고 일찍 돌아감');
   check(r.trash && r.legs, '불편: 매장에서 산 뒤 쓰레기통이 없으면 불편, 오래 걸으면 쉴 자리·마실 것을 찾음');

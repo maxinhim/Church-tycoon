@@ -30,7 +30,7 @@ function rebuildDecor(){
   S.buildings.forEach(function(b){
     var d=defOf(b),bd=bDims(b),p={x:b.x+bd.w/2,y:b.y+bd.h/2,v:d.beauty||0};
     if(b.def==='bin')BINS.push(p);
-    if(p.v>0&&(d.cat==='garden'||d.cat==='deco'))DECOR.push(p);
+    if(p.v>0&&(d.cat==='garden'||d.cat==='deco'||d.prop))DECOR.push(p);
   });
 }
 function nearSum(L,x,y,r){var t=0;for(var i=0;i<L.length;i++){var p=L[i];if(Math.abs(p.x-x)<=r&&Math.abs(p.y-y)<=r)t+=p.v;}return t;}
