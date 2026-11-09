@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- 상태 ---------- */
 var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
-var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events'};
+var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',lastBuilt:null,shift:null};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 // 시작 상태: 지도 전체(맨 아래 도로 줄 제외)에 지을 수 있다

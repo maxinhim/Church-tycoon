@@ -243,11 +243,12 @@ function drawHedge(b){
   box(r,0,.5,'#3f7d3c','#5a9a4f');
 }
 function drawRoseArch(b){
-  var x=b.x,y=b.y;
-  box(rrect(x+.1,y+.44,x+.19,y+.56),0,1.3,'#f1ece2');
-  box(rrect(x+.81,y+.44,x+.9,y+.56),0,1.3,'#f1ece2');
-  box(rrect(x+.08,y+.42,x+.92,y+.58),1.3,1.42,'#f1ece2');
-  for(var i=0;i<10;i++){var t=hh(b.id*3+i+1,i),p=rotPt(x+.1+t*.8,y+.5);dot(p[0],p[1],.9+hh(i,b.id+2)*.5,Math.max(1,2.2*PJ.s),i%2?'#d9567a':'#3f7a3a');}
+  // 정면이 좌우(0·1)면 아치를 세로로 세운다
+  var x=b.x,y=b.y,v=b.face===0||b.face===1,R=function(a,c,e,g){return v?rrect(x+c,y+a,x+g,y+e):rrect(x+a,y+c,x+e,y+g);};
+  box(R(.1,.44,.19,.56),0,1.3,'#f1ece2');
+  box(R(.81,.44,.9,.56),0,1.3,'#f1ece2');
+  box(R(.08,.42,.92,.58),1.3,1.42,'#f1ece2');
+  for(var i=0;i<10;i++){var t=hh(b.id*3+i+1,i),u=.1+t*.8,p=v?rotPt(x+.5,y+u):rotPt(x+u,y+.5);dot(p[0],p[1],.9+hh(i,b.id+2)*.5,Math.max(1,2.2*PJ.s),i%2?'#d9567a':'#3f7a3a');}
 }
 
 /* ---------- 새 건물·조경 ---------- */

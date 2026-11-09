@@ -18,7 +18,7 @@
   - 데이터·상태: `config` → `buildings` → `state`
   - 게임 로직: `pathfinding`(땅·계단·다리를 잇는 길찾기) → `visitors` → `sim` → `build` → `modular`(역할별로 칸을 이어 짓는 건물, 층 쌓기) → `doors`(입구·출구) → `paths`(길·철골 계단·다리·연결 다리) → `floors`(바닥 타일) → `ministry`(난이도·목표·사역팀·부교역자·직분자·행사·고민 카드·노후) → `save`
   - 렌더링: `render-core`(투영·도형) → `render-entities`(건물·방문자) → `render-scene`(장면 합성)
-  - UI·진입점: `camera` → `hud` → `effects`(건축 수치 글씨·목표 축하·빠른 현황·고민 카드) → `panel` → `input` → `main`(`init`은 마지막 파일에서 실행)
+  - UI·진입점: `camera` → `hud` → `effects`(건축 수치 글씨·목표 축하·빠른 현황·고민 카드) → `panel` → `place`(지도 위에서 짓기: ✓·✕·방향 화살표와 아래 안내 띠) → `input` → `main`(`init`은 마지막 파일에서 실행)
 
 ## 출처
 - 그래픽과 시스템은 이 프로젝트의 코드로 새로 그렸습니다. 외부 이미지·소리·소스는 사용하지 않습니다.

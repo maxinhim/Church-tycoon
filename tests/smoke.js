@@ -494,18 +494,52 @@ async function ministryChecks(browser, url) {
   const staffTab = await page.evaluate(() => UI.tab === 'staff' && /부교역자/.test(document.getElementById('panel').textContent));
   await page.click('#fab [data-fab="build"]');
   await page.click('#cards [data-v="room"]');
-  const compact = await page.evaluate(() => document.getElementById('dock').classList.contains('compact') && getComputedStyle(document.getElementById('cards')).display === 'none');
+  // 고르면 패널이 닫히고, 미리보기 둘레에 ✓·✕와 방향 화살표 4개, 아래 안내 띠
+  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && !document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 4 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
+  const btnPos = await page.evaluate(() => { syncPlace(); const r = s => document.querySelector(s).getBoundingClientRect(); const ok = r('#place [data-pl="ok"]'), no = r('#place [data-pl="no"]'); const bx = plBox(); return ok.left < no.left && ok.bottom <= bx.t + 4 && no.bottom <= bx.t + 4; });
+  const effCard = await page.evaluate(() => /좌석 \+24/.test(document.querySelector('#cards [data-v="room"]').textContent));
   await page.click('#fab [data-fab="minis"]');
-  const cancelled = await page.evaluate(() => UI.tool === null && UI.ghost === null);
+  const cancelled = await page.evaluate(() => UI.tool === null && UI.ghost === null && document.getElementById('place').hidden);
   await page.click('#fab [data-fab="build"]'); await page.click('#cards [data-v="room"]');
   const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
-  if (placed) await page.click('[data-act="confirm"]');
+  // 화살표로 정면 방향 바꾸기
+  const faced = await page.evaluate(() => { syncPlace(); const el = [...document.querySelectorAll('#place .parr')].find(e => +e.dataset.v !== UI.face); const want = +el.dataset.v; el.click(); syncPlace(); return UI.face === want && el.classList.contains('on'); });
+  const m0 = await page.evaluate(() => S.money);
+  if (placed) await page.click('#place [data-pl="ok"]');
   const fx = await page.evaluate(() => F.some(f => /좌석 \+/.test(f.text)));
+  const backToList = await page.evaluate(() => !document.getElementById('dock').hidden && UI.tool === null && !!document.querySelector('#detail [data-act="undoLast"]'));
+  await page.click('#detail [data-act="undoLast"]');
+  const refunded = await page.evaluate(m => S.money === m && !S.buildings.some(b => b.def === 'room' && b.id === (UI.lastBuilt || {}).bid), m0);
+  // 조경: 짓고 나면 옆자리로 미리보기가 옮겨져 이어 짓기, 되돌리면 전액 환불
+  await page.click('#dock [data-v="garden"]'); await page.click('#cards [data-v="tree"]');
+  const repeat = await page.evaluate(() => {
+    const n0 = S.buildings.length, mA = S.money;
+    for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 8; x++) if (canPlace(D.tree, x, y, 2) && canPlace(D.tree, x + 1, y, 2)) { UI.ghost = { x, y }; break; }
+    const g0 = { ...UI.ghost }; plLock = 0; plOk();
+    const moved = UI.tool === 'tree' && (UI.ghost.x !== g0.x || UI.ghost.y !== g0.y) && S.buildings.length === n0 + 1;
+    const noArrows = [...document.querySelectorAll('#place .parr')].every(e => e.hidden);
+    const und = document.querySelector('#pbar [data-act="undo"]'); und.click();
+    return moved && noArrows && S.buildings.length === n0 && S.money === mA;
+  });
+  await page.click('#place [data-pl="no"]');
+  const ended = await page.evaluate(() => UI.tool === null && !document.getElementById('dock').hidden);
+  // 길: 지도 위 ✓로 한 칸씩
+  await page.click('#dock [data-v="path"]'); await page.click('#cards [data-v="path"]');
+  const pathOk = await page.evaluate(() => { const n = S.paths.length; plLock = 0; const okBtn = document.querySelector('#place [data-pl="ok"]'); syncPlace(); if (okBtn.disabled) { UI.pc.x = 4; UI.pc.y = ROWS - 4; UI.pc.l = 0; syncPlace(); } plOk(); return S.paths.length === n + 1 && !!document.querySelector('#pbar [data-act="pkind"]'); });
+  await page.keyboard.press('Escape');
+  const escEnds = await page.evaluate(() => UI.tool === null);
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼으로 요약·챙길 일이 열리고, 다시 누르면 닫힘');
   check(minis && staffTab, '기능 버튼: 행사 버튼 안에 행사·사역자 탭');
-  check(compact, '기능 버튼: 건물을 고르면 패널이 작아져 지도가 넓게 보임');
+  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개와 안내 띠');
+  check(btnPos, '지도에서 짓기: ✓는 왼쪽 위, ✕는 오른쪽 위 (미리보기보다 위)');
+  check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
-  check(placed && fx, '건축 효과: 지으면 건물 위에 "좌석 +n" 글씨가 뜸');
+  check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
+  check(placed && fx, '건축 효과: ✓로 지으면 건물 위에 "좌석 +n" 글씨가 뜸');
+  check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 목록으로 돌아오고, 그 주에는 전액 되돌리기');
+  check(repeat, '지도에서 짓기: 조경은 옆자리로 이어 짓기, 방향 화살표 없음, 되돌리면 전액 환불');
+  check(ended, '지도에서 짓기: ✕로 그만두면 목록으로 돌아옴');
+  check(pathOk && escEnds, '지도에서 짓기: 길은 ✓로 한 칸씩 잇고 띠에서 종류를 고름, Esc로 끝냄');
   check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

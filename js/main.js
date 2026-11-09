@@ -1,6 +1,6 @@
 'use strict';
 function restart(dk){
-  S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
+  S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.lastBuilt=null;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
   $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
 }
 /* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */
@@ -8,7 +8,7 @@ var portraitMQ=window.matchMedia('(orientation: portrait)');
 function isPortrait(){return portraitMQ.matches;}
 function syncOrientation(){
   var p=isPortrait();
-  ['#stage','#ui','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
+  ['#stage','#ui','#place','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
 }
 function lockLandscape(){
   try{var o=screen.orientation;if(o&&o.lock)o.lock('landscape').catch(function(){});}catch(e){}
@@ -35,7 +35,7 @@ function frame(ts){
   stepFx(dt);
   // 목회 고민 카드가 열려 있으면 시간이 멈춘다
   if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*UI.speed;while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
-  draw();hud(false);
+  draw();syncPlace();hud(false);
   requestAnimationFrame(frame);
 }
 function init(){
@@ -58,7 +58,7 @@ function init(){
   $('#over').addEventListener('click',function(e){if(e.target.closest('[data-act="restart"]'))restart();});
   $('#dlg').addEventListener('click',function(e){var b=e.target.closest('[data-act="dlg"]');if(!b)return;var why=chooseDlg(+b.dataset.v);if(why)toast(why,1600);showDlg();renderPanel();hud(true);});
   $('#cele').addEventListener('click',function(){$('#cele').hidden=true;});
-  setupInput();
+  setupInput();setupPlace();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
   if(portraitMQ.addEventListener)portraitMQ.addEventListener('change',syncOrientation);else portraitMQ.addListener(syncOrientation);

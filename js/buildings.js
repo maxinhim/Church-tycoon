@@ -58,13 +58,13 @@ mk('picnic','피크닉 테이블','garden',1,1,200,1,'picnic','#a07a52','#c75b4a
 mk('statue','십자가 조형물','garden',1,1,900,1,'statue','#e9e4da','#c9a24a',{beauty:2.5,rep:0.1,desc:'교회를 상징하는 조형물. 평판이 조금 오릅니다'});
 mk('planter','화분','garden',1,1,60,0,'planter','#b9694c','#e57a95',{beauty:0.5,desc:'꽃이 핀 큰 화분'});
 mk('gazebo','정자','garden',2,2,900,4,'gazebo','#a07a52','#8a5a2b',{fill:{comf:30,fel:12},cap:6,dur:4,beauty:1,desc:'그늘에 앉아 쉬어가는 정자'});
-mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
+mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
 mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.04,desc:'단정한 회색 보도블록'});
 mk('f_brick','벽돌 바닥','floor',1,1,20,0,'floor','#b9694c','#8c4a33',{pat:'brick',beauty:0.05,desc:'따뜻한 붉은 벽돌'});
 mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',beauty:0.03,desc:'밟으면 소리 나는 자갈길'});
 mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.05,desc:'결이 보이는 나무 바닥'});
 mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
-mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
+mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 function heightOf(id){
   var d=D[id];

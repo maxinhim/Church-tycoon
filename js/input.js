@@ -24,7 +24,7 @@ function onTap(px,py){
   if(isRoomDef(UI.tool)){tapRoomTile(pickTile(px,py));return;}
   if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:ft.x,y:ft.y};var fw=paintFloor(ft.x,ft.y,UI.tool);if(fw)toast(fw,1200);if(!UI.fold)renderDetail();hud(true);return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
-  if(UI.tool&&D[UI.tool]){placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
+  if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   UI.sel=pickBuilding(px,py);
   var pp=UI.sel?null:pickPieceAt(px,py);UI.selPiece=pp?pp.id:null;
   if((UI.sel||UI.selPiece)&&(UI.tab!=='build'||UI.fold)){UI.tab='build';UI.fold=false;syncTabs();renderPanel();}
@@ -36,7 +36,11 @@ function setupInput(){
   cv.addEventListener('pointerdown',function(e){
     try{cv.setPointerCapture(e.pointerId);}catch(_){}
     ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(ptrs.size===1){gest={mode:'tap',sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,onGhost:onGhostTile(groundTile(e.clientX,e.clientY))};}
+    if(ptrs.size===1){
+      // 미리보기는 바닥뿐 아니라 지붕 쪽을 잡아도 끌린다. 잡은 곳 기준으로 움직여 튀지 않게
+      var og=onGhostTile(groundTile(e.clientX,e.clientY))||ghostHit(e.clientX,e.clientY);
+      gest={mode:'tap',sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,onGhost:og,g0:og?{x:UI.ghost.x,y:UI.ghost.y}:null,w0:toWorld(e.clientX,e.clientY,0)};
+    }
     else if(ptrs.size===2){var a=pts();gest={mode:'pinch',d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1,z:cam.z,mx:(a[0].x+a[1].x)/2,my:(a[0].y+a[1].y)/2};}
   });
   cv.addEventListener('pointermove',function(e){
@@ -50,7 +54,11 @@ function setupInput(){
     if(ptrs.size!==1)return;
     if(gest.mode==='tap'&&Math.hypot(e.clientX-gest.sx,e.clientY-gest.sy)>8){gest.mode=gest.onGhost?'ghost':'pan';cv.style.cursor=gest.mode==='pan'?'grabbing':'move';}
     if(gest.mode==='pan'){cam.ox+=e.clientX-gest.lx;cam.oy+=e.clientY-gest.ly;clampCam();}
-    else if(gest.mode==='ghost'){placeGhost(groundTile(e.clientX,e.clientY));if(!UI.fold)renderDetail();}
+    else if(gest.mode==='ghost'){
+      var w=toWorld(e.clientX,e.clientY,0),gd=faceDims(D[UI.tool],UI.face);
+      var nx=clamp(gest.g0.x+Math.round(w[0]-gest.w0[0]),0,COLS-gd.w),ny=clamp(gest.g0.y+Math.round(w[1]-gest.w0[1]),0,ROWS-1-gd.h);
+      if(nx!==UI.ghost.x||ny!==UI.ghost.y){UI.ghost.x=nx;UI.ghost.y=ny;renderDetail();}
+    }
     gest.lx=e.clientX;gest.ly=e.clientY;
   });
   var end=function(e){
@@ -80,14 +88,12 @@ function onPanel(e){
   if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='pick'){
-    if(UI.tool!==v&&isLocked(v)){toast(D[v].name+'은(는) '+lockText(lockGoal(v))+' 지을 수 있어요',1800);return;}
-    UI.tool=(UI.tool===v)?null:v;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.pc=UI.tool==='path'?newCursor():null;
-    if(UI.tool&&UI.tool!=='path'){var c=viewCenter();placeGhost(groundTile(c[0],c[1]));}else UI.ghost=null;
-    refreshCards();renderDetail();
+    // 고르면 패널을 닫고 지도에서 바로 짓는다
+    if(isLocked(v)){toast(D[v].name+'은(는) '+lockText(lockGoal(v))+' 지을 수 있어요',1800);return;}
+    startPlace(v);
   }
-  else if(a==='cancel'){UI.ghost=null;UI.tool=null;UI.undo=[];UI.pc=null;refreshCards();renderDetail();}
-  else if(a==='face'){UI.face=screenToWorldDir(+v);if(UI.ghost){var gd=faceDims(D[UI.tool],UI.face);UI.ghost.x=clamp(UI.ghost.x,0,COLS-gd.w);UI.ghost.y=clamp(UI.ghost.y,0,ROWS-1-gd.h);}renderDetail();}
-  else if(a==='pdir'){UI.pc.dir=screenToWorldDir(+v);renderDetail();}
+  else if(a==='cancel'){endPlace();}
+  else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}
   else if(a==='pslope'){UI.pc.slope=+v;renderDetail();}
   else if(a==='pkind'){if(v==='sky'&&isLocked('sky')){toast('연결 다리는 '+lockText(lockGoal('sky'))+' 지을 수 있어요',1800);return;}UI.pc.k=v;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
@@ -95,24 +101,16 @@ function onPanel(e){
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
   else if(a==='dempiece'){var pc2=pieceById(UI.selPiece);if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
   else if(a==='undo'){
-    var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();return !!u&&removeTile(u.x,u.y,1);})();
+    var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
     if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
   }
-  else if(a==='floorup'){var fb=bById(UI.sel),bs0=snapStats(),fw2=addFloor(fb);toast(fw2||'한 층 올렸어요',1400);if(!fw2&&fb){var fdm=bDims(fb);statFx(bs0,fb.x+fdm.w/2,fb.y+fdm.h/2,bHeight(fb));}renderDetail();hud(true);}
+  else if(a==='floorup'){UI.lastBuilt=null;var fb=bById(UI.sel),bs0=snapStats(),fw2=addFloor(fb);toast(fw2||'한 층 올렸어요',1400);if(!fw2&&fb){var fdm=bDims(fb);statFx(bs0,fb.x+fdm.w/2,fb.y+fdm.h/2,bHeight(fb));}renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
     var st=UI.selTile;
     if(st&&removeTile(st.x,st.y,.5))toast('칸 하나를 철거했어요',1400);
     UI.selTile=null;var rb=st&&roomAt(st.x,st.y);UI.sel=rb?rb.id:null;
-    renderDetail();hud(true);
-  }
-  else if(a==='confirm'){
-    var cb0=snapStats(),gx=UI.ghost&&UI.ghost.x,gy=UI.ghost&&UI.ghost.y;
-    if(UI.tool&&UI.ghost&&!isLocked(UI.tool)&&build(UI.tool,gx,gy,UI.face)){
-      var cdm=faceDims(D[UI.tool],UI.face);statFx(cb0,gx+cdm.w/2,gy+cdm.h/2,heightOf(UI.tool)+.2);
-      toast(D[UI.tool].name+'을(를) 지었어요',1600);UI.ghost=null;
-    }
     renderDetail();hud(true);
   }
   else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}

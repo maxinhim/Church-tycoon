@@ -1,6 +1,21 @@
 'use strict';
 /* ---------- 하단 패널 ---------- */
 var panel;
+// 건축 카드에 미리 보여 줄 효과 두 가지 (지을 때 건물 위에 뜨는 글씨와 같은 말)
+function effTags(d){
+  var t=[];
+  if(d.seats)t.push('좌석 +'+d.seats);
+  if(d.fcap)t.push('교제 +'+d.fcap);
+  if(d.kcap)t.push('돌봄 +'+d.kcap);
+  if(d.ccap)t.push('편의 +'+d.ccap);
+  if(d.park)t.push('주차 +'+d.park);
+  if(d.vis)t.push('방문자 +'+Math.round(d.vis*100)+'%');
+  if(d.rep&&t.length<2)t.push('평판 ↑');
+  if(d.beauty&&t.length<2)t.push(d.beauty>=1?'분위기 +'+d.beauty:'분위기 ↑');
+  if(d.fill&&t.length<2){var bn=null;for(var n in d.fill)if(!bn||d.fill[n]>d.fill[bn])bn=n;t.push(NK[bn]+' +'+d.fill[bn]);}
+  if(d.income&&t.length<2)t.push('수입 +'+d.income);
+  return t.slice(0,2);
+}
 function effText(d){
   var p=[];
   if(d.seats)p.push('좌석 +'+d.seats);
@@ -20,6 +35,9 @@ function effText(d){
 var GROUP_TITLE={build:'건축',minis:'행사',status:'현황',menu:'메뉴'};
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':t;}
 function openGroup(g){
+  UI.lastBuilt=null;
+  // 지도에서 짓는 중에 건축 버튼을 누르면 짓기를 그만두고 목록으로
+  if(g==='build'&&isPlacing()){endPlace();return;}
   if(!UI.fold&&tabGroup(UI.tab)===g){closeDock();return;}
   // 건축이 아닌 패널로 옮기면 짓던 것(미리보기)은 취소한다
   if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;}
@@ -28,18 +46,18 @@ function openGroup(g){
 }
 // 닫으면 짓던 것도 함께 취소한다 (미리보기만 지도에 남지 않게)
 function closeDock(){
-  UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;
+  UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;UI.lastBuilt=null;
   renderPanel();
 }
 function renderPanel(){
   panel=$('#panel');
   var dock=$('#dock');
-  dock.hidden=UI.fold;syncTabs();
-  if(UI.fold)return;
+  // 지도에서 짓는 동안은 패널을 닫고 아래 작은 띠만 보인다
+  dock.hidden=UI.fold||isPlacing();syncTabs();renderPbar();
+  if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   $('#dtitle').textContent=GROUP_TITLE[g];
   $('#subtabs').innerHTML=g==='minis'?[['events','행사'],['staff','사역자']].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'';
-  dock.classList.toggle('compact',t==='build'&&!!UI.tool&&UI.tool!=='demolish');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
@@ -54,7 +72,10 @@ function renderBuild(){
       var el=document.createElement('button');el.className='card';el.dataset.act='pick';el.dataset.v=d.id;
       el.appendChild(iconCanvas(d));
       var lk=isLocked(d.id);if(lk)el.classList.add('lock');
-      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?'목표 '+lockGoal(d.id)+'개 후':fmt(d.cost))+'</span>');
+      var tg=effTags(d);
+      el.setAttribute('aria-label',d.name+', '+(lk?'잠김':fmt(d.cost))+'. '+effText(d));
+      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?'목표 '+lockGoal(d.id)+'개 후':fmt(d.cost)+(d.up?'<small> · 주 '+d.up+'</small>':''))+'</span>'+
+        '<span class="ef">'+(tg.length?tg.map(function(x){return '<i>'+x+'</i>';}).join(''):'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });
   }
@@ -64,56 +85,15 @@ function refreshCards(){
   var cs=document.querySelectorAll('#cards .card');
   for(var i=0;i<cs.length;i++){var d=D[cs[i].dataset.v];if(!d)continue;cs[i].classList.toggle('poor',S.money<d.cost||isLocked(d.id));cs[i].classList.toggle('sel',UI.tool===d.id);}
 }
-function dirPad(act,cur){
-  var lab=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'],rot=[45,135,225,315];
-  return '<div class="dpad">'+[2,3,1,0].map(function(i){
-    return '<button class="btn dbtn'+(i===cur?' on':'')+'" data-act="'+act+'" data-v="'+i+'" aria-label="'+lab[i]+'" aria-pressed="'+(i===cur)+'">'+
-      '<svg viewBox="0 0 24 24" style="transform:rotate('+rot[i]+'deg)" aria-hidden="true"><path d="M5 12h12M12 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
-  }).join('')+'</div>';
-}
 function segBtns(act,val,items,off){
   return '<div class="seg">'+items.map(function(it){var on=String(val)===String(it[0]);return '<button class="btn'+(on?' on':'')+'" data-act="'+act+'" data-v="'+it[0]+'" aria-pressed="'+on+'"'+(off?' disabled':'')+'>'+it[1]+'</button>';}).join('')+'</div>';
 }
 function bad(t){return '<span style="color:var(--bad)">'+t+'</span>';}
 function renderDetail(){
+  if(isPlacing()){renderPbar();return;}
   var el=$('#detail');if(!el)return;
-  var h='',d,b;
-  if(UI.tool==='path'){
-    var c=UI.pc,p=pcPiece(),why=p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'';
-    var sky=c.k==='sky',sl=sky?0:c.slope;
-    var info=!p?'지도를 눌러 시작할 곳을 고르세요. 지어 둔 길을 누르면 그 끝에서 이어 짓습니다':
-      (why?bad(why):'다음: '+pieceName(p)+' · 높이 '+c.l+(sl?'→'+(c.l+sl):'')+' · '+fmt(pieceCost(p)));
-    if(sky&&!why)info+='<br>같은 역할 건물의 위층 벽끼리 이으면 방문자가 다리를 건너 옮겨 다녀요';
-    // 건설하기 버튼을 위에 두어 좁은 패널에서도 방향·경사를 바꾸며 바로 누를 수 있게
-    var ctrl='<div class="pb"><div class="pg"><span class="lbl">방향</span>'+dirPad('pdir',worldToScreenDir(c.dir))+'</div>'+
-      '<div class="pg"><span class="lbl">경사</span>'+segBtns('pslope',sl,[[-1,'내리막'],[0,'평지'],[1,'오르막']],sky)+
-      '<span class="lbl">종류</span>'+segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크'],['sky','연결 다리']])+'</div>'+
-      '<div class="pg"><span class="lbl">시작 높이</span><div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="한 층 낮게"'+(c.l<=0?' disabled':'')+'>▼</button>'+
-      '<span class="lvl">'+(c.l?c.l+1+'층':'땅')+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div></div></div>'+
-      '';
-    h='<div class="tx">'+info+'</div><div class="btns">'+(c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+
-      '<button class="btn pri" data-act="pbuild"'+(p&&!why?'':' disabled')+'>건설하기</button><button class="btn" data-act="cancel">완료</button></div>'+ctrl;
-  }else if(isRoomDef(UI.tool)){
-    var rd=D[UI.tool],rp=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y,UI.tool):null,line;
-    if(!rp)line='빈 땅을 누르면 칸이 생기고, 같은 칸끼리 이어 붙이면 하나의 '+rd.rname+'이 됩니다. 지은 칸을 다시 누르면 위층이 올라갑니다(최대 '+MROOM.maxF+'층)';
-    else if(!rp.ok)line=bad(rp.why);
-    else if(S.money<rp.cost)line=bad('자금이 부족해요');
-    else line=(rp.kind==='floor'?'이 칸을 누르면 위층을 올려요 · ':'이 칸을 누르면 칸을 지어요 · ')+fmt(rp.cost);
-    h='<div class="tx"><b>'+rd.name+' '+fmt(rd.cost)+' · 위층 '+fmt(MROOM.floorCost)+'</b><br>'+line+'</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
-  }else if(isFloorDef(UI.tool)){
-    var fd=D[UI.tool];
-    h='<div class="tx"><b>'+fd.name+(fd.cost?' · 한 칸 '+fmt(fd.cost):'')+'</b><br>'+fd.desc+'. 땅을 누를 때마다 한 칸씩 칠해져요</div><div class="btns">'+(UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
-  }else if(UI.tool&&D[UI.tool]){
-    d=D[UI.tool];
-    var facing=(d.fill||d.w!==d.h)?'<div class="pb"><div class="pg"><span class="lbl">정면 방향 (기본 출입구 쪽)</span>'+dirPad('face',worldToScreenDir(UI.face))+'</div></div>':'';
-    if(UI.ghost){
-      var ok=canPlace(d,UI.ghost.x,UI.ghost.y,UI.face),afford=S.money>=d.cost;
-      var why2=!ok?bad('이곳에는 지을 수 없어요. 건물을 끌어서 옮겨 보세요'):(!afford?bad('자금이 부족해요'):effText(d));
-      h=facing+'<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b><br>'+why2+'</div><div class="btns"><button class="btn" data-act="cancel">취소</button><button class="btn pri" data-act="confirm"'+((ok&&afford)?'':' disabled')+'>짓기</button></div>';
-    }else{
-      h=facing+'<div class="tx"><b>'+d.name+' · '+fmt(d.cost)+'</b> ('+d.w+'×'+d.h+')<br>'+d.desc+'. 지도를 눌러 위치를 고르세요</div>';
-    }
-  }else if(UI.sel&&bById(UI.sel)){
+  var h='',b;
+  if(UI.sel&&bById(UI.sel)){
     b=bById(UI.sel);var bd=defOf(b),st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
     var tileBtn=st?'<button class="btn" data-act="demtile">'+(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5)+'</button>':'';
     if(canStack(b)){
@@ -137,11 +117,12 @@ function renderDetail(){
     var sw=sp.k==='sky'&&NAV.badSky[sp.id]?'<br>'+bad('역할이 다른 건물을 잇고 있어 방문자가 건너지 않아요'):'';
     h='<div class="tx"><b>'+pieceName(sp)+'</b> · 높이 '+sp.l+(sp.s?'→'+(sp.l+1):'')+sw+'</div><div class="btns"><button class="btn bad" data-act="dempiece">철거 +'+fmt(pieceCost(sp)*0.5)+'</button></div>';
   }else{
-    h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'건물을 고른 뒤 지도를 눌러 지으세요. 지은 건물을 누르면 입구·출구를 옮길 수 있어요.')+'</div>';
+    var lb=canUnbuild(UI.lastBuilt)&&bById(UI.lastBuilt.bid);
+    if(lb)h='<div class="tx"><b>'+defOf(lb).name+'</b>을(를) 지었어요. 잘못 지었다면 이번 주 안에는 전액 돌려받을 수 있어요</div><div class="btns"><button class="btn" data-act="undoLast">되돌리기 +'+fmt(UI.lastBuilt.cost)+'</button></div>';
+    else h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 입구·출구를 옮길 수 있어요.')+'</div>';
   }
   el.innerHTML=h;
-  var cs=$('#cards');if(cs)cs.hidden=UI.tool==='path'||(!UI.tool&&!!(UI.sel||UI.selPiece));
-  var dk=$('#dock');if(dk)dk.classList.toggle('compact',UI.tab==='build'&&!!UI.tool&&UI.tool!=='demolish');
+  var cs=$('#cards');if(cs)cs.hidden=!UI.tool&&!!(UI.sel||UI.selPiece);
 }
 function stars(n){return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n);}
 function meter(v){var p=Math.round(clamp(v,0,1)*100);return '<div class="bar"><i style="width:'+p+'%;background:'+(p<30?'var(--bad)':p<60?'var(--gold)':'var(--good)')+'"></i></div>';}
@@ -224,7 +205,7 @@ function renderMenu(){
   panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="14" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
     (UI.confirmNew?'<div class="sec">난이도를 고르면 처음부터 시작해요 (지금 진행은 사라져요)</div><div class="diffs">'+Object.keys(DIFF).map(function(k){return '<button class="btn'+(k==='normal'?' pri':'')+'" data-act="newgame" data-v="'+k+'"><b>'+DIFF[k].name+'</b><small>'+DIFF[k].desc+'</small></button>';}).join('')+'<button class="btn" data-act="newgame">취소</button></div>':
       '<div class="btns"><button class="btn" data-act="newgame">새로 시작</button></div>')+'<p class="hint">지금 난이도: '+curDiff().name+'</p>'+
-    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 정면 방향을 고르고, 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li><li>길 탭: 시작할 곳을 누르고 방향·경사·종류·높이를 고른 뒤 건설하기로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>오른쪽 아래 동그란 버튼: 건축 · 행사(행사·사역자) · 현황. 같은 버튼을 다시 누르면 닫힙니다. 교회 이름·새로 시작은 위쪽 톱니바퀴 메뉴</li><li>행사 버튼: 행사 탭에서 특별행사·절기 행사를, 사역자 탭에서 부교역자 청빙·직분자 임명·사역팀을 다룹니다</li><li>건물은 시간이 지나면 낡아요. 주황 ! 표시는 수리, 빨간 ? 표시는 입구·출구에 닿는 길이 없다는 뜻이에요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
+    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건축 목록의 카드에는 지으면 늘어나는 효과와 주간 유지비가 적혀 있어요</li><li>카드를 고르면 목록이 닫히고 지도에 미리보기가 놓입니다. 끌거나 지도를 눌러 옮기고, 둘레 화살표로 정면(출입구) 방향을 고른 뒤 왼쪽 위 초록 ✓로 짓고, 오른쪽 위 빨간 ✕로 그만둡니다 (PC: Enter·Esc·R)</li><li>조경은 짓고 나면 옆자리에 미리보기가 다시 놓여 ✓만 눌러 이어 지을 수 있어요. 큰 건물은 지은 주 안에 목록에서 전액 되돌릴 수 있어요</li><li>길: 시작할 곳을 누르고 화살표로 방향, 아래 띠에서 종류·경사·높이를 고른 뒤 ✓로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>오른쪽 아래 동그란 버튼: 건축 · 행사(행사·사역자) · 현황. 같은 버튼을 다시 누르면 닫힙니다. 교회 이름·새로 시작은 위쪽 톱니바퀴 메뉴</li><li>행사 버튼: 행사 탭에서 특별행사·절기 행사를, 사역자 탭에서 부교역자 청빙·직분자 임명·사역팀을 다룹니다</li><li>건물은 시간이 지나면 낡아요. 주황 ! 표시는 수리, 빨간 ? 표시는 입구·출구에 닿는 길이 없다는 뜻이에요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
     '<div class="sec">만든 방식과 참고 자료</div>'+
     '<p class="hint" style="padding:0 0 4px">그래픽과 시스템은 모두 이 페이지의 코드로 새로 그렸고, 외부 이미지·소리·소스를 가져오지 않았습니다. 개발 중 참고한 공개 자료입니다.</p>'+
     '<ul class="refs"><li><a href="https://kenney.nl/assets/isometric-landscape" target="_blank" rel="noopener">Kenney 아이소메트릭 에셋 (CC0)</a> · 나중에 그림을 바꿀 때 쓸 후보</li>'+
