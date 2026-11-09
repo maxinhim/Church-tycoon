@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Gemini 스프라이트 시트를 칸마다 잘라 투명 PNG와 js/sprite-data.js를 만든다.
 
-쓰는 법:  python3 tools/slice_sheet.py docs/art/sheets/decor-b.json
+쓰는 법:  python3 tools/slice_sheet.py docs/art/sheets/decor-b.json docs/art/sheets/decor-c.json
+          (시트를 여럿 주면 한 js/sprite-data.js로 합친다. 인자가 없으면 위 둘을 쓴다)
 
 manifest(JSON):
   sheet   시트 이미지 (manifest 기준 상대 경로)
@@ -11,6 +12,8 @@ manifest(JSON):
           fw   게임에서 그림 너비 (바닥 한 칸 너비 = 1)
           by   그림 밑변 위치 (0 = 칸 가운데, 1 = 칸 앞 꼭짓점). 바닥에 납작한 것은 1에 가깝게
           sway 바람에 흔들리는 정도 (나무 1, 꽃 .4, 없으면 0)
+          back 앞모습 칸이면 짝인 뒷모습 조각의 id (뒷모습 칸도 따로 cells에 적는다)
+          fl   앞면이 왼쪽 아래를 향하게 그려진 그림이면 1 (기본은 오른쪽 아래)
           glow 등불의 분홍빛 번짐까지 지우는 강한 배경 제거
 
 처리 순서: 검은 격자선 찾기 → 칸 안쪽만 잘라내기 → 마젠타 배경·그늘진 마젠타·(glow면) 분홍 번짐 지우기
@@ -95,7 +98,8 @@ def drop_specks(alpha, min_px=40):
     return keep
 
 
-def main(manifest_path):
+def process(manifest_path):
+    """시트 하나를 잘라 조각을 저장하고 {id: 정보}를 돌려준다."""
     man = json.load(open(manifest_path))
     base = os.path.dirname(os.path.abspath(manifest_path))
     img = np.asarray(Image.open(os.path.join(base, man['sheet'])).convert('RGB')).astype(int)
@@ -126,16 +130,33 @@ def main(manifest_path):
         im = im.convert('RGBa').resize((w, h), Image.LANCZOS).convert('RGBA')
         name = it['id'] + '.png'
         im.save(os.path.join(out_dir, name), optimize=True)
-        data[it['id']] = {'src': man['out'] + '/' + name, 'w': w, 'h': h,
-                          'fw': it.get('fw', 1), 'by': it.get('by', 0), 'sway': it.get('sway', 0)}
+        d = {'src': man['out'] + '/' + name, 'w': w, 'h': h,
+             'fw': it.get('fw', 1), 'by': it.get('by', 0), 'sway': it.get('sway', 0)}
+        if it.get('back'):
+            d['back'] = it['back']  # 뒷모습 조각 id
+        if it.get('fl'):
+            d['fl'] = 1  # 앞면이 오른쪽 아래가 아니라 왼쪽 아래를 향하는 그림
+        data[it['id']] = d
         print('%-12s 칸 %2d  %3dx%3d' % (it['id'], i, w, h))
-    js = os.path.join(ROOT, man.get('js', 'js/sprite-data.js'))
+    return data, man
+
+
+def main(paths):
+    data, mans = {}, []
+    for p in paths:
+        d, man = process(p)
+        for k in d:
+            if k in data:
+                raise SystemExit('조각 id가 겹쳐요: ' + k)
+        data.update(d)
+        mans.append(os.path.relpath(p, ROOT))
+    js = os.path.join(ROOT, 'js/sprite-data.js')
     with open(js, 'w') as f:
         f.write("'use strict';\n/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(%s)를 고친 뒤 다시 만들 것 */\n"
-                % os.path.relpath(manifest_path, ROOT))
+                % ', '.join(mans))
         f.write('var SPR_DATA=' + json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('},"', '},\n"') + ';\n')
     print('→', os.path.relpath(js, ROOT), len(data), '개')
 
 
 if __name__ == '__main__':
-    main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'docs/art/sheets/decor-b.json'))
+    main(sys.argv[1:] or [os.path.join(ROOT, 'docs/art/sheets/decor-b.json'), os.path.join(ROOT, 'docs/art/sheets/decor-c.json')])

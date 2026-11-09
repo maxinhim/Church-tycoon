@@ -23,8 +23,9 @@ function placeKind(){
    · 'none' 화살표 없음: 방향이 상관없는 것을 옮길 때
    방향이 상관없는 것(나무·분수·파라솔 등)은 입구 아치 쪽을 보게 저절로 정한다 (문이 있으면 문도 그쪽) */
 function isDecoCat(d){return REPEAT_CATS.indexOf(d.cat)>=0;}
-function isLineKind(d){return LINE_KINDS.indexOf(d.kind)>=0;}
+function isLineKind(d){return LINE_KINDS.indexOf(d.kind)>=0||d.dir==='axis';}
 function faceMatters(d){
+  if(d.dir)return d.dir==='face';
   if(isDecoCat(d))return d.w!==d.h||FRONT_KINDS.indexOf(d.kind)>=0;
   return !!d.fill||d.w!==d.h||d.towerH>0||['stage','busstop'].indexOf(d.kind)>=0;
 }

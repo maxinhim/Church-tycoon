@@ -473,7 +473,7 @@ function drawParasol(b){
   }
 }
 var DECO_DRAW={market:drawMarket,topiary:drawTopiary,canal:drawCanal,birdbath:drawBirdbath,fence:drawFence,lamp2:drawLamp2,bollard:drawBollard,
-  stonelamp:drawStoneLamp,bin:drawBin,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol};
+  stonelamp:drawStoneLamp,bin:drawBin,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol,spr:drawSprFallback};
 
 /* ---------- 울타리: 도로 | 주차 구역 | 교회 부지 ----------
    부지 둘레와 부지·주차 구역 경계는 흰 나무 울타리, 주차 구역 둘레와 도로 쪽은 짙은 철망 울타리.

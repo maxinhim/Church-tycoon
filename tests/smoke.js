@@ -767,7 +767,19 @@ async function ministryChecks(browser, url) {
   await page.waitForFunction(() => SPR_N === SPR_TOTAL, null, { timeout: 8000 }).catch(() => {});
   const sprites = await page.evaluate(() => {
     if (SPR_TOTAL < 20 || SPR_N !== SPR_TOTAL) return 'loaded ' + SPR_N + '/' + SPR_TOTAL;
-    const miss = Object.keys(SPR_DATA).filter(id => !D[id]); if (miss.length) return 'no def ' + miss;
+    // 모든 조각은 정의가 쓰거나(def.spr 포함) 앞모습의 뒷모습이어야 한다
+    const used = new Set(); DEFS.forEach(d => { if (SPR_DATA[d.spr || d.id]) used.add(d.spr || d.id); });
+    Object.values(SPR_DATA).forEach(v => { if (v.back) { if (!SPR_DATA[v.back]) used.add('MISSING ' + v.back); used.add(v.back); } });
+    const miss = Object.keys(SPR_DATA).filter(id => !used.has(id)); if (miss.length) return 'unused ' + miss;
+    if ([...used].some(u => /^MISSING/.test(u))) return 'back missing';
+    // 방향: 앞(↘)·뒤집은 앞(↙)·뒷(↖)·뒤집은 뒷(↗). 방향 없는 것은 뒤집지 않는다
+    const calls = []; const real = drawSpr; window.drawSpr = function (id, cx, cy, n, sid, mir) { calls.push([id, !!mir]); return true; };
+    const probe = (def, face) => { calls.length = 0; ROT = 0; drawSprEntity({ x: 5, y: 20, def, id: 4, face }); return calls[0]; };
+    const dirs = [0, 1, 2, 3].map(sd => probe('bench', screenToWorldDir(sd)));
+    const treeA = probe('tree', 0), treeB = probe('tree', 3), longA = probe('gate', screenToWorldDir(0)), longB = probe('gate', screenToWorldDir(1));
+    window.drawSpr = real;
+    const okDir = JSON.stringify(dirs) === JSON.stringify([['bench', false], ['bench', true], ['bench_b', false], ['bench_b', true]]) && !treeA[1] && !treeB[1] && longA[1] === false && longB[1] === true;
+    if (!okDir) return 'dir ' + JSON.stringify(dirs) + JSON.stringify([treeA, treeB, longA, longB]);
     const t = { x: 5, y: 20, def: 'cherry', id: 3, face: 2 };
     if (!drawSprEntity(t)) return 'not drawn';
     const keep = SPR.cherry; delete SPR.cherry; let ok = !drawSprEntity(t); try { drawEntity(t); } catch (e) { ok = false; } SPR.cherry = keep;

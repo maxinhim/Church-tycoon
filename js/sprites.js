@@ -16,8 +16,8 @@ function loadSprites(){
   });
 }
 function sprOf(id){return SPR[id]&&SPR_DATA[id]?SPR[id]:null;}
-// (cx,cy): 바닥 가운데 (회전 전 좌표), n: 바닥 칸 수(너비), sid: 흔들림 위상
-function drawSpr(id,cx,cy,n,sid){
+// (cx,cy): 바닥 가운데 (회전 전 좌표), n: 바닥 칸 수(너비), sid: 흔들림 위상, mir: 좌우 뒤집기
+function drawSpr(id,cx,cy,n,sid,mir){
   var im=sprOf(id);if(!im)return false;
   var sd=SPR_DATA[id],c=PJ.c,s=PJ.s,p=rotPt(cx,cy),g=P(p[0],p[1],0);
   var dw=sd.fw*n*2*HW*s,dh=dw*sd.h/sd.w,by=g[1]+sd.by*n*HH*s;
@@ -26,15 +26,33 @@ function drawSpr(id,cx,cy,n,sid){
   var sw=sd.sway?treeSway(sid)*s*sd.sway:0;
   c.save();c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';
   c.translate(g[0],by);
+  if(mir)c.scale(-1,1);
   if(sw)c.transform(1,0,-sw/dh,1,0,0);
   c.drawImage(im,-dw/2,-dh,dw,dh);
   c.restore();
   return true;
 }
+/* 방향: 화면에서 정면이 향하는 쪽 sd (0 ↘ 1 ↙ 2 ↖ 3 ↗).
+   앞모습 그림은 앞면이 ↘, 뒷모습 그림은 뒷면이 ↘를 향한다.
+   ↘ 앞모습 · ↙ 앞모습 뒤집기 · ↖ 뒷모습 · ↗ 뒷모습 뒤집기. 긴 것(앞뒤 같음)은 홀수일 때만 뒤집는다.
+   그림의 앞면이 ↙를 향하게 그려졌으면(fl) 뒤집는 쪽이 반대 */
+function sprDir(d,b){
+  if(!d.dir||b.face==null)return 0;
+  return worldToScreenDir(b.face);
+}
 function drawSprEntity(b){
-  if(!sprOf(b.def))return false;
-  var dm=faceDims(D[b.def],b.face);
-  return drawSpr(b.def,b.x+dm.w/2,b.y+dm.h/2,dm.w,b.id||b.x*31+b.y);
+  var d=D[b.def],id=d.spr||b.def,im=sprOf(id);if(!im)return false;
+  var sd=SPR_DATA[id],dir=sprDir(d,b),mir=false;
+  if(d.dir){
+    mir=(dir%2===1)!==!!sd.fl;
+    if(dir>=2&&sd.back&&sprOf(sd.back))id=sd.back;
+  }
+  var dm=faceDims(d,b.face);
+  return drawSpr(id,b.x+dm.w/2,b.y+dm.h/2,dm.w,b.id||b.x*31+b.y,mir);
+}
+// 그림이 없을 때 새 꾸미기를 단순한 상자로 그린다
+function drawSprFallback(b){
+  var d=D[b.def];box(rrect(b.x+.22,b.y+.22,b.x+.78,b.y+.78),0,Math.max(.2,heightOf(b.def)*.7),d.wall,d.roofc);
 }
 // 바깥 숲 나무 (def가 없는 나무)
 function drawSprOutTree(t){

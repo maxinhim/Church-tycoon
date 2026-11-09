@@ -46,7 +46,7 @@ mk('nurse','수유실','comfort',1,1,600,5,'bld','#f6eef0','#c77d8f',{H:.75,roof
 mk('lounge','휴게실','comfort',2,1,800,7,'bld','#e9efe6','#5c8a5a',{H:.8,roof:'flat',bigwin:1,ccap:10,fill:{comf:50,fel:8},cap:6,dur:4,desc:'잠시 앉아 쉬어가는 실내 공간'});
 mk('shop','매점','shop',1,1,450,3,'bld','#f2ede4','#d1a02e',{H:.7,roof:'flat',deco:'awning',ccap:4,fill:{comf:30,fel:6},cap:3,dur:3,income:3,desc:'간식과 음료를 파는 작은 매점'});
 mk('parktower','주차 타워','comfort',2,2,3000,18,'bld','#c9ced3','#59626b',{H:1.6,roof:'flat',deco:'park',park:24,desc:'좁은 땅에 많은 차를 세우는 주차 타워. 층을 올리면 더 늘어나요'});
-mk('busstop','버스 정류장','comfort',1,1,300,2,'busstop','#3f5ea3','#d6e2ea',{vis:0.05,desc:'교회 앞 버스 정류장. 방문자 +5%'});
+mk('busstop','버스 정류장','comfort',1,1,300,2,'busstop','#3f5ea3','#d6e2ea',{dir:'face',vis:0.05,desc:'교회 앞 버스 정류장. 방문자 +5%'});
 mk('mcomf','편의실 칸','comfort',1,1,360,2,'mroom','#dfe6ea','#6c8794',{rname:'편의실',per:{ccap:6,cap:4,up:2},fk:'comf',ccap:6,fill:{comf:43},cap:4,dur:4,desc:'같은 칸끼리 이어 붙이면 하나의 편의실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
 mk('tree','나무','garden',1,1,110,0,'tree','#3d7a3d','#3d7a3d',{beauty:1,desc:'부지 분위기가 좋아집니다'});
 mk('cherry','벚나무','garden',1,1,180,0,'tree','#3d7a3d','#e9a3bd',{shape:'round',leaf:['#d97f9f','#eaa1bb','#f8cfdc'],beauty:1.4,desc:'봄이면 분홍 꽃이 흐드러지는 나무'});
@@ -70,15 +70,15 @@ mk('pampas','억새','garden',1,1,80,0,'flower','#7a8a4a','#e8dcc0',{petals:['#e
 mk('urn','돌 화분','garden',1,1,150,0,'planter','#b8b2a6','#5a9a4f',{beauty:1,desc:'담쟁이가 늘어진 돌 항아리 화분'});
 mk('basket','걸이 화분','garden',1,1,120,0,'planter','#3d4650','#e57a95',{beauty:0.8,desc:'쇠기둥에 매단 꽃바구니'});
 mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe0',{beauty:1.6,desc:'수련이 떠 있는 둥근 돌 물그릇'});
-mk('bench','벤치','deco',1,1,160,0,'bench','#8a6a46','#8a6a46',{ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
+mk('bench','벤치','deco',1,1,160,0,'bench','#8a6a46','#8a6a46',{dir:'face',ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
 mk('lamp','가로등','deco',1,1,120,1,'lamp','#3d4650','#f5e6a8',{beauty:0.5,desc:'저녁에도 길을 밝혀요'});
 mk('hedge','생울타리','deco',1,1,90,0,'hedge','#3f7d3c','#5a9a4f',{beauty:0.6,desc:'잘 다듬은 낮은 나무 울타리'});
-mk('rosearch','꽃 아치','garden',1,1,260,0,'arch','#f1ece2','#d9567a',{beauty:1.2,desc:'장미가 감긴 정원 아치'});
+mk('rosearch','꽃 아치','garden',1,1,260,0,'arch','#f1ece2','#d9567a',{spr:'pergola',dir:'axis',beauty:1.2,desc:'장미가 감긴 정원 아치'});
 mk('pond','연못','garden',2,2,700,2,'pond','#6fa8c9','#3d7a3d',{beauty:3,desc:'물고기가 노니는 작은 연못'});
-mk('picnic','피크닉 테이블','deco',1,1,200,1,'picnic','#a07a52','#c75b4a',{fill:{fel:14,comf:14},cap:4,dur:3,beauty:0.4,desc:'잔디 위에서 함께 먹고 이야기하는 자리'});
-mk('statue','십자가 조형물','deco',1,1,900,1,'statue','#e9e4da','#c9a24a',{beauty:2.5,rep:0.1,desc:'교회를 상징하는 조형물. 평판이 조금 오릅니다'});
+mk('picnic','피크닉 테이블','deco',1,1,200,1,'picnic','#a07a52','#c75b4a',{dir:'axis',fill:{fel:14,comf:14},cap:4,dur:3,beauty:0.4,desc:'잔디 위에서 함께 먹고 이야기하는 자리'});
+mk('statue','십자가 조형물','deco',1,1,900,1,'statue','#e9e4da','#c9a24a',{spr:'cross',beauty:2.5,rep:0.1,desc:'교회를 상징하는 조형물. 평판이 조금 오릅니다'});
 mk('planter','화분','garden',1,1,60,0,'planter','#b9694c','#e57a95',{beauty:0.5,desc:'꽃이 핀 큰 화분'});
 mk('gazebo','정자','garden',2,2,900,4,'gazebo','#a07a52','#8a5a2b',{fill:{comf:30,fel:12},cap:6,dur:4,beauty:1,desc:'그늘에 앉아 쉬어가는 정자'});
 mk('fence_w','흰 울타리','deco',1,1,60,0,'fence','#f4f1ea','#d9d3c6',{style:'picket',beauty:0.4,desc:'하얀 나무 울타리. 화살표로 놓는 방향을 고르세요'});
@@ -89,9 +89,27 @@ mk('lamp2','쌍등 가로등','deco',1,1,200,1,'lamp2','#3d4650','#f5e6a8',{beau
 mk('bollard','정원등','deco',1,1,70,0,'bollard','#3d4650','#f5e6a8',{beauty:0.3,desc:'길가를 비추는 낮은 정원등'});
 mk('stonelamp','석등','deco',1,1,320,0,'stonelamp','#b8b2a6','#f5d98a',{beauty:1.3,desc:'화강암으로 깎은 전통 석등'});
 mk('bin','쓰레기통','deco',1,1,50,0,'bin','#3f7a52','#2f5f40',{ccap:1,beauty:0.1,desc:'마당이 깨끗해져요. 편의 수용 +1'});
-mk('board','게시판','deco',1,1,150,0,'board','#8a6844','#6b4f3a',{beauty:0.3,vis:0.01,desc:'교회 소식을 붙이는 작은 게시판. 방문자 +1%'});
+mk('board','게시판','deco',1,1,150,0,'board','#8a6844','#6b4f3a',{dir:'face',beauty:0.3,vis:0.01,desc:'교회 소식을 붙이는 작은 게시판. 방문자 +1%'});
 mk('bell','종','deco',1,1,600,1,'bell','#8a6844','#b8862f',{beauty:1.2,rep:0.1,desc:'나무 틀에 매단 작은 종. 평판이 조금 오릅니다'});
 mk('lantern','초롱 등','deco',1,1,140,0,'lamp','#7a5530','#f5e6a8',{beauty:0.7,desc:'나무 기둥에 매단 종이 초롱'});
+/* 시트 C 그림으로 그리는 꾸미기. kind 'spr'는 그림이 없을 때 단순한 상자로 그린다.
+   dir: 'face' 앞·뒤 그림이 있어 화살표가 바라보는 방향 / 'axis' 앞뒤가 같은 긴 것(화살표가 이어 짓는 방향, 눕는 방향도 따라감) / 없으면 방향 없음
+   hgt: 높이(칸), 눌러서 고를 때와 카드·미리보기에 쓴다 */
+mk('swing','그네 의자','deco',1,1,380,1,'spr','#8a6a46','#a07a52',{hgt:1.3,dir:'face',ccap:2,fcap:2,fill:{comf:20,fel:14},cap:2,dur:4,beauty:0.8,desc:'지붕 아래 둘이 앉아 이야기하는 그네 의자'});
+mk('sunbed','선베드','deco',1,1,220,0,'spr','#8a6a46','#a07a52',{hgt:.5,dir:'face',ccap:2,fill:{comf:26},cap:1,dur:3,beauty:0.4,desc:'누워서 쉬어가는 나무 의자'});
+mk('library','작은 도서함','deco',1,1,260,0,'spr','#8a6844','#6b4f3a',{hgt:1.2,dir:'face',fill:{word:12,comf:8},cap:2,dur:3,beauty:0.5,vis:0.01,desc:'책을 빌려 읽고 나누는 작은 도서함. 방문자 +1%'});
+mk('drinkfount','식수대','deco',1,1,180,0,'spr','#c9c2b6','#9aa3a8',{hgt:1.1,dir:'face',ccap:2,fill:{comf:16},cap:2,dur:2,beauty:0.3,desc:'목을 축이는 돌 식수대. 편의 수용 +2'});
+mk('grill','바비큐 그릴','deco',1,1,300,1,'spr','#3d4650','#59626b',{hgt:1.4,dir:'face',fcap:3,fill:{fel:26,comf:6},cap:3,dur:4,beauty:0.3,desc:'함께 구워 먹으며 교제하는 그릴'});
+mk('lectern','야외 강대상','deco',1,1,350,0,'spr','#8a6844','#c9c2b6',{hgt:1.2,dir:'face',beauty:0.7,rep:0.05,desc:'야외 예배에 쓰는 작은 강대상. 평판이 조금 오릅니다'});
+mk('vending','자판기','shop',1,1,420,2,'spr','#3d4650','#59626b',{hgt:1.5,dir:'face',ccap:2,fill:{comf:20},cap:2,dur:3,income:2,desc:'음료 자판기. 방문자가 음료를 사 마셔요'});
+mk('coffeecart','커피 카트','shop',1,1,650,3,'spr','#8a6844','#a07a52',{hgt:1.5,dir:'face',ccap:3,fcap:3,fill:{fel:20,comf:14},cap:3,dur:3,income:3,desc:'지붕 달린 작은 커피 카트. 방문자가 커피를 사 마셔요'});
+mk('flowercart','꽃 가판대','shop',1,1,600,3,'spr','#8a6844','#d9567a',{hgt:1.5,dir:'face',ccap:3,fill:{comf:24,fel:8},cap:3,dur:3,income:3,beauty:0.5,desc:'꽃을 파는 작은 수레 가판대'});
+mk('gate','정원 문','deco',1,1,140,0,'spr','#8a6844','#c9c2b6',{hgt:1.0,dir:'axis',beauty:0.3,desc:'돌기둥 사이의 나무 문. 화살표로 놓는 방향을 고르세요'});
+mk('trellis','덩굴 격자','deco',1,1,110,0,'spr','#8a6844','#5a9a4f',{hgt:1.3,dir:'axis',beauty:0.5,desc:'덩굴이 타고 오르는 나무 격자'});
+mk('stringlight','줄조명','deco',1,1,160,0,'spr','#8a6844','#f5e6a8',{hgt:1.6,dir:'axis',beauty:0.8,desc:'기둥 사이에 건 따뜻한 전구 줄'});
+mk('spotlight','정원 조명','deco',1,1,90,0,'spr','#3d4650','#f5e6a8',{hgt:.5,beauty:0.3,desc:'나무와 꽃을 위로 비추는 작은 조명'});
+mk('bridge_a','아치 돌다리','garden',1,1,420,0,'spr','#9aa3a8','#c9c2b6',{hgt:.8,dir:'axis',beauty:1.2,desc:'물길 위에 놓는 둥근 돌다리'});
+mk('bridge_w','나무 다리','garden',1,1,240,0,'spr','#a07a52','#8a6844',{hgt:.35,dir:'axis',beauty:0.7,desc:'물길 위에 놓는 납작한 나무 다리'});
 mk('bikerack','자전거 거치대','deco',1,1,120,0,'bikerack','#9aa3a8','#59626b',{park:1,desc:'자전거 세 대를 세울 수 있어요. 주차 +1 (부지 안에도 둘 수 있어요)'});
 mk('parasol','파라솔 테이블','deco',1,1,240,1,'parasol','#e8e2d4','#d65a4a',{fill:{comf:16,fel:12},cap:4,dur:3,beauty:0.5,desc:'햇빛을 가리는 파라솔 아래 쉼 자리'});
 mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
@@ -105,6 +123,7 @@ mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 function heightOf(id){
   var d=D[id];
+  if(d.hgt!=null)return d.hgt;
   if(d.kind==='bld')return Math.max(d.H+(d.rh||0.05),d.towerH?d.towerH+0.75:0);
   return {market:.95,canal:.1,birdbath:.7,topiary:.7,fence:.62,lamp2:1.8,bollard:.5,stonelamp:1.2,bin:.5,board:1.1,bell:1.6,bikerack:.4,parasol:1.3,lot:.12,tree:1.4,flower:.25,bench:.45,spire:2.7,fountain:.9,lamp:1.7,hedge:.55,arch:1.45,floor:.02,stage:.7,playground:1.2,pond:.15,picnic:.5,statue:1.7,planter:.6,gazebo:1.4,busstop:1.1}[d.kind]||1;
 }

@@ -1,0 +1,191 @@
+{
+ "sheet": "decor-c.png",
+ "grid": [
+  6,
+  6
+ ],
+ "out": "assets/decor",
+ "scale": 0.5,
+ "inset": 4,
+ "cells": {
+  "0": {
+   "id": "bench",
+   "fw": 0.85,
+   "by": 0.35,
+   "back": "bench_b"
+  },
+  "1": {
+   "id": "bench_b",
+   "fw": 0.85,
+   "by": 0.35
+  },
+  "2": {
+   "id": "swing",
+   "fw": 1.0,
+   "by": 0.3,
+   "back": "swing_b"
+  },
+  "3": {
+   "id": "swing_b",
+   "fw": 1.0,
+   "by": 0.3
+  },
+  "4": {
+   "id": "board",
+   "fw": 0.6,
+   "by": 0.2,
+   "back": "board_b"
+  },
+  "5": {
+   "id": "board_b",
+   "fw": 0.6,
+   "by": 0.2
+  },
+  "6": {
+   "id": "busstop",
+   "fw": 1.15,
+   "by": 0.35,
+   "back": "busstop_b",
+   "glow": true
+  },
+  "7": {
+   "id": "busstop_b",
+   "fw": 1.15,
+   "by": 0.35,
+   "glow": true
+  },
+  "8": {
+   "id": "sunbed",
+   "fw": 0.95,
+   "by": 0.35,
+   "back": "sunbed_b"
+  },
+  "9": {
+   "id": "sunbed_b",
+   "fw": 0.95,
+   "by": 0.35
+  },
+  "10": {
+   "id": "library",
+   "fw": 0.55,
+   "by": 0.2,
+   "back": "library_b"
+  },
+  "11": {
+   "id": "library_b",
+   "fw": 0.55,
+   "by": 0.2
+  },
+  "12": {
+   "id": "drinkfount",
+   "fw": 0.45,
+   "by": 0.25,
+   "back": "drinkfount_b"
+  },
+  "13": {
+   "id": "drinkfount_b",
+   "fw": 0.45,
+   "by": 0.25
+  },
+  "14": {
+   "id": "grill",
+   "fw": 0.8,
+   "by": 0.3,
+   "back": "grill_b"
+  },
+  "15": {
+   "id": "grill_b",
+   "fw": 0.8,
+   "by": 0.3
+  },
+  "16": {
+   "id": "vending",
+   "fw": 0.55,
+   "by": 0.25,
+   "back": "vending_b"
+  },
+  "17": {
+   "id": "vending_b",
+   "fw": 0.55,
+   "by": 0.25
+  },
+  "18": {
+   "id": "lectern",
+   "fw": 0.55,
+   "by": 0.25,
+   "back": "lectern_b"
+  },
+  "19": {
+   "id": "lectern_b",
+   "fw": 0.55,
+   "by": 0.25
+  },
+  "20": {
+   "id": "coffeecart",
+   "fw": 0.95,
+   "by": 0.3,
+   "back": "coffeecart_b"
+  },
+  "21": {
+   "id": "coffeecart_b",
+   "fw": 0.95,
+   "by": 0.3
+  },
+  "22": {
+   "id": "flowercart",
+   "fw": 1.0,
+   "by": 0.3,
+   "back": "flowercart_b"
+  },
+  "23": {
+   "id": "flowercart_b",
+   "fw": 1.0,
+   "by": 0.3
+  },
+  "26": {
+   "id": "bridge_a",
+   "fw": 1.1,
+   "by": 0.45
+  },
+  "27": {
+   "id": "bridge_w",
+   "fw": 1.0,
+   "by": 0.5
+  },
+  "28": {
+   "id": "stringlight",
+   "fw": 0.95,
+   "by": 0.2
+  },
+  "29": {
+   "id": "spotlight",
+   "fw": 0.25,
+   "by": 0.15
+  },
+  "30": {
+   "id": "cross",
+   "fw": 0.6,
+   "by": 0.3
+  },
+  "31": {
+   "id": "pergola",
+   "fw": 0.9,
+   "by": 0.3
+  },
+  "32": {
+   "id": "picnic",
+   "fw": 1.0,
+   "by": 0.4
+  },
+  "33": {
+   "id": "gate",
+   "fw": 0.9,
+   "by": 0.3
+  },
+  "34": {
+   "id": "trellis",
+   "fw": 0.75,
+   "by": 0.2
+  }
+ }
+}
