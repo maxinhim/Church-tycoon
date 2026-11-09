@@ -1,8 +1,8 @@
 'use strict';
 /* 지도 32×32 칸. 맨 아래 줄은 도로, 그 위 4줄(PZ~ROWS-2)은 주차 구역, 나머지가 교회 부지.
    도로·주차 구역·부지는 울타리로 나뉘고, 주차 구역에서 부지로 들어오는 곳(ENT 열)에 교회 입구가 있다.
-   지도 밖 BAND 칸까지 잔디를 그린다. 한 주는 현실 시간 WEEK초 */
-var COLS=32, ROWS=32, ENT=15, PZ=27, BAND=12, WEEK=48, SAVE_KEY='church-tycoon-iso-v3';
+   지도 밖 BAND 칸까지 잔디를 그린다. 한 주는 현실 시간 WEEK초(4분, 하루 약 34초) */
+var COLS=32, ROWS=32, ENT=15, PZ=27, BAND=12, WEEK=240, SAVE_KEY='church-tycoon-iso-v3';
 var HW=32, HH=16, ZH=30;
 var $=function(s){return document.querySelector(s);};
 var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};

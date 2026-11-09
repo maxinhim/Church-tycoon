@@ -26,10 +26,19 @@ function hud(force){
 }
 // 오른쪽 위 시계: 연·주, 요일 칸(지난 날은 흐리게, 오늘은 강조), 주일 정산까지 남은 날
 function syncClock(){
-  var yr=Math.floor(S.week/52)+1,w=S.week%52+1,di=dayIdx(),left=6-di;
-  $('#ckWeek').textContent=yr+'년 '+w+'주';
-  $('#ckLeft').textContent=(left?'주일 정산까지 '+left+'일':'오늘은 주일')+(S.evt==='rain'?' · 장마':S.evt==='festival'?' · 축제':'');
+  var yr=Math.floor(S.week/52)+1,wn=S.week%52+1,di=dayIdx(),left=6-di;
+  $('#ckWeek').textContent=yr+'년 '+wn+'주';
+  $('#ckLeft').textContent=(left?'주일 정산까지 '+left+'일':'오늘은 주일')+(S.evt==='festival'?' · 축제':'');
+  var w=ensureWx(),wk=w.cur+'|'+w.next+'|'+(left?1:0);
+  if(syncClock.k!==wk){syncClock.k=wk;
+    $('#wxNow').innerHTML=wxIcon(w.cur)+WEATHER[w.cur].n;
+    $('#wxNext').innerHTML=(left?'내일 ':'월요일 ')+wxIcon(w.next)+WEATHER[w.next].n;}
   var ds=$('#ckDays').children;for(var i=0;i<7;i++){ds[i].classList.toggle('now',i===di);ds[i].classList.toggle('past',i<di);}
   $('#ckBar').style.width=clamp(S.t/WEEK*100,0,100)+'%';
-  $('#clock').setAttribute('aria-label',yr+'년 '+w+'주 '+DAYS[di]+', '+(left?'주일 정산까지 '+left+'일':'오늘 주일 정산'));
+  $('#clock').setAttribute('aria-label',yr+'년 '+wn+'주 '+DAYS[di]+', '+(left?'주일 정산까지 '+left+'일':'오늘 주일 정산')+', 날씨 '+WEATHER[w.cur].n+', 내일 '+WEATHER[w.next].n+'. 누르면 날씨 설명');
+}
+// 시계를 누르면 오늘·내일 날씨가 무슨 뜻인지 알려 준다
+function wxExplain(){
+  var w=ensureWx(),se=WX_SEASON[seasonKey()].n;
+  toast(se+' · 오늘 '+WEATHER[w.cur].n+': '+WEATHER[w.cur].tip+' / 내일 '+WEATHER[w.next].n,4200);
 }

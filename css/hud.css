@@ -19,17 +19,24 @@
 .days i.now{background:var(--accent);color:var(--accent-ink);font-weight:700}
 .days i.sun{color:#c0392b;font-weight:700}
 .days i.sun.now{background:#c0392b;color:#fff}
+.ckw{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}
+.ckw span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+#wxNow{font-weight:700}
+#wxNext{color:var(--muted)}
+.wxi{width:15px;height:15px;flex:none}
+.wx-sun,.wx-heat{color:#e0a020}.wx-cloud{color:#7a8a99}.wx-rain{color:#3f7fc0}.wx-storm{color:#5a4fc0}.wx-wind{color:#3d9b7a}.wx-snow{color:#5fa3d0}
+#clock{cursor:pointer}
+.rw{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin:-2px 0 4px}
 .ckbar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
 .ckbar i{display:block;height:100%;background:var(--accent);width:0}
-/* 교회 입구 위 문 열기 버튼 */
-#gateBtn{position:fixed;left:0;top:0;z-index:3;display:flex;align-items:center;gap:5px;height:34px;padding:0 12px 0 9px;border-radius:999px;border:2px solid #fff;font-weight:700;font-size:12.5px;box-shadow:0 3px 10px rgba(0,0,0,.3);white-space:nowrap;touch-action:manipulation}
-#gateBtn[hidden]{display:none}
-#gateBtn svg{width:17px;height:17px}
-#gateBtn.off{background:#27a85a;color:#fff}
-#gateBtn.on{background:rgba(255,255,255,.92);color:#2a5e3c;height:28px;font-size:11.5px;border-color:#2a5e3c}
-#gateBtn.ask{background:#d6453a;color:#fff}
-@media (prefers-reduced-motion:no-preference){#gateBtn.off{animation:gatePulse 1.6s ease-in-out infinite}}
-@keyframes gatePulse{50%{box-shadow:0 0 0 6px rgba(39,168,90,.35),0 3px 10px rgba(0,0,0,.3)}}
+/* 교회 입구를 누르면 뜨는 문 열기·닫기 카드 */
+#gatePop{position:fixed;left:0;top:0;z-index:4;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;max-width:min(300px,calc(100vw - 24px))}
+#gatePop[hidden]{display:none}
+#gatePop::after{content:'';position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:var(--glass);transform:translateX(-50%) rotate(45deg);border-right:1px solid var(--glass-line);border-bottom:1px solid var(--glass-line)}
+.gpt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.gpt b{font-size:13px}
+.gpt span{font-size:11px;color:var(--muted)}
+#gatePop .btn{flex:none}
 /* 주일 정산 영수증 */
 #rcpt{position:fixed;right:8px;top:84px;z-index:4;width:230px;padding:8px 12px;cursor:pointer;font-size:12px}
 #rcpt[hidden]{display:none}

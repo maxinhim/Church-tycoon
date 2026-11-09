@@ -8,7 +8,7 @@ var portraitMQ=window.matchMedia('(orientation: portrait)');
 function isPortrait(){return portraitMQ.matches;}
 function syncOrientation(){
   var p=isPortrait();
-  ['#stage','#ui','#place','#gateBtn','#rcpt','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
+  ['#stage','#ui','#place','#gatePop','#rcpt','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
 }
 function lockLandscape(){
   try{var o=screen.orientation;if(o&&o.lock)o.lock('landscape').catch(function(){});}catch(e){}
@@ -32,7 +32,7 @@ function syncSpeed(){var b=$('#spBadge');b.hidden=UI.speed===1;b.textContent=UI.
 var last=0;
 function frame(ts){
   var dt=Math.min(0.25,(ts-last)/1000||0);last=ts;
-  stepFx(dt);
+  stepFx(dt);stepWx(dt);
   // 목회 고민 카드가 열려 있으면 시간이 멈춘다
   if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*UI.speed;while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
   draw();syncPlace();syncGate();hud(false);
@@ -58,9 +58,12 @@ function init(){
   $('#over').addEventListener('click',function(e){if(e.target.closest('[data-act="restart"]'))restart();});
   $('#dlg').addEventListener('click',function(e){var b=e.target.closest('[data-act="dlg"]');if(!b)return;var why=chooseDlg(+b.dataset.v);if(why)toast(why,1600);showDlg();renderPanel();hud(true);});
   $('#cele').addEventListener('click',function(){$('#cele').hidden=true;});
-  $('#gateBtn').addEventListener('click',toggleGate);
+  $('#gpBtn').addEventListener('click',toggleGate);
+  $('#clock').addEventListener('click',wxExplain);
+  $('#clock').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();wxExplain();}});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gatePop').hidden)closeGatePop();});
   $('#rcpt').addEventListener('click',function(){$('#rcpt').hidden=true;UI.statusTab='finance';if(UI.fold||tabGroup(UI.tab)!=='status')openGroup('status');else{UI.tab='finance';renderPanel();}});
-  if(!S.open)setTimeout(function(){toast('길과 건물을 준비한 뒤, 교회 입구의 \'교회 문 열기\'를 누르세요',4200);},600);
+  if(!S.open)setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
   setupInput();setupPlace();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);

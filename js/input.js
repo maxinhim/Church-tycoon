@@ -21,6 +21,10 @@ function onGhostTile(t){
 }
 function onTap(px,py){
   if(S.over)return;
+  // 교회 입구를 누르면 문 열기·닫기 카드. 다른 곳을 누르면 카드는 닫힌다
+  var popOpen=!$('#gatePop').hidden;
+  if(!isPlacing()&&gateHit(px,py)){if(popOpen)closeGatePop();else openGatePop();return;}
+  if(popOpen)closeGatePop();
   if(isRoomDef(UI.tool)){tapRoomTile(pickTile(px,py));return;}
   if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:ft.x,y:ft.y};var fw=paintFloor(ft.x,ft.y,UI.tool);if(fw)toast(fw,1200);if(!UI.fold)renderDetail();hud(true);return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}

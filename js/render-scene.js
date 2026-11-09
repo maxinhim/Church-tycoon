@@ -35,7 +35,10 @@ function draw(){
   c.fillStyle='#80b169';c.fillRect(0,0,VW,VH);
   PJ.c=c;PJ.ox=cam.ox;PJ.oy=cam.oy;PJ.s=cam.z;
   drawGround();
+  drawWxGround();
   drawFloors();
+  drawPuddles();
+  drawCloudShadows();
   drawOutTrees(true);
   var sb=UI.sel?bById(UI.sel):null;
   if(sb){
@@ -74,8 +77,10 @@ function draw(){
   var ar=rrect(ENT-.06,PZ-.07,ENT+1.06,PZ+.07);ar.f=drawArch;E.push(ar);
   var rg=rrect(ENT-.05,ROWS-1-.05,ENT+1.05,ROWS-1+.05);rg.f=drawRoadGap;E.push(rg);
   fenceSegs().forEach(function(f){var r=fenceRect(f);r.f=function(){drawFenceSeg(f);};E.push(r);});
+  snowmen().forEach(function(t){var r=rrect(t.x+.25,t.y+.25,t.x+.75,t.y+.75);r.f=function(){drawSnowman(t);};E.push(r);});
   sortEnt(E).forEach(function(e){e.f();});
   drawOutTrees(false);
+  drawWxOverlay(c);
   drawMarkers(c);
   if(isRoomDef(UI.tool))drawRoomGhost();
   if(isFloorDef(UI.tool)&&UI.ghost)footprint(UI.ghost.x,UI.ghost.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[4,3]);
@@ -97,6 +102,14 @@ function draw(){
 // 건물 위 표시: 주황 '!'는 수리 필요(상태 50% 미만), 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가
 function drawMarkers(c){
   var s=Math.max(.7,cam.z);
+  // 문이 닫혀 있으면 교회 입구 위에 자물쇠 (누르면 문 열기 카드)
+  if(!S.open){
+    var gm=rotPt(ENT+.5,PZ),gq=P(gm[0],gm[1],1.75),pr=(S.clock*1.4)%1;
+    c.strokeStyle='rgba(255,210,63,'+(0.8*(1-pr)).toFixed(3)+')';c.lineWidth=2;c.beginPath();c.arc(gq[0],gq[1],(10+10*pr)*s,0,6.283);c.stroke();
+    c.fillStyle='#d6453a';c.strokeStyle='#fff';c.lineWidth=1.6;c.beginPath();c.arc(gq[0],gq[1],10*s,0,6.283);c.fill();c.stroke();
+    c.strokeStyle='#fff';c.lineWidth=1.6*s;c.beginPath();c.arc(gq[0],gq[1]-2*s,3*s,Math.PI,0);c.stroke();
+    c.fillStyle='#fff';c.fillRect(gq[0]-4.2*s,gq[1]-2*s,8.4*s,6.4*s);
+  }
   S.buildings.forEach(function(b){
     var bad=b.door&&!usable(b),worn=maintainable(b)&&condOf(b)<50;
     if(!bad&&!worn)return;

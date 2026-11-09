@@ -43,31 +43,46 @@ function repayLoan(i){
   var amt=Math.ceil(l.bal);if(S.money<amt)return '자금이 부족해요 ('+fmt(amt)+' 필요)';
   S.money-=amt;S.loans.splice(i,1);addLog(LOANS[l.k].name+'을 모두 갚았어요');save();return '';
 }
-function toggleGate(){
-  if(!S.open){
-    S.open=true;gateAsk=-1e9;addLog('교회 문을 열었어요');
-    toast('교회 문을 열었어요! 방문자가 찾아오기 시작해요',2400);
+/* 교회 문: 지도에서 교회 입구(파란 아치)를 누르면 작은 카드가 떠서 열고 닫는다.
+   닫혀 있는 동안에는 아치 위에 자물쇠 표시가 떠 있어 어디를 누르면 되는지 알 수 있다 */
+var gatePopUntil=0;
+function setGate(open){
+  if(open===!!S.open)return;
+  S.open=open;
+  if(open){
+    addLog('교회 문을 열었어요');toast('교회 문을 열었어요! 방문자가 찾아오기 시작해요',2400);
     F.push({x:ENT+.5,y:PZ-.5,z:1.6,t:2.4,d:2.4,text:'교회 문을 열었어요',col:'#ffe28a',big:1});
-    save();hud(true);return;
+  }else{
+    // 주차 구역에 있던 사람은 돌아가고, 부지 안에 있던 사람은 볼일을 마치고 나간다
+    V.forEach(function(v){if(v.y>=PZ&&v.state!=='leave'&&v.state!=='inside')goLeave(v);});
+    addLog('교회 문을 닫았어요');toast('교회 문을 닫았어요',1800);
   }
-  var now=performance.now();
-  if(now-gateAsk>3000){gateAsk=now;toast('닫으면 방문자가 오지 않고 주일 헌금이 크게 줄어요. 한 번 더 누르면 닫혀요',3000);syncGate();return;}
-  gateAsk=-1e9;S.open=false;
-  // 주차 구역에 있던 사람은 돌아가고, 부지 안에 있던 사람은 볼일을 마치고 나간다
-  V.forEach(function(v){if(v.y>=PZ&&v.state!=='leave'&&v.state!=='inside')goLeave(v);});
-  addLog('교회 문을 닫았어요');toast('교회 문을 닫았어요',1800);save();hud(true);
+  save();hud(true);
 }
-// 교회 입구 위에 붙는 문 열기·닫기 버튼 (매 프레임 위치를 맞춘다)
+function toggleGate(){setGate(!S.open);closeGatePop();}
+function openGatePop(){gatePopUntil=performance.now()+7000;renderGatePop();syncGate();var b=$('#gpBtn');if(b)b.focus({preventScroll:true});}
+function closeGatePop(){gatePopUntil=0;syncGate();}
+function renderGatePop(){
+  $('#gpT').textContent=S.open?'교회 문이 열려 있어요':'교회 문이 닫혀 있어요';
+  $('#gpS').textContent=S.open?'닫으면 방문자가 오지 않고 주일 헌금이 크게 줄어요':'열어야 방문자가 들어오고 주일에 성도가 예배하러 와요';
+  var b=$('#gpBtn');b.textContent=S.open?'문 닫기':'문 열기';b.className='btn '+(S.open?'bad':'pri');
+}
+// 화면의 (px,py)가 교회 입구 아치 위인지 (여유 10px)
+function gateHit(px,py){
+  var L=1e9,R=-1e9,T=1e9,B=-1e9;
+  [[ENT-.1,PZ],[ENT+1.1,PZ]].forEach(function(p){[0,1.5].forEach(function(z){var r=rotPt(p[0],p[1]),q=toScreen(r[0],r[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
+  var pad=Math.max(10,14*cam.z);
+  return px>=L-pad&&px<=R+pad&&py>=T-pad&&py<=B+pad;
+}
+// 카드를 아치 위에 붙인다 (매 프레임)
 function syncGate(){
-  var el=$('#gateBtn');if(!el)return;
-  var p=rotPt(ENT+.5,PZ),q=toScreen(p[0],p[1],1.75),vw=window.innerWidth,vh=window.innerHeight;
-  var off=q[0]<-40||q[1]<-40||q[0]>vw+40||q[1]>vh+40;
-  el.hidden=off;if(off)return;
-  var asking=S.open&&performance.now()-gateAsk<3000;
-  var cls=S.open?(asking?'gate ask':'gate on'):'gate off',txt=S.open?(asking?'한 번 더 누르면 닫혀요':'교회 문 열림'):'교회 문 열기';
-  if(el.className!==cls){el.className=cls;}
-  if(el.dataset.t!==txt){el.dataset.t=txt;el.querySelector('span').textContent=txt;el.setAttribute('aria-label',S.open?'교회 문 닫기':'교회 문 열기: 열어야 방문자가 들어와요');}
-  el.style.transform='translate('+Math.round(q[0])+'px,'+Math.round(q[1])+'px) translate(-50%,-100%)';
+  var el=$('#gatePop');if(!el)return;
+  var on=performance.now()<gatePopUntil&&!isPortrait();
+  if(el.hidden===on)el.hidden=!on;
+  if(!on)return;
+  var p=rotPt(ENT+.5,PZ),q=toScreen(p[0],p[1],1.8),vw=window.innerWidth;
+  var x=clamp(q[0],110,vw-110),y=Math.max(q[1],el.offsetHeight+60);
+  el.style.transform='translate('+Math.round(x)+'px,'+Math.round(y)+'px) translate(-50%,-100%)';
 }
 /* ---------- 주일 정산 영수증 ---------- */
 var rcptTimer=0;
@@ -75,16 +90,18 @@ function rcptLines(r){
   var L=[];
   if(r.closed)L.push(['온라인 헌금 (문 닫음)',r.online]);else L.push(['주일 헌금 · 출석 '+r.attend+'명',r.offering]);
   if(r.visGive)L.push(['방문자 헌금',r.visGive]);
-  if(r.shop)L.push(['매장 수익',r.shop]);
+  if(r.shop)L.push(['매장 판매',r.shop]);
   if(r.other)L.push(['그 밖의 수입',r.other]);
   if(r.sponsor)L.push(['개척 후원',r.sponsor]);
   L.push(['운영비·유지비',-r.opex]);
   if(r.pay)L.push(['사례비',-r.pay]);
+  if(r.supply)L.push(['매장 재료비',-r.supply]);
   if(r.loan)L.push(['대출 상환',-r.loan]);
   return L;
 }
 function rcptHtml(r,full){
-  return '<div class="rk">'+(Math.floor(r.w/52)+1)+'년 '+(r.w%52+1)+'주 · 주일 정산</div><ul>'+rcptLines(r).map(function(l){
+  var wn=r.wx&&WEATHER[r.wx]?'<div class="rw">'+wxIcon(r.wx)+'주일 날씨 '+WEATHER[r.wx].n+(r.wxLost>0?' · 출석 '+r.wxLost+'명 줄었어요':'')+'</div>':'';
+  return '<div class="rk">'+(Math.floor(r.w/52)+1)+'년 '+(r.w%52+1)+'주 · 주일 정산</div>'+wn+'<ul>'+rcptLines(r).map(function(l){
     return '<li><span>'+l[0]+'</span><b class="'+(l[1]<0?'neg':'pos')+'">'+(l[1]<0?'−':'+')+fmt(Math.abs(l[1]))+'</b></li>';}).join('')+
     '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+(full?'':'<p class="rh">눌러서 재정 보기</p>');
 }

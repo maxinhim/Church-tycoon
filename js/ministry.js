@@ -267,7 +267,7 @@ function repairAll(){
 function decayWeek(){
   S.buildings.forEach(function(b){
     if(!maintainable(b))return;
-    b.cond=Math.max(0,condOf(b)-(1.6+(b.weekUses||0)*0.04)*MOD.decay);
+    b.cond=Math.max(0,condOf(b)-(1.6+(b.weekUses||0)*0.016)*MOD.decay);
     b.weekUses=0;
   });
 }

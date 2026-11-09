@@ -444,14 +444,18 @@ async function rulesChecks(browser, url) {
     for (let i = 0; i < WEEK * 5; i++) update(0.1);
     const g = gid(ENT, PZ - 1);
     o.closedNoVisit = V.length === 0 && !navPath(gid(ENT, PZ), m => m === g);
-    // 문 버튼으로 연다
-    document.getElementById('gateBtn').click();
-    o.opened = S.open === true && !!navPath(gid(ENT, PZ), m => m === g);
+    // 문 카드는 평소엔 숨어 있고, 교회 입구를 누르면 뜬다
+    const popHidden = document.getElementById('gatePop').hidden;
+    const gp = rotPt(ENT + .5, PZ), gs = toScreen(gp[0], gp[1], .7);
+    onTap(gs[0], gs[1]); syncGate();
+    o.gatePop = popHidden && !document.getElementById('gatePop').hidden && /닫혀/.test(document.getElementById('gpT').textContent);
+    document.getElementById('gpBtn').click();
+    o.opened = S.open === true && !!navPath(gid(ENT, PZ), m => m === g) && document.getElementById('gatePop').hidden;
     for (let i = 0; i < 200; i++) update(0.1);
     o.visitors = V.length > 0;
-    // 한 번 누르면 확인을 묻고, 두 번 누르면 닫힌다
-    toggleGate(); const ask = S.open; toggleGate();
-    o.closeTwice = ask === true && S.open === false;
+    // 다시 입구를 눌러 카드에서 닫는다
+    openGatePop(); const btnTxt = document.getElementById('gpBtn').textContent; document.getElementById('gpBtn').click();
+    o.closeTwice = /닫기/.test(btnTxt) && S.open === false;
     S.open = true;
     // 매장: 지갑의 돈으로 사고, 수익이 쌓이며 건물 위에 금액이 뜬다
     S.money = 50000;
@@ -478,10 +482,39 @@ async function rulesChecks(browser, url) {
     // 시계: 오른쪽 위, 한 주는 48초, 주일 칸 강조
     S.t = WEEK * 6.5 / 7; hud(true);
     const ck = document.getElementById('clock').getBoundingClientRect();
-    o.clock = WEEK === 48 && ck.left > innerWidth / 2 && ck.top < 60 && document.querySelector('#ckDays .sun').classList.contains('now') && isSunday();
+    o.clock = WEEK === 240 && ck.left > innerWidth / 2 && ck.top < 60 && document.querySelector('#ckDays .sun').classList.contains('now') && isSunday();
     // 재정 탭
     openGroup('status'); document.querySelector('#subtabs [data-v="finance"]').click();
     o.finance = UI.tab === 'finance' && /대출 받기/.test(document.getElementById('panel').textContent);
+    // 날씨: 계절별로 다른 날씨, 하루마다 바뀜, 효과
+    const roll = (wk) => { S.week = wk - 1; const seen = new Set(); for (let i = 0; i < 400; i++) seen.add(rollWx('sun')); return seen; };
+    const summer = roll(30), winter = roll(3);
+    o.wxSeason = summer.has('heat') && summer.has('storm') && !summer.has('snow') && winter.has('snow') && !winter.has('heat');
+    S.week = 10; S.wx.next = 'rain'; advanceWx();
+    o.wxAdvance = S.wx.cur === 'rain' && !!WEATHER[S.wx.next];
+    o.wxRain = !wxOpen(D.bench) && !wxOpen(D.parasol) && wxOpen(D.wc) && wxSale(D.cafe) > 1 && WEATHER.rain.vis < 1 && wxAttend() < 1 && wxDrain() > 0;
+    S.wx.cur = 'wind'; o.wxWind = !wxOpen(D.parasol) && wxOpen(D.bench) && wxFill(D.playground) > 1;
+    S.wx.cur = 'sun'; o.wxSun = wxFill(D.bench) > 1 && WEATHER.sun.vis > 1;
+    let bow = false; for (let i = 0; i < 40 && !bow; i++) { S.wx.cur = 'rain'; S.wx.next = 'sun'; advanceWx(); bow = S.wx.bow > 0; }
+    o.wxRainbow = bow;
+    // 폭우: 벼락이 건물을 상하게 하고, 첨탑이 있으면 막아 준다
+    S.wx.cur = 'storm'; S.buildings.forEach(b => { if (maintainable(b)) b.cond = 100; });
+    let hit = false; for (let i = 0; i < 20 && !hit; i++) { S.wx.hits = 0; strike(); hit = S.buildings.some(b => maintainable(b) && condOf(b) < 100); }
+    S.buildings.forEach(b => { if (maintainable(b)) b.cond = 100; });
+    for (let y = 0; y < PZ && !S.buildings.some(b => b.def === 'spire'); y++) for (let x = 0; x < COLS; x++) if (canPlace(D.spire, x, y, 2)) { build('spire', x, y, 2); break; }
+    for (let i = 0; i < 10; i++) { S.wx.hits = 0; strike(); }
+    o.wxStorm = hit && S.buildings.every(b => !maintainable(b) || condOf(b) === 100);
+    // 눈: 쌓이면 눈사람이 생기고 걸음이 느려진다
+    S.wx.cur = 'snow'; S.wx.day = dayIdx(); for (let i = 0; i < 70; i++) wxTick(1);
+    o.wxSnow = S.wx.snow > 0.9 && snowmen().length > 0 && wxSpeed() < 1;
+    // 주일 폭우: 출석이 줄고 영수증에 날씨
+    S.members = 20; S.wx.cur = 'storm'; S.t = WEEK - 0.05; S.wx.day = 6; update(0.1);
+    o.wxSunday = S.rcpt.wx === 'storm' && S.rcpt.wxLost > 0 && /폭우/.test(document.getElementById('rcpt').textContent);
+    hud(true);
+    o.wxClock = new RegExp(WEATHER[S.wx.cur].n).test(document.getElementById('wxNow').textContent) && /내일|월요일/.test(document.getElementById('wxNext').textContent);
+    // 날씨마다 그려 보기 (비·눈 효과, 우산, 번개, 무지개)
+    for (let i = 0; i < 20; i++) spawnV(false);
+    Object.keys(WEATHER).forEach(k => { S.wx.cur = k; WX.k = {}; WX.k[k] = 1; S.wx.wet = 1; S.wx.bow = 10; stepWx(0.5); WX.flash = 1; WX.bolt = { x: 5, y: 5, z: 1, t: .3 }; draw(); });
     // 꾸미기 요소
     o.deco = DEFS.filter(d => d.cat === 'deco').length >= 15 && DEFS.filter(d => d.cat === 'garden').length >= 15;
     for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
@@ -492,14 +525,22 @@ async function rulesChecks(browser, url) {
   check(r.walk, '걷기: 잔디는 못 걷고, 주차 구역은 포장, 도로는 출입구 열만');
   check(r.closedStart && r.closedNoVisit, '교회 문: 닫힌 채 시작, 방문자가 오지 않고 부지로 못 들어옴 (건물 이용 표시는 그대로)');
   check(r.opened && r.visitors, '교회 문: 입구 버튼으로 열면 방문자가 들어옴');
-  check(r.closeTwice, '교회 문: 닫을 때는 한 번 더 눌러 확인');
+  check(r.gatePop, '교회 문: 카드는 평소엔 숨어 있고 교회 입구를 누르면 뜸');
+  check(r.closeTwice, '교회 문: 입구 카드에서 닫기');
   check(r.shop && r.shopCat, '매장: 방문자가 지갑의 돈으로 사 가고 수익·금액 글씨가 뜸, 매장 분류 7종 이상');
   check(r.borrow && r.bigLocked && r.limit, '대출: 한도 안에서 빌림, 건축 대출은 목표 2개 후');
   check(r.repayWeekly && r.repayAll, '대출: 주일 정산 때 원리금 상환, 남은 원금 한 번에 갚기');
   check(r.receipt, '주일 정산: 영수증 카드가 뜸');
   check(r.closedSunday, '주일 정산: 문을 닫은 주일엔 온라인 헌금만');
-  check(r.clock, '시계: 오른쪽 위, 한 주 48초, 주일 강조');
+  check(r.clock, '시계: 오른쪽 위, 한 주 240초, 주일 강조');
   check(r.finance, '재정 탭: 현황 버튼 안에 대출·정산 내역');
+  check(r.wxSeason, '날씨: 여름엔 폭염·폭우, 겨울엔 눈 (계절별)');
+  check(r.wxAdvance && r.wxClock, '날씨: 하루마다 바뀌고 시계에 오늘·내일 날씨');
+  check(r.wxRain && r.wxWind && r.wxSun, '날씨: 비엔 야외 자리 쉼·실내 매장 붐빔, 바람엔 파라솔 접고 연날리기, 맑으면 야외 자리 인기');
+  check(r.wxRainbow, '날씨: 비가 그치면 무지개가 뜰 수 있음');
+  check(r.wxStorm, '날씨: 벼락이 건물을 상하게 하고, 십자가 첨탑이 피뢰침이 됨');
+  check(r.wxSnow, '날씨: 눈이 쌓이면 눈사람, 걸음이 느려짐');
+  check(r.wxSunday, '날씨: 주일 폭우면 출석이 줄고 영수증에 표시');
   check(r.deco, '꾸미기: 조경·꾸미기 요소 각 15종 이상');
   check(errs.length === 0, '구역·재정: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -560,7 +601,7 @@ async function ministryChecks(browser, url) {
     restart('normal');
     // 균형: 아무것도 하지 않으면 1년 동안 저절로 커지지 않고, 초반에 바로 파산하지도 않는다
     let minMoney = S.money;
-    S.open = true; for (let w = 0; w < 30; w++) { if (S.dlg) chooseDlg(dlgById(S.dlg).o.length - 1); for (let i = 0; i < WEEK * 10; i++) update(0.1); minMoney = Math.min(minMoney, S.money); }
+    S.open = true; for (let w = 0; w < 30; w++) { if (S.dlg) chooseDlg(dlgById(S.dlg).o.length - 1); for (let i = 0; i < WEEK * 2; i++) update(0.5); minMoney = Math.min(minMoney, S.money); }
     o.passive = S.members < 25 && minMoney > 0 && !S.over;
     // 지도 밖도 잔디색으로 칠해진다
     draw(); const px = document.getElementById('cv').getContext('2d').getImageData(3, 3, 1, 1).data;

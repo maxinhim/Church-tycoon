@@ -81,16 +81,16 @@ function drawTree(b){
   var c=PJ.c,s=PJ.s,p=rotPt(b.x+.5,b.y+.5),g=P(p[0],p[1],0),hv=hh(b.x*7+b.id,b.y*3+1);
   c.fillStyle='rgba(20,40,10,.22)';c.beginPath();c.ellipse(g[0]+4*s,g[1]+1*s,14*s,6.5*s,0,0,6.283);c.fill();
   box(rrect(b.x+.45,b.y+.45,b.x+.55,b.y+.55),0,.55,'#6b4f3a');
-  var dd=D[b.def]||D.tree,lf=dd.leaf,cone=dd.shape?dd.shape==='cone':hv<.38;
+  var dd=D[b.def]||D.tree,lf=dd.leaf,cone=dd.shape?dd.shape==='cone':hv<.38,sw=treeSway(b.id||b.x*31+b.y)*s;
   if(cone){
     var lc=lf||['#2e6a44','#3f8656'];
     for(var k=0;k<3;k++){
-      var zb=.4+k*.34,wd=(15-k*3.6)*s,qb=P(p[0],p[1],zb),qt=P(p[0],p[1],zb+.6);
+      var zb=.4+k*.34,wd=(15-k*3.6)*s,qb=P(p[0],p[1],zb),qt=P(p[0],p[1],zb+.6);qb[0]+=sw*k*.5;qt[0]+=sw*(k*.5+1);
       c.fillStyle=lc[0];c.beginPath();c.moveTo(qb[0]-wd,qb[1]);c.lineTo(qb[0]+wd,qb[1]);c.lineTo(qt[0],qt[1]);c.closePath();c.fill();
       c.fillStyle=lc[1];c.beginPath();c.moveTo(qb[0]-wd,qb[1]);c.lineTo(qb[0],qb[1]+wd*.18);c.lineTo(qt[0],qt[1]);c.closePath();c.fill();
     }
   }else{
-    var q=P(p[0],p[1],1.0),R=(13+hv*3)*s;
+    var q=P(p[0],p[1],1.0),R=(13+hv*3)*s;q[0]+=sw;
     var rc=lf||['#3b7539','#4e9147','#69ad5c'];
     c.fillStyle=rc[0];c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
     c.fillStyle=rc[1];c.beginPath();c.arc(q[0]-3*s,q[1]-3*s,R*.74,0,6.283);c.fill();
@@ -152,6 +152,12 @@ function drawVisitor(v){
   var top=q[1]-lg-bh-hr*2-bob;
   if(v.want&&v.state==='walk'){c.fillStyle=NC[v.want];c.beginPath();c.arc(q[0],top-3.2*Math.max(s,.6),Math.max(1.6,2.4*s),0,6.283);c.fill();c.strokeStyle='#fff';c.lineWidth=1;c.stroke();}
   if(v.state==='wait'){c.fillStyle='#fff';c.font='700 '+Math.max(9,11*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('…',q[0],top);}
+  // 비·눈 오는 날엔 우산
+  if(wxUmbrella()){
+    var ur=Math.max(4.5,8*s),uy=top-1.5*s,uc=['#d6453a','#3f6fe0','#f2c14e','#2f9e6e','#8a5bb5','#2b2b2b'][(v.ph*10|0)%6];
+    c.strokeStyle='#3d3d46';c.lineWidth=1;c.beginPath();c.moveTo(q[0]+bw*.3,q[1]-lg-bh*.4);c.lineTo(q[0]+bw*.3,uy);c.stroke();
+    c.fillStyle=uc;c.beginPath();c.moveTo(q[0]+bw*.3-ur,uy+ur*.15);c.quadraticCurveTo(q[0]+bw*.3,uy-ur*1.05,q[0]+bw*.3+ur,uy+ur*.15);c.closePath();c.fill();
+  }
 }
 function drawRoadCar(e){
   box(e.r1,.02,.16,e.c);box(e.r2,.16,.28,e.c,'#bcd3e0');

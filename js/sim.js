@@ -3,12 +3,13 @@
 function update(dt){
   if(S.over)return;
   S.clock+=dt;S.t+=dt;
-  var evM=S.evt==='festival'?1.6:(S.evt==='rain'?0.5:1);
+  wxTick(dt);
+  var evM=(S.evt==='festival'?1.6:1)*WEATHER[wxNow()].vis;
   var parkF=clamp((A.park+4)/(S.members*0.35+6),0.35,1);
   // 초반에도 마당이 비어 보이지 않게 방문자는 넉넉히, 대신 한 사람의 정착 확률은 낮게
   // 교회 문이 닫혀 있으면 아무도 오지 않는다. 주일에는 성도들이 예배하러 온다
   if(S.open){
-    var rate=VIS_RATE*(0.4+S.rep/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0008;
+    var rate=VIS_RATE*(0.4+S.rep/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
     S.spawnAcc+=rate*dt;
     while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<60)spawnV(false);}
     if(isSunday()){
@@ -20,7 +21,7 @@ function update(dt){
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
-var VIS_RATE=0.32;
+var VIS_RATE=0.16,SHOP_COST=0.5;
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
 function addLog(msg){S.log.unshift({w:S.week,msg:msg});if(S.log.length>10)S.log.length=10;}
@@ -32,20 +33,23 @@ function addLog(msg){S.log.unshift({w:S.week,msg:msg});if(S.log.length>10)S.log.
 function weekEnd(){
   recalc();
   var dc=curDiff(),mood=S.mood,m=S.members;
-  var closed=!S.open,attend=closed?0:Math.min(m,A.seats);
+  // 주일 날씨(비·눈·폭우)에 따라 출석이 줄어든다
+  var closed=!S.open,full=closed?0:Math.min(m,A.seats),attend=Math.round(full*wxAttend()),wxLost=full-attend;
   // 출석이 많을수록 한 사람당 헌금 효과는 줄어든다
   var offering=Math.round(attend*9*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500));
   var online=closed?Math.round(m*1.2):0;
-  var visGive=Math.round(S.visitsWeek*1.2*(0.5+S.rep/100));
+  var visGive=Math.round(S.visitsWeek*0.5*(0.5+S.rep/100));
   var sponsor=Math.round(Math.max(0,260-3.5*S.week));
   var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(teamPay()+assocPay());
   var loan=payLoans();
-  var exp=opex+pay+loan,give=offering+online+visGive+sponsor;
+  // 매장 재료비: 판매액의 절반
+  var supply=Math.round(S.weekShop*SHOP_COST);
+  var exp=opex+pay+loan+supply,give=offering+online+visGive+sponsor;
   var inc=give+S.weekInc;
-  S.money+=give-opex-pay-loan;
+  S.money+=give-opex-pay-loan-supply;
   S.hist.push({inc:inc,exp:exp});if(S.hist.length>12)S.hist.shift();
   S.posWeeks=inc-exp>0?S.posWeeks+1:0;
-  S.rcpt={w:S.week,closed:closed,attend:attend,offering:offering,online:online,visGive:visGive,shop:Math.round(S.weekShop),other:Math.round(S.weekInc-S.weekShop),sponsor:sponsor,opex:opex,pay:pay,loan:loan,net:Math.round(inc-exp)};
+  S.rcpt={w:S.week,closed:closed,attend:attend,offering:offering,online:online,visGive:visGive,shop:Math.round(S.weekShop),other:Math.round(S.weekInc-S.weekShop),sponsor:sponsor,opex:opex,pay:pay,loan:loan,supply:supply,wx:wxNow(),wxLost:wxLost,net:Math.round(inc-exp)};
   if(closed)S.tempMood-=6;
   var msg=closed?'문을 닫은 주일 · 온라인 헌금 +'+fmt(online):'주일예배 · 출석 '+attend+'명 · 헌금 +'+fmt(offering)+(S.weekShop?' · 매장 +'+fmt(S.weekShop):'')+' · 지출 −'+fmt(exp);
   var churn=m*0.012;
@@ -70,9 +74,8 @@ function weekEnd(){
   if(S.evtLeft>0){S.evtLeft--;if(S.evtLeft===0)S.evt=null;}
   else if(Math.random()<0.14){
     var r=Math.random();
-    if(r<0.25){S.evt='rain';S.evtLeft=2;ev='장마철입니다. 2주간 방문자가 줄어요.';}
-    else if(r<0.5){S.evt='festival';S.evtLeft=2;ev='동네 축제가 열렸어요. 2주간 거리가 북적여요.';}
-    else if(r<0.75){S.money+=400;ev='익명의 감사 헌금 400이 들어왔어요.';}
+    if(r<0.4){S.evt='festival';S.evtLeft=2;ev='동네 축제가 열렸어요. 2주간 거리가 북적여요.';}
+    else if(r<0.72){S.money+=400;ev='익명의 감사 헌금 400이 들어왔어요.';}
     else{S.money-=250;ev='난방 설비 수리비 250이 나갔어요.';}
   }
   addLog(msg);
