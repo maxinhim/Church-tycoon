@@ -9,12 +9,13 @@ function spawnV(member){
   var needs={};NEEDS.forEach(function(n){needs[n]=22+Math.random()*34;});
   if(member)needs.word=8+Math.random()*10;
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
-    member:!!member,wallet:Math.round(member?6+Math.random()*20:3+Math.random()*16),
-    life:95+Math.random()*50,speed:1.5+Math.random()*0.6,ph:Math.random()*6.28,
+    member:!!member,wallet:Math.round(member?12+Math.random()*40:6+Math.random()*32),
+    life:55+Math.random()*30,speed:1.9+Math.random()*0.7,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
 }
-var JOIN_P=0.07;
+// 한 주가 48초라 한 주에 오는 방문자가 예전(240초)보다 적어, 한 번 방문의 정착 확률을 올려 한 주 합계를 맞춘다
+var JOIN_P=0.14;
 /* 발자국: 노드마다 지나간 사람 수 (저장하지 않음, 주마다 절반으로 줄어든다).
    둘러보는 방문자는 발길이 덜 닿은 곳(새로 깐 길·데크)을 골라 간다 */
 var TRAF={};
@@ -79,8 +80,8 @@ function arrive(v){
   if(b.inUse<defOf(b).cap)enter(v,b);
   else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=5;}}
 }
-// 한 주가 길어져(240초) 건물 안에 머무는 시간도 늘린다
-var STAY=2;
+// 한 주 48초에 맞춰 건물 안에 머무는 시간을 짧게
+var STAY=0.6;
 function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*STAY*(0.8+Math.random()*0.4);}
 function finishVisit(v){
   var b=bById(v.inside);
@@ -95,7 +96,7 @@ function finishVisit(v){
     }
     // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
     if(d.income&&v.wallet>0){
-      var pay=Math.min(v.wallet,Math.round(d.income*wxSale(d)*(0.7+Math.random()*0.6)));
+      var pay=Math.min(v.wallet,Math.round(d.income*SHOP_K*wxSale(d)*(0.7+Math.random()*0.6)));
       if(pay>0){v.wallet-=pay;S.money+=pay;S.weekInc+=pay;S.weekShop+=pay;sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
     placeAt(v,exitNodeFor(b));

@@ -57,7 +57,7 @@ function placeWhy(d,x,y,face){
   return '';
 }
 function startPlace(id){
-  UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
@@ -130,12 +130,40 @@ function syncPlace(){
   ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
   ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
 }
+// 바닥 미리보기를 d 방향 다음 칸으로 (데크 위면 같은 높이의 다음 데크, 없으면 땅)
+function floorStep(g,d){
+  var nx=g.x+DIRS[d][0],ny=g.y+DIRS[d][1];
+  if(nx<0||ny<0||nx>=COLS||ny>=PZ)return false;
+  var cp=g.pid&&pieceById(g.pid),np=cp?piecesAt(nx,ny).filter(function(q){return isDeckPiece(q)&&q.l===cp.l;})[0]:null;
+  g.x=nx;g.y=ny;if(np)g.pid=np.id;else delete g.pid;return true;
+}
+/* 타일 카드에서 종류를 고르면: 그 칸을 바꾸고 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다.
+   방향은 이어진 바닥이 있는 쪽(같은 종류였던 바닥 우선)으로 먼저 잡는다 */
+function startFloorFrom(x,y,pid,id,prev){
+  var g={x:x,y:y};if(pid)g.pid=pid;
+  var best=-1,bs=-1;
+  for(var d=0;d<4;d++){
+    var t={x:x,y:y,pid:pid};if(!floorStep(t,d))continue;
+    var sl=floorSlot(t.x,t.y,t.pid),cur=sl&&sl.get(),sc=cur?(cur===prev?2:1):0;
+    if(sc>bs){bs=sc;best=d;}
+  }
+  UI.tab='build';UI.fold=false;UI.cat='floor';UI.sel=null;UI.selPiece=null;UI.selFloor=null;
+  startPlace(id);
+  if(best>=0)UI.fdir=best;
+  UI.ghost=g;UI.flast={x:x,y:y,pid:pid};floorStep(UI.ghost,UI.fdir);
+  renderDetail();
+}
 function plPathWhy(){var p=pcPiece();return p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'시작할 곳을 먼저 누르세요';}
 function plCur(){var k=placeKind();return k==='path'?UI.pc.dir:((k==='floor'||(k==='bld'&&arrowMode(D[UI.tool])==='line'))?UI.fdir:UI.face);}
 // 화살표: 건물은 정면(기본 출입구) 방향, 길·바닥·조경은 다음 칸이 이어질 방향
 function plDir(d){
   if(placeKind()==='path'){UI.pc.dir=d;renderDetail();return;}
-  if(placeKind()==='floor'){UI.fdir=d;renderDetail();return;}
+  if(placeKind()==='floor'){
+    // 방금 칠한 칸 바로 다음에 있던 미리보기는, 방향을 바꾸면 그 칸 기준 새 방향으로 옮긴다
+    var g=UI.ghost,fl=UI.flast;
+    if(g&&fl){var t={x:fl.x,y:fl.y,pid:fl.pid};floorStep(t,UI.fdir);if(t.x===g.x&&t.y===g.y){var u={x:fl.x,y:fl.y,pid:fl.pid};if(floorStep(u,d)){g.x=u.x;g.y=u.y;if(u.pid)g.pid=u.pid;else delete g.pid;}}}
+    UI.fdir=d;renderDetail();return;
+  }
   var df=D[UI.tool];
   if(arrowMode(df)==='line'){UI.fdir=d;if(isLineKind(df))UI.face=d<2?2:0;renderDetail();return;}
   var o=faceDims(df,UI.face),n=faceDims(df,d),g=UI.ghost;
@@ -174,12 +202,7 @@ function plOk(){
     var ter=isTerDef(UI.tool),g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':(ter?terApply(g0.x,g0.y,UI.tool,UI.tlv,UI.fdir):paintFloor(g0.x,g0.y,UI.tool,g0.pid));
     if(fw){toast(fw,1400);sfx('error',.4);return;}
     plLock=now+150;plBuzz();sfx(ter?'place':'floor',.45,90);
-    var nx=g0.x+DIRS[UI.fdir][0],ny=g0.y+DIRS[UI.fdir][1];
-    if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ){
-      // 데크 위에서 칠하고 있었으면 같은 높이의 다음 데크로, 없으면 땅으로
-      var cp=g0.pid&&pieceById(g0.pid),np=cp?piecesAt(nx,ny).filter(function(q){return isDeckPiece(q)&&q.l===cp.l;})[0]:null;
-      g0.x=nx;g0.y=ny;if(np)g0.pid=np.id;else delete g0.pid;
-    }
+    UI.flast={x:g0.x,y:g0.y,pid:g0.pid};floorStep(g0,UI.fdir);
     renderDetail();hud(true);return;
   }
   if(k!=='bld'||!UI.ghost)return;
@@ -271,7 +294,8 @@ function renderPbar(){
       undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else{
     var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool,UI.ghost.pid):'';
-    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">한 칸 '+fmt(d.cost)+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    var fsl=UI.ghost&&floorSlot(UI.ghost.x,UI.ghost.y,UI.ghost.pid),fpv=fsl&&fsl.get(),fnc=fpv&&fpv!==UI.tool&&d.cost?floorSwapCost(fpv,UI.tool):null;
+    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">'+(fnc!=null?'바꾸기 '+(fnc<0?'+':'')+fmt(Math.abs(fnc)):'한 칸 '+fmt(d.cost))+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)
   if(h!==plHtml){el.innerHTML=h;plHtml=h;}

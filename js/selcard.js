@@ -6,7 +6,8 @@
    · 철거는 두 번 눌러야 한다 (작은 카드에서 잘못 눌러도 바로 사라지지 않게)
    지도 빈 곳을 누르거나 Esc를 누르면 닫힌다. 버튼 동작은 패널과 같은 onPanel로 처리한다. */
 var scHtml='',scKey='',scMore=false,scArm=0;
-function selFloorOk(){var f=UI.selFloor;if(!f)return false;var sl=floorSlot(f.x,f.y,f.pid);return !!sl&&!!sl.get();}
+// 땅 카드: 교회 부지 안의 빈 땅(바닥이 깔렸든 아니든) 한 칸
+function selFloorOk(){var f=UI.selFloor;if(!f||f.x<0||f.y<0||f.x>=COLS||f.y>=PZ)return false;var sl=floorSlot(f.x,f.y,f.pid);return !!sl&&!sl.busy&&!piecesAt(f.x,f.y).length;}
 function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI.sel))||(UI.selPiece&&pieceById(UI.selPiece))||selFloorOk());}
 // 바닥 바꾸기 줄: 지금 바닥을 뺀 종류마다 (걷어낸 반값을 뺀) 바꾸는 값
 function floorRow(prev,pid,x,y){
@@ -59,9 +60,14 @@ function renderSelCard(){
     if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmt(Math.floor(D[p.f].cost*.5)),'','f_erase');
     row+=scDem('철거',pieceCost(p)*0.5);
   }else{
-    var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get();
-    h='<div class="sct"><b>'+D[cur].name+'</b><span>바꾸면 걷어낸 값의 반을 빼고 계산해요</span></div>'+floorRow(cur,0,sf.x,sf.y);
-    row+=scDem('철거',Math.floor(D[cur].cost*.5));
+    // 빈 땅·바닥 칸: 바닥 깔기·바꾸기, 땅 높이기·낮추기, 경사로를 바로 고른다
+    var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
+    h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?'높이 '+gh+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'눌러서 바로 깔아요')+'</span></div>'+floorRow(cur,0,sf.x,sf.y);
+    var up=terPlan(sf.x,sf.y,'ter_set',gh+1),dn=gh>0||isRamp(sf.x,sf.y)?terPlan(sf.x,sf.y,'ter_set',isRamp(sf.x,sf.y)?gh:gh-1):null;
+    if(!up.why)row+=scBtn('gter','땅 높이기 '+fmt(up.cost),'',gh+1,'땅을 한 층 높이기 '+fmt(up.cost));
+    if(dn&&!dn.why)row+=scBtn('gter',(isRamp(sf.x,sf.y)?'평평하게 ':'땅 낮추기 ')+fmt(dn.cost),'',isRamp(sf.x,sf.y)?gh:gh-1);
+    row+=scBtn('gramp','경사로…','',null,'이 칸에서 흙 경사로 짓기 (방향을 고른 뒤 ✓)');
+    if(cur)row+=scDem('철거',Math.floor(D[cur].cost*.5));
   }
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
   h+='<div class="scb">'+row+'</div>'+(scMore?more:'');

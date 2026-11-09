@@ -11,17 +11,20 @@ function update(dt){
   if(S.open){
     var rate=VIS_RATE*(0.4+S.rep/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
     S.spawnAcc+=rate*dt;
-    while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<60)spawnV(false);}
+    while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<70)spawnV(false);}
     if(isSunday()){
-      S.memAcc+=Math.min(S.members,A.seats)*0.4/(WEEK/7)*dt;
+      S.memAcc+=Math.min(S.members,A.seats)*0.25/(WEEK/7)*dt;
       while(S.memAcc>=1){S.memAcc-=1;if(V.length<90)spawnV(true);}
     }
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
+  // 목표는 주중에도 이루는 즉시 보상 (0.5초마다 확인)
+  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;checkGoal();}
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
-var VIS_RATE=0.16,SHOP_COST=0.5;
+// 한 주 48초 기준. 방문자는 예전(240초)보다 2.5배 자주 오고, 한 번 살 때 2배 산다 (한 주 매장 수입을 예전과 비슷하게)
+var VIS_RATE=0.4,SHOP_COST=0.5,SHOP_K=2;
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
 function addLog(msg){S.log.unshift({w:S.week,msg:msg});if(S.log.length>10)S.log.length=10;}
@@ -38,7 +41,7 @@ function weekEnd(){
   // 출석이 많을수록 한 사람당 헌금 효과는 줄어든다
   var offering=Math.round(attend*9*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500));
   var online=closed?Math.round(m*1.2):0;
-  var visGive=Math.round(S.visitsWeek*0.5*(0.5+S.rep/100));
+  var visGive=Math.round(S.visitsWeek*1.0*(0.5+S.rep/100));
   var sponsor=Math.round(Math.max(0,260-3.5*S.week));
   var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(teamPay()+assocPay());
   // 재정 화면에서 항목마다 어떻게 계산됐는지 보여 주려고 계산 재료를 함께 남긴다

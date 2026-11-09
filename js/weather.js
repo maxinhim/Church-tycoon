@@ -1,6 +1,6 @@
 'use strict';
 /* ---------- 날씨 ----------
-   날씨는 2~3일(약 70~100초)마다 바뀌고, 다음 날씨와 며칠 뒤인지 미리 알려 준다(시계의 '내일'·'2일 뒤').
+   날씨는 한 주에 한 번(월요일) 정해지고, 다음 주 날씨를 미리 알려 준다. 비·폭우·눈은 2~3일만 오고 그쳐 맑음·흐림이 된다.
    계절(올해 몇째 주)에 따라 나오는 날씨가 다르다. 겨울엔 눈, 여름엔 폭염·폭우.
    · 맑음: 방문자 조금 늘고, 야외 자리(벤치·피크닉·파라솔·야외 예배터)의 효과가 커진다
    · 흐림: 구름 그림자가 지나간다
@@ -30,7 +30,7 @@ var WX_SEASON={
 var OUTDOOR=['stage','bench','picnic','parasol','playground','market'];
 function seasonKey(){var w=weekOfYear();return w>=10&&w<=22?'spring':(w<=35&&w>22?'summer':(w<=47&&w>35?'autumn':'winter'));}
 function ensureWx(){
-  if(!S.wx)S.wx={cur:'sun',next:'cloud',day:dayIdx(),left:3,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1};
+  if(!S.wx)S.wx={cur:'sun',next:'cloud',day:dayIdx(),clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1};
   return S.wx;
 }
 function rollWx(cur){
@@ -80,13 +80,22 @@ function wxAttend(){
   return 1;
 }
 function wxSpan(){return Math.random()<0.5?2:3;}
-// 날씨가 바뀔 때
+function wxWetKind(k){return k==='rain'||k==='storm'||k==='snow';}
+// 새 주(월요일): 이번 주 날씨. 비·폭우·눈이면 2~3일 뒤 그칠 날씨도 정해 둔다
 function advanceWx(){
   var w=ensureWx(),prev=w.cur;
-  w.cur=w.next;w.next=rollWx(w.cur);w.hits=0;w.lt=4+Math.random()*6;
+  w.cur=w.next;w.next=rollWx(w.cur);
+  if(wxWetKind(w.cur)){w.clear=wxSpan();w.after=Math.random()<0.55?'sun':'cloud';}else{w.clear=0;w.after=null;}
+  wxChanged(prev);
+}
+// 비·눈이 그친다
+function clearWx(){var w=ensureWx(),prev=w.cur;w.cur=w.after||'cloud';w.clear=0;w.after=null;wxChanged(prev);}
+// 날씨가 바뀐 뒤 효과·알림
+function wxChanged(prev){
+  var w=ensureWx();w.hits=0;w.lt=4+Math.random()*6;
   var c=w.cur;
   if((prev==='rain'||prev==='storm')&&(c==='sun'||c==='cloud')&&Math.random()<0.55){
-    w.bow=26;S.tempMood+=2;S.rep=clamp(S.rep+0.5,0,100);
+    w.bow=12;S.tempMood+=2;S.rep=clamp(S.rep+0.5,0,100);
     toast('비가 그치고 무지개가 떴어요! 만족도와 평판이 조금 올라요',3000);
   }else if(c!==prev)toast('오늘 날씨: '+WEATHER[c].n+' · '+WEATHER[c].tip,3000);
   if(c==='heat'&&!hasWater())S.tempMood-=1.5;
@@ -98,11 +107,12 @@ function advanceWx(){
 // 매 갱신: 날 바뀜, 눈 쌓임, 물웅덩이, 무지개, 벼락
 function wxTick(dt){
   var w=ensureWx(),di=dayIdx();
-  // 날마다 하루씩 줄이고, 다 지나면 다음 날씨로 (한 날씨가 2~3일 이어진다)
-  if(di!==w.day){w.day=di;if(w.left==null)w.left=1;w.left--;if(w.left<=0){advanceWx();w.left=wxSpan();}}
+  // 월요일에 이번 주 날씨, 그 밖의 날엔 비·눈이 그칠 날을 하루씩 센다
+  if(di!==w.day){w.day=di;if(di===0)advanceWx();else if(w.clear>0){w.clear--;if(w.clear<=0)clearWx();}}
   var c=w.cur;
-  w.snow=c==='snow'?Math.min(1,w.snow+dt/50):Math.max(0,w.snow-dt/(c==='heat'||c==='sun'?30:80));
-  w.wet=(c==='rain'||c==='storm')?Math.min(1,w.wet+dt/15):Math.max(0,w.wet-dt/(c==='wind'||c==='heat'?15:45));
+  // 한 주 48초에 맞춘 빠르기: 눈은 하루 남짓이면 덮이고, 그치면 이틀쯤에 녹는다
+  w.snow=c==='snow'?Math.min(1,w.snow+dt/9):Math.max(0,w.snow-dt/(c==='heat'||c==='sun'?6:14));
+  w.wet=(c==='rain'||c==='storm')?Math.min(1,w.wet+dt/4):Math.max(0,w.wet-dt/(c==='wind'||c==='heat'?4:10));
   if(w.bow>0)w.bow=Math.max(0,w.bow-dt);
   if(c==='storm'){w.lt-=dt;if(w.lt<=0){w.lt=7+Math.random()*9;strike();}}
 }

@@ -19,22 +19,23 @@ function floorWhy(x,y,id,pid){
   var prev=sl.get();
   if(id==='f_erase')return prev?'':'지울 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
-  if(S.money<D[id].cost)return '자금이 부족해요';
+  if(S.money<floorSwapCost(prev,id))return '자금이 부족해요';
   return '';
 }
 function paintFloor(x,y,id,pid){
   var why=floorWhy(x,y,id,pid);if(why&&why!=='자금이 부족해요')return why;
   var sl=floorSlot(x,y,pid),prev=sl.get();
   if(id==='f_erase'){sl.set(null);S.money+=Math.floor(D[prev].cost*0.5);}
-  else{if(S.money<D[id].cost)return '자금이 부족해요';S.money-=D[id].cost;sl.set(id);}
-  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id});
+  // 깔린 바닥 위에 다른 바닥을 깔면 걷어낸 반값을 빼고 계산한다
+  else{var c=floorSwapCost(prev,id);if(S.money<c)return '자금이 부족해요';S.money-=c;sl.set(id);}
+  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:id==='f_erase'?0:floorSwapCost(prev,id)});
   recalc();save();return '';
 }
 function floorUndo(){
   var u=UI.undo.pop();if(!u)return false;
   var sl=floorSlot(u.x,u.y,u.pid);if(!sl)return false;
   if(u.id==='f_erase'){sl.set(u.prev);S.money-=Math.floor(D[u.prev].cost*0.5);}
-  else{sl.set(u.prev);S.money+=D[u.id].cost;}
+  else{sl.set(u.prev);S.money+=u.c!=null?u.c:D[u.id].cost;}
   recalc();save();return true;
 }
 /* 깔린 바닥을 다른 종류로 바꾸기: 걷어낼 때 돌려받는 반값을 새 바닥 값에서 빼고 계산한다.

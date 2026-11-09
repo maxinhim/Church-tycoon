@@ -29,18 +29,19 @@ function syncClock(){
   var yr=Math.floor(S.week/52)+1,wn=S.week%52+1,di=dayIdx(),left=6-di;
   $('#ckWeek').textContent=yr+'년 '+wn+'주';
   $('#ckLeft').textContent=(left?'주일 정산까지 '+left+'일':'오늘은 주일')+(S.evt==='festival'?' · 축제':'');
-  var w=ensureWx(),nd=wxWhen(),wk=w.cur+'|'+w.next+'|'+nd;
+  var w=ensureWx(),nd=wxWhen(),nk=wxUpcoming(),wk=w.cur+'|'+nk+'|'+nd;
   if(syncClock.k!==wk){syncClock.k=wk;
     $('#wxNow').innerHTML=wxIcon(w.cur)+WEATHER[w.cur].n;
-    $('#wxNext').innerHTML=nd+' '+wxIcon(w.next)+WEATHER[w.next].n;}
+    $('#wxNext').innerHTML=nd+' '+wxIcon(nk)+WEATHER[nk].n;}
   var ds=$('#ckDays').children;for(var i=0;i<7;i++){ds[i].classList.toggle('now',i===di);ds[i].classList.toggle('past',i<di);}
   $('#ckBar').style.width=clamp(S.t/WEEK*100,0,100)+'%';
-  $('#clock').setAttribute('aria-label',yr+'년 '+wn+'주 '+DAYS[di]+', '+(left?'주일 정산까지 '+left+'일':'오늘 주일 정산')+', 날씨 '+WEATHER[w.cur].n+', '+nd+' '+WEATHER[w.next].n+'. 누르면 날씨 설명');
+  $('#clock').setAttribute('aria-label',yr+'년 '+wn+'주 '+DAYS[di]+', '+(left?'주일 정산까지 '+left+'일':'오늘 주일 정산')+', 날씨 '+WEATHER[w.cur].n+', '+nd+' '+WEATHER[nk].n+'. 누르면 날씨 설명');
 }
-// 다음 날씨가 오는 때: '내일' 또는 'n일 뒤'
-function wxWhen(){var l=ensureWx().left;return !l||l<=1?'내일':l+'일 뒤';}
+// 다음 날씨: 비·눈이 그칠 날이 남았으면 그친 뒤 날씨, 아니면 다음 주 날씨
+function wxUpcoming(){var w=ensureWx();return w.clear>0&&w.after?w.after:w.next;}
+function wxWhen(){var w=ensureWx();if(w.clear>0)return w.clear<=1?'내일':w.clear+'일 뒤';return dayIdx()===6?'내일':'다음 주';}
 // 시계를 누르면 오늘·내일 날씨가 무슨 뜻인지 알려 준다
 function wxExplain(){
   var w=ensureWx(),se=WX_SEASON[seasonKey()].n;
-  toast(se+' · 오늘 '+WEATHER[w.cur].n+': '+WEATHER[w.cur].tip+' / '+wxWhen()+' '+WEATHER[w.next].n,4200);
+  toast(se+' · 오늘 '+WEATHER[w.cur].n+': '+WEATHER[w.cur].tip+' / '+wxWhen()+' '+WEATHER[wxUpcoming()].n,4200);
 }

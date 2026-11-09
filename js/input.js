@@ -31,8 +31,9 @@ function onTap(px,py){
   if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   // 지은 것을 누르면 패널을 열지 않고 그 위에 작은 카드만 띄운다 (열려 있던 패널은 닫는다)
   var dem=UI.tool==='demolish',sel=pickBuilding(px,py),stl=UI.selTile,pp=sel?null:pickPieceAt(px,py);
-  // 건물·길이 아니면 깔린 바닥 타일 (누르면 바로 바꾸기·철거 카드)
-  var ft=null;if(!sel&&!pp){var gt=groundTile(px,py);if(gt.x>=0&&gt.y>=0&&gt.x<COLS&&gt.y<PZ&&!gt.pid&&S.floor[gt.x+','+gt.y]&&!isRamp(gt.x,gt.y))ft={x:gt.x,y:gt.y};}
+  // 건물·길이 아니면 땅 칸 카드 (바닥 깔기·바꾸기, 땅 높이기, 경사로). 다른 카드가 열려 있으면 이번 누름은 닫기만 한다
+  var ft=null,wasOpen=!!(UI.sel||UI.selPiece||UI.selFloor);
+  if(!sel&&!pp&&!wasOpen&&!dem){var gt=groundTile(px,py);if(gt.x>=0&&gt.y>=0&&gt.x<COLS&&gt.y<PZ&&!gt.pid)ft={x:gt.x,y:gt.y};}
   if((sel||pp||ft)&&!UI.fold)closeDock();
   UI.sel=sel;UI.selTile=stl;UI.selPiece=pp?pp.id:null;UI.selFloor=ft;
   // 철거 모드에서 골랐으면 철거 버튼이 보이게 펼쳐 둔다
@@ -118,10 +119,22 @@ function onPanel(e){
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
   else if(a==='fswap'||a==='demfloor'){
     var tid=a==='demfloor'?'f_erase':v,sp=UI.selPiece&&pieceById(UI.selPiece),sf=UI.selFloor;
-    var fx=sp?sp.x:sf&&sf.x,fy=sp?sp.y:sf&&sf.y,fw=fx==null?'바닥을 먼저 고르세요':floorSwap(fx,fy,tid,sp?sp.id:0);
-    if(fw){toast(fw,1600);sfx('error',.4);}
-    else{sfx(tid==='f_erase'?'demolish':'floor',.6);toast(tid==='f_erase'?'바닥을 걷어냈어요':D[tid].name+'(으)로 바꿨어요',1200);if(tid==='f_erase'&&sf&&!sp)UI.selFloor=null;}
+    var fx=sp?sp.x:sf&&sf.x,fy=sp?sp.y:sf&&sf.y,fsl=fx==null?null:floorSlot(fx,fy,sp?sp.id:0),fprev=fsl?fsl.get():null;
+    var fw=fx==null?'바닥을 먼저 고르세요':floorSwap(fx,fy,tid,sp?sp.id:0);
+    if(fw){toast(fw,1600);sfx('error',.4);renderDetail();hud(true);return;}
+    sfx(tid==='f_erase'?'demolish':'floor',.6);
+    if(tid==='f_erase'){toast('바닥을 걷어냈어요',1200);if(sf&&!sp)UI.selFloor=null;renderDetail();hud(true);return;}
+    // 바꾼 뒤 바닥 깔기로 넘어가 화살표 쪽으로 이어 바꾼다
+    startFloorFrom(fx,fy,sp?sp.id:0,tid,fprev);hud(true);
+  }
+  else if(a==='gter'){
+    var gf=UI.selFloor,gw=gf?terApply(gf.x,gf.y,'ter_set',+v):'칸을 먼저 고르세요';
+    if(gw){toast(gw,1600);sfx('error',.4);}else{sfx('place',.6);toast('땅 높이 '+v,1000);}
     renderDetail();hud(true);
+  }
+  else if(a==='gramp'){
+    var rf=UI.selFloor;if(!rf)return;
+    UI.selFloor=null;UI.tab='build';UI.fold=false;UI.cat='land';startPlace('ter_ramp');UI.ghost={x:rf.x,y:rf.y};renderDetail();
   }
   else if(a==='fexp'){UI.fexp=UI.fexp===v?null:v;renderFinance();}
   else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}

@@ -488,7 +488,7 @@ async function rulesChecks(browser, url) {
     // 시계: 오른쪽 위, 한 주는 48초, 주일 칸 강조
     S.t = WEEK * 6.5 / 7; hud(true);
     const ck = document.getElementById('clock').getBoundingClientRect();
-    o.clock = WEEK === 240 && ck.left > innerWidth / 2 && ck.top < 60 && document.querySelector('#ckDays .sun').classList.contains('now') && isSunday();
+    o.clock = WEEK === 48 && ck.left > innerWidth / 2 && ck.top < 60 && document.querySelector('#ckDays .sun').classList.contains('now') && isSunday();
     // 재정 탭
     openGroup('status'); document.querySelector('#subtabs [data-v="finance"]').click();
     o.finance = UI.tab === 'finance' && /대출 받기/.test(document.getElementById('panel').textContent);
@@ -517,7 +517,7 @@ async function rulesChecks(browser, url) {
     S.members = 20; S.wx.cur = 'storm'; S.t = WEEK - 0.05; S.wx.day = 6; update(0.1);
     o.wxSunday = S.rcpt.wx === 'storm' && S.rcpt.wxLost > 0 && /폭우/.test(document.getElementById('rcpt').textContent);
     hud(true);
-    o.wxClock = new RegExp(WEATHER[S.wx.cur].n).test(document.getElementById('wxNow').textContent) && /내일|일 뒤/.test(document.getElementById('wxNext').textContent);
+    o.wxClock = new RegExp(WEATHER[S.wx.cur].n).test(document.getElementById('wxNow').textContent) && /내일|일 뒤|다음 주/.test(document.getElementById('wxNext').textContent);
     // 날씨마다 그려 보기 (비·눈 효과, 우산, 번개, 무지개)
     for (let i = 0; i < 20; i++) spawnV(false);
     Object.keys(WEATHER).forEach(k => { S.wx.cur = k; WX.k = {}; WX.k[k] = 1; S.wx.wet = 1; S.wx.bow = 10; stepWx(0.5); WX.flash = 1; WX.bolt = { x: 5, y: 5, z: 1, t: .3 }; draw(); });
@@ -538,7 +538,7 @@ async function rulesChecks(browser, url) {
   check(r.repayWeekly && r.repayAll, '대출: 주일 정산 때 원리금 상환, 남은 원금 한 번에 갚기');
   check(r.receipt, '주일 정산: 영수증 카드가 뜸');
   check(r.closedSunday, '주일 정산: 문을 닫은 주일엔 온라인 헌금만');
-  check(r.clock, '시계: 오른쪽 위, 한 주 240초, 주일 강조');
+  check(r.clock, '시계: 오른쪽 위, 한 주 48초, 주일 강조');
   check(r.finance, '재정 탭: 현황 버튼 안에 대출·정산 내역');
   check(r.wxSeason, '날씨: 여름엔 폭염·폭우, 겨울엔 눈 (계절별)');
   check(r.wxAdvance && r.wxClock, '날씨: 차례가 되면 다음 날씨로 바뀌고 시계에 오늘·다음 날씨');
@@ -570,7 +570,9 @@ async function ministryChecks(browser, url) {
     o.normalStart = S.diff === 'normal' && S.money === DIFF.normal.money;
     o.locked = isLocked('chapel') && hireTeam('admin') !== '' && appoint('deacon') !== '';
     // 목표 달성: 후원금·평판·잠금 해제·축하 카드
-    const m0 = S.money, r0 = S.rep; S.members = 12; recalc(); checkGoal();
+    // 주중(월요일)에도 조건을 채우면 바로 달성된다 (주일 정산을 기다리지 않음)
+    const m0 = S.money, r0 = S.rep, wk0 = S.week; S.t = 1; S.members = 12; recalc(); S.goalAcc = 0; update(0.6);
+    o.goalMid = S.goal === 1 && S.week === wk0;
     o.goal = S.goal === 1 && S.money === m0 + GOALS[0].r && S.rep >= r0 + GOALS[0].rep - 0.001 && !isLocked('chapel') && !document.getElementById('cele').hidden && CF.length > 0;
     // 부지: 산 땅 밖에는 못 짓고, 사면 넓어진다
     S.money = 99999;
@@ -617,6 +619,7 @@ async function ministryChecks(browser, url) {
   check(r.normalStart, '난이도: 기본은 보통(자금 6,000)으로 시작');
   check(r.locked, '목표: 처음엔 예배당·관리팀·집사 임명이 잠겨 있음');
   check(r.goal, '목표: 달성하면 후원금·평판·잠금 해제와 축하 카드·꽃가루');
+  check(r.goalMid, '목표: 주일을 기다리지 않고 주중에 바로 달성');
   check(r.anywhere, '부지: 처음부터 지도 전체에 지을 수 있음 (도로 줄 제외)');
   check(r.noStamina, '목회자 체력: 없앤 기능이 남아 있지 않음');
   check(r.team, '사역팀: 꾸리면 효과가 반영됨');
@@ -887,10 +890,13 @@ async function terrainChecks(browser, url) {
     // 주차 분류
     o.park = ['lot', 'lots', 'parktower', 'bikerack'].every(id => D[id].cat === 'park') && CATS.some(c => c[0] === 'park');
     // 날씨는 2~3일씩 이어진다
+    // 날씨는 월요일에만 정해지고, 비는 2~3일 뒤 그친다
     let changes = 0; const adv = window.advanceWx; window.advanceWx = function () { changes++; adv(); };
-    for (let d = 0; d < 21; d++) { S.wx.day = -1; wxTick(.01); }
+    S.wx.day = 6; S.wx.next = 'rain'; const seq = [];
+    for (let d = 0; d < 21; d++) { S.t = (d % 7) * WEEK / 7 + .01; wxTick(.01); seq.push(S.wx.cur); }
     window.advanceWx = adv;
-    o.wxSlow = changes >= 7 && changes <= 11;
+    const rainDays = seq.slice(0, 7).filter(k => k === 'rain').length;
+    o.wxSlow = changes === 3 && rainDays >= 2 && rainDays <= 3 && seq[0] === 'rain' && seq[6] !== 'rain';
     // 재정 항목 설명
     S.t = WEEK - .001; weekEnd(); o.why = ['offering', 'opex', 'supply', 'pay'].every(k => rcptWhy(S.rcpt, k).indexOf('<li>') === 0);
     return o;
@@ -909,7 +915,7 @@ async function terrainChecks(browser, url) {
   check(r.saved, '지형: 저장·불러오기 후에도 높이 유지');
   check(r.wear, '노후: 단계마다 표시가 바뀌고 효율이 90·75·55%로 떨어짐');
   check(r.park, '주차: 주차장·소형 주차장·주차 타워·자전거 거치대가 주차 분류에');
-  check(r.wxSlow, '날씨: 2~3일마다 바뀜');
+  check(r.wxSlow, '날씨: 한 주에 한 번 정해지고, 비는 2~3일 뒤 그침');
   check(r.why, '재정: 항목마다 계산 방식 설명이 있음');
   check(errs.length === 0, '지형: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -965,7 +971,20 @@ async function deckChecks(browser, url) {
     const card = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="fswap"][data-v="f_wood"]');
     const m2 = S.money; document.querySelector('#selCard [data-act="fswap"][data-v="f_wood"]').click();
     o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost - Math.floor(D.f_block.cost * .5);
+    // 바꾸면 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다 (기존 바닥 위는 걷어낸 반값을 뺀 값)
+    o.fchain = isPlacing() && UI.tool === 'f_wood' && !!UI.ghost && Math.abs(UI.ghost.x - 8) + Math.abs(UI.ghost.y - 4) === 1;
+    S.floor[UI.ghost.x + ',' + UI.ghost.y] = 'f_block'; const m4 = S.money; plOk();
+    o.fchain = o.fchain && S.money === m4 - (D.f_wood.cost - Math.floor(D.f_block.cost * .5));
+    endPlace(); UI.fold = true;
     const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && S.money - m3 === Math.floor(D.f_wood.cost * .5);
+    // 빈 땅을 누르면 바닥·땅 높이기·경사로 카드, 높이기를 누르면 바로 한 층
+    closeSelCard(); const em = rotPt(6.5, 2.5), eq = toScreen(em[0], em[1], 0); onTap(eq[0], eq[1]);
+    const gcard = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="gter"]') && !!document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="fswap"]');
+    document.querySelector('#selCard [data-act="gter"]').click();
+    o.gcard = gcard && th(6, 2) === 1;
+    // 카드가 열린 채 빈 땅을 누르면 닫기만 한다
+    const om = rotPt(9.5, 2.5), oq = toScreen(om[0], om[1], 0); onTap(oq[0], oq[1]); o.gclose = document.getElementById('selCard').hidden;
+    document.querySelector('#selCard') && closeSelCard();
     // 건축 목록: 지금 지을 수 있는 것부터 싼 순서
     S.money = 1000; const ord = buildOrder('worship'), can = d => !isLocked(d.id) && S.money >= d.cost;
     const k = ord.findIndex(d => !can(d)); o.order = ord.slice(0, k < 0 ? ord.length : k).every((d, i, a) => !i || a[i - 1].cost <= d.cost) && (k < 0 || ord.slice(k).every(d => !can(d)));
@@ -985,8 +1004,10 @@ async function deckChecks(browser, url) {
   check(r.tree && r.room && r.tile, '데크: 나무·칸 건물·바닥 타일도 데크 위에');
   check(r.cap, '데크: 데크 높이와 층수를 합쳐 10층 제한');
   check(r.moved && r.saved, '데크: 땅으로 옮기면 데크 높이가 풀리고, 저장 후에도 유지');
+  check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (걷어낸 반값을 뺀 값)');
   check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(걷어낸 반값을 뺀 값) 걷어낼 수 있음');
   check(r.order, '건축 목록: 지금 지을 수 있는 것부터 싼 순서로');
+  check(r.gcard && r.gclose, '빈 땅: 누르면 바닥·땅 높이기·경사로 카드, 카드가 열려 있으면 닫기만');
   check(r.novel && r.wander, '방문자: 새 건물에 끌리고, 발길이 적은 바닥으로 둘러봄');
   check(errs.length === 0, '데크: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
