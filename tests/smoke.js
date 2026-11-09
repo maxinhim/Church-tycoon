@@ -660,11 +660,11 @@ async function ministryChecks(browser, url) {
   const repeat = await page.evaluate(() => {
     const n0 = S.buildings.length, mA = S.money;
     for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 8; x++) if (canPlace(D.tree, x, y, 2) && canPlace(D.tree, x + 1, y, 2)) { UI.ghost = { x, y }; break; }
-    const g0 = { ...UI.ghost }; plLock = 0; plOk();
-    const moved = UI.tool === 'tree' && (UI.ghost.x !== g0.x || UI.ghost.y !== g0.y) && S.buildings.length === n0 + 1;
-    const noArrows = [...document.querySelectorAll('#place .parr')].every(e => e.hidden);
+    UI.fdir = 0; const g0 = { ...UI.ghost }; plLock = 0; plOk();
+    const moved = UI.tool === 'tree' && UI.ghost.x === g0.x + 1 && UI.ghost.y === g0.y && S.buildings.length === n0 + 1;
+    syncPlace(); const arrows = [...document.querySelectorAll('#place .parr')].filter(e => !e.hidden).length === 4 && document.querySelector('#place .parr.on').dataset.v === '0';
     syncPlace(); const und = document.querySelector('#place [data-pl="undo"]'); const undoOnMap = !und.hidden && document.getElementById('pbar').hidden; und.click();
-    return moved && noArrows && undoOnMap && S.buildings.length === n0 && S.money === mA;
+    return moved && arrows && undoOnMap && S.buildings.length === n0 && S.money === mA;
   });
   await page.click('#place [data-pl="no"]');
   const ended = await page.evaluate(() => UI.tool === null && !document.getElementById('dock').hidden);
@@ -740,11 +740,28 @@ async function ministryChecks(browser, url) {
   check(roomNoMove, '옮기기·돌리기: 칸 건물에는 옮기기 버튼이 없음');
   check(blockedTip, '지도에서 짓기: 못 짓는 자리에서 회색 ✓를 누르면 이유를 알려 줌');
   check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 패널 없이 건물 위 카드, 그 주에는 카드에서 전액 되돌리기');
-  check(repeat, '지도에서 짓기: 조경은 옆자리로 이어 짓기, 방향 화살표 없음, 되돌리면 전액 환불');
+  check(repeat, '지도에서 짓기: 조경은 길처럼 화살표 쪽으로 한 칸씩 이어 짓기, 되돌리면 전액 환불');
   check(ended, '지도에서 짓기: ✕로 그만두면 목록으로 돌아옴');
   check(pathOk && escEnds, '지도에서 짓기: 길은 ✓로 한 칸씩 잇고 띠에서 종류를 고름, Esc로 끝냄');
   check(floorDir && floorTap, '지도에서 짓기: 바닥은 화살표 방향으로 ✓마다 한 칸씩 깔리고, 지도를 누르면 자리만 옮김');
   check(rotates, '건물 방향: 화살표로 정면을 바꾸면 벤치·예배실·쌍등·정류장·피크닉 테이블 그림이 돎');
+  // 꾸미기 이어 짓기: 울타리는 짓는 방향을 따라 눕고, 벤치는 화살표가 정면이고 옆으로 늘어서고, 파라솔은 화살표 없이 입구 쪽을 봄
+  const decoLine = await page.evaluate(() => {
+    const spot = id => { for (let y = 14; y < PZ - 3; y++) for (let x = 3; x < COLS - 6; x++) { let ok = true; for (let i = 0; i < 4; i++) for (let j = -1; j < 2; j++) if (!canPlace(D[id], x + i, y + j, 2)) ok = false; if (ok) return { x, y }; } return null; };
+    S.money += 5000; startPlace('fence_w'); let p = spot('fence_w'); UI.ghost = { ...p };
+    plDir(2); if (UI.face !== 0) return 'fence face ' + UI.face; plDir(0); if (UI.face !== 2) return 'fence face2';
+    plLock = 0; plOk(); plLock = 0; plOk();
+    const f2 = S.buildings.slice(-2); if (!(f2[0].def === 'fence_w' && f2[1].x === f2[0].x + 1 && f2[1].face === 2)) return 'fence line';
+    endPlace(); startPlace('bench'); p = spot('bench'); UI.ghost = { ...p }; syncPlace();
+    if (arrowMode(D.bench) !== 'face') return 'bench mode'; plDir(2); plLock = 0; plOk();
+    const bn = S.buildings[S.buildings.length - 1]; if (bn.face !== 2 || (UI.ghost.x === p.x && UI.ghost.y === p.y)) return 'bench';
+    endPlace(); startPlace('parasol'); p = spot('parasol'); UI.ghost = { ...p }; syncPlace();
+    const noArr = arrowMode(D.parasol) === 'line'; plLock = 0; plOk(); const pa = S.buildings[S.buildings.length - 1];
+    endPlace(); if (!noArr || pa.face !== gateFace(D.parasol, pa.x, pa.y)) return 'parasol';
+    if (turnable(D.tree) || !turnable(D.fence_w) || !turnable(D.bench)) return 'turnable';
+    return 'ok';
+  });
+  check(decoLine === 'ok', '꾸미기 이어 짓기: 울타리는 짓는 방향대로, 벤치는 정면 화살표, 방향 없는 것은 입구 쪽 자동 (' + decoLine + ')');
   check(smallBtns, '지도에서 짓기: ✓·✕ 38px, 화살표 32px로 작아짐');
   // 그림 조각: 모두 불러와 쓰고, 그림이 없으면 벡터로 그린다
   await page.waitForFunction(() => SPR_N === SPR_TOTAL, null, { timeout: 8000 }).catch(() => {});

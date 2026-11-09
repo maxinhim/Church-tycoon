@@ -88,7 +88,7 @@ function draw(){
   if(isFloorDef(UI.tool)&&UI.ghost)footprint(UI.ghost.x,UI.ghost.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[4,3]);
   if(UI.tool==='path')drawPathGhost();
   if(gd){
-    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:UI.face},mvb=mvId&&bById(mvId);
+    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);
     if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
     ensureDoors(gb);
     c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;

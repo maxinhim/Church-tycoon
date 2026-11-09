@@ -29,7 +29,7 @@ function renderSelCard(){
     if(b.door&&!usable(b))warn=!b.acc||!b.acc.ent?'입구까지 길이 없어 이용 못 해요':'출구에서 나갈 길이 없어요';
     else if(maintainable(b)&&condOf(b)<60)warn='낡아서 효과가 줄었어요';
     h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
-    if(canMove(b))row+=scBtn('move','옮기기·돌리기','pri');
+    if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     if(b.door&&!usable(b)){var lp=linkPlan(b);if(!lp.why&&lp.tiles.length)row+=scBtn('link','길 잇기 '+fmt(lp.cost),'pri');}
     var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
     if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));

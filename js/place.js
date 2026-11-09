@@ -2,11 +2,12 @@
 /* ---------- 지도 위에서 짓기 ----------
    건축 목록에서 하나를 고르면 패널은 닫히고 지도에서 바로 짓는다.
    · 건물·조경: 반투명 미리보기 둘레의 화살표로 정면 방향을 고르고, 왼쪽 위 ✓로 짓고 오른쪽 위 ✕로 그만둔다.
-     미리보기는 끌어서 옮기거나 지도를 눌러 옮긴다. 조경은 지은 뒤에도 이어서 옆자리에 또 지을 수 있다.
+     미리보기는 끌어서 옮기거나 지도를 눌러 옮긴다. 조경·꾸미기는 길처럼 화살표 쪽으로 한 칸씩 이어 짓는다
+     (앞뒤가 뚜렷한 벤치 등은 화살표가 정면이고 옆으로 늘어선다).
    · 길: 커서 칸 둘레 화살표로 방향, ✓로 한 칸씩 잇는다. 종류·경사·높이는 아래 작은 띠에서.
    · 칸 건물·바닥: 지도를 누르면 바로 지어진다. 띠에 되돌리기·완료만 둔다.
    아래 띠(#pbar)는 이름·비용·효과, 지을 수 없으면 그 까닭을 보여 준다. */
-var REPEAT_CATS=['garden'],plLock=0,plHtml='',PL_DIRNAME=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'];
+var REPEAT_CATS=['garden','deco'],LINE_KINDS=['fence','hedge'],FRONT_KINDS=['bench','picnic','board','bell','bikerack','arch'],plLock=0,plHtml='',PL_DIRNAME=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'];
 function isPlacing(){return !UI.fold&&UI.tab==='build'&&!!UI.tool&&UI.tool!=='demolish';}
 function placeKind(){
   if(!isPlacing())return '';
@@ -15,8 +16,36 @@ function placeKind(){
   if(isFloorDef(UI.tool))return 'floor';
   return D[UI.tool]?'bld':'';
 }
-// 방향을 바꿔도 달라지는 게 없는 것(나무·화분처럼 문이 없고 정사각형인 장식)에는 화살표를 띄우지 않는다
-function faceMatters(d){return !!d.fill||d.w!==d.h||d.towerH>0||['hedge','arch','stage','fence','bell','board','bikerack','lamp2','statue','busstop'].indexOf(d.kind)>=0;}
+/* 화살표의 뜻 (arrowMode)
+   · 'face' 바라보는 방향: 건물, 그리고 앞뒤가 뚜렷한 꾸미기(벤치·피크닉 테이블·게시판·종·거치대·꽃 아치)
+   · 'line' 이어 짓는 방향: 나머지 조경·꾸미기. ✓마다 한 칸씩 화살표 쪽으로 나아간다.
+            울타리·생울타리는 짓는 방향을 따라 눕는다
+   · 'none' 화살표 없음: 방향이 상관없는 것을 옮길 때
+   방향이 상관없는 것(나무·분수·파라솔 등)은 입구 아치 쪽을 보게 저절로 정한다 (문이 있으면 문도 그쪽) */
+function isDecoCat(d){return REPEAT_CATS.indexOf(d.cat)>=0;}
+function isLineKind(d){return LINE_KINDS.indexOf(d.kind)>=0;}
+function faceMatters(d){
+  if(isDecoCat(d))return d.w!==d.h||FRONT_KINDS.indexOf(d.kind)>=0;
+  return !!d.fill||d.w!==d.h||d.towerH>0||['stage','busstop'].indexOf(d.kind)>=0;
+}
+// 돌릴 수 있는 것 (옮기기 카드의 이름에 씀)
+function turnable(d){return faceMatters(d)||isLineKind(d);}
+function arrowMode(d){
+  if(movingId())return turnable(d)?'face':'none';
+  if(isDecoCat(d))return faceMatters(d)?'face':'line';
+  return faceMatters(d)?'face':'none';
+}
+// 입구 아치 쪽 방향 (DIRS 번호)
+function gateFace(d,x,y){
+  var gx=ENT+.5-(x+d.w/2),gy=PZ-(y+d.h/2),best=2,bv=-1e9;
+  for(var i=0;i<4;i++){var v=DIRS[i][0]*gx+DIRS[i][1]*gy;if(v>bv){bv=v;best=i;}}
+  return best;
+}
+// 지금 미리보기가 실제로 지어질 방향
+function plFace(){
+  var d=D[UI.tool];if(!d||!UI.ghost||movingId()||turnable(d))return UI.face;
+  return gateFace(d,UI.ghost.x,UI.ghost.y);
+}
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 function placeWhy(d,x,y,face){
   var zw=zoneWhy(d,x,y,face);if(zw)return zw;
@@ -29,6 +58,7 @@ function placeWhy(d,x,y,face){
 function startPlace(id){
   UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
+  if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
   if(id==='path'){UI.pc=newCursor();UI.ghost=null;pcStartAt(c[0],c[1]);}
   else{
@@ -71,11 +101,11 @@ function plMove(el,x,y,w){el.style.transform='translate('+Math.round(x-w/2)+'px,
 // 매 프레임: 지도 위 버튼을 미리보기 둘레에 붙인다
 function syncPlace(){
   var root=$('#place');if(!root)return;
-  var k=placeKind(),line=k==='path'||k==='floor',bx=(k==='bld'||line)?plBox():null;
+  var k=placeKind(),am=k==='bld'?arrowMode(D[UI.tool]):'',line=k==='path'||k==='floor'||am==='line',bx=k?plBox():null;
   root.hidden=!bx;if(!bx)return;
   var vw=window.innerWidth,vh=window.innerHeight,cl=function(v,a,b){return Math.max(a,Math.min(b,v));};
-  // 건물: 화살표 = 건물이 바라보는 방향(정면). 길·바닥: 화살표 = 다음 칸으로 이어 짓는 방향
-  var show=line||faceMatters(D[UI.tool]),cur=k==='path'?UI.pc.dir:(k==='floor'?UI.fdir:UI.face),minY=1e9,maxY=-1e9;
+  // 건물: 화살표 = 건물이 바라보는 방향(정면). 길·바닥·조경: 화살표 = 다음 칸으로 이어 짓는 방향
+  var show=line||am==='face',cur=plCur(),minY=1e9,maxY=-1e9;
   root.querySelectorAll('.parr').forEach(function(el){
     var a=bx.arr[+el.dataset.v];el.hidden=!show;if(!show)return;
     minY=Math.min(minY,a.y);maxY=Math.max(maxY,a.y);
@@ -100,23 +130,26 @@ function syncPlace(){
   ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
 }
 function plPathWhy(){var p=pcPiece();return p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'시작할 곳을 먼저 누르세요';}
-// 화살표: 건물은 정면(기본 출입구) 방향, 길은 다음 칸이 이어질 방향
+function plCur(){var k=placeKind();return k==='path'?UI.pc.dir:((k==='floor'||(k==='bld'&&arrowMode(D[UI.tool])==='line'))?UI.fdir:UI.face);}
+// 화살표: 건물은 정면(기본 출입구) 방향, 길·바닥·조경은 다음 칸이 이어질 방향
 function plDir(d){
   if(placeKind()==='path'){UI.pc.dir=d;renderDetail();return;}
   if(placeKind()==='floor'){UI.fdir=d;renderDetail();return;}
-  var df=D[UI.tool],o=faceDims(df,UI.face),n=faceDims(df,d),g=UI.ghost;
+  var df=D[UI.tool];
+  if(arrowMode(df)==='line'){UI.fdir=d;if(isLineKind(df))UI.face=d<2?2:0;renderDetail();return;}
+  var o=faceDims(df,UI.face),n=faceDims(df,d),g=UI.ghost;
   UI.face=d;
   // 가로세로가 바뀌면 가운데를 지키며 돌린다
   if(g){g.x=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w);g.y=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-1-n.h);}
   renderDetail();
 }
-function plTurn(){var k=placeKind(),cur=k==='path'?UI.pc.dir:(k==='floor'?UI.fdir:UI.face);plDir(screenToWorldDir((worldToScreenDir(cur)+1)%4));}
-// 이어 짓기(조경): 방금 지은 자리 옆 빈 곳으로 미리보기를 옮긴다. 지난번에 옮긴 쪽을 먼저 본다
-function plNext(d,x,y){
-  var dm=faceDims(d,UI.face),pref=UI.shift||[1,0];
-  var first=[[pref[0]*dm.w,pref[1]*dm.h],[dm.w,0],[0,dm.h],[-dm.w,0],[0,-dm.h]];
-  for(var i=0;i<first.length;i++){var fx=x+first[i][0],fy=y+first[i][1];if(canPlace(d,fx,fy,UI.face)){UI.shift=[Math.sign(first[i][0]),Math.sign(first[i][1])];return {x:fx,y:fy};}}
-  return plNear(d,x,y,5);
+function plTurn(){plDir(screenToWorldDir((worldToScreenDir(plCur())+1)%4));}
+// 이어 짓기 한 걸음: 'line'은 화살표 쪽, 'face'(벤치 등)는 옆으로 (화면 오른쪽으로 늘어서게)
+function plStep(d){
+  if(arrowMode(d)==='line')return DIRS[UI.fdir];
+  var side=UI.face<2?[2,3]:[0,1];
+  for(var i=0;i<2;i++){var sd=worldToScreenDir(side[i]);if(sd===0||sd===3)return DIRS[side[i]];}
+  return DIRS[side[0]];
 }
 // (x,y) 둘레를 한 바퀴씩 넓혀 가며 가장 가까운 빈자리
 function plNear(d,x,y,R){
@@ -148,14 +181,15 @@ function plOk(){
   if(movingId()){plMoveDone();return;}
   var d=D[UI.tool],g=UI.ghost,why2=placeWhy(d,g.x,g.y,UI.face);
   if(why2){toast(why2,1600);return;}
-  if(!build(UI.tool,g.x,g.y,UI.face))return;
+  if(!build(UI.tool,g.x,g.y,plFace()))return;
   var nb=S.buildings[S.buildings.length-1];
   plBuzz();plLock=now+350;
   if(REPEAT_CATS.indexOf(d.cat)>=0){
-    // 조경은 이어서: 옆 빈자리로 미리보기를 옮기고 되돌리기를 쌓는다
+    // 조경·꾸미기는 길처럼 이어서: 한 칸 나아가고 되돌리기를 쌓는다 (막힌 칸이면 회색 ✓로 알려 준다)
     UI.undo.push({bid:nb.id,cost:d.cost,w:S.week});
-    var nx=plNext(d,g.x,g.y);if(nx){g.x=nx.x;g.y=nx.y;}
-    toast(d.name+'을(를) 지었어요 · ✓로 옆에 또 짓기',1500);renderDetail();
+    var dm=faceDims(d,UI.face),st=plStep(d),nx=g.x+st[0]*dm.w,ny=g.y+st[1]*dm.h;
+    if(nx>=0&&ny>=0&&nx+dm.w<=COLS&&ny+dm.h<=ROWS-1){g.x=nx;g.y=ny;}
+    renderDetail();
   }else{
     // 큰 건물은 하나 짓고 끝. 방금 지은 것은 카드에서 이번 주 안에 전액 되돌릴 수 있다
     // 지은 건물 위에 작은 카드(되돌리기·길 잇기·옮기기)를 띄우고 패널은 닫아 둔다
@@ -250,6 +284,6 @@ function setupPlace(){
     var k=placeKind();
     if(e.key==='Escape'){endPlace();e.preventDefault();}
     else if(e.key==='Enter'&&(k==='bld'||k==='path'||k==='floor')){plOk();e.preventDefault();}
-    else if((e.key==='r'||e.key==='R')&&(k==='path'||k==='floor'||(k==='bld'&&faceMatters(D[UI.tool])))){plTurn();e.preventDefault();}
+    else if((e.key==='r'||e.key==='R')&&(k==='path'||k==='floor'||(k==='bld'&&arrowMode(D[UI.tool])!=='none'))){plTurn();e.preventDefault();}
   });
 }
