@@ -1,5 +1,5 @@
 'use strict';
-/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json, docs/art/sheets/sheet-E4.json)를 고친 뒤 다시 만들 것 */
+/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json, docs/art/sheets/sheet-E4.json, docs/art/sheets/sheet-W1.json)를 고친 뒤 다시 만들 것 */
 var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"by":0.1,"sway":1},
 "fir":{"src":"assets/decor/fir.png","w":105,"h":150,"fw":0.58,"by":0.1,"sway":0.8},
 "cherry":{"src":"assets/decor/cherry.png","w":129,"h":144,"fw":0.82,"by":0.1,"sway":1},
@@ -96,10 +96,8 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "dawn_b":{"src":"assets/bld/dawn_b.png","w":124,"h":153,"fw":1.05,"by":0.95,"sway":0},
 "bell":{"src":"assets/bld/bell.png","w":129,"h":150,"fw":0.85,"by":0.35,"sway":0,"back":"bell_b"},
 "bell_b":{"src":"assets/bld/bell_b.png","w":128,"h":150,"fw":0.85,"by":0.35,"sway":0},
-"room":{"src":"assets/bld/room.png","w":116,"h":149,"fw":1.0,"by":0.95,"sway":0,"back":"room_b"},
 "youth":{"src":"assets/bld/youth.png","w":143,"h":154,"fw":1.0,"by":0.95,"sway":0,"back":"youth_b"},
 "kids":{"src":"assets/bld/kids.png","w":150,"h":153,"fw":1.0,"by":0.95,"sway":0,"back":"kids_b"},
-"room_b":{"src":"assets/bld/room_b.png","w":119,"h":151,"fw":1.0,"by":0.95,"sway":0},
 "youth_b":{"src":"assets/bld/youth_b.png","w":142,"h":150,"fw":1.0,"by":0.95,"sway":0},
 "kids_b":{"src":"assets/bld/kids_b.png","w":146,"h":153,"fw":1.0,"by":0.95,"sway":0},
 "study":{"src":"assets/bld/study.png","w":154,"h":157,"fw":1.0,"by":0.95,"sway":0,"back":"study_b"},
@@ -111,7 +109,6 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "parktower_b":{"src":"assets/bld/parktower_b.png","w":146,"h":157,"fw":1.0,"by":0.95,"sway":0},
 "playground_b":{"src":"assets/bld/playground_b.png","w":159,"h":153,"fw":1.05,"by":0.9,"sway":0},
 "pond":{"src":"assets/bld/pond.png","w":150,"h":98,"fw":1.0,"by":0.85,"sway":0},
-"chapel":{"src":"assets/bld/chapel.png","w":130,"h":156,"fw":1.0,"by":0.95,"sway":0,"back":"chapel_b"},
 "dining":{"src":"assets/bld/dining.png","w":147,"h":155,"fw":1.0,"by":0.95,"sway":0,"back":"dining_b","fl":1},
 "chapel_b":{"src":"assets/bld/chapel_b.png","w":132,"h":155,"fw":1.0,"by":0.95,"sway":0},
 "dining_b":{"src":"assets/bld/dining_b.png","w":147,"h":156,"fw":1.0,"by":0.95,"sway":0},
@@ -144,4 +141,7 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "bakery":{"src":"assets/bld/bakery.png","w":302,"h":314,"fw":1.05,"by":0.95,"sway":0,"back":"bakery_b"},
 "bakery_b":{"src":"assets/bld/bakery_b.png","w":298,"h":312,"fw":1.05,"by":0.95,"sway":0},
 "bookstore":{"src":"assets/bld/bookstore.png","w":297,"h":312,"fw":1.05,"by":0.95,"sway":0,"back":"bookstore_b"},
-"bookstore_b":{"src":"assets/bld/bookstore_b.png","w":299,"h":314,"fw":1.05,"by":0.95,"sway":0}};
+"bookstore_b":{"src":"assets/bld/bookstore_b.png","w":299,"h":314,"fw":1.05,"by":0.95,"sway":0},
+"room":{"src":"assets/bld/room.png","w":406,"h":478,"fw":1.0,"by":0.95,"sway":0,"back":"room_b","fl":1},
+"room_b":{"src":"assets/bld/room_b.png","w":418,"h":464,"fw":1.0,"by":0.95,"sway":0},
+"chapel":{"src":"assets/bld/chapel.png","w":442,"h":476,"fw":1.0,"by":0.95,"sway":0,"back":"chapel_b","fl":1}};

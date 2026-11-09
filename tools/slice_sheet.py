@@ -16,6 +16,8 @@ manifest(JSON):
           fl   앞면이 왼쪽 아래를 향하게 그려진 그림이면 1 (기본은 오른쪽 아래)
           glow 등불의 분홍빛 번짐까지 지우는 강한 배경 제거
           box  [x0,y0,x1,y1] 칸을 합쳐 그린 그림은 픽셀 범위를 직접 준다
+          patch  [{poly,dx,dy}] 다각형 안의 얼룩을 (dx,dy) 떨어진 곳 그림으로 덮기 (먼저 erase, 그다음 patch)
+          erase  [[[x,y],...],...] 칸 안에 끼어든 딴 그림을 지울 다각형들 (시트 좌표)
           tex  바닥 질감 칸: 배경을 지우지 않고 size(기본 128)px 정사각형으로. k = 질감 한 장이 덮는 칸 수
   uniform 격자선이 고르지 않으면 true: 시트 크기를 칸 수로 똑같이 나눈다
   bgauto  배경이 바랜 분홍이면 true: 칸 가장자리 색도 배경으로 지운다
@@ -138,6 +140,25 @@ def process(manifest_path):
             x0, y0, x1, y1 = it['box']
         else:
             (y0, y1), (x0, x1) = ry[i // cols], cx[i % cols]
+        if it.get('erase'):
+            # 시트에 끼어든 딴 그림을 지운다: 시트 좌표의 다각형들을 배경색으로 덮는다
+            from PIL import ImageDraw
+            tmp = Image.fromarray(img.astype(np.uint8))
+            dr = ImageDraw.Draw(tmp)
+            for poly in it['erase']:
+                dr.polygon([tuple(p) for p in poly], fill=(251, 0, 253))
+            img = np.asarray(tmp).astype(int)
+        if it.get('patch'):
+            # 얼룩 덮기: 다각형 안을 (dx,dy)만큼 떨어진 곳의 그림으로 덮는다 (같은 재질을 따라 옮겨 붙임)
+            from PIL import ImageDraw
+            base = Image.fromarray(img.astype(np.uint8))
+            for p in it['patch']:
+                mask = Image.new('L', base.size, 0)
+                ImageDraw.Draw(mask).polygon([tuple(q) for q in p['poly']], fill=255)
+                src = Image.new('RGB', base.size)
+                src.paste(base, (-p['dx'], -p['dy']))
+                base.paste(src, (0, 0), mask)
+            img = np.asarray(base).astype(int)
         c = img[y0 + inset:y1 - inset, x0 + inset:x1 - inset]
         if it.get('tex'):
             # 바닥 질감: 배경을 지우지 않고 정사각형 그대로 (게임이 마름모로 눌러 반복해 깐다)
@@ -195,4 +216,4 @@ def main(paths):
 if __name__ == '__main__':
     main(sys.argv[1:] or [os.path.join(ROOT, 'docs/art/sheets', n) for n in
                          ('decor-b.json', 'decor-c.json', 'sheet-D.json', 'sheet-E.json', 'sheet-F.json', 'sheet-G.json', 'sheet-H.json',
-                          'sheet-E2.json', 'sheet-E3.json', 'sheet-E4.json')])
+                          'sheet-E2.json', 'sheet-E3.json', 'sheet-E4.json', 'sheet-W1.json')])

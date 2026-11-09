@@ -10,17 +10,6 @@
  ],
  "out": "assets/bld",
  "cells": {
-  "6": {
-   "id": "room_b",
-   "fw": 1.0,
-   "by": 0.95
-  },
-  "0": {
-   "id": "room",
-   "fw": 1.0,
-   "by": 0.95,
-   "back": "room_b"
-  },
   "8": {
    "id": "youth_b",
    "fw": 1.0,
