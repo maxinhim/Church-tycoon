@@ -94,6 +94,13 @@ Row 7: wooden park bench with a backrest; round picnic table with a striped para
     </div>
   </section>
 
+  <section class="box" aria-labelledby="h-rule">
+    <div class="head"><h2 id="h-rule">다음 시트부터 지킬 규칙</h2><span class="tag">공통</span></div>
+    <p class="note" style="margin-bottom:10px">Gemini가 생성 이미지 표시(별 모양)를 맨 오른쪽 아래 칸에 넣습니다. 그래서 맨 오른쪽 아래 칸(7행 7열)은 비워 두고, 요소는 48개까지만 넣습니다. 새 시트 프롬프트의 LAYOUT 맨 끝에 아래 문장을 붙이고, 7행에는 6개만 적습니다.</p>
+<pre id="snip">The bottom-right cell (row 7, column 7) must stay completely empty: only the flat magenta background, no object, no shadow, no text. Place objects only in the other 48 cells.</pre>
+    <div class="mini"><button type="button" id="copySnip">이 문장만 복사</button></div>
+  </section>
+
   <section class="box" aria-labelledby="h-chk">
     <h2 id="h-chk">결과를 받으면 확인할 것</h2>
     <ul class="chk">
@@ -136,6 +143,11 @@ Row 7: wooden park bench with a backrest; round picnic table with a striped para
     if(navigator.clipboard&&navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(function(){done(true);},fallback);
     }else fallback();
+  });
+  var sb=document.getElementById('copySnip'),snip=document.getElementById('snip');
+  sb.addEventListener('click',function(){
+    function ok(v){sb.textContent=v?'복사했어요':'길게 눌러 직접 복사하세요';if(!v){var r=document.createRange();r.selectNodeContents(snip);var s=window.getSelection();s.removeAllRanges();s.addRange(r);}setTimeout(function(){sb.textContent='이 문장만 복사';},2500);}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(snip.textContent).then(function(){ok(true);},function(){ok(false);});else ok(false);
   });
   document.getElementById('selAll').addEventListener('click',function(){selectAll();pre.focus({preventScroll:true});});
 })();
