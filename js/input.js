@@ -119,6 +119,7 @@ function onPanel(e){
     UI.selTile=null;var rb=st&&roomAt(st.x,st.y);UI.sel=rb?rb.id:null;
     renderDetail();hud(true);
   }
+  else if(a==='move'){startMove(bById(UI.sel));}
   else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
   else if(a==='hire'){var hw=hireTeam(v);toast(hw||STAFF[v].name+' 단계 '+S.staff[v]+'로 올렸어요',1800);renderStaff();hud(true);}
   else if(a==='fire'){if(S.staff[v]>0){S.staff[v]--;recalc();save();}renderStaff();hud(true);}

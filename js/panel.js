@@ -113,7 +113,7 @@ function renderDetail(){
     if(maintainable(b)){var cd=Math.round(condOf(b));lines.push('건물 상태 '+cd+'%'+(cd<60?' · '+bad('낡아서 효과가 줄었어요'):''));if(cd<100)tileBtn+='<button class="btn" data-act="repair">수리 '+fmt(repairCost(b))+'</button>';}
     if(b.links&&b.links.length)lines.push('연결 다리로 이어짐: '+b.links.map(function(id){var o=bById(id);return o?defOf(o).name:'';}).join(', '));
     h='<div class="tx full"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+lines.join('<br>')+'</div>'+doorUI+
-      '<div class="btns">'+tileBtn+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
+      '<div class="btns">'+tileBtn+(canMove(b)?'<button class="btn" data-act="move">옮기기·돌리기</button>':'')+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
   }else if(UI.selPiece&&pieceById(UI.selPiece)){
     var sp=pieceById(UI.selPiece);
     var sw=sp.k==='sky'&&NAV.badSky[sp.id]?'<br>'+bad('역할이 다른 건물을 잇고 있어 방문자가 건너지 않아요'):'';
@@ -124,7 +124,7 @@ function renderDetail(){
       var lk=lb.door&&!usable(lb)?linkPlan(lb):null,lkb=lk&&!lk.why&&lk.tiles.length?'<button class="btn pri" data-act="link" data-v="'+lb.id+'">입구까지 길 잇기 '+fmt(lk.cost)+'</button>':'';
       h='<div class="tx"><b>'+defOf(lb).name+'</b>을(를) 지었어요.'+(lkb?' '+bad('아직 길이 이어지지 않았어요.'):'')+' 잘못 지었다면 이번 주 안에는 전액 돌려받을 수 있어요</div><div class="btns">'+lkb+'<button class="btn" data-act="undoLast">되돌리기 +'+fmt(UI.lastBuilt.cost)+'</button></div>';
     }
-    else h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 입구·출구를 옮길 수 있어요.')+'</div>';
+    else h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 무료로 옮기거나 돌릴 수 있고, 입구·출구도 바꿀 수 있어요.')+'</div>';
   }
   el.innerHTML=h;
   var cs=$('#cards');if(cs)cs.hidden=!UI.tool&&!!(UI.sel||UI.selPiece);

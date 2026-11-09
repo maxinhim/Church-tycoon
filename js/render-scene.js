@@ -46,9 +46,11 @@ function draw(){
     else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
   }
   var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)?D[UI.tool]:null,gok=false;
-  if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&S.money>=gd.cost;footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
+  if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&(movingId()||S.money>=gd.cost);footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
+  var mvId=movingId();
   S.buildings.forEach(function(b){
+    if(b.id===mvId)return;
     if(isRoom(b)){
       var map=roomMap(b);
       b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.f=function(){drawRoomTile(b,t,map);};E.push(rt);});
@@ -86,7 +88,8 @@ function draw(){
   if(isFloorDef(UI.tool)&&UI.ghost)footprint(UI.ghost.x,UI.ghost.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[4,3]);
   if(UI.tool==='path')drawPathGhost();
   if(gd){
-    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:UI.face};
+    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:UI.face},mvb=mvId&&bById(mvId);
+    if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
     ensureDoors(gb);
     c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;
     drawDoorPads(gb);
@@ -111,7 +114,9 @@ function drawMarkers(c){
     c.strokeStyle='#fff';c.lineWidth=1.6*s;c.beginPath();c.arc(gq[0],gq[1]-2*s,3*s,Math.PI,0);c.stroke();
     c.fillStyle='#fff';c.fillRect(gq[0]-4.2*s,gq[1]-2*s,8.4*s,6.4*s);
   }
+  var mv=movingId();
   S.buildings.forEach(function(b){
+    if(b.id===mv)return;
     var bad=b.door&&!usable(b),worn=maintainable(b)&&condOf(b)<50;
     if(!bad&&!worn)return;
     var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bHeight(b)+.35);

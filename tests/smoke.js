@@ -666,6 +666,24 @@ async function ministryChecks(browser, url) {
     return moved && noArrows && undoOnMap && S.buildings.length === n0 && S.money === mA;
   });
   await page.click('#place [data-pl="no"]');
+  // 지은 것 옮기기·돌리기: 무료, 원래 자리는 비고, 방향이 바뀌고, 취소하면 그대로
+  const moved = await page.evaluate(() => {
+    const free = (w, h) => { for (let y = 16; y < PZ - 2; y++) for (let x = 2; x < COLS - 4; x++) if (canPlace(D.bench, x, y, 2) && canPlace(D.bench, x, y, 0)) return { x, y }; return null; };
+    const a = free(); S.money += 1000; build('bench', a.x, a.y, 2); const b = S.buildings[S.buildings.length - 1];
+    UI.tab = 'build'; UI.fold = false; UI.sel = b.id; renderPanel();
+    const btn = document.querySelector('#detail [data-act="move"]'); if (!btn) return 'no button';
+    btn.click(); if (!(movingId() === b.id && document.getElementById('dock').hidden && UI.ghost.x === b.x)) return 'no mode';
+    // 제자리·같은 방향도 자기 자신과 겹친다고 하지 않는다
+    if (placeWhy(D.bench, b.x, b.y, 2)) return 'self overlap';
+    document.querySelector('#place [data-pl="no"]').click();
+    if (b.x !== a.x || movingId() || occ[a.y][a.x] !== b.id) return 'cancel broke';
+    UI.tab = 'build'; UI.fold = false; UI.sel = b.id; renderPanel(); document.querySelector('#detail [data-act="move"]').click();
+    let t = null; for (let y = 16; y < PZ - 2 && !t; y++) for (let x = 2; x < COLS - 4; x++) if (Math.abs(x - a.x) + Math.abs(y - a.y) > 3 && canPlace(D.bench, x, y, 0)) { t = { x, y }; break; }
+    const m0 = S.money; UI.ghost = { x: t.x, y: t.y }; UI.face = 0; plLock = 0; syncPlace();
+    document.querySelector('#place [data-pl="ok"]').click();
+    return S.money === m0 && b.x === t.x && b.y === t.y && b.face === 0 && occ[a.y][a.x] !== b.id && occ[t.y][t.x] === b.id && UI.sel === b.id && !movingId() && !!document.querySelector('#detail [data-act="move"]') ? 'ok' : 'move broke';
+  });
+  const roomNoMove = await page.evaluate(() => { let r = S.buildings.find(b => isRoom(b)); if (!r) { S.money += 1000; for (let y = 16; y < PZ - 2 && !r; y++) for (let x = 2; x < COLS - 2 && !r; x++) if (tilePlan(x, y, 'mroom').ok && placeTile(x, y, 'mroom')) r = roomAt(x, y, 'mroom'); } UI.tab = 'build'; UI.fold = false; UI.sel = r.id; renderPanel(); const none = !document.querySelector('#detail [data-act="move"]'); UI.sel = null; renderPanel(); return none; });
   const ended = await page.evaluate(() => UI.tool === null && !document.getElementById('dock').hidden);
   // 길: 지도 위 ✓로 한 칸씩
   await page.click('#dock [data-v="path"]'); await page.click('#cards [data-v="path"]');
@@ -702,6 +720,8 @@ async function ministryChecks(browser, url) {
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
   check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
   check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨·안내 띠를 띄우지 않음 (효과는 건축 카드에서만)');
+  check(moved === 'ok', '옮기기·돌리기: 지은 것을 무료로 다른 자리·방향으로 옮김, 취소하면 그대로 (' + moved + ')');
+  check(roomNoMove, '옮기기·돌리기: 칸 건물에는 옮기기 버튼이 없음');
   check(blockedTip, '지도에서 짓기: 못 짓는 자리에서 회색 ✓를 누르면 이유를 알려 줌');
   check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 목록으로 돌아오고, 그 주에는 전액 되돌리기');
   check(repeat, '지도에서 짓기: 조경은 옆자리로 이어 짓기, 방향 화살표 없음, 되돌리면 전액 환불');

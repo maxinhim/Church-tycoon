@@ -19,15 +19,15 @@ function placeKind(){
 function faceMatters(d){return !!d.fill||d.w!==d.h||d.towerH>0||['hedge','arch','stage','fence','bell','board','bikerack','lamp2','statue','busstop'].indexOf(d.kind)>=0;}
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 function placeWhy(d,x,y,face){
-  var dm=faceDims(d,face);
   var zw=zoneWhy(d,x,y,face);if(zw)return zw;
   if(!canPlace(d,x,y,face))return '다른 건물이나 길과 겹쳐요. 끌어서 옮겨 보세요';
+  if(movingId())return '';
   if(isLocked(d.id))return lockText(lockGoal(d.id))+' 지을 수 있어요';
   if(S.money<d.cost)return '자금이 '+fmt(d.cost-S.money)+' 모자라요';
   return '';
 }
 function startPlace(id){
-  UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   var c=viewCenter();
   if(id==='path'){UI.pc=newCursor();UI.ghost=null;pcStartAt(c[0],c[1]);}
@@ -40,7 +40,7 @@ function startPlace(id){
   renderPanel();
 }
 // 그만두면 건축 목록으로 돌아간다 (이미 지은 것은 그대로)
-function endPlace(){UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;renderPanel();}
+function endPlace(){UI.moving=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;renderPanel();}
 // 미리보기의 화면 위치: 좌우·위 끝, 방향별 화살표 자리
 function plBox(){
   var k=placeKind(),x,y,w,h,z0,H;
@@ -94,7 +94,7 @@ function syncPlace(){
   var can=k==='path'?plPathWhy()==='':(k==='floor'?!floorWhy(UI.ghost.x,UI.ghost.y,UI.tool):!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face));
   // 못 지을 때도 누를 수는 있게 두고(회색), 누르면 이유를 알려 준다
   ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
-  ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost):'여기에는 지을 수 없어요'));
+  ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
 }
 function plPathWhy(){var p=pcPiece();return p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'시작할 곳을 먼저 누르세요';}
 // 화살표: 건물은 정면(기본 출입구) 방향, 길은 다음 칸이 이어질 방향
@@ -142,6 +142,7 @@ function plOk(){
     renderDetail();hud(true);return;
   }
   if(k!=='bld'||!UI.ghost)return;
+  if(movingId()){plMoveDone();return;}
   var d=D[UI.tool],g=UI.ghost,why2=placeWhy(d,g.x,g.y,UI.face);
   if(why2){toast(why2,1600);return;}
   if(!build(UI.tool,g.x,g.y,UI.face))return;
@@ -158,6 +159,32 @@ function plOk(){
     toast(d.name+'을(를) 지었어요',1600);renderPanel();
   }
   hud(true);
+}
+/* ---------- 지은 것 옮기기·돌리기 (무료) ----------
+   짓기와 같은 미리보기로 자리와 방향을 고른다. 원래 건물은 그동안 숨기고, 겹침 검사에서도 빼 둔다.
+   층·상태·이용 횟수는 그대로. 방향이 같으면 직접 고른 입구·출구도 함께 옮긴다. 칸 건물·길·바닥은 옮기지 않는다 */
+function canMove(b){return !!b&&!isRoom(b)&&!!D[b.def];}
+function movingId(){var b=UI.moving&&bById(UI.moving);return b&&UI.tool===b.def&&isPlacing()?b.id:0;}
+function startMove(b){
+  if(!canMove(b))return;
+  UI.tool=b.def;UI.face=b.face==null?2:b.face;UI.ghost={x:b.x,y:b.y};UI.moving=b.id;
+  UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.undo=[];UI.pc=null;
+  renderPanel();
+}
+function plMoveDone(){
+  var b=bById(UI.moving),g=UI.ghost;if(!b||!g){endPlace();return;}
+  var face=UI.face,why=placeWhy(D[b.def],g.x,g.y,face);
+  if(why){toast(why,1600);return;}
+  var f0=b.face==null?2:b.face,dx=g.x-b.x,dy=g.y-b.y,same=!dx&&!dy&&f0===face,links=(b.links||[]).length;
+  if(!same){
+    if(b.door&&f0===face)['ent','ext'].forEach(function(k){b.door[k]={x:b.door[k].x+dx,y:b.door[k].y+dy,d:b.door[k].d,l:b.door[k].l};});
+    else delete b.door;
+    b.x=g.x;b.y=g.y;b.face=face;
+    releaseVisitors(b.id);structureChanged();plBuzz();
+  }
+  UI.moving=null;UI.tool=null;UI.ghost=null;UI.sel=b.id;
+  var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(links&&!(b.links||[]).length?' · 연결 다리가 끊겼어요':'')+(b.door&&!usable(b)?' · 입구까지 길을 이어 주세요':'');
+  toast(msg,1800);renderPanel();hud(true);
 }
 function plBuzz(){try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}}
 // 방금 지은 건물을 전액 돌려받고 없앤다. 같은 주 안에서만, 층을 올렸거나 이미 없으면 못 한다

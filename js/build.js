@@ -13,9 +13,9 @@ function zoneWhy(d,x,y,face){
   return '';
 }
 function canPlace(d,x,y,face){
-  var dm=faceDims(d,face);
+  var dm=faceDims(d,face),me=movingId();
   if(zoneWhy(d,x,y,face))return false;
-  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)if(occ[y+j][x+i]||piecesAt(x+i,y+j).length)return false;
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){var o=occ[y+j][x+i];if((o&&o!==me)||piecesAt(x+i,y+j).length)return false;}
   return true;
 }
 function bump(){
