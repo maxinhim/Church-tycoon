@@ -86,7 +86,7 @@ function depart(v){
   S.rep=clamp(S.rep+(avg-58)*0.006,0,100);
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
-  var p=clamp((avg-42)/50,0,1)*0.5*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
+  var p=clamp((avg-42)/50,0,1)*0.36*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
   if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;F.push({x:ENT+0.5,y:ROWS-1.2,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 function decide(v){

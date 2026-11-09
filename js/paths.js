@@ -30,7 +30,6 @@ function pieceFits(p){
   if(p.k==='sky'&&p.s)return '연결 다리는 평지로만 지을 수 있어요';
   if(p.k==='sky'&&p.l<1)return '연결 다리는 2층 높이부터 지을 수 있어요';
   if(occ[p.y][p.x])return '건물이 있어요';
-  if(!owned(p.x,p.y))return '아직 사지 않은 땅이에요';
   var ps=piecesAt(p.x,p.y);
   for(var i=0;i<ps.length;i++){
     var q=ps[i];

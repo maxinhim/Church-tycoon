@@ -77,7 +77,6 @@ function tilePlan(x,y,def){
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};
-  if(!owned(x,y))return {ok:false,why:'아직 사지 않은 땅이에요'};
   if(piecesAt(x,y).length)return {ok:false,why:'길이 있어요'};
   return {ok:true,kind:'new',cost:D[def].cost};
 }

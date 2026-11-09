@@ -5,7 +5,8 @@ function update(dt){
   S.clock+=dt;S.t+=dt;
   var evM=S.evt==='festival'?1.6:(S.evt==='rain'?0.5:1);
   var parkF=clamp((A.park+4)/(S.members*0.35+6),0.35,1);
-  var rate=0.2*(0.4+S.rep/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0012;
+  // 초반에도 마당이 비어 보이지 않게 방문자는 넉넉히, 대신 한 사람의 정착 확률은 낮게
+  var rate=0.32*(0.4+S.rep/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0012;
   S.spawnAcc+=rate*dt;
   while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<50)spawnV();}
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
@@ -43,10 +44,8 @@ function weekEnd(){
   if(lose>gain)msg+=' · 성도 '+(lose-gain)+'명이 떠났어요';
   S.rep=clamp(S.rep+A.rep+MOD.rep+(mood-60)*0.015-(S.rep>50?(S.rep-50)*0.05:0),0,100);
   S.weekInc=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
-  // 체력·일시 만족·행사·쿨다운·노후·직분 정리
-  staminaWeek();
+  // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
-  if(S.restCd>0)S.restCd--;
   for(var id in S.ev){var st=S.ev[id];if(st.left>0)st.left--;if(st.cd>0)st.cd--;}
   decayWeek();
   for(var k in OFFICE){var mx=officeMax(k);if(S.off[k]>mx){addLog('성도가 줄어 '+OFFICE[k].name+' '+(S.off[k]-mx)+'명이 직분을 내려놓았어요');S.off[k]=mx;}}

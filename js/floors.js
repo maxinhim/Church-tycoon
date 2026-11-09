@@ -6,7 +6,6 @@ function isFloorDef(id){return !!D[id]&&D[id].kind==='floor';}
 function paintFloor(x,y,id){
   if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
   if(occ[y][x])return '건물이 있어요';
-  if(!owned(x,y))return '아직 사지 않은 땅이에요';
   var k=x+','+y,prev=S.floor[k]||null;
   if(id==='f_erase'){
     if(!prev)return '지울 바닥이 없어요';

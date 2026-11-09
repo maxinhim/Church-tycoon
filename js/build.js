@@ -3,7 +3,7 @@
 function canPlace(d,x,y,face){
   var dm=faceDims(d,face);
   if(x<0||y<0||x+dm.w>COLS||y+dm.h>ROWS-1)return false;
-  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)if(occ[y+j][x+i]||piecesAt(x+i,y+j).length||!owned(x+i,y+j))return false;
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)if(occ[y+j][x+i]||piecesAt(x+i,y+j).length)return false;
   return true;
 }
 function bump(){

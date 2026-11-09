@@ -121,15 +121,13 @@ function onPanel(e){
   else if(a==='newgame'){if(v&&DIFF[v]){restart(v);}else{UI.confirmNew=!UI.confirmNew;renderMenu();}}
   else{
     var msg='',done='';
-    if(a==='rest'){msg=restWeek();done='한 주 쉬었어요. 체력이 회복됐어요';}
-    else if(a==='hireA'){var cnd=S.cands[+v];msg=hireAssoc(+v);done=cnd?cnd.name+' '+cnd.title+'님을 청빙했어요':'';}
+    if(a==='hireA'){var cnd=S.cands[+v];msg=hireAssoc(+v);done=cnd?cnd.name+' '+cnd.title+'님을 청빙했어요':'';}
     else if(a==='dismiss'){dismissAssoc(+v);done='부교역자가 사임했어요';}
     else if(a==='searchA'){msg=searchCands();done='새 후보를 찾았어요';}
     else if(a==='appoint'){msg=appoint(v);done=OFFICE[v]?OFFICE[v].name+'를 임명했어요':'';if(!msg)F.push({x:ENT+.5,y:ROWS-2,z:1.4,t:2.2,d:2.2,text:OFFICE[v].name+' 임직',col:'#ffe28a',big:1});}
     else if(a==='runEv'){msg=runEvent(v);done=EVENTS[v]?EVENTS[v].name+'을(를) 열었어요':'';if(!msg)F.push({x:ENT+.5,y:ROWS-2,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
     else if(a==='repair'){msg=repair(bById(UI.sel));done='수리를 마쳤어요';}
     else if(a==='repairAll'){msg=repairAll();done='낡은 건물을 모두 고쳤어요';}
-    else if(a==='buyLand'){msg=buyLand();done='부지를 넓혔어요';}
     else return;
     toast(msg||done,1800);renderPanel();hud(true);
   }

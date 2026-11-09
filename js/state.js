@@ -4,16 +4,16 @@ var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
 var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events'};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
-// 시작 상태. 처음엔 입구 앞 일부 땅(S.land)만 가지고 시작하고, 나머지는 부지를 사서 넓힌다
+// 시작 상태: 지도 전체(맨 아래 도로 줄 제외)에 지을 수 있다
 var START_TREES=[[10,20],[21,21],[11,28],[20,27],[17,22],[3,4],[6,13],[26,6],[29,16],[4,25],[28,27],[13,9],[19,3],[8,2],[24,12],[2,18],[30,22]];
 function newState(dk){
   dk=DIFF[dk]?dk:'normal';
   var bs=[{id:1,def:'room',x:14,y:26,face:2,inUse:0,uses:0}];
   START_TREES.forEach(function(t,i){bs.push({id:i+2,def:'tree',x:t[0],y:t[1],inUse:0,uses:0});});
   return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,
-    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:{},land:landStart(),landLv:0,
+    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:{},
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
-    assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},stam:100,tempMood:0,restCd:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
+    assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,fel:1,care:1,comf:1,park:1,past:1},
     hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0};
 }

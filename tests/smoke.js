@@ -167,7 +167,7 @@ async function modularChecks(browser, url) {
   });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 99999; S.land = { x0: 0, y0: 0, x1: COLS - 1, y1: ROWS - 2 }; S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.money = 99999; S.goal = GOALS.length; S.dlg = null;
     const rooms = () => S.buildings.filter(b => b.def === 'mroom');
     // 왼쪽부터 5칸이 비어 있는 줄을 찾는다
     let X = -1, Y = -1;
@@ -230,7 +230,7 @@ async function pathChecks(browser, url) {
   });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 99999; S.land = { x0: 0, y0: 0, x1: COLS - 1, y1: ROWS - 2 }; S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.money = 99999; S.goal = GOALS.length; S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     const starter = S.buildings.find(b => b.def === 'room');
@@ -314,7 +314,7 @@ async function stackChecks(browser, url) {
   });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999; S.land = { x0: 0, y0: 0, x1: COLS - 1, y1: ROWS - 2 }; S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.money = 999999; S.goal = GOALS.length; S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     // 완성품 건물 층 올리기
@@ -418,9 +418,9 @@ async function ministryChecks(browser, url) {
     o.goal = S.goal === 1 && S.money === m0 + GOALS[0].r && S.rep >= r0 + GOALS[0].rep - 0.001 && !isLocked('chapel') && !document.getElementById('cele').hidden && CF.length > 0;
     // 부지: 산 땅 밖에는 못 짓고, 사면 넓어진다
     S.money = 99999;
-    o.landBlock = !canPlace(D.room, 2, 2, 2) && !owned(2, 2);
-    const L0 = Object.assign({}, S.land); buyLand();
-    o.land = S.land.x0 < L0.x0 && S.land.y0 < L0.y0 && S.landLv === 1;
+    // 부지 사기는 없앴다: 지도 어디에나(도로 줄 제외) 지을 수 있다
+    o.anywhere = canPlace(D.room, 2, 2, 2) && !canPlace(D.room, 2, ROWS - 2, 2) && typeof buyLand === 'undefined';
+    o.noStamina = S.stam === undefined && typeof restWeek === 'undefined';
     // 사역팀·부교역자·직분자
     const cap0 = MOD.cap;
     o.team = hireTeam('evang') === '' && S.staff.evang === 1 && MOD.vis > 1;
@@ -431,8 +431,8 @@ async function ministryChecks(browser, url) {
     o.office = appoint('deacon') === '' && S.off.deacon === 1 && appoint('deacon') === '' && appoint('deacon') !== '';
     // 행사: 비용·체력·재개 대기, 절기 제한
     S.members = 20; recalc();
-    const st0 = S.stam, mm = S.money;
-    o.event = runEvent('street') === '' && S.money === mm - EVENTS.street.cost && S.stam === st0 - EVENTS.street.stam && evBlock('street') !== '' && MOD.vis > 1.3;
+    const mm = S.money;
+    o.event = runEvent('street') === '' && S.money === mm - EVENTS.street.cost && evBlock('street') !== '' && MOD.vis > 1.3;
     S.week = 2; o.season = evBlock('christmas') !== '';
     // 고민 카드: 선택하면 효과가 나고 닫힌다
     S.dlg = 'illness'; showDlg(); const mz = S.money;
@@ -461,11 +461,12 @@ async function ministryChecks(browser, url) {
   check(r.normalStart, '난이도: 기본은 보통(자금 6,000)으로 시작');
   check(r.locked, '목표: 처음엔 예배당·관리팀·집사 임명이 잠겨 있음');
   check(r.goal, '목표: 달성하면 후원금·평판·잠금 해제와 축하 카드·꽃가루');
-  check(r.landBlock && r.land, '부지: 산 땅 밖에는 못 짓고, 사면 넓어짐');
+  check(r.anywhere, '부지: 처음부터 지도 전체에 지을 수 있음 (도로 줄 제외)');
+  check(r.noStamina, '목회자 체력: 없앤 기능이 남아 있지 않음');
   check(r.team, '사역팀: 꾸리면 효과가 반영됨');
   check(r.assoc && r.assocLimit, '부교역자: 청빙 비용·사례비·목양 수용력, 자리 수 제한');
   check(r.office, '직분자: 성도 8명마다 집사 한 명까지 임명');
-  check(r.event && r.season, '행사: 비용·체력을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
+  check(r.event && r.season, '행사: 비용을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
   check(r.dlgShown && r.dlg, '목회 고민: 카드가 뜨고, 고르면 효과가 나고 닫힘');
   check(r.worn && r.repair, '노후: 낡으면 좌석이 줄고, 수리하면 돌아옴');
   check(r.panels, '패널: 사역자·행사·현황·메뉴 탭이 그려짐');
@@ -489,7 +490,7 @@ async function ministryChecks(browser, url) {
   await page.click('#fab [data-fab="minis"]');
   const cancelled = await page.evaluate(() => UI.tool === null && UI.ghost === null);
   await page.click('#fab [data-fab="build"]'); await page.click('#cards [data-v="room"]');
-  const placed = await page.evaluate(() => { const L = S.land; for (let y = L.y0; y <= L.y1; y++) for (let x = L.x0; x <= L.x1; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
+  const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   if (placed) await page.click('[data-act="confirm"]');
   const fx = await page.evaluate(() => F.some(f => /좌석 \+/.test(f.text)));
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼으로 요약·챙길 일이 열리고, 다시 누르면 닫힘');

@@ -63,7 +63,6 @@ function warnings(){
   if(c.seat<1)w.push('좌석이 부족해 성도가 떠나요');
   if(c.past<1)w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
   var idle=evIdleWeeks();if(idle>6)w.push('행사를 연 지 '+idle+'주 됐어요. 공동체가 침체돼요');
-  if(S.stam<30)w.push('목회자가 지쳤어요. 쉬거나 중보기도팀을 꾸리세요');
   var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');
   var un=S.buildings.filter(function(b){return b.door&&!usable(b);}).length;if(un)w.push('이용할 수 없는 건물 '+un+'곳 (문·길 확인)');
   if(c.park<0.7)w.push('주차가 모자라 방문자가 줄어요');

@@ -188,16 +188,6 @@ function drawGround(){
       if(on(q[0],q[1]))c.fillRect(q[0],q[1]-2.4*PJ.s,1.2*PJ.s+.4,2.4*PJ.s);
     }
   }
-  // 아직 사지 않은 땅은 조금 어둡게, 산 땅은 점선 울타리로
-  var L=S.land;
-  if(L){
-    var dim='rgba(25,45,20,.17)',wq=function(x0,y0,x1,y1){if(x1<=x0||y1<=y0)return;var r=rrect(x0,y0,x1,y1);quad([[r.x0,r.y0,.003],[r.x1,r.y0,.003],[r.x1,r.y1,.003],[r.x0,r.y1,.003]],dim);};
-    wq(0,0,COLS,L.y0);wq(0,L.y0,L.x0,L.y1+1);wq(L.x1+1,L.y0,COLS,L.y1+1);
-    var lr=rrect(L.x0,L.y0,L.x1+1,L.y1+1);
-    c.setLineDash([6,5]);c.strokeStyle='rgba(255,255,255,.75)';c.lineWidth=Math.max(1,1.6*PJ.s);c.beginPath();
-    [[lr.x0,lr.y0],[lr.x1,lr.y0],[lr.x1,lr.y1],[lr.x0,lr.y1]].forEach(function(pt,i){var pp=P(pt[0],pt[1],.01);if(i)c.lineTo(pp[0],pp[1]);else c.moveTo(pp[0],pp[1]);});
-    c.closePath();c.stroke();c.setLineDash([]);
-  }
   // 도로: 지도 양옆 바깥까지
   var rr=rrect(-B,ROWS-1,COLS+B,ROWS);
   quad([[rr.x0,rr.y0,.004],[rr.x1,rr.y0,.004],[rr.x1,rr.y1,.004],[rr.x0,rr.y1,.004]],'#5c6670');
