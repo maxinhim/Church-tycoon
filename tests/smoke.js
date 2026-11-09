@@ -1075,6 +1075,30 @@ async function gripeChecks(browser, url) {
     S.grip = { wc: 6, seat: 4 }; S.gripN = 20; gripeWeek(); recalc();
     o.pen = S.gripPen === 7.5 && MOD.parts.some(p => /불편/.test(p[0]) && p[1] === -7.5);
     o.warn = warnings().some(t => /화장실을 못 찾은 방문자 6명 → 화장실/.test(t)) && warnings().some(t => /쉴 곳/.test(t));
+    // 배고픔·외로움: 맞는 건물을 찾아가고, 없으면 불편
+    o.ids = new Set(DEFS.map(d => d.id)).size === DEFS.length;
+    S.grip = {}; spawnV(false); const v5 = V[V.length - 1]; v5.urge = 'lonely';
+    o.lonely0 = urgeGo(v5) === false && S.grip.lonely === 1;
+    let club = null;
+    for (let y = PZ - 3; y > 0 && !club; y--) for (let x = 2; x < COLS - 3 && !club; x++) if (canPlace(D.boardgame, x, y, 2)) {
+      build('boardgame', x, y, 2); const nb = S.buildings[S.buildings.length - 1]; recalc(); linkDoor(nb); recalc();
+      if (usable(nb)) club = nb; else { demolish(nb.id); recalc(); } }
+    spawnV(false); const v6 = V[V.length - 1]; v6.urge = 'lonely';
+    o.lonely1 = !!club && urgeGo(v6) === true && v6.target === club.id && v6.want === 'fel';
+    enter(v6, club); finishVisit(v6); o.lonely1 = o.lonely1 && !v6.urge && v6.lonT > 1e8;
+    spawnV(false); const v7 = V[V.length - 1]; v7.urge = 'food'; const fb = urgeGo(v7);
+    o.food = fb === true && GRIPES.food.ids.indexOf(bById(v7.target).def) >= 0;
+    o.fixes = gripeFixes(D.boardgame).includes('외로움') && gripeFixes(D.cell).includes('외로움') && gripeFixes(D.bakery).includes('배고픔') && gripeFixes(D.cafe).includes('목마름') && /외로움/.test(effText(D.futsal));
+    // 소모임 분류: 제목 줄에 운동·취미·음악 칩, 고른 묶음만 목록에
+    o.club = CATS.some(c => c[0] === 'club') && D.gym.cat === 'club' && D.gym.sub === 'sport' && OUTDOOR.indexOf('court') >= 0 && PRICY_CATS.indexOf('club') >= 0;
+    UI.tab = 'build'; UI.fold = false; UI.cat = 'club'; UI.csub = 'sport'; UI.tool = null; renderPanel();
+    const subs = [...document.querySelectorAll('#subtabs [data-act="csub"]')].map(b => b.dataset.v).join();
+    const sport = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.v);
+    document.querySelector('#subtabs [data-act="csub"][data-v="music"]').click();
+    const music = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.v);
+    o.club = o.club && subs === 'sport,hobby,music' && sport.includes('futsal') && sport.includes('gym') && !sport.includes('choir') && music.length === 3 && music.includes('choir');
+    UI.cat = 'worship'; renderPanel(); o.club = o.club && !document.querySelector('#subtabs [data-act="csub"]');
+    UI.fold = true; renderPanel();
     // 만족도 항목을 누르면 계산 방식이 펼쳐진다
     UI.tab = 'status'; UI.statusTab = 'status'; UI.fold = false; renderPanel(); renderStatus();
     const rows = document.querySelectorAll('#panel .covb').length;
@@ -1093,6 +1117,10 @@ async function gripeChecks(browser, url) {
   check(r.trash && r.legs, '불편: 매장에서 산 뒤 쓰레기통이 없으면 불편, 오래 걸으면 쉴 자리·마실 것을 찾음');
   check(r.pen && r.warn, '불편: 지난주 불편 비율만큼 만족도가 내려가고, 챙길 일에 지을 것이 보임');
   check(r.mood, '현황: 만족도 항목을 누르면 계산 방식이 펼쳐짐');
+  check(r.ids, '건물 정의: id가 겹치지 않음');
+  check(r.lonely0 && r.lonely1 && r.food, '불편: 외로운 방문자는 소모임을, 배고픈 방문자는 먹을 곳을 찾아가고, 없으면 불편');
+  check(r.fixes, '불편: 건물 설명에 무엇을 풀어 주는지 보임 (외로움·배고픔·목마름)');
+  check(r.club, '소모임: 운동·취미·음악 칩이 제목 줄에, 고른 묶음만 목록에 (체육관은 운동으로)');
   check(errs.length === 0, '불편: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

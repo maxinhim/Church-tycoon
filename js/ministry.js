@@ -27,7 +27,9 @@ function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 var UNLOCK={
   chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,mfel:1,mcomf:1,lamp:1,picnic:1,planter:1,
   dining:2,youth:2,elder:2,counsel:2,pantry:2,lounge:2,nurse:2,fountain:2,spire:2,mcare:2,study:2,gazebo:2,playground:2,shop:2,sky:2,
-  grand:3,clinic:3,dawn:3,rosearch:3,mission:3,gym:3,foodbank:3,parktower:3,pond:3,statue:3,outdoor:3
+  badminton:1,jokgu:1,gateball:1,calli:1,art:1,
+  hoops:2,craft:2,cook:2,band:2,choir:2,
+  futsal:3,grand:3,clinic:3,dawn:3,rosearch:3,mission:3,gym:3,foodbank:3,parktower:3,pond:3,statue:3,outdoor:3
 };
 function lockGoal(id){return UNLOCK[id]||0;}
 function isLocked(id){return lockGoal(id)>S.goal;}

@@ -12,6 +12,7 @@ function effTags(d){
   if(d.vis)t.push('방문자 +'+Math.round(d.vis*100)+'%');
   if(d.rep&&t.length<2)t.push('평판 ↑');
   if(d.beauty&&t.length<2)t.push(d.beauty>=1?'분위기 +'+d.beauty:'분위기 ↑');
+  if(d.cat==='club'&&t.length<2)t.push('외로움 ↓');
   if(d.fill&&t.length<2){var bn=null;for(var n in d.fill)if(!bn||d.fill[n]>d.fill[bn])bn=n;t.push(NK[bn]+' +'+d.fill[bn]);}
   if(d.income&&t.length<2)t.push('판매 ~'+d.income*SHOP_K);
   return t.slice(0,2);
@@ -27,6 +28,7 @@ function effText(d){
   if(d.beauty)p.push('분위기 +'+d.beauty);
   if(d.vis)p.push('방문자 +'+Math.round(d.vis*100)+'%');
   if(d.income)p.push('한 번 팔 때 약 '+d.income*SHOP_K);
+  if(gripeFixes(d).length)p.push(gripeFixes(d).join('·')+'을(를) 풀어 줘요');
   p.push('유지비 '+d.up+'/주');
   return p.join(' · ');
 }
@@ -34,6 +36,8 @@ function effText(d){
    '행사' 버튼 안에는 행사·사역자 두 탭이 있다 */
 var GROUP_TITLE={build:'건축',minis:'행사',status:'현황',menu:'메뉴'};
 var SUBTABS={minis:[['events','행사'],['staff','사역자']],status:[['status','현황'],['finance','재정']]};
+// 건축 › 소모임의 하위 묶음: 제목 줄 빈자리에 칩으로 (창 높이가 늘지 않게)
+var CLUB_SUBS=[['sport','운동'],['hobby','취미'],['music','음악']];
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
 function openGroup(g){
   UI.lastBuilt=null;
@@ -60,7 +64,9 @@ function renderPanel(){
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   $('#dtitle').textContent=GROUP_TITLE[g];
-  $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'';
+  var cs=UI.csub||'sport';
+  $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
+    (t==='build'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
@@ -68,7 +74,8 @@ function renderPanel(){
    지우기 같은 도구(값 0)는 맨 뒤. 분류를 열 때만 정렬한다 (자금이 바뀌어도 누르는 도중 카드가 움직이지 않게) */
 function buildOrder(cat){
   var can=function(d){return !isLocked(d.id)&&S.money>=d.cost;};
-  return DEFS.filter(function(d){return d.cat===cat;}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
+  var cs=UI.csub||'sport';
+  return DEFS.filter(function(d){return d.cat===cat&&(cat!=='club'||d.sub===cs);}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
     var ta=a.d.cost?0:1,tb=b.d.cost?0:1;if(ta!==tb)return ta-tb;
     var ca=can(a.d)?0:1,cb=can(b.d)?0:1;if(ca!==cb)return ca-cb;
     return a.d.cost-b.d.cost||a.i-b.i;

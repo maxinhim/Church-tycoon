@@ -51,7 +51,7 @@ function releaseVisitors(id){
 }
 
 /* ---------- 완성품 건물 층 올리기 (같은 건물을 위로, 최대 10층) ---------- */
-var MAXF=10,STACK_CATS=['worship','fellow','care','comfort','park'];
+var MAXF=10,STACK_CATS=['worship','fellow','club','care','comfort','park'];
 function canStack(b){var d=D[b.def];return !!d&&d.kind==='bld'&&STACK_CATS.indexOf(d.cat)>=0;}
 function floorCostOf(b){return Math.round(D[b.def].cost*0.75/10)*10;}
 function structureChanged(){rebuildOcc();bump();recalc();save();}

@@ -27,7 +27,7 @@ var WX_SEASON={
   autumn:{n:'가을',w:{sun:45,cloud:25,rain:12,wind:18}},
   winter:{n:'겨울',w:{sun:30,cloud:28,snow:32,wind:10}}
 };
-var OUTDOOR=['stage','bench','picnic','parasol','playground','market'];
+var OUTDOOR=['stage','bench','picnic','parasol','playground','market','court'];
 function seasonKey(){var w=weekOfYear();return w>=10&&w<=22?'spring':(w<=35&&w>22?'summer':(w<=47&&w>35?'autumn':'winter'));}
 function ensureWx(){
   if(!S.wx)S.wx={cur:'sun',next:'cloud',day:dayIdx(),clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1};

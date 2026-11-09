@@ -42,6 +42,7 @@ function drawBld(b){
       if(s>.45){var q=P(mid,r.y1,H1*.79),c=PJ.c;c.fillStyle='#2f5f7a';c.font='700 '+(7.5*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('WC',q[0],q[1]);}
     }
     if(d.deco==='park'){var pm=(r.x0+r.x1)/2;fr('L',r,pm-.15,pm+.15,H1*.55,H1*.85,'#2a56c6');if(s>.45){var qp=P(pm,r.y1,H1*.7),cp=PJ.c;cp.fillStyle='#fff';cp.font='800 '+(8*s)+'px sans-serif';cp.textAlign='center';cp.textBaseline='middle';cp.fillText('P',qp[0],qp[1]);}}
+    if(d.deco==='sign'){var sm=(r.x0+r.x1)/2,sw2=Math.min(.34,(r.x1-r.x0)*.3);fr('L',r,sm-sw2,sm+sw2,H1*.62,H1*.9,d.signc||'#3f5ea3');if(s>.45){var qs=P(sm,r.y1,H1*.76),cs2=PJ.c;cs2.fillStyle='#fff';cs2.font='700 '+(7*s)+'px "IBM Plex Sans KR",sans-serif';cs2.textAlign='center';cs2.textBaseline='middle';cs2.fillText(d.sign,qs[0],qs[1]);}}
     if(d.deco==='clinic'){var cm=(r.x0+r.x1)/2,zc=H1*.7;fr('L',r,cm-.05,cm+.05,zc-.16,zc+.16,'#2f9e6e');fr('L',r,cm-.16,cm+.16,zc-.05,zc+.05,'#2f9e6e');}
     if(d.deco==='info'){var im=(r.x0+r.x1)/2;fr('L',r,im-.13,im+.13,H1*.6,H1*.9,'#2a56c6');if(s>.45){var qi=P(im,r.y1,H1*.75),ci=PJ.c;ci.fillStyle='#fff';ci.font='700 '+(8*s)+'px sans-serif';ci.textAlign='center';ci.textBaseline='middle';ci.fillText('i',qi[0],qi[1]);}}
     var top=null;
@@ -481,7 +482,50 @@ function drawParasol(b){
     c.lineTo(rim[0]+Math.cos(a0)*20*s,rim[1]+Math.sin(a0)*9*s);c.lineTo(rim[0]+Math.cos(a1)*20*s,rim[1]+Math.sin(a1)*9*s);c.closePath();c.fill();
   }
 }
-var DECO_DRAW={market:drawMarket,topiary:drawTopiary,canal:drawCanal,birdbath:drawBirdbath,fence:drawFence,lamp2:drawLamp2,bollard:drawBollard,
+/* ---------- 소모임 운동 코트 ----------
+   바닥(코트 색) + 흰 선 + 종류별 기구(네트·골대·탁구대·운동기구). 정면(face)에 맞춰 fPt로 돌린다 */
+function cLine(b,pts,z,col,wd){
+  var c=PJ.c;c.strokeStyle=col||'rgba(255,255,255,.85)';c.lineWidth=Math.max(.6,(wd||1.3)*PJ.s);c.beginPath();
+  pts.forEach(function(u,i){var f=fPt(b,u[0],u[1]),p=rotPt(f[0],f[1]),q=P(p[0],p[1],z);if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});
+  c.stroke();
+}
+function cRing(b,cu,cv,r,z,a0,a1){var pts=[],n=18;for(var i=0;i<=n;i++){var a=a0+(a1-a0)*i/n;pts.push([cu+Math.cos(a)*r,cv+Math.sin(a)*r]);}cLine(b,pts,z);}
+function drawCourt(b){
+  var d=D[b.def],W=d.w,H=d.h,t=d.court,z=.055;
+  box(fRect(b,.04,.04,W-.04,H-.04),0,.05,shade(d.surf,.8),d.surf);
+  var parts=[],post=function(u,v,h,col){parts.push({r:fRect(b,u-.04,v-.04,u+.04,v+.04),z0:.05,z1:h,c:col||'#59626b'});};
+  if(t!=='pingpong'&&t!=='fitness')cLine(b,[[.25,.25],[W-.25,.25],[W-.25,H-.25],[.25,H-.25],[.25,.25]],z);
+  if(t==='pingpong'){
+    cLine(b,[[.3,.5],[1.7,.5]],z,'rgba(255,255,255,.5)');
+    [[.45,.3],[1.55,.3],[.45,.7],[1.55,.7]].forEach(function(p){post(p[0],p[1],.4,'#3d3d46');});
+    parts.push({r:fRect(b,.35,.24,1.65,.76),z0:.38,z1:.44,c:d.wall,t:'#2f6a4a'});
+    parts.push({r:fRect(b,.98,.2,1.02,.8),z0:.44,z1:.53,c:'#f4efe6'});
+  }else if(t==='fitness'){
+    post(.3,.5,1.15,d.wall);post(.9,.5,1.15,d.wall);parts.push({r:fRect(b,.3,.47,.9,.53),z0:1.08,z1:1.13,c:'#cfd6dc'});
+    post(1.5,.5,.55,d.wall);parts.push({r:fRect(b,1.32,.32,1.68,.68),z0:.45,z1:.52,c:'#d65a4a'});
+  }else if(t==='badminton'||t==='jokgu'){
+    var m=W/2,nh=t==='badminton'?.85:.42,n0=t==='badminton'?.5:.08;
+    cLine(b,[[m,.25],[m,H-.25]],z);
+    if(t==='badminton')cLine(b,[[.25,H/2],[W-.25,H/2]],z);
+    post(m,.15,nh,'#3d4650');post(m,H-.15,nh,'#3d4650');
+    parts.push({r:fRect(b,m-.02,.17,m+.02,H-.17),z0:n0,z1:nh,c:'#ecebe6'});
+  }else if(t==='gateball'){
+    [[.8,.8],[2.2,1.1],[1.2,2.2]].forEach(function(p){post(p[0]-.08,p[1],.22,'#f4efe6');post(p[0]+.08,p[1],.22,'#f4efe6');parts.push({r:fRect(b,p[0]-.12,p[1]-.02,p[0]+.12,p[1]+.02),z0:.2,z1:.24,c:'#f4efe6'});});
+    post(1.5,1.5,.6,'#d65a4a');
+  }else if(t==='hoops'){
+    cLine(b,[[1,.25],[1,1.4],[2,1.4],[2,.25]],z);cRing(b,1.5,1.4,.5,z,0,Math.PI);cRing(b,1.5,.5,1.25,z,0,Math.PI);
+    post(1.5,.14,1.45,'#3d4650');
+    parts.push({r:fRect(b,1.1,.22,1.9,.27),z0:1.1,z1:1.62,c:'#f4efe6'});
+    parts.push({r:fRect(b,1.38,.3,1.62,.5),z0:1.3,z1:1.34,c:'#d9823b'});
+  }else if(t==='futsal'){
+    var mf=W/2;cLine(b,[[mf,.25],[mf,H-.25]],z);cRing(b,mf,H/2,.5,z,0,Math.PI*2);
+    cLine(b,[[.25,.9],[.9,.9],[.9,H-.9],[.25,H-.9]],z);cLine(b,[[W-.25,.9],[W-.9,.9],[W-.9,H-.9],[W-.25,H-.9]],z);
+    [.18,W-.18].forEach(function(u){post(u,H/2-.5,.6,'#f4efe6');post(u,H/2+.5,.6,'#f4efe6');parts.push({r:fRect(b,u-.04,H/2-.5,u+.04,H/2+.5),z0:.56,z1:.62,c:'#f4efe6'});});
+  }
+  drawParts(parts);
+}
+
+var DECO_DRAW={court:drawCourt,market:drawMarket,topiary:drawTopiary,canal:drawCanal,birdbath:drawBirdbath,fence:drawFence,lamp2:drawLamp2,bollard:drawBollard,
   stonelamp:drawStoneLamp,bin:drawBin,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol,spr:drawSprFallback};
 
 /* ---------- 울타리: 도로 | 주차 구역 | 교회 부지 ----------

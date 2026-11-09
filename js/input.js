@@ -95,8 +95,9 @@ function onPanel(e){
   var a=el.dataset.act,v=el.dataset.v;
   if(a==='close'){closeDock();return;}
   if(a==='subtab'){UI.tab=v;if(tabGroup(v)==='minis')UI.minisTab=v;else UI.statusTab=v;renderPanel();return;}
-  if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
-  else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
+  if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderPanel();}
+  if(a==='csub'){UI.csub=v;UI.tool=null;UI.ghost=null;renderPanel();}
+  else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderPanel();}
   else if(a==='pick'){
     // 고르면 패널을 닫고 지도에서 바로 짓는다
     if(isLocked(v)){toast(D[v].name+'은(는) '+lockText(lockGoal(v))+' 지을 수 있어요',1800);return;}

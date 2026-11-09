@@ -26,7 +26,7 @@ mk('bakery','빵집','shop',2,1,800,8,'bld','#f6ead4','#c9853a',{H:.8,roof:'flat
 mk('bookstore','기독교 서점','shop',2,1,1100,9,'bld','#eef0e6','#4f6db0',{H:.85,roof:'flat',bigwin:1,deco:'awning',ccap:4,fill:{word:20,comf:18},cap:5,dur:4,income:6,desc:'성경과 신앙 서적, 작은 선물을 파는 서점'});
 mk('market','나눔장터','shop',3,2,1300,10,'market','#c9b38a','#d65a6e',{fcap:10,ccap:6,fill:{fel:30,comf:22},cap:10,dur:4,income:5,rep:0.2,desc:'중고 물건과 손수 만든 먹거리를 나누는 장터. 수익 일부로 이웃을 도와 평판이 조금 오릅니다'});
 mk('youth','청년부실','fellow',2,2,1500,14,'bld','#e3eef2','#2f8f9d',{H:.95,roof:'flat',deco:'dots',fcap:18,fill:{fel:48,word:12},cap:12,dur:5,desc:'청년들이 모이고 어울리는 방'});
-mk('gym','체육관','fellow',4,3,4200,40,'bld','#e6e9ec','#5a6b7c',{H:1.4,roof:'flat',bigwin:1,fcap:40,ccap:6,fill:{fel:60,comf:10},cap:30,dur:6,desc:'운동과 큰 행사를 함께하는 넓은 공간'});
+mk('gym','체육관','club',4,3,4200,40,'bld','#e6e9ec','#5a6b7c',{sub:'sport',H:1.4,roof:'flat',bigwin:1,fcap:40,ccap:6,fill:{fel:60,comf:10},cap:30,dur:6,desc:'운동과 큰 행사를 함께하는 넓은 공간'});
 mk('mfel','교제실 칸','fellow',1,1,380,3,'mroom','#eadfce','#a0603f',{rname:'교제실',per:{fcap:6,cap:4,up:3},fk:'fel',fcap:6,fill:{fel:43},cap:4,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 교제실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 10층)'});
 mk('pantry','구제창고','care',2,1,850,12,'bld','#c99a64','#8a5a2b',{H:.85,roof:'gable',rh:.5,deco:'barn',kcap:8,fill:{care:56},cap:4,dur:4,rep:0.5,desc:'이웃을 돕는 나눔. 평판이 천천히 오릅니다'});
 mk('counsel','상담실','care',1,1,650,8,'bld','#ece5d6','#7b6aa5',{H:.85,roof:'hip',rh:.5,kcap:4,fill:{care:44,word:10},cap:2,dur:6,rep:0.2,desc:'마음을 들어주는 작은 방'});
@@ -112,6 +112,23 @@ mk('bridge_a','아치 돌다리','garden',1,1,420,0,'spr','#9aa3a8','#c9c2b6',{h
 mk('bridge_w','나무 다리','garden',1,1,240,0,'spr','#a07a52','#8a6844',{hgt:.35,dir:'axis',beauty:0.7,desc:'물길 위에 놓는 납작한 나무 다리'});
 mk('bikerack','자전거 거치대','park',1,1,120,0,'bikerack','#9aa3a8','#59626b',{park:1,desc:'자전거 세 대를 세울 수 있어요. 주차 +1 (부지 안에도 둘 수 있어요)'});
 mk('parasol','파라솔 테이블','comfort',1,1,240,1,'parasol','#e8e2d4','#d65a4a',{prop:1,fill:{comf:16,fel:12},cap:4,dur:3,beauty:0.5,desc:'햇빛을 가리는 파라솔 아래 쉼 자리'});
+/* ---------- 소모임: 운동·취미·음악 (외로움을 풀어 준다) ----------
+   운동 시설은 야외 코트(court)라 비·눈 오는 날엔 쉬고, 취미·음악 방은 실내(층 올리기 가능) */
+mk('pingpong','탁구대','club',2,1,300,1,'court','#3f7a52','#2a56c6',{sub:'sport',court:'pingpong',surf:'#c9c2b6',dir:'face',fcap:4,fill:{fel:20,comf:6},cap:4,dur:3,desc:'둘이서, 넷이서 땀 흘리며 친해지는 탁구대'});
+mk('fitness','야외 운동기구','club',2,1,350,1,'court','#3f6fe0','#59626b',{sub:'sport',court:'fitness',surf:'#d9c9a3',dir:'face',fcap:3,fill:{fel:12,comf:10,care:6},cap:4,dur:3,desc:'철봉·허리 돌리기 같은 운동기구. 어르신과 동네 이웃이 함께 써요'});
+mk('badminton','배드민턴장','club',3,2,650,3,'court','#3d9b7a','#f4efe6',{sub:'sport',court:'badminton',surf:'#4f8a6a',dir:'axis',fcap:8,fill:{fel:28,comf:4},cap:6,dur:4,desc:'네트 하나로 금방 어울리는 배드민턴 코트'});
+mk('jokgu','족구장','club',3,2,700,3,'court','#c96f3d','#f4efe6',{sub:'sport',court:'jokgu',surf:'#c98f5c',dir:'axis',fcap:10,fill:{fel:30},cap:8,dur:4,desc:'낮은 네트를 사이에 두고 발로 겨루는 족구장. 남선교회의 단골'});
+mk('gateball','게이트볼장','club',3,3,800,3,'court','#8fb05a','#f4efe6',{sub:'sport',court:'gateball',surf:'#9cbf6a',fcap:10,kcap:4,fill:{fel:26,care:10},cap:10,dur:5,rep:0.2,desc:'어르신들이 모여 공을 치는 잔디 게이트볼장'});
+mk('hoops','농구장','club',3,3,1000,4,'court','#d9823b','#f4efe6',{sub:'sport',court:'hoops',surf:'#b8564a',dir:'face',fcap:12,fill:{fel:32,comf:4},cap:10,dur:4,desc:'골대 하나 있는 하프 코트. 청소년들이 모여들어요'});
+mk('futsal','풋살장','club',5,3,1600,6,'court','#3f8656','#f4efe6',{sub:'sport',court:'futsal',surf:'#3f8a4c',dir:'axis',fcap:18,fill:{fel:36},cap:14,dur:5,desc:'작은 골대 두 개가 있는 풋살장. 주일 오후 조기 축구회가 모여요'});
+mk('boardgame','보드게임실','club',2,2,800,7,'bld','#efe3cf','#7a5bc7',{sub:'hobby',H:.85,roof:'flat',deco:'sign',sign:'보드',signc:'#7a5bc7',fcap:10,fill:{fel:40},cap:8,dur:5,desc:'둘러앉아 웃음이 터지는 보드게임 모임방'});
+mk('calli','서예교실','club',2,2,900,7,'bld','#f2ece0','#3d3d46',{sub:'hobby',H:.9,roof:'hip',rh:.45,deco:'sign',sign:'서예',signc:'#3d3d46',fcap:8,fill:{fel:30,word:8},cap:8,dur:6,desc:'말씀 구절을 붓으로 옮겨 쓰는 서예 모임'});
+mk('art','미술교실','club',2,2,900,7,'bld','#f4efe6','#d9567a',{sub:'hobby',H:.9,roof:'flat',bigwin:1,deco:'sign',sign:'미술',signc:'#d9567a',fcap:8,fill:{fel:32,care:6},cap:8,dur:6,desc:'그림을 그리며 마음을 나누는 미술 모임'});
+mk('craft','공방','club',2,2,1000,8,'bld','#e8dcc6','#8a5a2b',{sub:'hobby',H:.9,roof:'gable',rh:.45,deco:'sign',sign:'공방',signc:'#8a5a2b',fcap:8,fill:{fel:34,comf:4},cap:8,dur:6,desc:'뜨개질·목공으로 손수 만드는 공방 모임'});
+mk('cook','요리교실','club',3,2,1100,10,'bld','#f6ecdc','#d1a02e',{sub:'hobby',H:.9,roof:'flat',deco:'sign',sign:'요리',signc:'#c4503a',fcap:12,fill:{fel:36,comf:8},cap:10,dur:6,desc:'함께 만들고 나눠 먹는 요리 모임'});
+mk('guitar','기타·우쿨렐레 교실','club',2,2,900,7,'bld','#ece4d4','#c9853a',{sub:'music',H:.85,roof:'flat',deco:'sign',sign:'기타',signc:'#c9853a',fcap:8,fill:{fel:32,word:6},cap:8,dur:5,desc:'처음 잡아 보는 기타·우쿨렐레를 함께 배워요'});
+mk('band','밴드연습실','club',2,2,1300,10,'bld','#3f4650','#c4503a',{sub:'music',H:.95,roof:'flat',deco:'sign',sign:'밴드',signc:'#c4503a',fcap:10,fill:{fel:36,word:8},cap:8,dur:5,desc:'드럼과 앰프가 있는 밴드 연습실. 찬양팀 청년들의 아지트'});
+mk('choir','합창실','club',3,2,1500,12,'bld','#efe9dc','#3f5ea3',{sub:'music',H:1.0,roof:'gable',rh:.5,deco:'sign',sign:'합창',signc:'#3f5ea3',fcap:16,fill:{fel:38,word:10},cap:14,dur:6,desc:'목소리를 맞추며 하나 되는 합창 모임'});
 mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
 mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.04,desc:'단정한 회색 보도블록'});
 mk('f_brick','벽돌 바닥','floor',1,1,20,0,'floor','#b9694c','#8c4a33',{pat:'brick',beauty:0.05,desc:'따뜻한 붉은 벽돌'});
@@ -124,9 +141,12 @@ mk('ter_set','땅 높이','land',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'
 mk('ter_ramp','흙 경사로','land',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
 /* 꾸미기에 마음 쓰도록: 기능 건물(예배·교제·매장·돌봄·편의·주차)은 2배 값.
    정원·장식·바닥·길·지형·편의 소품은 그대로. 초기 자금·목표 보상·대출·신용 한도도 같은 비율로 올렸다 */
-var BUILD_K=2,PRICY_CATS=['worship','fellow','shop','care','comfort','park'];
+var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 // 편의로 옮긴 작은 소품(prop: 벤치·쓰레기통·식수대 등)은 꾸미기 때 값 그대로
 DEFS.forEach(function(d){if(PRICY_CATS.indexOf(d.cat)>=0&&!d.prop)d.cost=Math.round(d.cost*BUILD_K/10)*10;});
+// 소모임 코트의 그림 높이 (가려짐·눌러 고르기용)
+var COURT_H={pingpong:.5,fitness:1.2,badminton:.9,jokgu:.5,gateball:.4,hoops:1.7,futsal:.8};
+DEFS.forEach(function(d){if(d.kind==='court')d.hgt=COURT_H[d.court];});
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 function heightOf(id){
   var d=D[id];
