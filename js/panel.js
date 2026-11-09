@@ -139,8 +139,9 @@ function renderStaff(){
   h+='<div class="sec">직분자 임명 · 모두 '+offTotal()+'명</div>';
   Object.keys(OFFICE).forEach(function(k){
     var o=OFFICE[k],mx=officeMax(k),lk=o.goal>S.goal;
-    h+=srow(o.name,S.off[k]+' / '+mx+'명 · 성도 '+o.per+'명마다 한 명',o.desc+'. 임직식 비용 '+fmt(o.cost),
-      lk?'<button class="btn" disabled>'+lockText(o.goal)+'</button>':'<button class="btn pri" data-act="appoint" data-v="'+k+'"'+(S.off[k]>=mx||S.money<o.cost?' disabled':'')+'>임명</button>');
+    // 임직식 비용은 청빙 버튼처럼 버튼 안에 ('임명 300')
+    h+=srow(o.name,S.off[k]+' / '+mx+'명 · 성도 '+o.per+'명마다 한 명',o.desc,
+      lk?'<button class="btn" disabled>'+lockText(o.goal)+'</button>':'<button class="btn pri" data-act="appoint" data-v="'+k+'"'+(S.off[k]>=mx||S.money<o.cost?' disabled':'')+'>임명 '+fmt(o.cost)+'</button>');
   });
   h+='<div class="sec">사역팀 · 주 '+fmt(teamPay())+'</div>';
   Object.keys(STAFF).forEach(function(k){

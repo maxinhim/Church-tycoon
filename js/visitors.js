@@ -9,7 +9,7 @@ function spawnV(member){
   var needs={};NEEDS.forEach(function(n){needs[n]=22+Math.random()*34;});
   if(member)needs.word=8+Math.random()*10;
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
-    member:!!member,wallet:Math.round(member?12+Math.random()*40:6+Math.random()*32),
+    member:!!member,wallet:Math.round(member?18+Math.random()*60:9+Math.random()*48),
     life:55+Math.random()*30,speed:1.9+Math.random()*0.7,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});

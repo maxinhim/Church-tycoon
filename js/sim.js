@@ -23,8 +23,8 @@ function update(dt){
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
-// 한 주 48초 기준. 방문자는 예전(240초)보다 2.5배 자주 오고, 한 번 살 때 2배 산다 (한 주 매장 수입을 예전과 비슷하게)
-var VIS_RATE=0.4,SHOP_COST=0.5,SHOP_K=2;
+// 한 주 48초 기준. 매장: 한 번 살 때 3.5배(SHOP_K), 재료비는 판매액의 30% — 매장 운영으로 넉넉히 벌도록
+var VIS_RATE=0.4,SHOP_COST=0.3,SHOP_K=3.5;
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
 function addLog(msg){S.log.unshift({w:S.week,msg:msg});if(S.log.length>10)S.log.length=10;}

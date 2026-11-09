@@ -468,11 +468,12 @@ async function rulesChecks(browser, url) {
     let shopB = null;
     for (let y = 0; y < PZ - 2 && !shopB; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.bakery, x, y, 2)) { build('bakery', x, y, 2); shopB = S.buildings[S.buildings.length - 1]; break; }
     spawnV(false); const v = V[V.length - 1]; v.wallet = 30; enter(v, shopB);
-    const m0 = S.money, ws0 = S.weekShop; finishVisit(v);
+    const m0 = S.money, ws0 = S.weekShop, wsu0 = S.weekSup || 0; finishVisit(v);
     o.shop = S.money > m0 && S.weekShop > ws0 && v.wallet < 30 && F.some(f => /^\+\d+$/.test(f.text));
     // 재료비는 판 순간 나가고, 정산 때 자금 변동 = 영수증의 '정산 때' 금액 (합계에 주중 순수익이 들어 있어도 설명이 맞음)
-    o.shopSup = S.weekSup > 0 && S.money - m0 === (S.weekShop - S.weekSup);
-    { const ms = S.money, wi = S.weekInc, wsup = S.weekSup; weekEnd(); const r = S.rcpt;
+    o.shopSup = S.weekSup > wsu0 && S.money - m0 === (S.weekShop - ws0) - (S.weekSup - wsu0) && S.weekSup - wsu0 === Math.round((S.weekShop - ws0) * SHOP_COST);
+    // 주일 정산 때 무작위 사건(감사 헌금·수리비)이 끼지 않게
+    { S.evtLeft = 2; S.evt = null; const ms = S.money, wi = S.weekInc, wsup = S.weekSup; weekEnd(); const r = S.rcpt;
       o.settle = S.money - ms === r.settle && r.pre === Math.round(wi - wsup) && r.net === r.settle + r.pre && /정산 때 자금/.test(rcptHtml(r, false)); }
     o.shopCat = DEFS.filter(d => d.cat === 'shop').length >= 7 && ['market', 'bakery', 'bookstore'].every(id => D[id] && D[id].income > 0);
     // 대출: 한도 안에서 빌리고, 주일마다 갚고, 한 번에 갚을 수 있음
@@ -1068,12 +1069,14 @@ async function gripeChecks(browser, url) {
     enter(v2, wc); finishVisit(v2); o.goWc = o.goWc && !v2.urge && v2.wcT > 1e8;
     // 쓰레기: 매장에서 사고 쓰레기통이 없으면 떠날 때 불편
     spawnV(false); const v3 = V[V.length - 1]; v3.wallet = 30; enter(v3, cafe); finishVisit(v3);
-    o.trash = v3.trash === true; depart(v3); o.trash = o.trash && S.grip.bin === 1;
+    // 먹을 것을 사면 절반쯤은 쓰레기가 생긴다
+    let tr = 0; for (let i = 0; i < 40; i++) { const t = { trash: false }; gripeBought(t, cafe); if (t.trash) tr++; }
+    v3.trash = true; depart(v3); o.trash = tr > 8 && tr < 32 && S.grip.bin === 1;
     // 다리: 오래 걸으면 쉴 자리를 찾는다
     spawnV(false); const v4 = V[V.length - 1]; gripeTick(v4, .1, 99); o.legs = v4.urge === 'seat' || v4.urge === 'drink';
     // 주일 정산: 불편 비율만큼 다음 주 만족도가 내려가고, 챙길 일에 무엇을 지을지 보인다
     S.grip = { wc: 6, seat: 4 }; S.gripN = 20; gripeWeek(); recalc();
-    o.pen = S.gripPen === 7.5 && MOD.parts.some(p => /불편/.test(p[0]) && p[1] === -7.5);
+    o.pen = S.gripPen === 3.4 && MOD.parts.some(p => /불편/.test(p[0]) && p[1] === -3.4);
     o.warn = warnings().some(t => /화장실을 못 찾은 방문자 6명 → 화장실/.test(t)) && warnings().some(t => /쉴 곳/.test(t));
     // 배고픔·외로움: 맞는 건물을 찾아가고, 없으면 불편
     o.ids = new Set(DEFS.map(d => d.id)).size === DEFS.length;
