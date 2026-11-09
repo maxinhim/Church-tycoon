@@ -28,8 +28,9 @@ var SPIRIT_B={
   praise:{r:20},outdoor:{r:16},choir:{r:12},band:{r:8},guitar:{r:5},bell:{r:3}
 };
 var SPIRIT_W={w:.3,p:.2,r:.2,s:.3};
-// 성도 수에 따라 오르는 기대치: 300명이면 필요가 1.6배
-function expectK(m){return 1+m/500;}
+// 기대치: 성도 300명이면 +0.6, 교회 Level 30이면 +0.435 (Level 하나에 +0.015)
+var EXP_LV=0.015;
+function expectK(m){return 1+m/500+Math.max(0,(S.lvl||1)-1)*EXP_LV;}
 // 그 행사를 연 지 몇 주 지났는지에 따라 1 → 0
 function recent(id,span){var w=(S.evW||{})[id];if(w==null)return 0;return Math.max(0,1-(S.week-w)/span);}
 function spiritParts(){

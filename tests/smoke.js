@@ -1134,7 +1134,10 @@ async function gripeChecks(browser, url) {
     o.spirit = s0 === 0 && s1.sac.communion === 1 && s1.s > 0.5 && s2.sac.communion === 0 && Math.abs(Object.values(MW).reduce((a, b) => a + b, 0) - 1) < 1e-9;
     S.evW = {}; S.ev = {}; S.money = 99999; runEvent('communion'); o.spirit = o.spirit && S.evW.communion === S.week;
     // 기대치: 300명이면 필요 1.6배
-    o.expect = Math.abs(expectK(300) - 1.6) < 1e-9 && expectK(0) === 1;
+    const lv0 = S.lvl; S.lvl = 1; o.expect = Math.abs(expectK(300) - 1.6) < 1e-9 && expectK(0) === 1;
+    S.lvl = 31; o.expect = o.expect && Math.abs(expectK(0) - 1.45) < 1e-9; S.lvl = lv0;
+    // 보너스 넘침 막기: 항목이 모두 100%여도 항목 점수는 85, 나머지는 보너스로
+    recalc(); o.expect = o.expect && MOOD_ITEMS === 85 && S.cov.items <= 1 && Math.abs(S.mood - Math.min(100, Math.max(0, MOOD_ITEMS * S.cov.items + beautyBonus() + MOD.mood))) < 1e-6;
     // 익숙해짐: 꾸밈을 새로 지으면 fresh가 쌓이고, 주마다 15%씩 줄어든다
     S.fresh = 0; let fl = null; for (let y = 2; y < PZ - 2 && !fl; y++) for (let x = 2; x < COLS - 2 && !fl; x++) if (canPlace(D.fountain, x, y, 2)) { build('fountain', x, y, 2); fl = 1; }
     const f1 = S.fresh; S.evtLeft = 2; weekEnd(); o.fresh = f1 === D.fountain.beauty && Math.abs(S.fresh - f1 * 0.85) < 1e-9;
@@ -1156,7 +1159,7 @@ async function gripeChecks(browser, url) {
   check(r.pen && r.warn, '불편: 지난주 불편 비율만큼 만족도가 내려가고, 챙길 일에 지을 것이 보임');
   check(r.mood, '현황: 만족도 항목을 누르면 계산 방식이 펼쳐짐 (영성 포함 8줄)');
   check(r.spirit, '영성: 성찬식 등 성례를 열면 오르고 시간이 지나면 줄어듦, 만족도 비중 합 1');
-  check(r.expect && r.fresh, '만족도: 성도가 늘수록 기대치가 오르고, 새로 꾸민 효과는 주마다 익숙해짐');
+  check(r.expect && r.fresh, '만족도: 성도 수·교회 Level만큼 기대치가 오르고, 항목은 85까지(나머지는 보너스), 새로 꾸민 효과는 익숙해짐');
   check(r.rep, '평판: 100에서 저절로 내려옴 (꾸준한 노력이 있어야 높게 유지)');
   check(r.level, '교회 Level: 점수로 오르고(최대 100) 내려가지 않음, 오르면 큰 배지가 뜨고 이름 옆에 보임');
   check(r.ids, '건물 정의: id가 겹치지 않음');

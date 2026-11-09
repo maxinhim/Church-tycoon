@@ -179,10 +179,11 @@ function topCap(key){
 function sgn(v){v=Math.round(v*10)/10;return (v<0?'−':'+')+Math.abs(v);}
 function moodWhy(k){
   var m=Math.max(1,S.members),c=S.cov||{},L=[],cap=function(have,need,unit,base){L.push(unit+' '+Math.round(have)+(base?' (기본 '+base+' 포함)':'')+' ÷ 필요 '+Math.round(need)+' → '+Math.round(Math.min(1,have/Math.max(1,need))*100)+'%');};
-  var w=MW[k],E=c.E||1,ek=E>1.005?' × 기대치 '+E.toFixed(2):'';
+  var w=MW[k],E=c.E||1,ek=E>1.005?' × 기대치 '+E.toFixed(2)+' (성도 수·교회 Lv)':'';
   if(k==='all'){
-    var base=0;for(var q in MW)base+=100*MW[q]*(c[q]||0);
-    L.push('항목 점수 '+Math.round(base)+' = 영성 25% · 좌석 20% · 목양 17% · 교제 12% · 주차 10% · 돌봄 9% · 편의 7%를 섞은 값 (아래 막대)');
+    var it=c.items!=null?c.items:0;
+    L.push('항목 점수 '+Math.round(MOOD_ITEMS*it)+' / '+MOOD_ITEMS+' = 영성 25% · 좌석 20% · 목양 17% · 교제 12% · 주차 10% · 돌봄 9% · 편의 7%를 섞은 값('+Math.round(it*100)+'%) × '+MOOD_ITEMS);
+    L.push('항목만으로는 '+MOOD_ITEMS+'까지예요. 나머지는 꾸밈·사역팀·행사 보너스로 채워요');
     L.push('꾸밈 '+sgn(beautyBonus())+' = 아름다움 '+(Math.round(A.beauty*10)/10)+' × '+BEAUTY_K+' + 새로 꾸민 것 '+(Math.round((S.fresh||0)*10)/10)+' × '+FRESH_K+' (최대 +8)');
     L.push('새로 꾸민 효과는 한 주에 15%씩 익숙해져요. 정원·장식·바닥을 계속 더하거나 바꾸면 유지돼요');
     (MOD.parts||[]).forEach(function(p){L.push(p[0]+' '+sgn(p[1]));});

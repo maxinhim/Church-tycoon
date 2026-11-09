@@ -41,15 +41,17 @@ function agg(){
   return a;
 }
 // 만족도 비중 (합 1): 영성이 가장 크다
-var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07};
+var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07},MOOD_ITEMS=85;
 function calcMood(){
   var m=Math.max(1,S.members);
   var cov=function(have,need){return Math.min(1,have/Math.max(1,need));};
   // past: 목양 — 담임·부교역자·직분자가 돌볼 수 있는 성도 수(MOD.cap) 대비
-  // 성도가 늘수록 기대치가 올라 교제·돌봄·편의·주차 필요가 더 빨리 는다 (300명이면 1.6배)
+  // 성도가 늘고 교회 Level이 오를수록 기대치가 올라 교제·돌봄·편의·주차·영성 필요가 더 빨리 는다
   var E=expectK(m),sp=spiritParts();
   var seat=cov(A.seats,m),fel=cov(A.fcap+3,m*0.55*E),care=cov(A.kcap+2,m*0.3*E),comf=cov(A.ccap+3,m*0.25*E),park=cov(A.park+3,m*0.35*E),past=cov(MOD.cap,m);
-  var mood=100*(MW.seat*seat+MW.spirit*sp.v+MW.past*past+MW.fel*fel+MW.park*park+MW.care*care+MW.comf*comf)+beautyBonus()+MOD.mood;
-  return {mood:clamp(mood,0,100),seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
+  // 항목 점수는 최대 85까지만. 나머지 15는 꾸밈·사역팀·행사 같은 보너스로만 채운다 (모자란 항목을 보너스로 덮지 못하게)
+  var items=MW.seat*seat+MW.spirit*sp.v+MW.past*past+MW.fel*fel+MW.park*park+MW.care*care+MW.comf*comf;
+  var mood=MOOD_ITEMS*items+beautyBonus()+MOD.mood;
+  return {mood:clamp(mood,0,100),items:items,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
 }
 function recalc(){refreshNav();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;}
