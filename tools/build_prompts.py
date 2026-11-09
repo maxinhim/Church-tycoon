@@ -249,8 +249,21 @@ sheet('E4', '보충: 간판 없는 빵집·서점', (3, 3),
        "Row 3: all three cells stay empty (the bottom-right cell must be plain magenta)."],
       pair='h')
 
+sheet('W1', '고화질 시험: 작은 예배실·예배당 (2x2)', (2, 2),
+      '핵심 건물인 예배당이 작은 칸(6×6, 1024px)에서 받아 확대하면 깨져 보여서, 한 장에 그림 3개만 담아 칸 하나를 약 1000px로 키운다. 결과가 좋으면 예배당 뒷모습·대예배당도 같은 방식으로 받는다.',
+      '작은 예배실(처음부터 있는 건물, 2x2) 앞·뒤, 예배당(3x2) 앞',
+      ["It contains only THREE large, highly detailed drawings of the main church buildings.",
+       "GRID: exactly 2 columns x 2 rows of equal square cells, no more and no fewer. Each cell is very large, so draw each building big (about 70% of the cell width) with rich pixel detail: individual roof shingles, brick or plaster texture, window frames and panes, door panels, steps, trim and small flowers by the walls. Keep the same chunky pixel style and outline color as the reference image; more detail must come from more pixels, never from blur or soft painting.",
+       "Do NOT add any other objects, extra views, people, signs or text. Only the three drawings listed below.",
+       "Row 1, column 1: FRONT view of the small worship chapel, footprint 2x2: cream plaster walls, a steep slate-blue gable roof, a small plain white cross on the front of the ridge, a round window high on the front gable, an arched wooden double door with two stone steps, tall narrow arched side windows, a stone base.",
+       "Row 1, column 2: BACK view of the same small worship chapel (turned 180 degrees): the same walls, roof and cross, the back gable with one small round window, no door.",
+       "Row 2, column 1: FRONT view of the main chapel, footprint 3x2: red brick walls, a tall slate-blue gable roof, a white bell tower with a small spire and cross over the entrance, an arched wooden double door, tall arched windows along the long side, a stone base.",
+       "Row 2, column 2: (empty)."],
+      pair='h')
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('E4', '보충 — 간판 없는 빵집·서점 (지금 먼저)'),
+ORDER = [('W1', '고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)'),
+         ('E4', '보충 — 간판 없는 빵집·서점 (지금 먼저)'),
          ('E3', '보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)'),
          ('E2', '보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자'),
          ('K', 'UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다'),
@@ -352,7 +365,7 @@ def build_html():
 
 
 if __name__ == '__main__':
-    SHEETS.sort(key=lambda x: {'E4': 0, 'E3': 1, 'E2': 2}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
+    SHEETS.sort(key=lambda x: {'W1': 0, 'E4': 1, 'E3': 2, 'E2': 3}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))
