@@ -23,8 +23,9 @@ function update(dt){
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
-// 한 주 48초 기준. 매장: 한 번 살 때 3.5배(SHOP_K), 재료비는 판매액의 30% — 매장 운영으로 넉넉히 벌도록
-var VIS_RATE=0.4,SHOP_COST=0.3,SHOP_K=3.5;
+// 한 주 48초 기준. 자금 걱정보다 짓고 꾸미는 재미에 집중하도록 수입을 넉넉하게:
+// 매장은 한 번 살 때 8배(SHOP_K), 재료비는 판매액의 25%. 헌금은 출석 한 명당 30, 방문자 한 명당 3, 개척 후원은 600에서 주마다 6씩 줄어든다
+var VIS_RATE=0.4,SHOP_COST=0.25,SHOP_K=8,OFFER_PER=30,VIS_GIVE=3,SPONSOR0=600,SPONSOR_DROP=6;
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
 function addLog(msg){S.log.unshift({w:S.week,msg:msg});if(S.log.length>10)S.log.length=10;}
@@ -39,10 +40,10 @@ function weekEnd(){
   // 주일 날씨(비·눈·폭우)에 따라 출석이 줄어든다
   var closed=!S.open,full=closed?0:Math.min(m,A.seats),attend=Math.round(full*wxAttend()),wxLost=full-attend;
   // 출석이 많을수록 한 사람당 헌금 효과는 줄어든다
-  var offering=Math.round(attend*9*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500));
+  var offering=Math.round(attend*OFFER_PER*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500));
   var online=closed?Math.round(m*1.2):0;
-  var visGive=Math.round(S.visitsWeek*1.0*(0.5+S.rep/100));
-  var sponsor=Math.round(Math.max(0,260-3.5*S.week));
+  var visGive=Math.round(S.visitsWeek*VIS_GIVE*(0.5+S.rep/100));
+  var sponsor=Math.round(Math.max(0,SPONSOR0-SPONSOR_DROP*S.week));
   var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(teamPay()+assocPay());
   // 재정 화면에서 항목마다 어떻게 계산됐는지 보여 주려고 계산 재료를 함께 남긴다
   var loanList=S.loans.map(function(l){return {n:LOANS[l.k].name,p:Math.round(l.pay)};});

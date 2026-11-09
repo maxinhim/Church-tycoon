@@ -106,14 +106,14 @@ function rcptWhy(r,k){
   var L=[];
   if(k==='offering'){
     L.push('출석 '+r.attend+'명 = 성도 '+x.m+'명 중 좌석('+x.seats+'석) 안에 든 '+x.full+'명'+(r.wxLost>0?' − 주일 날씨로 '+r.wxLost+'명 줄어듦':''));
-    L.push('헌금 = 출석 × 9 × 만족도 보정 '+pct(0.4+0.6*x.mood/100)+' (만족도 '+x.mood+'%) × 사역 보정 '+pct(x.offerMod));
+    L.push('헌금 = 출석 × '+OFFER_PER+' × 만족도 보정 '+pct(0.4+0.6*x.mood/100)+' (만족도 '+x.mood+'%) × 사역 보정 '+pct(x.offerMod));
     L.push('출석이 많을수록 한 사람당 효과가 줄어요 (÷ '+(1+r.attend/500).toFixed(2)+')');
     L.push('늘리려면: 좌석(예배당), 만족도, 재정·목양 사역팀');
   }else if(k==='online'){L.push('교회 문을 닫은 주일에는 온라인 헌금만 들어와요: 성도 '+x.m+'명 × 1.2');L.push('문을 열면 주일 헌금으로 바뀌어요');}
-  else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × 0.5 × 평판 보정 '+pct(0.5+x.rep/100)+' (평판 '+x.rep+')');}
+  else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × '+VIS_GIVE+' × 평판 보정 '+pct(0.5+x.rep/100)+' (평판 '+x.rep+')');}
   else if(k==='shop'){L.push('방문자가 주중에 매장(카페·식당·빵집·서점 등)에서 산 금액의 합계예요');L.push('이 중 '+pct(x.shopRate)+'는 팔 때마다 재료비로 바로 나가요');}
   else if(k==='other'){L.push('행사·특별 후원 등 매장 밖에서 주중에 들어온 돈이에요');}
-  else if(k==='sponsor'){L.push('개척 초기 후원: 260 − 3.5 × 지난 주 수('+x.week+') — 주마다 줄어 약 75주 뒤 끝나요');}
+  else if(k==='sponsor'){L.push('개척 초기 후원: '+SPONSOR0+' − '+SPONSOR_DROP+' × 지난 주 수('+x.week+') — 주마다 줄어 '+Math.round(SPONSOR0/SPONSOR_DROP)+'주 뒤 끝나요');}
   else if(k==='opex'){
     L.push('(기본 운영비 110 + 성도 '+x.m+'명 × 2.6 + 건물 유지비 '+fmt(x.up)+')');
     L.push('× 사역 보정 '+pct(x.upMod)+' (관리팀·행정·집사가 줄여 줘요) × 난이도 '+x.dn+' '+pct(x.dc));
