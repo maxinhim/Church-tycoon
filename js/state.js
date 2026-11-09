@@ -19,7 +19,7 @@ function newState(dk){
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
     hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
-    grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{},lvl:null};
+    grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{communion:-2},lvl:null};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
@@ -42,13 +42,21 @@ function agg(){
 }
 // 만족도 비중 (합 1): 영성이 가장 크다
 var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07},MOOD_ITEMS=85;
+/* 만족도 항목 = (기본 + 건물 자리 × 0.6) ÷ 필요.  필요 = 바닥(f)과 성도 × 비율(r) × 기대치 중 큰 쪽.
+   기본은 바닥의 절반이라 처음엔 항목마다 50% 안팎에서 시작하고, 건물로 채우려면 꽤 많이 지어야 한다.
+   좌석(기본 없음, 기대치 없음)은 예배 출석과 따로, 만족도에만 이렇게 계산한다. 목양은 사람(담임·부교역자·직분자)이 채운다 */
+var BLD_SAT=0.6;
+var SAT={seat:{f:29,r:1.0,b:0,e:0},fel:{f:20,r:.9,b:10,e:1},care:{f:12,r:.5,b:6,e:1},comf:{f:12,r:.4,b:6,e:1},park:{f:14,r:.55,b:7,e:1},past:{f:50,r:1.2,b:0,e:0}};
+function satHave(k){return k==='past'?MOD.cap:({seat:A.seats,fel:A.fcap,care:A.kcap,comf:A.ccap,park:A.park}[k])*BLD_SAT;}
+function satInfo(k){
+  var s=SAT[k],m=Math.max(1,S.members),E=s.e?expectK(m):1,need=Math.max(s.f,m*s.r*E),have=satHave(k);
+  return {have:have,base:s.b,need:need,v:Math.min(1,(s.b+have)/need)};
+}
 function calcMood(){
   var m=Math.max(1,S.members);
-  var cov=function(have,need){return Math.min(1,have/Math.max(1,need));};
-  // past: 목양 — 담임·부교역자·직분자가 돌볼 수 있는 성도 수(MOD.cap) 대비
   // 성도가 늘고 교회 Level이 오를수록 기대치가 올라 교제·돌봄·편의·주차·영성 필요가 더 빨리 는다
-  var E=expectK(m),sp=spiritParts();
-  var seat=cov(A.seats,m),fel=cov(A.fcap+3,m*0.55*E),care=cov(A.kcap+2,m*0.3*E),comf=cov(A.ccap+3,m*0.25*E),park=cov(A.park+3,m*0.35*E),past=cov(MOD.cap,m);
+  var E=expectK(m),sp=spiritParts(),q=function(k){return satInfo(k).v;};
+  var seat=q('seat'),fel=q('fel'),care=q('care'),comf=q('comf'),park=q('park'),past=q('past');
   // 항목 점수는 최대 85까지만. 나머지 15는 꾸밈·사역팀·행사 같은 보너스로만 채운다 (모자란 항목을 보너스로 덮지 못하게)
   var items=MW.seat*seat+MW.spirit*sp.v+MW.past*past+MW.fel*fel+MW.park*park+MW.care*care+MW.comf*comf;
   var mood=MOOD_ITEMS*items+beautyBonus()+MOD.mood;

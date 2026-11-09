@@ -34,11 +34,12 @@ function expectK(m){return 1+m/500+Math.max(0,(S.lvl||1)-1)*EXP_LV;}
 // 그 행사를 연 지 몇 주 지났는지에 따라 1 → 0
 function recent(id,span){var w=(S.evW||{})[id];if(w==null)return 0;return Math.max(0,1-(S.week-w)/span);}
 function spiritParts(){
-  var m=Math.max(1,S.members),E=expectK(m),st=S.staff,cap={w:3,p:3,r:3};
-  S.buildings.forEach(function(b){var s=SPIRIT_B[b.def];if(!s)return;var k=condFactor(b)*(b.floors||1);for(var q in s)cap[q]+=s[q]*k;});
+  // 기본은 바닥의 절반(처음엔 50% 안팎), 건물 자리는 × 0.6, 사역팀·부교역자·권사는 그대로
+  var m=Math.max(1,S.members),E=expectK(m),st=S.staff,F={w:12,p:8,r:10},R={w:.4,p:.25,r:.3},cap={w:6,p:4,r:5};
+  S.buildings.forEach(function(b){var s=SPIRIT_B[b.def];if(!s)return;var k=condFactor(b)*(b.floors||1)*BLD_SAT;for(var q in s)cap[q]+=s[q]*k;});
   cap.w+=8*st.edu;cap.p+=8*st.prayer+Math.min(6,S.off.kwonsa);cap.r+=10*st.praise;
   S.assoc.forEach(function(a){if(a.field==='edu')cap.w+=6*a.skill;else if(a.field==='praise')cap.r+=6*a.skill;else if(a.field==='visit')cap.p+=4*a.skill;});
-  var need={w:m*0.25*E,p:m*0.15*E,r:m*0.2*E},o={cap:cap,need:need,E:E};
+  var need={w:Math.max(F.w,m*R.w*E),p:Math.max(F.p,m*R.p*E),r:Math.max(F.r,m*R.r*E)},o={cap:cap,need:need,E:E};
   ['w','p','r'].forEach(function(q){o[q]=Math.min(1,cap[q]/Math.max(1,need[q]));});
   var fest=Math.max(recent('easter',8),recent('thanks',8),recent('christmas',8),recent('revival',8));
   o.sac={communion:recent('communion',8),baptism:recent('baptism',12),retreat:recent('retreat',16),fest:fest};

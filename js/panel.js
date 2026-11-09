@@ -178,7 +178,11 @@ function topCap(key){
 }
 function sgn(v){v=Math.round(v*10)/10;return (v<0?'−':'+')+Math.abs(v);}
 function moodWhy(k){
-  var m=Math.max(1,S.members),c=S.cov||{},L=[],cap=function(have,need,unit,base){L.push(unit+' '+Math.round(have)+(base?' (기본 '+base+' 포함)':'')+' ÷ 필요 '+Math.round(need)+' → '+Math.round(Math.min(1,have/Math.max(1,need))*100)+'%');};
+  var m=Math.max(1,S.members),c=S.cov||{},L=[];
+  // 항목 한 줄: (기본 + 건물 자리 × 0.6) ÷ 필요(바닥과 성도 × 비율 × 기대치 중 큰 쪽)
+  var cap=function(k,unit){var i=satInfo(k),s=SAT[k];
+    L.push(unit+' '+(i.base?'기본 '+i.base+' + ':'')+(k==='past'?'':'건물 ')+Math.round(i.have)+' ÷ 필요 '+Math.round(i.need)+' → '+Math.round(i.v*100)+'%');
+    L.push('필요 = 최소 '+s.f+', 또는 성도 '+m+'명 × '+s.r+(s.e?ek:'')+(k==='past'?'':' · 건물 자리는 '+Math.round(BLD_SAT*100)+'%만 쳐요'));};
   var w=MW[k],E=c.E||1,ek=E>1.005?' × 기대치 '+E.toFixed(2)+' (성도 수·교회 Lv)':'';
   if(k==='all'){
     var it=c.items!=null?c.items:0;
@@ -187,21 +191,21 @@ function moodWhy(k){
     L.push('꾸밈 '+sgn(beautyBonus())+' = 아름다움 '+(Math.round(A.beauty*10)/10)+' × '+BEAUTY_K+' + 새로 꾸민 것 '+(Math.round((S.fresh||0)*10)/10)+' × '+FRESH_K+' (최대 +8)');
     L.push('새로 꾸민 효과는 한 주에 15%씩 익숙해져요. 정원·장식·바닥을 계속 더하거나 바꾸면 유지돼요');
     (MOD.parts||[]).forEach(function(p){L.push(p[0]+' '+sgn(p[1]));});
-    L.push('0~100 사이로 잘라요. 60 아래면 떠나는 성도가 늘고, 60 위면 소개로 새 성도가 와요');
+    L.push('0~100 사이로 잘라요. '+MOOD_LEAVE+' 아래면 떠나는 성도가 늘고, '+MOOD_GAIN+' 위면 소개로 새 성도가 와요');
   }else if(k==='spirit'){
     var sp=spiritParts(),nm={w:'말씀',p:'기도',r:'찬양'},pc=function(v){return Math.round(v*100)+'%';};
     L.push('말씀 30% · 기도 20% · 찬양 20% · 성례 30%를 섞은 값');
-    ['w','p','r'].forEach(function(q){L.push(nm[q]+' '+pc(sp[q])+' = 자리 '+Math.round(sp.cap[q])+' (기본 3 포함) ÷ 필요 '+Math.round(sp.need[q]));});
+    ['w','p','r'].forEach(function(q){L.push(nm[q]+' '+pc(sp[q])+' = 자리 '+Math.round(sp.cap[q])+' (기본 포함, 건물은 '+Math.round(BLD_SAT*100)+'%만) ÷ 필요 '+Math.round(sp.need[q]));});
     L.push('성례 '+pc(sp.s)+' = 성찬식 '+pc(sp.sac.communion)+' · 세례식 '+pc(sp.sac.baptism)+' · 수련회 '+pc(sp.sac.retreat)+' · 절기 예배 '+pc(sp.sac.fest)+' (연 지 오래될수록 줄어요)');
     L.push('말씀: 성경공부방·선교관·소그룹실·북카페·교육팀 / 기도: 기도실·새벽기도실·중보기도팀·권사 / 찬양: 찬양실·야외 예배터·합창실·찬양팀');
-    L.push('필요는 성도 '+m+'명에 맞춰'+ek+' 늘어요 (말씀 × 0.25, 기도 × 0.15, 찬양 × 0.2)');
-  }else if(k==='seat'){cap(A.seats,m,'좌석');L.push('좌석이 많은 곳: '+topCap('seats'));L.push('모자라면 남는 성도만큼 매주 떠나요. 예배당·예배실 칸·층 올리기로 늘려요');}
-  else if(k==='fel'){cap(A.fcap+3,m*0.55*E,'교제 수용',3);L.push('필요 = 성도 '+m+'명 × 0.55'+ek);L.push('교제 수용이 큰 곳: '+topCap('fcap'));L.push('교제실·소그룹실·카페·식당으로 늘려요');}
-  else if(k==='care'){cap(A.kcap+2,m*0.3*E,'돌봄 수용',2);L.push('필요 = 성도 '+m+'명 × 0.3'+ek);L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('돌봄실·어린이부실·유아방·경로 쉼터로 늘려요');}
-  else if(k==='comf'){cap(A.ccap+3,m*0.25*E,'편의 수용',3);L.push('필요 = 성도 '+m+'명 × 0.25'+ek);L.push('편의 수용이 큰 곳: '+topCap('ccap'));L.push('화장실·편의실·휴게실·벤치·식수대·쓰레기통으로 늘려요');}
-  else if(k==='park'){cap(A.park+3,m*0.35*E,'주차 자리',3);L.push('필요 = 성도 '+m+'명 × 0.35'+ek);L.push('주차 자리가 많은 곳: '+topCap('park'));L.push('주차 구역에 주차장·주차 타워·자전거 거치대를 지어요');}
+    L.push('필요는 성도 '+m+'명에 맞춰'+ek+' 늘어요 (말씀 × 0.4, 기도 × 0.25, 찬양 × 0.3, 최소 12·8·10)');
+  }else if(k==='seat'){cap('seat','좌석');L.push('좌석이 많은 곳: '+topCap('seats'));L.push('모자라면 남는 성도만큼 매주 떠나요. 예배당·예배실 칸·층 올리기로 늘려요');}
+  else if(k==='fel'){cap('fel','교제 수용');L.push('교제 수용이 큰 곳: '+topCap('fcap'));L.push('교제실·소그룹실·카페·식당으로 늘려요');}
+  else if(k==='care'){cap('care','돌봄 수용');L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('돌봄실·어린이부실·유아방·경로 쉼터로 늘려요');}
+  else if(k==='comf'){cap('comf','편의 수용');L.push('편의 수용이 큰 곳: '+topCap('ccap'));L.push('화장실·편의실·휴게실·벤치·식수대·쓰레기통으로 늘려요');}
+  else if(k==='park'){cap('park','주차 자리');L.push('주차 자리가 많은 곳: '+topCap('park'));L.push('주차 구역에 주차장·주차 타워·자전거 거치대를 지어요');}
   else if(k==='past'){
-    cap(MOD.cap,m,'돌볼 수 있는 성도');
+    cap('past','돌볼 수 있는 성도');
     var st=S.staff,o=S.off,as=S.assoc.reduce(function(t,a){return t+35+(a.field==='visit'?12*a.skill:0);},0);
     L.push('담임 목사 25'+(st.care?' + 돌봄팀 '+8*st.care:'')+(as?' + 부교역자 '+as:'')+(o.deacon?' + 집사 '+6*o.deacon:'')+(o.kwonsa?' + 권사 '+10*o.kwonsa:'')+(o.elder?' + 장로 '+18*o.elder:''));
     L.push('행사 › 사역자 탭에서 부교역자 청빙·직분자 임명·돌봄팀으로 늘려요');
@@ -214,7 +218,7 @@ function renderStatus(){
   var h=statusSummary()+'<div class="sec">성도 만족도 <small>· 항목을 누르면 계산 방식</small></div><div class="cov">';
   MOOD_ROWS.forEach(function(r){
     var v=r[0]==='all'?Math.round(S.mood):Math.round((c[r[0]]==null?1:c[r[0]])*100),open=UI.mexp===r[0];
-    var col=r[0]==='all'?'':';background:'+(v<60?'var(--bad)':'var(--good)');
+    var col=r[0]==='all'?'':';background:'+(v<50?'var(--bad)':v<80?'var(--gold)':'var(--good)');
     h+='<button class="covb'+(open?' open':'')+'" data-act="mexp" data-v="'+r[0]+'" aria-expanded="'+open+'"><span>'+r[1]+'</span><div class="bar"><i style="width:'+v+'%'+col+'"></i></div><span class="v">'+v+'%</span></button>'+
       (open?'<ul class="rwhy">'+moodWhy(r[0])+'</ul>':'');
   });

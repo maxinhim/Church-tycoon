@@ -10,7 +10,7 @@
    · 삭막함: 걸어 다닌 곳 둘레에 나무·화단·장식이 거의 없으면 불편
    · 붐빔: 건물이 꽉 차서 기다리다 돌아섬 (예전부터 있던 판정)
    불편을 겪으면 그 방문자는 정착·평판에 손해를 보고(annoy), 한 주 동안 겪은 불편의 비율만큼
-   다음 주 성도 만족도가 내려간다(최대 6, 불편마다 무게가 다르다). 현황 › 챙길 일에 무엇이 모자란지 보인다. */
+   다음 주 성도 만족도가 내려간다(최대 8, 불편마다 무게가 다르다). 현황 › 챙길 일에 무엇이 모자란지 보인다. */
 // s: 건물 설명에 붙는 짧은 이름 (이 건물이 무엇을 풀어 주는지)
 var GRIPES={
   wc:{s:'화장실',n:'화장실을 못 찾은',fix:'화장실·편의실 칸',ids:['wc','mcomf']},
@@ -31,8 +31,8 @@ function gripeFixes(d){var o=[];for(var k in GRIPES){var g=GRIPES[k];if(g.s&&gri
 var TRASHY=['cafe','bakery','vending','coffeecart','shop'];
 // 불편마다 무게: 쓰레기·붐빔은 가볍게. 방문자가 적을 때(20명 미만)는 20명으로 나눠 몇 명에 크게 흔들리지 않게
 var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};
-// 민감도: 만족도는 최대 6까지만, 비율 × 8. 챙길 일에는 방문자 12% 이상(최소 3명)이 겪은 불편만
-var GRIPE_MAX=6,GRIPE_K=8,GRIPE_N0=20,GRIPE_SHOW=0.12;
+// 민감도: 만족도는 최대 8까지, 비율 × 11, 방문자가 적어도 14명으로 나눔(초반에도 느끼게). 챙길 일에는 방문자 10% 이상(최소 3명)이 겪은 불편만
+var GRIPE_MAX=8,GRIPE_K=11,GRIPE_N0=14,GRIPE_SHOW=0.1;
 /* 장식 목록: 둘러본 곳이 삭막한지, 쓰레기통이 가까운지 볼 때 쓴다 (recalc 때마다 다시 만든다) */
 var DECOR=[],BINS=[];
 function rebuildDecor(){
@@ -47,11 +47,11 @@ function nearSum(L,x,y,r){var t=0;for(var i=0;i<L.length;i++){var p=L[i];if(Math
 function nearAny(L,x,y,r){for(var i=0;i<L.length;i++){var p=L[i];if(Math.abs(p.x-x)<=r&&Math.abs(p.y-y)<=r)return true;}return false;}
 /* 방문자마다: 화장실이 급해질 때, 다리가 아파질 거리, 목이 마를 거리 */
 function gripeInit(v){
-  v.wcT=Math.random()<0.35?18+Math.random()*30:1e9;
-  v.foodT=Math.random()<0.3?22+Math.random()*30:1e9;
+  v.wcT=Math.random()<0.42?16+Math.random()*28:1e9;
+  v.foodT=Math.random()<0.36?20+Math.random()*28:1e9;
   // 혼자 온 새 방문자가 더 외롭다
-  v.lonT=Math.random()<(v.member?0.12:0.28)?8+Math.random()*24:1e9;
-  v.walked=0;v.legs=36+Math.random()*18;v.walkT=0;v.thirst=48+Math.random()*24;
+  v.lonT=Math.random()<(v.member?0.15:0.34)?8+Math.random()*22:1e9;
+  v.walked=0;v.legs=32+Math.random()*16;v.walkT=0;v.thirst=42+Math.random()*22;
   v.urge='';v.drank=false;v.trash=false;v.looks=0;v.nice=0;
 }
 function addGripe(k,name){
@@ -92,7 +92,7 @@ function gripeDone(v,k){
   if(k==='wc')v.wcT=1e9;
   else if(k==='food')v.foodT=1e9;
   else if(k==='lonely')v.lonT=1e9;
-  else if(k==='seat'){v.walked=0;v.legs=36+Math.random()*18;}
+  else if(k==='seat'){v.walked=0;v.legs=32+Math.random()*16;}
   else if(k==='drink')v.drank=true;
   if(v.urge===k)v.urge='';
 }

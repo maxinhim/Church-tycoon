@@ -1055,6 +1055,9 @@ async function gripeChecks(browser, url) {
     setGate(true); o.hall = o.hall && !S.open && /예배 공간/.test(gateWhy());
     S.buildings = keepB; rebuildOcc(); recalc(); setGate(true); o.hall = o.hall && S.open; UI.sel = null;
     // 가격: 기능 건물 1.5배, 꾸미기는 그대로, 초기 자금 두 배
+    // 새 교회: 만족도 항목이 모두 50% 안팎에서 시작하고, 전체도 45~55
+    { const c = S.cov; o.start50 = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].every(k => c[k] >= 0.4 && c[k] <= 0.6) && S.mood >= 40 && S.mood <= 58 && BLD_SAT === 0.6 && MOOD_LEAVE === 45 && MOOD_GAIN === 50;
+      o.start50d = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].map(k => k + Math.round(c[k] * 100)).join(' ') + ' mood' + Math.round(S.mood); }
     o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.chapel.cost === 5600 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 1000 && GOALS[0].r === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
     o.props = ['bench', 'picnic', 'parasol', 'swing', 'sunbed', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
@@ -1088,7 +1091,7 @@ async function gripeChecks(browser, url) {
     spawnV(false); const v4 = V[V.length - 1]; gripeTick(v4, .1, 99); o.legs = v4.urge === 'seat' || v4.urge === 'drink';
     // 주일 정산: 불편 비율만큼 다음 주 만족도가 내려가고, 챙길 일에 무엇을 지을지 보인다
     S.grip = { wc: 6, seat: 4 }; S.gripN = 20; gripeWeek(); recalc();
-    o.pen = S.gripPen === 3.4 && MOD.parts.some(p => /불편/.test(p[0]) && p[1] === -3.4);
+    o.pen = S.gripPen === 4.6 && MOD.parts.some(p => /불편/.test(p[0]) && p[1] === -4.6);
     o.warn = warnings().some(t => /화장실을 못 찾은 방문자 6명 → 화장실/.test(t)) && warnings().some(t => /쉴 곳/.test(t));
     // 배고픔·외로움: 맞는 건물을 찾아가고, 없으면 불편
     o.ids = new Set(DEFS.map(d => d.id)).size === DEFS.length;
@@ -1126,7 +1129,7 @@ async function gripeChecks(browser, url) {
     const seat = document.querySelector('#panel ul.rwhy'); const st = seat ? seat.textContent : '';
     document.querySelector('#panel .covb[data-v="all"]').click();
     const al = (document.querySelector('#panel ul.rwhy') || {}).textContent || '';
-    o.mood = rows === 8 && /좌석 \d+ ÷ 필요/.test(st) && /비중 20%/.test(st) && /항목 점수/.test(al) && /불편/.test(al) && /익숙해져요/.test(al);
+    o.mood = rows === 8 && /좌석 건물 \d+ ÷ 필요/.test(st) && /비중 20%/.test(st) && /항목 점수/.test(al) && /불편/.test(al) && /익숙해져요/.test(al);
     ['past', 'fel', 'care', 'comf', 'park', 'spirit'].forEach(k => { o.mood = o.mood && moodWhy(k).indexOf('<li>') === 0; });
     o.mood = o.mood && /성례/.test(moodWhy('spirit')) && /비중 25%/.test(moodWhy('spirit'));
     // 영성: 성찬식을 열면 성례가 차고, 8주가 지나면 사라진다
@@ -1151,6 +1154,7 @@ async function gripeChecks(browser, url) {
     document.getElementById('lvup').click(); o.level = o.level && document.getElementById('lvup').hidden;
     return o;
   });
+  check(r.start50, '새 교회: 만족도 항목이 50% 안팎에서 시작, 건물 효과는 60%만, 이탈 45·소개 50 기준 (' + r.start50d + ')');
   check(r.price, '가격: 초기 자금 20,000, 기능 건물·칸 위층·목표 보상·대출 2배, 꾸미기·바닥은 그대로');
   check(r.props, '편의 소품: 벤치·피크닉·파라솔·그네·선베드·식수대·쓰레기통·정자는 편의 분류, 값 그대로, 이어 놓기');
   check(r.link, '길 잇기: 카드에서 바닥 종류를 골라 그 바닥으로 깔고, 값은 칸 수 × 그 바닥 값');
