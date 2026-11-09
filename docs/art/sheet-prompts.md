@@ -10,7 +10,7 @@
 - **글자는 그림에 넣지 않는다**: Gemini는 한글을 정확히 못 쓰고, 버튼 글씨는 바뀌기 때문에 모든 글자는 게임의 웹 글꼴로 쓴다. 제목도 엠블럼만 받고 글씨는 글꼴로 얹는다.
 - **방향**: 앞모습은 앞면이 오른쪽 아래, 뒷모습은 뒷면이 오른쪽 아래. 게임이 좌우 뒤집기로 네 방향을 만든다 (자세한 표는 `gemini-prompts.md`). 차·계단만 긴 쪽이 "\\".
 - **맨 오른쪽 아래 칸은 비운다** (Gemini 워터마크).
-- **2K로 받는다**: 모든 프롬프트 LAYOUT 첫 줄에 2048×2048 지시가 있다. Gemini에서 해상도를 고를 수 있으면 2K를 고른다.
+- **해상도**: 모든 프롬프트는 "가능한 가장 큰 해상도(2K 이상)로 만들라"고 적는다. 프롬프트 문장으로는 픽셀 크기를 보장할 수 없다. 해상도는 도구 설정에서 고른다 (Google AI Studio에서 Nano Banana 계열의 이미지 크기 옵션을 확인하고, 앱에 옵션이 없으면 1K로 받는다). 칸 수를 줄이는 것이 화질에 더 큰 영향을 준다.
 
 ## 받는 순서 (권장)
 1. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
@@ -61,7 +61,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 2 columns x 2 rows of equal square cells (4 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -109,7 +109,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 3 columns x 3 rows of equal square cells (9 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -151,7 +151,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - Every used cell is filled completely, edge to edge, by its picture (no magenta inside used cells, no margin).
@@ -191,7 +191,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 6 columns x 6 rows of equal square cells (36 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -240,7 +240,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -286,7 +286,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -332,7 +332,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 3 columns x 3 rows of equal square cells (9 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -379,7 +379,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -421,7 +421,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 6 columns x 6 rows of equal square cells (36 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -465,7 +465,7 @@ ICON STYLE (this sheet is NOT isometric)
 - Every icon is about the same visual weight and fills about 65% of its cell, centered.
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 7 columns x 7 rows of equal square cells (49 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -502,7 +502,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -537,7 +537,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - Every used cell is filled completely, edge to edge, by its picture (no magenta inside used cells, no margin).
@@ -578,7 +578,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -619,7 +619,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 3 columns x 3 rows of equal square cells (9 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -667,7 +667,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
-- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
