@@ -261,8 +261,22 @@ sheet('W1', '고화질 시험: 작은 예배실·예배당 (2x2)', (2, 2),
        "Row 2, column 2: (empty)."],
       pair='h')
 
+sheet('W2', '고화질: 예배당·대예배당 앞·뒤 (2x2)', (2, 2),
+      '시트 W1 결과(작은 예배실·예배당)와 같은 방식. 예배당과 대예배당을 각각 앞·뒤 한 쌍으로, 네 칸을 모두 쓴다 (W1에서 빈 칸에 딴 그림이 끼어든 문제 때문). 같은 시트에서 앞·뒤를 함께 받으면 한 쌍이 서로 정확히 맞는다 (W1의 예배당 뒷모습은 따로 받아 예전 그림이 남아 있다). 오른쪽 아래 워터마크는 그림이 칸 가운데에 있으면 구석에 닿지 않는다.',
+      '예배당(3x2) 앞·뒤, 대예배당(4x3) 앞·뒤',
+      ["It contains exactly FOUR large, highly detailed drawings: two main church buildings, each shown from the front and from the back. Attach the previous sheet (the one with the cream chapel and the red brick chapel) as the style reference and match its pixel size, outline color, shading and level of detail exactly.",
+       "GRID: exactly 2 columns x 2 rows of equal square cells, no more and no fewer. Every cell holds ONE building drawn big (about 70% of the cell width). Draw rich pixel detail: roof shingles or slate rows, brick or stone texture, window frames and panes, door panels, steps, trim and small flowers by the walls. More detail must come from more pixels, never from blur or soft painting.",
+       "Use all four cells exactly as listed. Do NOT add any other objects, extra views, people, signs or text. Keep the lower-right corner of the bottom-right cell empty magenta (Gemini places its watermark there).",
+       "ORIENTATION (same as the reference sheet): the building's roof ridge runs from the lower-left to the upper-right of the cell. The entrance is on the SHORT gable end that faces the lower-left; the long side wall faces the lower-right. The FRONT views show the entrance gable. The BACK views are the same building turned 180 degrees: the entrance is hidden and we see the plain rear gable end on the left and the opposite long wall on the right.",
+       "Row 1, column 1: FRONT view of the main chapel, footprint 3x2: red brick walls, a tall slate-blue gable roof, a white bell tower with a dark pointed roof and a small cross rising from the roof near the entrance, a small gabled entrance porch with an arched wooden double door and stone steps, a round window high on the gable, tall arched windows with white frames along the long wall, a stone base.",
+       "Row 1, column 2: BACK view of exactly the same main chapel (turned 180 degrees): the same red brick, slate roof, bell tower on the far part of the ridge, arched windows on the long wall, stone base. The rear gable end has a round window and no door and no porch.",
+       "Row 2, column 1: FRONT view of the grand sanctuary, footprint 4x3 (much larger and taller than the main chapel): pale cream limestone walls with stone corner blocks, a steep slate-blue gable roof, a tall square bell tower with a pointed spire and a cross rising from the entrance gable, a big round rose window above a wide arched double door, a wide stone staircase of five steps, three tall pointed-arch windows (plain blue-grey glass, no pictures) along the long wall, buttresses between the windows, a stone base.",
+       "Row 2, column 2: BACK view of exactly the same grand sanctuary (turned 180 degrees): the same limestone walls, slate roof, buttresses and windows; the rear gable end has a tall window and a smaller round window, no staircase and no main door; the bell tower stands at the far end."],
+      empty_last=False, pair='h')
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('W1', '고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)'),
+ORDER = [('W2', '고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)'),
+         ('W1', '고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)'),
          ('E4', '보충 — 간판 없는 빵집·서점 (지금 먼저)'),
          ('E3', '보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)'),
          ('E2', '보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자'),
@@ -365,7 +379,7 @@ def build_html():
 
 
 if __name__ == '__main__':
-    SHEETS.sort(key=lambda x: {'W1': 0, 'E4': 1, 'E3': 2, 'E2': 3}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
+    SHEETS.sort(key=lambda x: {'W2': 0, 'W1': 1, 'E4': 2, 'E3': 3, 'E2': 4}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))

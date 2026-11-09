@@ -13,27 +13,76 @@
 - **해상도**: 모든 프롬프트는 "가능한 가장 큰 해상도(2K 이상)로 만들라"고 적는다. 프롬프트 문장으로는 픽셀 크기를 보장할 수 없다. 해상도는 도구 설정에서 고른다 (Google AI Studio에서 Nano Banana 계열의 이미지 크기 옵션을 확인하고, 앱에 옵션이 없으면 1K로 받는다). 칸 수를 줄이는 것이 화질에 더 큰 영향을 준다.
 
 ## 받는 순서 (권장)
-1. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
-2. 시트 E4 — 보충 — 간판 없는 빵집·서점 (지금 먼저)
-3. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
-4. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
-5. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
-6. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
-7. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
-8. 시트 E — 작은 건물
-9. 시트 F — 중간 건물
-10. 시트 G — 큰 건물
-11. 시트 H — 가장 큰 건물·입구
-12. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
-13. 시트 I — 길·계단·탈것
-14. 시트 N — 계절 장식
-15. 시트 M — 행사·사역 그림
+1. 시트 W2 — 고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)
+2. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
+3. 시트 E4 — 보충 — 간판 없는 빵집·서점 (지금 먼저)
+4. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
+5. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
+6. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
+7. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
+8. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
+9. 시트 E — 작은 건물
+10. 시트 F — 중간 건물
+11. 시트 G — 큰 건물
+12. 시트 H — 가장 큰 건물·입구
+13. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
+14. 시트 I — 길·계단·탈것
+15. 시트 N — 계절 장식
+16. 시트 M — 행사·사역 그림
 
 ## 그림으로 바꾸지 않는 것
 - **칸 건물(예배실 칸 등)**: 이웃 칸과 이어 붙는 벽·지붕 모양이 16가지가 넘어 시트로 맞추기 어렵다. 지금처럼 코드로 그리고 색만 팔레트에 맞춘다.
 - **층 쌓기(2층 이상)**: 1층·중간층·지붕을 따로 받아야 쌓을 수 있는데, Gemini 그림은 층마다 크기가 조금씩 달라 이음새가 어긋난다. 1층 그림 위에 코드로 층을 얹는 방식을 먼저 써 본다.
 - **날씨 효과(비·눈·번개·무지개)·그림자·선택 표시**: 움직이고 투명해야 해서 코드로 그린다.
 - **글자·숫자**: 모두 웹 글꼴.
+
+## 시트 W2 — 고화질: 예배당·대예배당 앞·뒤 (2x2) (2x2)
+
+- **쓰는 곳**: 예배당(3x2) 앞·뒤, 대예배당(4x3) 앞·뒤
+- **메모**: 시트 W1 결과(작은 예배실·예배당)와 같은 방식. 예배당과 대예배당을 각각 앞·뒤 한 쌍으로, 네 칸을 모두 쓴다 (W1에서 빈 칸에 딴 그림이 끼어든 문제 때문). 같은 시트에서 앞·뒤를 함께 받으면 한 쌍이 서로 정확히 맞는다 (W1의 예배당 뒷모습은 따로 받아 예전 그림이 남아 있다). 오른쪽 아래 워터마크는 그림이 칸 가운데에 있으면 구석에 닿지 않는다.
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains exactly FOUR large, highly detailed drawings: two main church buildings, each shown from the front and from the back. Attach the previous sheet (the one with the cream chapel and the red brick chapel) as the style reference and match its pixel size, outline color, shading and level of detail exactly.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 2 columns x 2 rows of equal square cells (4 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+GRID: exactly 2 columns x 2 rows of equal square cells, no more and no fewer. Every cell holds ONE building drawn big (about 70% of the cell width). Draw rich pixel detail: roof shingles or slate rows, brick or stone texture, window frames and panes, door panels, steps, trim and small flowers by the walls. More detail must come from more pixels, never from blur or soft painting.
+Use all four cells exactly as listed. Do NOT add any other objects, extra views, people, signs or text. Keep the lower-right corner of the bottom-right cell empty magenta (Gemini places its watermark there).
+ORIENTATION (same as the reference sheet): the building's roof ridge runs from the lower-left to the upper-right of the cell. The entrance is on the SHORT gable end that faces the lower-left; the long side wall faces the lower-right. The FRONT views show the entrance gable. The BACK views are the same building turned 180 degrees: the entrance is hidden and we see the plain rear gable end on the left and the opposite long wall on the right.
+Row 1, column 1: FRONT view of the main chapel, footprint 3x2: red brick walls, a tall slate-blue gable roof, a white bell tower with a dark pointed roof and a small cross rising from the roof near the entrance, a small gabled entrance porch with an arched wooden double door and stone steps, a round window high on the gable, tall arched windows with white frames along the long wall, a stone base.
+Row 1, column 2: BACK view of exactly the same main chapel (turned 180 degrees): the same red brick, slate roof, bell tower on the far part of the ridge, arched windows on the long wall, stone base. The rear gable end has a round window and no door and no porch.
+Row 2, column 1: FRONT view of the grand sanctuary, footprint 4x3 (much larger and taller than the main chapel): pale cream limestone walls with stone corner blocks, a steep slate-blue gable roof, a tall square bell tower with a pointed spire and a cross rising from the entrance gable, a big round rose window above a wide arched double door, a wide stone staircase of five steps, three tall pointed-arch windows (plain blue-grey glass, no pictures) along the long wall, buttresses between the windows, a stone base.
+Row 2, column 2: BACK view of exactly the same grand sanctuary (turned 180 degrees): the same limestone walls, slate roof, buttresses and windows; the rear gable end has a tall window and a smaller round window, no staircase and no main door; the bell tower stands at the far end.
+```
 
 ## 시트 W1 — 고화질 시험: 작은 예배실·예배당 (2x2) (2x2)
 
@@ -81,54 +130,6 @@ Row 1, column 1: FRONT view of the small worship chapel, footprint 2x2: cream pl
 Row 1, column 2: BACK view of the same small worship chapel (turned 180 degrees): the same walls, roof and cross, the back gable with one small round window, no door.
 Row 2, column 1: FRONT view of the main chapel, footprint 3x2: red brick walls, a tall slate-blue gable roof, a white bell tower with a small spire and cross over the entrance, an arched wooden double door, tall arched windows along the long side, a stone base.
 Row 2, column 2: (empty).
-```
-
-## 시트 E4 — 보충: 간판 없는 빵집·서점 (3x3)
-
-- **쓰는 곳**: 빵집(2x1)·기독교 서점(2x1)
-- **메모**: 시트 E·E2에서 두 번 다 영어 간판 글씨가 그려진 빵집·기독교 서점만 다시 받는다. 간판을 아예 빼고 진열창(빵·책)과 차양 색으로만 구분하게 했다. 시트 E2가 격자를 무시해서 격자 지시도 더 세게 넣었다.
-
-```
-Create a single square image: a sprite sheet for an isometric church-building management game. It contains two small shops, each shown from the front and from the back.
-
-STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
-- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
-- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
-- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
-- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
-- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
-- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
-- Do not copy any existing game's graphics or characters.
-- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
-
-PROJECTION (all world objects on this sheet)
-- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
-- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
-- Do NOT enlarge small objects to fill their cell; keep the shared scale.
-- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
-
-LAYOUT
-- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
-- Exactly 3 columns x 3 rows of equal square cells (9 cells total).
-- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
-- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
-- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
-- The bottom-right cell (row 3, column 3) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
-
-FRONT/BACK PAIRS
-Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
-- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
-- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
-- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
-
-CONTENTS (left to right, top to bottom)
-GRID: the image must be divided into exactly 3 columns and 3 rows of equal square cells, no more and no fewer. Only four cells are used; every other cell stays plain flat magenta.
-NO SIGNS AT ALL: no sign board, no plaque, no banner, no lettering, no logo, no numbers anywhere on or near the buildings. The shop type is shown ONLY by what is in its windows and by the awning color.
-FOOTPRINT: both shops are 2x1, clearly twice as long as they are deep (do not draw a cube). The long front side with the door faces the lower-right.
-Row 1: column 1 = FRONT view, column 2 = BACK view of a bakery: cream plaster walls with timber trim, a red-and-white striped awning, a big display window full of round loaves, baguettes and pastries on shelves, a small brick chimney, a flower box under the window. The back view shows a plain cream wall with one small window and a back door. Column 3 stays empty.
-Row 2: column 1 = FRONT view, column 2 = BACK view of a small Christian bookstore: red brick walls, a dark green awning, two display windows with neat rows of colorful book spines and a small wooden cross standing on a shelf, a wooden door with a glass pane. The back view shows a plain brick wall with one small window. Column 3 stays empty.
-Row 3: all three cells stay empty (the bottom-right cell must be plain magenta).
 ```
 
 ## 시트 D — 땅·바닥 질감 (4x4)
@@ -591,6 +592,54 @@ Row 2 (summer): blue and white camp tent for a summer bible school; small round 
 Row 3 (autumn): harvest display of pumpkins, rice sheaves and a fruit basket on a wooden cart; friendly scarecrow; pots of yellow and orange chrysanthemums; bare autumn tree with a few red leaves; hay bale with a pumpkin on top.
 Row 4 (winter): Christmas tree with ornaments and a star on top; snowy pine tree; small wooden nativity stable with a manger, simple statue figures and a star on the roof; wreath arch with red ribbons over a path, running lower-left to upper-right; pile of wrapped gift boxes.
 Row 5 (festival): snowman with a scarf and a hat; white bazaar tent with an open front and one table; string of colorful paper lanterns between two poles, running lower-left to upper-right; blank cloth banner between two poles, running lower-left to upper-right; (empty).
+```
+
+## 시트 E4 — 보충: 간판 없는 빵집·서점 (3x3)
+
+- **쓰는 곳**: 빵집(2x1)·기독교 서점(2x1)
+- **메모**: 시트 E·E2에서 두 번 다 영어 간판 글씨가 그려진 빵집·기독교 서점만 다시 받는다. 간판을 아예 빼고 진열창(빵·책)과 차양 색으로만 구분하게 했다. 시트 E2가 격자를 무시해서 격자 지시도 더 세게 넣었다.
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains two small shops, each shown from the front and from the back.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 3 columns x 3 rows of equal square cells (9 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+- The bottom-right cell (row 3, column 3) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+GRID: the image must be divided into exactly 3 columns and 3 rows of equal square cells, no more and no fewer. Only four cells are used; every other cell stays plain flat magenta.
+NO SIGNS AT ALL: no sign board, no plaque, no banner, no lettering, no logo, no numbers anywhere on or near the buildings. The shop type is shown ONLY by what is in its windows and by the awning color.
+FOOTPRINT: both shops are 2x1, clearly twice as long as they are deep (do not draw a cube). The long front side with the door faces the lower-right.
+Row 1: column 1 = FRONT view, column 2 = BACK view of a bakery: cream plaster walls with timber trim, a red-and-white striped awning, a big display window full of round loaves, baguettes and pastries on shelves, a small brick chimney, a flower box under the window. The back view shows a plain cream wall with one small window and a back door. Column 3 stays empty.
+Row 2: column 1 = FRONT view, column 2 = BACK view of a small Christian bookstore: red brick walls, a dark green awning, two display windows with neat rows of colorful book spines and a small wooden cross standing on a shelf, a wooden door with a glass pane. The back view shows a plain brick wall with one small window. Column 3 stays empty.
+Row 3: all three cells stay empty (the bottom-right cell must be plain magenta).
 ```
 
 ## 시트 E3 — 보충: 서양식으로 다시 받는 건물 (3x3)
