@@ -1103,6 +1103,11 @@ async function gripeChecks(browser, url) {
     enter(v6, club); finishVisit(v6); o.lonely1 = o.lonely1 && !v6.urge && v6.lonT > 1e8;
     spawnV(false); const v7 = V[V.length - 1]; v7.urge = 'food'; const fb = urgeGo(v7);
     o.food = fb === true && GRIPES.food.ids.indexOf(bById(v7.target).def) >= 0;
+    // 고루 쓰기: 같은 욕구를 채우는 두 건물 중 이번 주에 덜 쓰인 쪽을 고른다
+    const pick = () => { let a = 0; for (let i = 0; i < 12; i++) { spawnV(false); const w = V[V.length - 1]; w.wallet = 0; w.urge = ''; w.wcT = w.foodT = w.lonT = 1e9; NEEDS.forEach(n => { w.needs[n] = 99; }); w.needs.fel = 0; decide(w); if (w.target === cafe.id) a++; V.pop(); } return a; };
+    club.weekUses = 60; cafe.weekUses = 0; club.inUse = cafe.inUse = 0; const toCafe = pick();
+    club.weekUses = 0; cafe.weekUses = 60; const toCafe2 = pick(); club.weekUses = cafe.weekUses = 0;
+    o.spread = toCafe >= 9 && toCafe2 <= 3 && NEED_OK >= 85 && WAIT_T < 5 && CROWD_ANNOY > 1 && GRIPE_W.crowd >= 1;
     o.fixes = gripeFixes(D.boardgame).includes('외로움') && gripeFixes(D.cell).includes('외로움') && gripeFixes(D.bakery).includes('배고픔') && gripeFixes(D.cafe).includes('목마름') && /외로움/.test(effText(D.futsal));
     // 소모임 분류: 제목 줄에 운동·취미·음악 칩, 고른 묶음만 목록에
     o.club = CATS.some(c => c[0] === 'club') && D.gym.cat === 'club' && D.gym.sub === 'sport' && OUTDOOR.indexOf('court') >= 0 && PRICY_CATS.indexOf('club') >= 0;
@@ -1157,6 +1162,7 @@ async function gripeChecks(browser, url) {
   check(r.ids, '건물 정의: id가 겹치지 않음');
   check(r.hall, '예배 공간: 없으면 문을 못 열고, 문이 열린 동안 마지막 예배 공간은 철거 못 함');
   check(r.lonely0 && r.lonely1 && r.food, '불편: 외로운 방문자는 소모임을, 배고픈 방문자는 먹을 곳을 찾아가고, 없으면 불편');
+  check(r.spread, '방문자: 이번 주에 덜 쓰인 건물을 골라 고루 쓰고, 꽉 차서 오래 기다리면 크게 불만');
   check(r.fixes, '불편: 건물 설명에 무엇을 풀어 주는지 보임 (외로움·배고픔·목마름)');
   check(r.club, '소모임: 운동·취미·음악 칩이 제목 줄에, 고른 묶음만 목록에 (체육관은 운동으로)');
   check(errs.length === 0, '불편: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));

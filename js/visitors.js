@@ -22,7 +22,7 @@ var JOIN_P=0.14;
 var TRAF={};
 function trafWeek(){for(var k in TRAF){TRAF[k]*=.5;if(TRAF[k]<.5)delete TRAF[k];}}
 // 새로 지은 건물(6주 안)과 아직 덜 쓰인 건물에 끌린다
-function novelty(b){var age=b.bw==null?99:S.week-b.bw;return (age<6?8*(1-age/6):0)+((b.uses||0)<8?3:0);}
+function novelty(b){var age=b.bw==null?99:S.week-b.bw;return (age<6?4*(1-age/6):0)+((b.uses||0)<8?1.5:0);}
 // 둘러볼 곳: 부지 안 바닥 노드 몇 개를 뽑아, 발길이 적고 너무 멀지 않은 곳
 function wanderGoal(v){
   var L=NAV.walk||[];if(!L.length)return -1;
@@ -79,10 +79,12 @@ function arrive(v){
   var b=bById(v.target);
   if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
   if(b.inUse<defOf(b).cap)enter(v,b);
-  else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=5;}}
+  else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=WAIT_T;}}
 }
 // 한 주 48초에 맞춰 건물 안에 머무는 시간을 짧게
-var STAY=0.6;
+var STAY=0.8;
+// 꽉 찬 건물 앞에서 기다리는 시간. 넘으면 크게 불만(평판·정착 손해, 불편 '붐빔')
+var WAIT_T=3.5,CROWD_ANNOY=1.5;
 function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*STAY*(0.8+Math.random()*0.4);}
 function finishVisit(v){
   var b=bById(v.inside);
@@ -121,29 +123,35 @@ function depart(v){
   var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
   if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:ENT+0.5,y:PZ-0.6,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
+// 욕구가 이만큼 차면 그 욕구는 됐다고 보고, 평균이 이만큼이면 돌아간다 (높을수록 건물을 더 많이 들른다)
+var NEED_OK=88,NEED_DRAIN=0.4;
 function decide(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;
-  if(v.life<=0||avg>=80){goLeave(v);return;}
+  if(v.life<=0||avg>=NEED_OK){goLeave(v);return;}
   // 둘레를 둘러보고(삭막한지·쓰레기통), 급한 일(화장실·쉴 자리·마실 것)이 있으면 그것부터
   gripeLook(v);
   if(v.urge&&urgeGo(v))return;
-  var order=NEEDS.slice().sort(function(a,b){return v.needs[a]-v.needs[b];});
+  // 가장 모자란 욕구부터 보되, 사람마다 조금씩 섞어 여러 종류의 건물을 고루 들른다
+  var nr={};NEEDS.forEach(function(n){nr[n]=v.needs[n]+Math.random()*30;});
+  var order=NEEDS.slice().sort(function(a,b){return nr[a]-nr[b];});
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
-    if(v.needs[n]>=75)continue;
+    if(v.needs[n]>=NEED_OK)continue;
     var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&usable(b)&&!(v.blocked[b.id]>S.clock)&&wxOpen(d);});
     // 지갑에 돈이 있으면 매장에 조금 더 끌린다
-    // 가까운 곳을 먼저 보되, 새로 지었거나 덜 쓰인 건물에 더 끌리고, 사람마다 조금씩 다르게 고른다
-    var jit={};cands.forEach(function(b){jit[b.id]=Math.random()*6;});
-    var cost=function(b){var d=defOf(b);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.6-(d.income&&v.wallet>=d.income?6:0)-novelty(b)+jit[b.id];};
+    // 모든 건물을 골고루: 거리보다 '이번 주에 얼마나 쓰였나(자리 대비)'와 '지금 붐비나'를 더 크게 본다.
+    // 새 건물에는 조금만 더 끌리고, 사람마다 조금씩 다르게 고른다
+    var jit={};cands.forEach(function(b){jit[b.id]=Math.random()*4;});
+    var cost=function(b){var d=defOf(b),cp=Math.max(1,d.cap);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3+(b.weekUses||0)/cp*2.5+b.inUse/cp*4-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});
       if(p){v.path=p;v.pi=0;v.target=b.id;v.want=n;v.state='walk';if(!p.length)arrive(v);return;}
     }
   }
+  // 할 일이 없으면 대부분 바로 돌아가고, 가끔만 둘러본다 (마당을 떠도는 사람을 줄인다)
   v.idleN++;
-  if(v.idleN>=3){goLeave(v);return;}
+  if(v.idleN>=2||Math.random()<0.75){goLeave(v);return;}
   var tg=wanderGoal(v);if(tg<0||!nodeOk(tg)){v.t=0.5;return;}
   var wp=navPath(v.node,function(m){return m===tg;});
   if(wp&&wp.length){v.path=wp;v.pi=0;v.target=0;v.want='';v.state='walk';}else v.t=0.6;
@@ -151,7 +159,9 @@ function decide(v){
 function stepV(v,dt){
   v.life-=dt;
   // 비·폭염·눈 속을 걸으면 편의 욕구가 떨어진다
-  if(v.state!=='inside'){var dr=wxDrain();if(dr)v.needs.comf=Math.max(0,v.needs.comf-dr*dt);}
+  if(v.state!=='inside'){var dr=wxDrain();if(dr)v.needs.comf=Math.max(0,v.needs.comf-dr*dt);
+    // 밖에 있는 동안 욕구가 천천히 줄어 다음 건물을 찾게 된다
+    for(var ni=0;ni<NEEDS.length;ni++){var nk=NEEDS[ni];v.needs[nk]=Math.max(0,v.needs[nk]-NEED_DRAIN*dt);}}
   // 걸은 거리(지난 프레임)와 머문 시간으로 급한 일이 생긴다
   gripeTick(v,dt,v.mv||0);v.mv=0;
   if(v.state==='walk'||v.state==='leave'){
@@ -166,7 +176,7 @@ function stepV(v,dt){
     if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
     if(b.inUse<defOf(b).cap)enter(v,b);
     else if(linkWithSpace(b)&&startXfer(v,b,linkWithSpace(b))){}
-    else{v.wait-=dt;if(v.wait<=0){v.annoy++;addGripe('crowd',defOf(b).name);v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
+    else{v.wait-=dt;if(v.wait<=0){v.annoy+=CROWD_ANNOY;addGripe('crowd',defOf(b).name);v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
   }else if(v.state==='xfer'){
     var to=bById(v.target),r2=moveAlong(v,dt);
     if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}

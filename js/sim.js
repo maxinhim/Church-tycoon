@@ -25,7 +25,7 @@ function update(dt){
 }
 // 한 주 48초 기준. 자금 걱정보다 짓고 꾸미는 재미에 집중하도록 수입을 넉넉하게:
 // 매장은 한 번 살 때 8배(SHOP_K), 재료비는 판매액의 25%. 헌금은 출석 한 명당 30, 방문자 한 명당 3, 개척 후원은 600에서 주마다 6씩 줄어든다
-var VIS_RATE=0.4,SHOP_COST=0.25,SHOP_K=8,OFFER_PER=30,VIS_GIVE=3,SPONSOR0=600,SPONSOR_DROP=6;
+var VIS_RATE=0.6,SHOP_COST=0.25,SHOP_K=8,OFFER_PER=30,VIS_GIVE=3,SPONSOR0=600,SPONSOR_DROP=6;
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
 function addLog(msg){S.log.unshift({w:S.week,msg:msg});if(S.log.length>10)S.log.length=10;}
