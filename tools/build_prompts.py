@@ -210,8 +210,22 @@ sheet('N', '계절·행사 장식', (5, 5),
        "Row 4 (winter): Christmas tree with ornaments and a star on top; snowy pine tree; small wooden nativity stable with a manger, simple statue figures and a star on the roof; wreath arch with red ribbons over a path, running lower-left to upper-right; pile of wrapped gift boxes.",
        "Row 5 (festival): snowman with a scarf and a hat; white bazaar tent with an open front and one table; string of colorful paper lanterns between two poles, running lower-left to upper-right; blank cloth banner between two poles, running lower-left to upper-right; (empty)."])
 
+sheet('E2', '보충: 글자 없는 매장·안내실·첨탑', (4, 4),
+      '시트 E·F에서 쓰지 못한 칸만 다시 받는다: 영어 간판이 그려진 매점·카페·빵집·서점·찬양실, 게시판처럼 나온 안내실, 분홍 번짐이 생긴 첨탑·쌍등 가로등. 지난번 문제(글자, 2x1이 정육면체로 그려짐, 불빛 번짐)를 막는 문장을 넣었다.',
+      '매점·카페·빵집·기독교 서점·찬양실·안내실, 십자가 첨탑, 쌍등 가로등',
+      ["It contains a few small shops and church buildings, each shown from the front and from the back, plus two tall single objects.",
+       "ABSOLUTELY NO LETTERS: shop signs, awnings and windows must not contain any letters or words in any language. A sign board may show only one tiny simple picture (a cup, a loaf of bread, a book or a music note) on a plain colored panel.",
+       "FOOTPRINT: a 2x1 building is clearly twice as long as it is deep (its long front side is about twice its short side); do not draw it as a cube. A 1x1 building is a small square box. A 2x2 building is square and larger.",
+       "Rows 1 to 3 hold two FRONT/BACK pairs each (columns 1-2 and 3-4). Row 4 holds two single objects.",
+       "Row 1: snack kiosk, 1x1, wooden walls, yellow striped awning over a serving counter, a small sign with a cup picture; cafe, 2x1, brown walls, green striped awning, big windows, one small outdoor table, a sign with a cup picture.",
+       "Row 2: bakery, 2x1, cream walls, orange awning, bread display window, small chimney, a sign with a bread picture; Christian bookstore, 2x1, pale green and white walls, blue awning, books in the window, a sign with a book picture.",
+       "Row 3: music room, 2x2, cream walls, slate-blue roof, a round window, a sign with a music note picture, no instruments outside; welcome information kiosk, 1x1, a small closed booth with walls, a roof and a wide service window with a counter (NOT a notice board).",
+       "Row 4 (singles, front view only): tall slender church cross tower, 1x1, brick and stone, about 2.5 W tall, plain stone cross on top with NO glow; double-headed black street lamp with pale yellow lamp glass and NO glow or light around it; (empty); (empty)."],
+      pair='h')
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('K', 'UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다'),
+ORDER = [('E2', '보충 — 시트 D~H 결과에서 빠진 매장·안내실·첨탑만 다시 받기 (지금 먼저)'),
+         ('K', 'UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다'),
          ('L', 'UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다'),
          ('D', '땅·바닥 질감 — 화면 면적이 가장 넓다'),
          ('E', '작은 건물'), ('F', '중간 건물'), ('G', '큰 건물'), ('H', '가장 큰 건물·입구'),
@@ -309,6 +323,7 @@ def build_html():
 
 
 if __name__ == '__main__':
+    SHEETS.sort(key=lambda x: x['key'] != 'E2')  # 지금 받을 보충 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))

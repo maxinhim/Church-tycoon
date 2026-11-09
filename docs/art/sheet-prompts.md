@@ -12,23 +12,71 @@
 - **맨 오른쪽 아래 칸은 비운다** (Gemini 워터마크).
 
 ## 받는 순서 (권장)
-1. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
-2. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
-3. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
-4. 시트 E — 작은 건물
-5. 시트 F — 중간 건물
-6. 시트 G — 큰 건물
-7. 시트 H — 가장 큰 건물·입구
-8. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
-9. 시트 I — 길·계단·탈것
-10. 시트 N — 계절 장식
-11. 시트 M — 행사·사역 그림
+1. 시트 E2 — 보충 — 시트 D~H 결과에서 빠진 매장·안내실·첨탑만 다시 받기 (지금 먼저)
+2. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
+3. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
+4. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
+5. 시트 E — 작은 건물
+6. 시트 F — 중간 건물
+7. 시트 G — 큰 건물
+8. 시트 H — 가장 큰 건물·입구
+9. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
+10. 시트 I — 길·계단·탈것
+11. 시트 N — 계절 장식
+12. 시트 M — 행사·사역 그림
 
 ## 그림으로 바꾸지 않는 것
 - **칸 건물(예배실 칸 등)**: 이웃 칸과 이어 붙는 벽·지붕 모양이 16가지가 넘어 시트로 맞추기 어렵다. 지금처럼 코드로 그리고 색만 팔레트에 맞춘다.
 - **층 쌓기(2층 이상)**: 1층·중간층·지붕을 따로 받아야 쌓을 수 있는데, Gemini 그림은 층마다 크기가 조금씩 달라 이음새가 어긋난다. 1층 그림 위에 코드로 층을 얹는 방식을 먼저 써 본다.
 - **날씨 효과(비·눈·번개·무지개)·그림자·선택 표시**: 움직이고 투명해야 해서 코드로 그린다.
 - **글자·숫자**: 모두 웹 글꼴.
+
+## 시트 E2 — 보충: 글자 없는 매장·안내실·첨탑 (4x4)
+
+- **쓰는 곳**: 매점·카페·빵집·기독교 서점·찬양실·안내실, 십자가 첨탑, 쌍등 가로등
+- **메모**: 시트 E·F에서 쓰지 못한 칸만 다시 받는다: 영어 간판이 그려진 매점·카페·빵집·서점·찬양실, 게시판처럼 나온 안내실, 분홍 번짐이 생긴 첨탑·쌍등 가로등. 지난번 문제(글자, 2x1이 정육면체로 그려짐, 불빛 번짐)를 막는 문장을 넣었다.
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains a few small shops and church buildings, each shown from the front and from the back, plus two tall single objects.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Exactly 4 columns x 4 rows of equal square cells (16 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+- The bottom-right cell (row 4, column 4) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+ABSOLUTELY NO LETTERS: shop signs, awnings and windows must not contain any letters or words in any language. A sign board may show only one tiny simple picture (a cup, a loaf of bread, a book or a music note) on a plain colored panel.
+FOOTPRINT: a 2x1 building is clearly twice as long as it is deep (its long front side is about twice its short side); do not draw it as a cube. A 1x1 building is a small square box. A 2x2 building is square and larger.
+Rows 1 to 3 hold two FRONT/BACK pairs each (columns 1-2 and 3-4). Row 4 holds two single objects.
+Row 1: snack kiosk, 1x1, wooden walls, yellow striped awning over a serving counter, a small sign with a cup picture; cafe, 2x1, brown walls, green striped awning, big windows, one small outdoor table, a sign with a cup picture.
+Row 2: bakery, 2x1, cream walls, orange awning, bread display window, small chimney, a sign with a bread picture; Christian bookstore, 2x1, pale green and white walls, blue awning, books in the window, a sign with a book picture.
+Row 3: music room, 2x2, cream walls, slate-blue roof, a round window, a sign with a music note picture, no instruments outside; welcome information kiosk, 1x1, a small closed booth with walls, a roof and a wide service window with a counter (NOT a notice board).
+Row 4 (singles, front view only): tall slender church cross tower, 1x1, brick and stone, about 2.5 W tall, plain stone cross on top with NO glow; double-headed black street lamp with pale yellow lamp glass and NO glow or light around it; (empty); (empty).
+```
 
 ## 시트 D — 땅·바닥 질감 (4x4)
 
