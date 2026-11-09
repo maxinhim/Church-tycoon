@@ -1,5 +1,5 @@
 'use strict';
-/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json)를 고친 뒤 다시 만들 것 */
+/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json, docs/art/sheets/sheet-E4.json)를 고친 뒤 다시 만들 것 */
 var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"by":0.1,"sway":1},
 "fir":{"src":"assets/decor/fir.png","w":105,"h":150,"fw":0.58,"by":0.1,"sway":0.8},
 "cherry":{"src":"assets/decor/cherry.png","w":129,"h":144,"fw":0.82,"by":0.1,"sway":1},
@@ -140,4 +140,8 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "cell_b":{"src":"assets/bld/cell_b.png","w":278,"h":282,"fw":1.1,"by":0.95,"sway":0},
 "mission_b":{"src":"assets/bld/mission_b.png","w":304,"h":306,"fw":1.0,"by":0.95,"sway":0},
 "hall":{"src":"assets/bld/hall.png","w":373,"h":325,"fw":1.0,"by":0.95,"sway":0,"back":"hall_b"},
-"hall_b":{"src":"assets/bld/hall_b.png","w":386,"h":322,"fw":1.0,"by":0.95,"sway":0}};
+"hall_b":{"src":"assets/bld/hall_b.png","w":386,"h":322,"fw":1.0,"by":0.95,"sway":0},
+"bakery":{"src":"assets/bld/bakery.png","w":302,"h":314,"fw":1.05,"by":0.95,"sway":0,"back":"bakery_b"},
+"bakery_b":{"src":"assets/bld/bakery_b.png","w":298,"h":312,"fw":1.05,"by":0.95,"sway":0},
+"bookstore":{"src":"assets/bld/bookstore.png","w":297,"h":312,"fw":1.05,"by":0.95,"sway":0,"back":"bookstore_b"},
+"bookstore_b":{"src":"assets/bld/bookstore_b.png","w":299,"h":314,"fw":1.05,"by":0.95,"sway":0}};
