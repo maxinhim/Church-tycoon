@@ -1,10 +1,26 @@
 'use strict';
+/* 정면 방향 돌리기: 그림 함수는 '정면이 +y(face 2)'라고 보고 칸 안 좌표(u,v)로 그린다.
+   fPt·fRect가 그 좌표를 실제 정면 방향(face)으로 돌려 준다. W·H는 정의상 가로·세로(돌리기 전) */
+function fPt(b,u,v){
+  var d=D[b.def],W=d.w,H=d.h,f=b.face==null?2:b.face;
+  if(f===2)return [b.x+u,b.y+v];
+  if(f===3)return [b.x+W-u,b.y+H-v];
+  if(f===0)return [b.x+v,b.y+W-u];
+  return [b.x+H-v,b.y+u];
+}
+function fRect(b,u0,v0,u1,v1){var a=fPt(b,u0,v0),c=fPt(b,u1,v1);return rrect(Math.min(a[0],c[0]),Math.min(a[1],c[1]),Math.max(a[0],c[0]),Math.max(a[1],c[1]));}
+// 여러 조각을 앞뒤 순서대로 그린다 (돌린 뒤에도 가려짐이 맞게)
+function drawParts(parts){
+  parts.forEach(function(p){p.k=p.r.x0+p.r.x1+p.r.y0+p.r.y1;});
+  parts.sort(function(a,c){return a.k-c.k;}).forEach(function(p){box(p.r,p.z0,p.z1,p.c,p.t);});
+}
 function drawBld(b){
   // 층을 올린 건물은 층마다 한 층 높이(LV)로 쌓고, 지붕은 맨 위에
   var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,fl=b.floors||1,H1=fl>1?LV:d.H,H=fl>1?fl*LV:d.H,s=PJ.s;
   box(rrect(x+.03,y+.03,x+w-.03,y+h-.03),0,.05,'#cfc8b8');
   var r=rrect(x+.1,y+.1,x+w-.1,y+h-.1);
-  var alongX=(w>=h)!==(ROT%2===1);
+  // 용마루: 긴 쪽을 따라. 정사각형이면 정면에서 뒤로 (박공 끝이 정면을 보게) — 정면을 돌리면 지붕도 돈다
+  var worldX=w!==h?w>h:(b.face===0||b.face===1),alongX=worldX!==(ROT%2===1);
   var main=function(){
     box(r,.05,H,d.wall,d.roof==='flat'?shade(d.roofc,1.05):null);
     for(var fk=0;fk<fl;fk++){
@@ -102,14 +118,12 @@ function drawFlower(b){
   var cols=D[b.def].petals||['#e0567f','#f2c14e','#ffffff','#b574d6','#ff8a4a'],s=PJ.s;
   for(var i=0;i<9;i++){var p=rotPt(b.x+.2+hh(b.id*3+i,i)*.6,b.y+.2+hh(i*7,b.id+i)*.6);dot(p[0],p[1],.17,Math.max(.6,1.5*s),'#3f7a3a');dot(p[0],p[1],.2,Math.max(.8,2.1*s),cols[i%cols.length]);}
 }
+// 벤치: 등받이가 뒤, 앉는 쪽이 정면
 function drawBench(b){
-  var x=b.x,y=b.y,parts=[
-    {r:rrect(x+.28,y+.47,x+.72,y+.53),z0:0,z1:.14,c:'#4f3e2c'},
-    {r:rrect(x+.2,y+.36,x+.8,y+.41),z0:.14,z1:.42,c:'#8a6844'},
-    {r:rrect(x+.2,y+.41,x+.8,y+.6),z0:.14,z1:.2,c:'#a07a52'}];
-  parts.forEach(function(p){p.k=p.r.x0+p.r.x1+p.r.y0+p.r.y1;});
-  parts.sort(function(a,b){return a.k-b.k;});
-  parts.forEach(function(p){box(p.r,p.z0,p.z1,p.c);});
+  drawParts([
+    {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
+    {r:fRect(b,.2,.34,.8,.4),z0:.14,z1:.46,c:'#8a6844'},
+    {r:fRect(b,.2,.4,.8,.62),z0:.14,z1:.2,c:'#a07a52'}]);
 }
 function drawSpire(b){
   var d=D.spire;
@@ -288,15 +302,16 @@ function drawStage(b){
   for(var i=0;i<6;i++){var bx=x+.35+(i%3)*(w-.7)/2.6,by=y+h*.55+Math.floor(i/3)*.55;if(f!==2){bx=x+.35+(i%3)*(w-.7)/2.6;by=y+.35+Math.floor(i/3)*.55;}
     var br=rrect(bx,by,bx+.5,by+.12);box(br,.08,.22,'#8a6844');}
 }
+// 놀이터: 미끄럼틀이 정면으로 내려온다
 function drawPlayground(b){
   var x=b.x,y=b.y;
   box(rrect(x+.05,y+.05,x+1.95,y+1.95),0,.04,'#e0c48a','#e7cf9c');
-  box(rrect(x+.3,y+.3,x+.7,y+.7),.04,.8,'#e8892c');box(rrect(x+.25,y+.25,x+.75,y+.75),.8,.9,'#3f6fe0');
-  var p=rotPt(x+.5,y+.75),q=rotPt(x+.5,y+1.6),c=PJ.c,a=P(p[0],p[1],.8),bq=P(q[0],q[1],.06);
+  box(fRect(b,.3,.3,.7,.7),.04,.8,'#e8892c');box(fRect(b,.25,.25,.75,.75),.8,.9,'#3f6fe0');
+  var s0=fPt(b,.5,.75),s1=fPt(b,.5,1.6),p=rotPt(s0[0],s0[1]),q=rotPt(s1[0],s1[1]),c=PJ.c,a=P(p[0],p[1],.8),bq=P(q[0],q[1],.06);
   c.strokeStyle='#d9467a';c.lineWidth=Math.max(2,4*PJ.s);c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(bq[0],bq[1]);c.stroke();
-  box(rrect(x+1.2,y+.25,x+1.27,y+.32),.04,.95,'#59626b');box(rrect(x+1.7,y+.25,x+1.77,y+.32),.04,.95,'#59626b');
-  box(rrect(x+1.2,y+.25,x+1.77,y+.32),.95,1.0,'#59626b');
-  [1.37,1.6].forEach(function(sx){var s1=rotPt(x+sx,y+.28),pa=P(s1[0],s1[1],.95),pb=P(s1[0],s1[1],.35);c.strokeStyle='#3d4650';c.lineWidth=1;c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();});
+  box(fRect(b,1.2,.25,1.27,.32),.04,.95,'#59626b');box(fRect(b,1.7,.25,1.77,.32),.04,.95,'#59626b');
+  box(fRect(b,1.2,.25,1.77,.32),.95,1.0,'#59626b');
+  [1.37,1.6].forEach(function(sx){var sw=fPt(b,sx,.28),s1=rotPt(sw[0],sw[1]),pa=P(s1[0],s1[1],.95),pb=P(s1[0],s1[1],.35);c.strokeStyle='#3d4650';c.lineWidth=1;c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();});
 }
 function drawPond(b){
   var x=b.x,y=b.y,dm=faceDims(D[b.def],b.face);
@@ -305,15 +320,14 @@ function drawPond(b){
   for(var i=0;i<3;i++){var p=rotPt(x+.5+hh(b.id+i,i)*(dm.w-1),y+.5+hh(i,b.id)*(dm.h-1)),q=P(p[0],p[1],.07);c.fillStyle=i%2?'#e8892c':'#3f8656';c.beginPath();c.ellipse(q[0],q[1],(i%2?3:5)*s,(i%2?1.6:2.6)*s,0,0,6.283);c.fill();}
 }
 function drawPicnic(b){
-  var x=b.x,y=b.y;
-  box(rrect(x+.2,y+.3,x+.8,y+.4),0,.22,'#8a6844');box(rrect(x+.2,y+.6,x+.8,y+.7),0,.22,'#8a6844');
-  box(rrect(x+.45,y+.45,x+.55,y+.55),0,.4,'#6b4f3a');box(rrect(x+.15,y+.38,x+.85,y+.62),.4,.46,'#a07a52','#c75b4a');
+  drawParts([{r:fRect(b,.2,.24,.8,.36),z0:0,z1:.22,c:'#8a6844'},{r:fRect(b,.2,.64,.8,.76),z0:0,z1:.22,c:'#8a6844'},{r:fRect(b,.46,.46,.54,.54),z0:0,z1:.4,c:'#6b4f3a'}]);
+  box(fRect(b,.15,.38,.85,.62),.4,.46,'#a07a52','#c75b4a');
 }
 function drawStatue(b){
   var x=b.x,y=b.y;
   box(rrect(x+.2,y+.2,x+.8,y+.8),0,.3,'#cfc8b8');
   box(rrect(x+.44,y+.44,x+.56,y+.56),.3,1.5,'#e9e4da');
-  box(rrect(x+.3,y+.44,x+.7,y+.56),1.12,1.24,'#e9e4da');
+  box(fRect(b,.3,.44,.7,.56),1.12,1.24,'#e9e4da');
   var p=rotPt(x+.5,y+.5),q=P(p[0],p[1],1.55),c=PJ.c,g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],14*PJ.s);
   g.addColorStop(0,'rgba(255,225,140,.4)');g.addColorStop(1,'rgba(255,225,140,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],14*PJ.s,0,6.283);c.fill();
 }
@@ -328,12 +342,10 @@ function drawGazebo(b){
   box(rrect(x+.6,y+.85,x+1.4,y+1.15),.08,.3,'#a07a52');
   hip(r,.95,.6,'#8a5a2b');
 }
+// 버스 정류장: 뒤에 유리벽, 정면 쪽 모서리에 표지판
 function drawBusStop(b){
-  var x=b.x,y=b.y;
-  box(rrect(x+.15,y+.6,x+.85,y+.7),0,.9,'rgba(170,205,230,.6)');
-  box(rrect(x+.1,y+.3,x+.9,y+.75),.9,.98,'#3f5ea3');
-  box(rrect(x+.25,y+.45,x+.75,y+.55),0,.24,'#8a6844');
-  box(rrect(x+.86,y+.2,x+.9,y+.24),0,1.2,'#59626b');box(rrect(x+.8,y+.16,x+.96,y+.28),1.05,1.25,'#e8d36a');
+  drawParts([{r:fRect(b,.15,.25,.85,.33),z0:0,z1:.9,c:'#aacde6'},{r:fRect(b,.25,.4,.75,.52),z0:0,z1:.24,c:'#8a6844'},{r:fRect(b,.86,.76,.9,.8),z0:0,z1:1.2,c:'#59626b'}]);
+  box(fRect(b,.1,.2,.9,.7),.9,.98,'#3f5ea3');box(fRect(b,.8,.72,.96,.84),1.05,1.25,'#e8d36a');
 }
 
 /* ---------- 매장·꾸미기 요소 ---------- */
@@ -395,14 +407,15 @@ function drawFence(b){
   if(st==='picket')for(var k=0;k<5;k++){var o2=.14+k*.16;box(axRect(b,o2,.47,o2+.05,.53),0,.48,post);}
   if(st==='iron')for(var m=0;m<6;m++){var o3=.12+m*.14;box(axRect(b,o3,.485,o3+.025,.515),0,.56,post);}
 }
+// 쌍등: 등 두 개가 정면과 나란한 방향으로 달린다
 function drawLamp2(b){
   var x=b.x+.5,y=b.y+.5,c=PJ.c,s=PJ.s;
   box(rrect(x-.1,y-.1,x+.1,y+.1),0,.08,'#59626b');
   box(rrect(x-.04,y-.04,x+.04,y+.04),.08,1.5,'#3d4650');
-  box(rrect(x-.3,y-.03,x+.3,y+.03),1.45,1.5,'#3d4650');
-  [-.26,.26].forEach(function(o){
-    box(rrect(x+o-.08,y-.08,x+o+.08,y+.08),1.25,1.42,'#f5e6a8','#fff4c2');
-    var p=rotPt(x+o,y),q=P(p[0],p[1],1.33),g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],14*s);
+  box(fRect(b,.2,.47,.8,.53),1.45,1.5,'#3d4650');
+  [.24,.76].forEach(function(o){
+    box(fRect(b,o-.08,.42,o+.08,.58),1.25,1.42,'#f5e6a8','#fff4c2');
+    var lp=fPt(b,o,.5),p=rotPt(lp[0],lp[1]),q=P(p[0],p[1],1.33),g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],14*s);
     g.addColorStop(0,'rgba(255,240,180,.34)');g.addColorStop(1,'rgba(255,240,180,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],14*s,0,6.283);c.fill();
   });
 }

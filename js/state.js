@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- 상태 ---------- */
 var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
-var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',statusTab:'status',lastBuilt:null,shift:null};
+var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',statusTab:'status',lastBuilt:null,shift:null,fdir:null};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 /* 시작 상태: 교회 문은 닫혀 있다. 첫 예배실과, 교회 입구에서 예배실 앞까지 보도블록이 깔려 있다.

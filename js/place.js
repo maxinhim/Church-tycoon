@@ -16,7 +16,7 @@ function placeKind(){
   return D[UI.tool]?'bld':'';
 }
 // 방향을 바꿔도 달라지는 게 없는 것(나무·화분처럼 문이 없고 정사각형인 장식)에는 화살표를 띄우지 않는다
-function faceMatters(d){return !!d.fill||d.w!==d.h||d.towerH>0||['hedge','arch','stage','fence','bell','board','bikerack'].indexOf(d.kind)>=0;}
+function faceMatters(d){return !!d.fill||d.w!==d.h||d.towerH>0||['hedge','arch','stage','fence','bell','board','bikerack','lamp2','statue','busstop'].indexOf(d.kind)>=0;}
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 function placeWhy(d,x,y,face){
   var dm=faceDims(d,face);
@@ -28,6 +28,7 @@ function placeWhy(d,x,y,face){
 }
 function startPlace(id){
   UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   var c=viewCenter();
   if(id==='path'){UI.pc=newCursor();UI.ghost=null;pcStartAt(c[0],c[1]);}
   else{
@@ -45,6 +46,7 @@ function plBox(){
   var k=placeKind(),x,y,w,h,z0,H;
   if(k==='bld'){if(!UI.ghost)return null;var dm=faceDims(D[UI.tool],UI.face);x=UI.ghost.x;y=UI.ghost.y;w=dm.w;h=dm.h;z0=0;H=heightOf(UI.tool);}
   else if(k==='path'){var c=UI.pc;if(!c||c.x==null)return null;x=c.x;y=c.y;w=1;h=1;z0=c.l*LV;H=.35;}
+  else if(k==='floor'){if(!UI.ghost)return null;x=UI.ghost.x;y=UI.ghost.y;w=1;h=1;z0=0;H=.1;}
   else return null;
   var L=1e9,R=-1e9,T=1e9,B=-1e9;
   [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(function(p){[z0,z0+H].forEach(function(z){var q=plScr(p[0],p[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
@@ -54,7 +56,7 @@ function plBox(){
     var ux=a[0]-G[0],uy=a[1]-G[1],n=Math.hypot(ux,uy)||1;ux/=n;uy/=n;
     // 땅 높이와 지붕 높이 가운데 바깥쪽 점에서 더 밀어내 건물 그림을 가리지 않게
     var pa=(a[0]-C[0])*ux+(a[1]-C[1])*uy,pb=(b[0]-C[0])*ux+(b[1]-C[1])*uy,o=pa>=pb?a:b;
-    return {d:d,x:o[0]+ux*24,y:o[1]+uy*24,ang:Math.atan2(uy,ux)};
+    return {d:d,x:o[0]+ux*21,y:o[1]+uy*21,ang:Math.atan2(uy,ux)};
   });
   return {l:L,r:R,t:T,b:B,arr:arr};
 }
@@ -66,40 +68,42 @@ function plMove(el,x,y,w){el.style.transform='translate('+Math.round(x-w/2)+'px,
 // 매 프레임: 지도 위 버튼을 미리보기 둘레에 붙인다
 function syncPlace(){
   var root=$('#place');if(!root)return;
-  var k=placeKind(),bx=(k==='bld'||k==='path')?plBox():null;
+  var k=placeKind(),line=k==='path'||k==='floor',bx=(k==='bld'||line)?plBox():null;
   root.hidden=!bx;if(!bx)return;
   var vw=window.innerWidth,vh=window.innerHeight,cl=function(v,a,b){return Math.max(a,Math.min(b,v));};
-  var show=k==='path'||faceMatters(D[UI.tool]),cur=k==='path'?UI.pc.dir:UI.face,minY=1e9,maxY=-1e9;
+  // 건물: 화살표 = 건물이 바라보는 방향(정면). 길·바닥: 화살표 = 다음 칸으로 이어 짓는 방향
+  var show=line||faceMatters(D[UI.tool]),cur=k==='path'?UI.pc.dir:(k==='floor'?UI.fdir:UI.face),minY=1e9,maxY=-1e9;
   root.querySelectorAll('.parr').forEach(function(el){
     var a=bx.arr[+el.dataset.v];el.hidden=!show;if(!show)return;
     minY=Math.min(minY,a.y);maxY=Math.max(maxY,a.y);
-    plMove(el,cl(a.x,22,vw-22),cl(a.y,22,vh-22),36);
+    plMove(el,cl(a.x,20,vw-20),cl(a.y,20,vh-20),32);
     el.firstChild.style.transform='rotate('+a.ang+'rad)';
     var on=a.d===cur;el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on));
-    el.setAttribute('aria-label',(k==='path'?'길 방향 ':'정면 방향 ')+PL_DIRNAME[worldToScreenDir(a.d)]);
+    el.setAttribute('aria-label',(line?'짓는 방향 ':'바라보는 방향 ')+PL_DIRNAME[worldToScreenDir(a.d)]);
   });
   // ✓·✕는 미리보기 위쪽 좌우. 화살표와 겹치지 않게 충분히 띄운다.
   // 위쪽(교회 이름표 줄)에 자리가 없으면 미리보기 아래로 내린다
-  var mid=(bx.l+bx.r)/2,half=Math.max((bx.r-bx.l)/2,34),top=Math.min(bx.t-22,show?minY-46:1e9),tb=$('#top').getBoundingClientRect().bottom+26;
-  if(top<tb)top=Math.max(bx.b+22,show?maxY+46:-1e9);
+  var mid=(bx.l+bx.r)/2,half=Math.max((bx.r-bx.l)/2,28),top=Math.min(bx.t-18,show?minY-38:1e9),tb=$('#top').getBoundingClientRect().bottom+22;
+  if(top<tb)top=Math.max(bx.b+18,show?maxY+38:-1e9);
   var ok=root.querySelector('[data-pl="ok"]'),no=root.querySelector('[data-pl="no"]');
-  plMove(ok,cl(mid-half,26,vw-26),cl(top,26,vh-26),46);
-  plMove(no,cl(mid+half,26,vw-26),cl(top,26,vh-26),46);
-  var can=k==='path'?plPathWhy()==='':!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face);
+  plMove(ok,cl(mid-half,22,vw-22),cl(top,22,vh-22),38);
+  plMove(no,cl(mid+half,22,vw-22),cl(top,22,vh-22),38);
+  var can=k==='path'?plPathWhy()==='':(k==='floor'?!floorWhy(UI.ghost.x,UI.ghost.y,UI.tool):!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face));
   ok.disabled=!can;
-  ok.setAttribute('aria-label',k==='path'?'이 칸 짓기':(can?D[UI.tool].name+' 짓기':'여기에는 지을 수 없어요'));
+  ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?D[UI.tool].name+' 짓기':'여기에는 지을 수 없어요'));
 }
 function plPathWhy(){var p=pcPiece();return p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'시작할 곳을 먼저 누르세요';}
 // 화살표: 건물은 정면(기본 출입구) 방향, 길은 다음 칸이 이어질 방향
 function plDir(d){
   if(placeKind()==='path'){UI.pc.dir=d;renderDetail();return;}
+  if(placeKind()==='floor'){UI.fdir=d;renderDetail();return;}
   var df=D[UI.tool],o=faceDims(df,UI.face),n=faceDims(df,d),g=UI.ghost;
   UI.face=d;
   // 가로세로가 바뀌면 가운데를 지키며 돌린다
   if(g){g.x=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w);g.y=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-1-n.h);}
   renderDetail();
 }
-function plTurn(){var k=placeKind(),cur=k==='path'?UI.pc.dir:UI.face;plDir(screenToWorldDir((worldToScreenDir(cur)+1)%4));}
+function plTurn(){var k=placeKind(),cur=k==='path'?UI.pc.dir:(k==='floor'?UI.fdir:UI.face);plDir(screenToWorldDir((worldToScreenDir(cur)+1)%4));}
 // 이어 짓기(조경): 방금 지은 자리 옆 빈 곳으로 미리보기를 옮긴다. 지난번에 옮긴 쪽을 먼저 본다
 function plNext(d,x,y){
   var dm=faceDims(d,UI.face),pref=UI.shift||[1,0];
@@ -124,6 +128,15 @@ function plOk(){
   var k=placeKind(),now=performance.now();
   if(now<plLock)return;
   if(k==='path'){var why=pcBuild();if(why)toast(why,1600);else{plLock=now+180;plBuzz();}renderDetail();hud(true);return;}
+  // 바닥: 이 칸을 칠하고 화살표 방향으로 한 칸 나아간다
+  if(k==='floor'){
+    var g0=UI.ghost,fw=g0?paintFloor(g0.x,g0.y,UI.tool):'자리를 먼저 고르세요';
+    if(fw){toast(fw,1400);return;}
+    plLock=now+150;plBuzz();
+    var nx=g0.x+DIRS[UI.fdir][0],ny=g0.y+DIRS[UI.fdir][1];
+    if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ){g0.x=nx;g0.y=ny;}
+    renderDetail();hud(true);return;
+  }
   if(k!=='bld'||!UI.ghost)return;
   var d=D[UI.tool],g=UI.ghost,why2=placeWhy(d,g.x,g.y,UI.face);
   if(why2){toast(why2,1600);return;}
@@ -158,7 +171,7 @@ function renderPbar(){
   var h='',undo=UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'',d=D[UI.tool];
   if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
-    var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 정면(출입구) 방향을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';
+    var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 건물이 바라볼 방향(정면·출입구)을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · '+(why?bad(why):effText(d))+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
   }else if(k==='path'){
     var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sky=c.k==='sky',sl=sky?0:c.slope;
@@ -177,7 +190,8 @@ function renderPbar(){
     else line=(rp.kind==='floor'?'누르면 위층을 올려요 · ':'누르면 칸을 지어요 · ')+fmt(rp.cost);
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · 위층 '+fmt(MROOM.floorCost)+' · '+effText(d)+'<br><span class="pt">'+line+'</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else{
-    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">한 칸 '+fmt(d.cost)+'</span>':'')+'<br><span class="pt">'+d.desc+'. 땅을 누를 때마다 한 칸씩 칠해져요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool):'';
+    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">한 칸 '+fmt(d.cost)+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)
   if(h!==plHtml){el.innerHTML=h;plHtml=h;}
@@ -200,7 +214,7 @@ function setupPlace(){
     if(!isPlacing()||e.target.closest&&e.target.closest('input,textarea'))return;
     var k=placeKind();
     if(e.key==='Escape'){endPlace();e.preventDefault();}
-    else if(e.key==='Enter'&&(k==='bld'||k==='path')){plOk();e.preventDefault();}
-    else if((e.key==='r'||e.key==='R')&&(k==='path'||(k==='bld'&&faceMatters(D[UI.tool])))){plTurn();e.preventDefault();}
+    else if(e.key==='Enter'&&(k==='bld'||k==='path'||k==='floor')){plOk();e.preventDefault();}
+    else if((e.key==='r'||e.key==='R')&&(k==='path'||k==='floor'||(k==='bld'&&faceMatters(D[UI.tool])))){plTurn();e.preventDefault();}
   });
 }

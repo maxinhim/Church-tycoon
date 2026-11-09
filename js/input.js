@@ -26,7 +26,8 @@ function onTap(px,py){
   if(!isPlacing()&&gateHit(px,py)){if(popOpen)closeGatePop();else openGatePop();return;}
   if(popOpen)closeGatePop();
   if(isRoomDef(UI.tool)){tapRoomTile(pickTile(px,py));return;}
-  if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:ft.x,y:ft.y};var fw=paintFloor(ft.x,ft.y,UI.tool);if(fw)toast(fw,1200);if(!UI.fold)renderDetail();hud(true);return;}
+  // 바닥: 누른 칸으로 시작 자리만 옮긴다 (칠하기는 ✓)
+  if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-2)};if(!UI.fold)renderDetail();return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
   if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   UI.sel=pickBuilding(px,py);

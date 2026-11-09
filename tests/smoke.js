@@ -670,6 +670,28 @@ async function ministryChecks(browser, url) {
   const pathOk = await page.evaluate(() => { const n = S.paths.length; plLock = 0; const okBtn = document.querySelector('#place [data-pl="ok"]'); syncPlace(); if (okBtn.disabled) { UI.pc.x = 4; UI.pc.y = ROWS - 4; UI.pc.l = 0; syncPlace(); } plOk(); return S.paths.length === n + 1 && !!document.querySelector('#pbar [data-act="pkind"]'); });
   await page.keyboard.press('Escape');
   const escEnds = await page.evaluate(() => UI.tool === null);
+  // 바닥: 화살표 = 깔아 나갈 방향, ✓마다 한 칸 칠하고 나아감. 지도를 누르면 자리만 옮김
+  await page.click('#dock [data-v="floor"]'); await page.click('#cards [data-v="f_brick"]');
+  const floorDir = await page.evaluate(() => {
+    let sx = -1, sy = -1;
+    for (let y = 2; y < PZ - 4 && sx < 0; y++) for (let x = 2; x < COLS - 6; x++) if ([0, 1, 2, 3].every(i => !occ[y][x + i] && !S.floor[(x + i) + ',' + y])) { sx = x; sy = y; break; }
+    UI.ghost = { x: sx, y: sy }; renderDetail(); syncPlace();
+    const arrows = [...document.querySelectorAll('#place .parr')].filter(e => !e.hidden).length === 4;
+    plDir(0); plLock = 0; plOk(); plLock = 0; plOk(); plLock = 0; plOk();
+    return arrows && S.floor[sx + ',' + sy] === 'f_brick' && S.floor[(sx + 2) + ',' + sy] === 'f_brick' && UI.ghost.x === sx + 3 && UI.ghost.y === sy;
+  });
+  const floorTap = await page.evaluate(() => { const n = Object.keys(S.floor).length; const g = UI.ghost; const p = rotPt(g.x + .5, g.y + 3.5), q = toScreen(p[0], p[1], 0); onTap(q[0], q[1]); return Object.keys(S.floor).length === n && UI.ghost.x === g.x && UI.ghost.y === g.y + 3; });
+  await page.keyboard.press('Escape');
+  // 건물 방향: 화살표로 정면을 바꾸면 그림이 실제로 돈다 (벤치·정사각형 예배실·쌍등·버스 정류장)
+  const rotates = await page.evaluate(() => {
+    const cv2 = document.createElement('canvas'); cv2.width = 200; cv2.height = 200; const g2 = cv2.getContext('2d');
+    const keep = { c: PJ.c, ox: PJ.ox, oy: PJ.oy, s: PJ.s };
+    const shot = (id, f) => { g2.clearRect(0, 0, 200, 200); PJ.c = g2; PJ.ox = 100; PJ.oy = 60; PJ.s = 1.4; const b = { x: 0, y: 0, def: id, id: 3, face: f }; ensureDoors(b); drawEntity(b, 0); return cv2.toDataURL(); };
+    const out = ['bench', 'room', 'lamp2', 'busstop', 'picnic'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, f))).size >= 2 && shot(id, 0) !== shot(id, 2));
+    PJ.c = keep.c; PJ.ox = keep.ox; PJ.oy = keep.oy; PJ.s = keep.s;
+    return out;
+  });
+  const smallBtns = await page.evaluate(() => { startPlace('bench'); syncPlace(); const r = document.querySelector('#place [data-pl="ok"]').getBoundingClientRect(); const a = document.querySelector('#place .parr').getBoundingClientRect(); endPlace(); return r.width <= 40 && a.width <= 34; });
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼으로 요약·챙길 일이 열리고, 다시 누르면 닫힘');
   check(minis && staffTab, '기능 버튼: 행사 버튼 안에 행사·사역자 탭');
   check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개와 안내 띠');
@@ -682,6 +704,9 @@ async function ministryChecks(browser, url) {
   check(repeat, '지도에서 짓기: 조경은 옆자리로 이어 짓기, 방향 화살표 없음, 되돌리면 전액 환불');
   check(ended, '지도에서 짓기: ✕로 그만두면 목록으로 돌아옴');
   check(pathOk && escEnds, '지도에서 짓기: 길은 ✓로 한 칸씩 잇고 띠에서 종류를 고름, Esc로 끝냄');
+  check(floorDir && floorTap, '지도에서 짓기: 바닥은 화살표 방향으로 ✓마다 한 칸씩 깔리고, 지도를 누르면 자리만 옮김');
+  check(rotates, '건물 방향: 화살표로 정면을 바꾸면 벤치·예배실·쌍등·정류장·피크닉 테이블 그림이 돎');
+  check(smallBtns, '지도에서 짓기: ✓·✕ 38px, 화살표 32px로 작아짐');
   check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

@@ -3,6 +3,17 @@
    땅 칸에 칠하는 바닥(보도블록·벽돌·자갈·나무·꽃잔디). 걸어 다닐 수 있고 분위기 점수를 조금 올린다.
    S.floor = {"x,y": 정의 id} */
 function isFloorDef(id){return !!D[id]&&D[id].kind==='floor';}
+// 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
+function floorWhy(x,y,id){
+  if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
+  if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';
+  if(occ[y][x])return '건물이 있어요';
+  var prev=S.floor[x+','+y]||null;
+  if(id==='f_erase')return prev?'':'지울 바닥이 없어요';
+  if(prev===id)return '이미 같은 바닥이에요';
+  if(S.money<D[id].cost)return '자금이 부족해요';
+  return '';
+}
 function paintFloor(x,y,id){
   if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
   if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';

@@ -87,8 +87,9 @@ function draw(){
   if(UI.tool==='path')drawPathGhost();
   if(gd){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:UI.face};
+    ensureDoors(gb);
     c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;
-    ensureDoors(gb);drawDoorPads(gb);
+    drawDoorPads(gb);
   }
   if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.55;drawPiece(spc,'#ffd23f');c.globalAlpha=1;}}
   if(sb){
