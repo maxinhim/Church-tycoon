@@ -198,6 +198,8 @@ function refreshMods(){
   activeEvents().forEach(function(id){if(EVENTS[id].mods)EVENTS[id].mods(m);});
   // 행사를 오래 열지 않으면 공동체가 침체된다
   var idle=evIdleWeeks();if(idle>6)m.mood-=Math.min(15,(idle-6)*1.5);
+  // 많이 낡은 건물(상태 50% 미만)이 늘수록 성도 만족이 떨어진다
+  var worn=S.buildings.filter(function(b){return maintainable(b)&&condOf(b)<50;}).length;m.mood-=Math.min(12,worn*1.2);
   m.mood+=S.tempMood;
   MOD=m;
 }

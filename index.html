@@ -13,6 +13,12 @@
     <h1 id="cname">새빛교회</h1>
     <div class="goal"><span id="goalTxt"></span><div class="bar"><i id="goalBar" style="width:0%"></i></div></div>
   </header>
+  <div id="tr">
+  <div id="clock" class="glass" role="timer" aria-live="off">
+    <div class="ck1"><b id="ckWeek">1년 1주</b><span id="ckLeft">주일까지 6일</span></div>
+    <div class="days" id="ckDays" aria-hidden="true"><i>월</i><i>화</i><i>수</i><i>목</i><i>금</i><i>토</i><i class="sun">주</i></div>
+    <div class="ckbar"><i id="ckBar"></i></div>
+  </div>
   <div id="gear">
     <button class="gbtn" id="bGear" aria-label="설정: 게임 속도와 메뉴" aria-expanded="false" aria-controls="gearMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M4.7 4.7l1.9 1.9M17.4 17.4l1.9 1.9M2.8 12h2.6M18.6 12h2.6M4.7 19.3l1.9-1.9M17.4 6.6l1.9-1.9"/></svg><span id="spBadge" hidden></span></button>
     <div id="gearMenu" class="glass" hidden>
@@ -25,6 +31,7 @@
       </div>
       <button class="btn" id="bMenu" aria-pressed="false">메뉴 · 교회 이름·새로 시작·조작법</button>
     </div>
+  </div>
   </div>
   <div id="mid">
     <div id="toast" hidden></div>
@@ -40,7 +47,7 @@
     <div class="stat"><span class="k">자금</span><b id="vMoney">0</b></div>
     <div class="stat"><span class="k">성도</span><b id="vMem">0</b></div>
     <div class="stat"><span class="k">평판</span><b id="vRep">0</b></div>
-    <div class="stat"><span class="k" id="kDate">월요일</span><b id="vDate">1년 1주</b></div>
+    <div class="stat" id="sDebt" hidden><span class="k">빚</span><b id="vDebt">0</b></div>
   </div>
   <section id="dock" class="glass" hidden aria-labelledby="dtitle">
     <div class="dhead"><h2 id="dtitle">건축</h2><div class="subtabs" id="subtabs" role="tablist"></div>
@@ -54,6 +61,8 @@
   </nav>
 </div>
 <div id="place" hidden></div>
+<button id="gateBtn" class="gate off" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V9l8-5 8 5v12M9 21v-7h6v7"/></svg><span>교회 문 열기</span></button>
+<div id="rcpt" class="glass" hidden role="status"></div>
 <div id="over" hidden></div>
 <div id="dlg" hidden></div>
 <div id="cele" hidden></div>
@@ -77,6 +86,7 @@
 <script src="js/paths.js"></script>
 <script src="js/floors.js"></script>
 <script src="js/ministry.js"></script>
+<script src="js/finance.js"></script>
 <script src="js/save.js"></script>
 <script src="js/render-core.js"></script>
 <script src="js/render-entities.js"></script>

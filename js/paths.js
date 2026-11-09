@@ -25,6 +25,7 @@ function pieceH(p,wx,wy){
 }
 function pieceFits(p){
   if(p.x<0||p.y<0||p.x>=COLS||p.y>=ROWS-1)return '부지 밖이에요';
+  if(p.y>=PZ)return '주차 구역에는 길을 놓을 수 없어요 (이미 포장돼 걸을 수 있어요)';
   if(p.l<0)return '땅보다 낮게는 지을 수 없어요';
   if(pieceTop(p)>MAXL)return MAXL+'층 높이보다 높게는 지을 수 없어요';
   if(p.k==='sky'&&p.s)return '연결 다리는 평지로만 지을 수 있어요';

@@ -16,11 +16,11 @@ function placeKind(){
   return D[UI.tool]?'bld':'';
 }
 // 방향을 바꿔도 달라지는 게 없는 것(나무·화분처럼 문이 없고 정사각형인 장식)에는 화살표를 띄우지 않는다
-function faceMatters(d){return !!d.fill||d.w!==d.h||d.towerH>0||d.kind==='hedge'||d.kind==='arch'||d.kind==='stage';}
+function faceMatters(d){return !!d.fill||d.w!==d.h||d.towerH>0||['hedge','arch','stage','fence','bell','board','bikerack'].indexOf(d.kind)>=0;}
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 function placeWhy(d,x,y,face){
   var dm=faceDims(d,face);
-  if(x<0||y<0||x+dm.w>COLS||y+dm.h>ROWS-1)return '부지 밖이에요';
+  var zw=zoneWhy(d,x,y,face);if(zw)return zw;
   if(!canPlace(d,x,y,face))return '다른 건물이나 길과 겹쳐요. 끌어서 옮겨 보세요';
   if(isLocked(d.id))return lockText(lockGoal(d.id))+' 지을 수 있어요';
   if(S.money<d.cost)return '자금이 '+fmt(d.cost-S.money)+' 모자라요';

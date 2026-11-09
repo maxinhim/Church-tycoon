@@ -1,17 +1,20 @@
 'use strict';
 /* ---------- 상태 ---------- */
 var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
-var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',lastBuilt:null,shift:null};
+var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',statusTab:'status',lastBuilt:null,shift:null};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
-// 시작 상태: 지도 전체(맨 아래 도로 줄 제외)에 지을 수 있다
-var START_TREES=[[10,20],[21,21],[11,28],[20,27],[17,22],[3,4],[6,13],[26,6],[29,16],[4,25],[28,27],[13,9],[19,3],[8,2],[24,12],[2,18],[30,22]];
+/* 시작 상태: 교회 문은 닫혀 있다. 첫 예배실과, 교회 입구에서 예배실 앞까지 보도블록이 깔려 있다.
+   방문자는 바닥·길 위로만 다니므로 새 건물은 입구까지 바닥을 이어야 쓸 수 있다 */
+var START_TREES=[[10,20],[21,21],[18,22],[3,4],[6,13],[26,6],[29,16],[4,25],[13,9],[19,3],[8,2],[24,12],[2,18],[30,22],[11,25],[20,25]];
+var START_FLOOR=[[15,26],[15,25],[14,24],[15,24],[16,24]];
 function newState(dk){
   dk=DIFF[dk]?dk:'normal';
-  var bs=[{id:1,def:'room',x:14,y:26,face:2,inUse:0,uses:0}];
+  var bs=[{id:1,def:'room',x:14,y:22,face:2,inUse:0,uses:0}],fl={};
   START_TREES.forEach(function(t,i){bs.push({id:i+2,def:'tree',x:t[0],y:t[1],inUse:0,uses:0});});
-  return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,
-    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:{},
+  START_FLOOR.forEach(function(t){fl[t[0]+','+t[1]]='f_block';});
+  return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,open:false,loans:[],rcpt:null,weekShop:0,weekGive:0,memAcc:0,
+    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,fel:1,care:1,comf:1,park:1,past:1},

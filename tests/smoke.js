@@ -203,6 +203,10 @@ async function modularChecks(browser, url) {
     o.occ = [0, 1, 2, 3, 4].every(i => occ[Y][X + i] === rooms()[0].id);
     // 방문자는 가까운 곳부터 가므로, 입구 근처의 기본 예배실을 치워 이 예배실을 쓰게 한다
     S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
+    // 방문자는 바닥·길 위로만 다니므로 입구까지 길을 잇고, 교회 문을 연다
+    o.unlinked = !usable(rooms()[0]);
+    o.linkOk = linkDoor(rooms()[0]) === '' && usable(rooms()[0]);
+    S.open = true;
     for (let i = 0; i < 4000; i++) update(0.1);
     o.used = rooms()[0].uses > 0;
     save();
@@ -219,6 +223,7 @@ async function modularChecks(browser, url) {
   check(r.split, '예배실 칸: 가운데 칸을 지우면 두 예배실로 나뉨');
   check(r.rejoined && r.joinTwo, '예배실 칸: 다시 이으면 하나로 합쳐짐');
   check(r.occ, '예배실 칸: 점유 지도에 모든 칸이 등록됨');
+  check(r.unlinked && r.linkOk, '길 잇기: 바닥이 없으면 이용 불가, \'입구까지 길 잇기\'로 보도블록을 깔면 이용 가능');
   check(r.used, '예배실 칸: 방문자가 실제로 이용함');
   check(r.saveLoad, '예배실 칸: 저장 후 불러와도 칸·층이 유지됨');
   check(errs.length === 0, '예배실 칸: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
@@ -251,6 +256,9 @@ async function pathChecks(browser, url) {
     o.found = X >= 0;
     placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y); placeTile(X + 1, Y);
     const room = S.buildings.find(b => b.def === 'mroom');
+    // 잔디 칸에서 이미 닿는 바닥까지 보도블록을 깐다
+    const connect = (x, y) => { const t = walkSearch(x, y, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc(); return !!t; };
+    S.open = true; linkDoor(room);
     o.unconnected = room.acc.ok && defOf(room).seats === D.mroom.per.seats * 4;
     // 땅에서 방 쪽(-y)으로 오르막 1칸, 이어서 평지 다리 1칸
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 2; UI.pc.l = 0; UI.pc.dir = 3; UI.pc.slope = 1;
@@ -260,7 +268,12 @@ async function pathChecks(browser, url) {
     pcBuild();
     o.noOverlap = pieceFits({ x: X + 1, y: Y + 1, l: 1, s: 0, d: 0, k: 'stone' }) !== '' && pieceFits({ x: X, y: Y, l: 0, s: 0, d: 0, k: 'stone' }) !== '';
     o.bridgeOverPath = pieceFits({ x: X + 1, y: Y + 1, l: 0, s: 0, d: 0, k: 'stone' }) === '';
-    o.ground = groundOk(X + 1, Y + 1) && groundOk(X + 1, Y + 2);
+    // 다리·계단 밑 칸도 바닥을 깔면 걸을 수 있다 (잔디는 못 걷는다)
+    let grassNo = false;
+    for (let y = 0; y < PZ && !grassNo; y++) for (let x = 0; x < COLS; x++) if (!occ[y][x] && !S.floor[x + ',' + y] && !piecesAt(x, y).length) { grassNo = !groundOk(x, y); break; }
+    paintFloor(X + 1, Y + 1, 'f_block'); paintFloor(X + 1, Y + 2, 'f_block');
+    o.ground = grassNo && groundOk(X + 1, Y + 1) && groundOk(X + 1, Y + 2);
+    connect(X + 1, Y + 3);
     // 2층 입구를 다리 쪽으로
     room.door.ent = { x: X + 1, y: Y, d: 2, l: 1 }; recalc();
     o.connected = room.acc.ok && room.door.ent.l === 1;
@@ -347,6 +360,7 @@ async function stackChecks(browser, url) {
     o.linked = A.links.indexOf(B.id) >= 0 && B.links.indexOf(A.id) >= 0;
     o.skyNotNav = !NAV.reach[PN + S.paths.find(p => p.k === 'sky').id];
     // A가 꽉 차면 다리를 건너 B로
+    linkDoor(A); linkDoor(B);
     A.inUse = defOf(A).cap;
     spawnV(); const v = V[V.length - 1]; v.target = A.id; arrive(v);
     o.xferStart = v.state === 'xfer' && B.inUse === 1;
@@ -401,6 +415,93 @@ async function stackChecks(browser, url) {
   check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
   check(r.allDoors, '문: 새 건물에도 모두 입구·출구가 있음');
   check(errs.length === 0, '새 건물·요소: 시뮬레이션·4방향 그리기·패널 ' + r.cats + '개 분류 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
+// 구역·울타리·교회 문, 바닥 위로만 걷기, 매장 수익, 대출, 주일 정산, 시계
+async function rulesChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 31337;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.goal = GOALS.length; S.dlg = null;
+    const o = {};
+    // 구역: 주차장은 주차 구역에만, 주차 구역엔 주차장만, 입구 보도는 비움
+    o.zones = canPlace(D.lot, 1, PZ, 2) && !canPlace(D.lot, 1, 5, 2) && !canPlace(D.wc, 1, PZ, 2) && !canPlace(D.lots, ENT - 1, PZ, 2) &&
+      tilePlan(3, PZ).ok === false && paintFloor(3, PZ, 'f_block') !== '' && pieceFits({ x: 3, y: PZ, l: 0, s: 0, d: 0, k: 'stone' }) !== '';
+    // 걷기: 잔디는 못 걷고, 주차 구역은 걷고, 도로 줄은 입구 열만
+    o.walk = !groundOk(2, 5) && groundOk(2, PZ + 1) && !groundOk(2, ROWS - 1) && groundOk(ENT, ROWS - 1) && groundOk(ENT, PZ - 1);
+    // 시작은 문이 닫혀 있다: 방문자가 오지 않고, 주차 구역에서 부지로 들어오는 길이 막힌다
+    const starter = S.buildings.find(b => b.def === 'room');
+    o.closedStart = S.open === false && usable(starter);
+    for (let i = 0; i < WEEK * 5; i++) update(0.1);
+    const g = gid(ENT, PZ - 1);
+    o.closedNoVisit = V.length === 0 && !navPath(gid(ENT, PZ), m => m === g);
+    // 문 버튼으로 연다
+    document.getElementById('gateBtn').click();
+    o.opened = S.open === true && !!navPath(gid(ENT, PZ), m => m === g);
+    for (let i = 0; i < 200; i++) update(0.1);
+    o.visitors = V.length > 0;
+    // 한 번 누르면 확인을 묻고, 두 번 누르면 닫힌다
+    toggleGate(); const ask = S.open; toggleGate();
+    o.closeTwice = ask === true && S.open === false;
+    S.open = true;
+    // 매장: 지갑의 돈으로 사고, 수익이 쌓이며 건물 위에 금액이 뜬다
+    S.money = 50000;
+    let shopB = null;
+    for (let y = 0; y < PZ - 2 && !shopB; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.bakery, x, y, 2)) { build('bakery', x, y, 2); shopB = S.buildings[S.buildings.length - 1]; break; }
+    spawnV(false); const v = V[V.length - 1]; v.wallet = 30; enter(v, shopB);
+    const m0 = S.money, ws0 = S.weekShop; finishVisit(v);
+    o.shop = S.money > m0 && S.weekShop > ws0 && v.wallet < 30 && F.some(f => /^\+\d+$/.test(f.text));
+    o.shopCat = DEFS.filter(d => d.cat === 'shop').length >= 7 && ['market', 'bakery', 'bookstore'].every(id => D[id] && D[id].income > 0);
+    // 대출: 한도 안에서 빌리고, 주일마다 갚고, 한 번에 갚을 수 있음
+    const lim = creditLimit(), m1 = S.money;
+    o.borrow = borrow('small') === '' && S.money === m1 + 3000 && S.loans.length === 1;
+    o.bigLocked = (S.goal = 0, loanBlock('big') !== ''); S.goal = GOALS.length;
+    S.members = 6; S.rep = 10; o.limit = loanBlock('mid') !== '' || debt() + 8000 <= creditLimit();
+    const bal0 = S.loans[0].bal, mm = S.money;
+    S.t = WEEK - 0.05; update(0.1);
+    o.repayWeekly = S.loans[0].bal < bal0 && S.rcpt && S.rcpt.loan === S.loans[0].pay;
+    o.receipt = !!S.rcpt && !document.getElementById('rcpt').hidden && /주일 정산/.test(document.getElementById('rcpt').textContent);
+    S.money = 99999; o.repayAll = repayLoan(0) === '' && S.loans.length === 0;
+    // 문을 닫은 주일은 온라인 헌금만
+    S.open = false; S.t = WEEK - 0.05; update(0.1);
+    o.closedSunday = S.rcpt.closed && S.rcpt.offering === 0 && S.rcpt.online > 0;
+    S.open = true;
+    // 시계: 오른쪽 위, 한 주는 48초, 주일 칸 강조
+    S.t = WEEK * 6.5 / 7; hud(true);
+    const ck = document.getElementById('clock').getBoundingClientRect();
+    o.clock = WEEK === 48 && ck.left > innerWidth / 2 && ck.top < 60 && document.querySelector('#ckDays .sun').classList.contains('now') && isSunday();
+    // 재정 탭
+    openGroup('status'); document.querySelector('#subtabs [data-v="finance"]').click();
+    o.finance = UI.tab === 'finance' && /대출 받기/.test(document.getElementById('panel').textContent);
+    // 꾸미기 요소
+    o.deco = DEFS.filter(d => d.cat === 'deco').length >= 15 && DEFS.filter(d => d.cat === 'garden').length >= 15;
+    for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
+    window.__ct.setRot(0);
+    return o;
+  });
+  check(r.zones, '구역: 주차장은 주차 구역에만, 주차 구역엔 주차장만, 입구 보도는 비움');
+  check(r.walk, '걷기: 잔디는 못 걷고, 주차 구역은 포장, 도로는 출입구 열만');
+  check(r.closedStart && r.closedNoVisit, '교회 문: 닫힌 채 시작, 방문자가 오지 않고 부지로 못 들어옴 (건물 이용 표시는 그대로)');
+  check(r.opened && r.visitors, '교회 문: 입구 버튼으로 열면 방문자가 들어옴');
+  check(r.closeTwice, '교회 문: 닫을 때는 한 번 더 눌러 확인');
+  check(r.shop && r.shopCat, '매장: 방문자가 지갑의 돈으로 사 가고 수익·금액 글씨가 뜸, 매장 분류 7종 이상');
+  check(r.borrow && r.bigLocked && r.limit, '대출: 한도 안에서 빌림, 건축 대출은 목표 2개 후');
+  check(r.repayWeekly && r.repayAll, '대출: 주일 정산 때 원리금 상환, 남은 원금 한 번에 갚기');
+  check(r.receipt, '주일 정산: 영수증 카드가 뜸');
+  check(r.closedSunday, '주일 정산: 문을 닫은 주일엔 온라인 헌금만');
+  check(r.clock, '시계: 오른쪽 위, 한 주 48초, 주일 강조');
+  check(r.finance, '재정 탭: 현황 버튼 안에 대출·정산 내역');
+  check(r.deco, '꾸미기: 조경·꾸미기 요소 각 15종 이상');
+  check(errs.length === 0, '구역·재정: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
 
@@ -459,7 +560,7 @@ async function ministryChecks(browser, url) {
     restart('normal');
     // 균형: 아무것도 하지 않으면 1년 동안 저절로 커지지 않고, 초반에 바로 파산하지도 않는다
     let minMoney = S.money;
-    for (let w = 0; w < 30; w++) { if (S.dlg) chooseDlg(dlgById(S.dlg).o.length - 1); for (let i = 0; i < 240; i++) update(0.1); minMoney = Math.min(minMoney, S.money); }
+    S.open = true; for (let w = 0; w < 30; w++) { if (S.dlg) chooseDlg(dlgById(S.dlg).o.length - 1); for (let i = 0; i < WEEK * 10; i++) update(0.1); minMoney = Math.min(minMoney, S.money); }
     o.passive = S.members < 25 && minMoney > 0 && !S.over;
     // 지도 밖도 잔디색으로 칠해진다
     draw(); const px = document.getElementById('cv').getContext('2d').getImageData(3, 3, 1, 1).data;
@@ -555,6 +656,7 @@ async function ministryChecks(browser, url) {
     await pathChecks(browser, url);
     await stackChecks(browser, url);
     await ministryChecks(browser, url);
+    await rulesChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

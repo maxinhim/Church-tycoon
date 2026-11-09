@@ -70,6 +70,7 @@ function roomsChanged(){
 function tilePlan(x,y,def){
   def=def||'mroom';
   if(x<0||y<0||x>=COLS||y>=ROWS-1)return {ok:false,why:'부지 밖이에요'};
+  if(y>=PZ)return {ok:false,why:'주차 구역에는 주차장만 지을 수 있어요'};
   var r=roomAt(x,y);
   if(r){
     if(r.def!==def)return {ok:false,why:'역할이 다른 칸 위에는 쌓을 수 없어요'};

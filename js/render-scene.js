@@ -71,7 +71,9 @@ function draw(){
       E.push({x0:r1.x0,y0:r1.y0,x1:r1.x1,y1:r1.y1,f:function(){drawRoadCar({r1:r1,r2:r2,c:col});}});
     })(wx,ly,k?'#3d78c7':'#d65a4a');
   }
-  var ar=rrect(ENT,ROWS-1+.05,ENT+1,ROWS-1+.15);ar.f=drawArch;E.push(ar);
+  var ar=rrect(ENT-.06,PZ-.07,ENT+1.06,PZ+.07);ar.f=drawArch;E.push(ar);
+  var rg=rrect(ENT-.05,ROWS-1-.05,ENT+1.05,ROWS-1+.05);rg.f=drawRoadGap;E.push(rg);
+  fenceSegs().forEach(function(f){var r=fenceRect(f);r.f=function(){drawFenceSeg(f);};E.push(r);});
   sortEnt(E).forEach(function(e){e.f();});
   drawOutTrees(false);
   drawMarkers(c);

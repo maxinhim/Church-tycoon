@@ -1,15 +1,37 @@
 'use strict';
-/* ---------- 길찾기 (땅 + 길·계단·다리) ----------
+/* ---------- 길찾기 (바닥·길 + 계단·다리) ----------
+   교회 부지에서는 바닥 타일이나 땅 높이의 길이 깔린 칸만 걸을 수 있다(잔디는 못 걷는다).
+   주차 구역은 포장되어 있어 어디든 걷고, 도로 줄은 입구 열만 걷는다.
+   주차 구역 → 부지로 들어오는 칸 경계는 교회 입구(ENT 열)뿐이고, 교회 문이 열려 있을 때만 들어올 수 있다.
+   나가는 쪽은 문이 닫혀 있어도 막지 않는다 (안에 있던 사람이 갇히지 않게).
    노드: 땅 칸 = y*COLS+x, 높이가 있는 길 조각(다리·계단) = PN+조각 id (PN은 땅 칸 수보다 훨씬 큰 값).
    땅 높이의 평지 길은 땅 칸과 같은 노드로 본다.
    두 노드는 맞닿은 면의 높이(포트)가 같을 때만 이어진다. */
-var NAV={reach:{},badSky:{}};
+var NAV={reach:{},badSky:{},all:false},WALK=null;
 function gid(x,y){return y*COLS+x;}
 function gateNode(){return gid(ENT,ROWS-1);}
 var PN=100000;
 function isPieceNode(n){return n>=PN;}
 function nodePiece(n){return pieceById(n-PN);}
-function groundOk(x,y){return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x];}
+function flatPieceAt(x,y){return S.paths.some(function(p){return p.x===x&&p.y===y&&p.l===0&&!p.s&&p.k!=='sky';});}
+function computeWalk(){
+  WALK=[];
+  for(var y=0;y<ROWS;y++){
+    var row=[],z=zoneOf(y);
+    for(var x=0;x<COLS;x++)row.push(z==='road'?x===ENT:(z==='park'?true:false));
+    WALK.push(row);
+  }
+  for(var k in S.floor){var p=k.split(','),fx=+p[0],fy=+p[1];if(fy>=0&&fy<ROWS&&fx>=0&&fx<COLS)WALK[fy][fx]=true;}
+  S.paths.forEach(function(p){if(p.l===0&&!p.s&&p.k!=='sky'&&p.y<ROWS&&p.x<COLS)WALK[p.y][p.x]=true;});
+}
+function groundOk(x,y){if(!WALK)computeWalk();return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x]&&WALK[y][x];}
+function gateOpen(){return !!S.open||NAV.all;}
+// 세로로 한 칸 옮길 때 울타리를 넘는지: 부지 ↔ 주차 구역은 입구 열에서만, 들어올 때는 문이 열려 있어야
+function crossOk(x,y,ny){
+  if(y>=PZ&&ny<PZ)return x===ENT&&gateOpen();
+  if(y<PZ&&ny>=PZ)return x===ENT;
+  return true;
+}
 function nodeOk(n){return isPieceNode(n)?!!nodePiece(n):groundOk(n%COLS,(n/COLS)|0);}
 function nodePos(n){
   if(!isPieceNode(n))return {x:n%COLS+.5,y:((n/COLS)|0)+.5,z:0};
@@ -30,6 +52,7 @@ function navNext(n,cb){
     var x=n%COLS,y=(n/COLS)|0;
     for(d=0;d<4;d++){
       var nx=x+DIRS[d][0],ny=y+DIRS[d][1];
+      if(!crossOk(x,y,ny))continue;
       if(groundOk(nx,ny))cb(gid(nx,ny),0);
       var pn=pieceNodeAt(nx,ny,OPP[d],0);if(pn>=0)cb(pn,0);
     }
@@ -39,7 +62,7 @@ function navNext(n,cb){
   for(d=0;d<4;d++){
     var pl=portLevel(p,d);if(pl<0)continue;
     var mx=p.x+DIRS[d][0],my=p.y+DIRS[d][1];
-    if(pl===0&&groundOk(mx,my))cb(gid(mx,my),0);
+    if(pl===0&&groundOk(mx,my)&&crossOk(mx,p.y,my))cb(gid(mx,my),0);
     var qn=pieceNodeAt(mx,my,OPP[d],pl);if(qn>=0)cb(qn,pl*LV);
   }
 }
@@ -81,9 +104,11 @@ function doorNode(s){
 }
 /* 문 정리 → 입구 아치에서 닿는 곳 계산 → 건물마다 입구·출구 이용 가능 여부 */
 function refreshNav(){
+  computeWalk();
   S.buildings.forEach(ensureDoors);
   refreshLinks();
-  NAV.reach=navReach(gateNode());
+  // 이용 가능 여부는 문이 열려 있다고 보고 계산한다 (닫아 둔 동안 '?' 표시가 온 지도에 뜨지 않게)
+  NAV.all=true;NAV.reach=navReach(gateNode());NAV.all=false;
   S.buildings.forEach(function(b){
     if(!b.door){b.acc=null;return;}
     var en=doorNode(b.door.ent),ex=doorNode(b.door.ext);

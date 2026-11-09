@@ -1,8 +1,20 @@
 'use strict';
 /* ---------- 건축 ---------- */
+// 구역 규칙: 주차장은 주차 구역에만, 주차 구역에는 주차장만. 입구로 가는 보도(ENT 열)는 비워 둔다
+function zoneWhy(d,x,y,face){
+  var dm=faceDims(d,face),lot=d.kind==='lot'||d.id==='parktower';
+  if(x<0||y<0||x+dm.w>COLS||y+dm.h>ROWS-1)return '부지 밖이에요';
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){
+    var z=zoneOf(y+j);
+    if(lot&&z!=='park')return '주차장은 도로 옆 주차 구역에만 지을 수 있어요';
+    if(!lot&&z==='park')return '주차 구역에는 주차장만 지을 수 있어요';
+    if(z==='park'&&x+i===ENT)return '교회 입구로 가는 보도는 비워 둬야 해요';
+  }
+  return '';
+}
 function canPlace(d,x,y,face){
   var dm=faceDims(d,face);
-  if(x<0||y<0||x+dm.w>COLS||y+dm.h>ROWS-1)return false;
+  if(zoneWhy(d,x,y,face))return false;
   for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)if(occ[y+j][x+i]||piecesAt(x+i,y+j).length)return false;
   return true;
 }

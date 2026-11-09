@@ -4,9 +4,12 @@
    입구·출구가 입구 아치에서 닿지 않는 건물은 고르지 않는다.
    연결 다리로 이어진 같은 역할 건물은 한 묶음: 들어간 건물이 꽉 차면 다리를 건너 옆 건물로 가고,
    자기 출구가 막혀 있어도 묶음의 다른 출구로 나올 수 있다. */
-function spawnV(){
+// member: 주일에 예배하러 오는 성도 (정착 판정 없음, 말씀이 가장 급하다). wallet: 매장에서 쓸 수 있는 돈
+function spawnV(member){
   var needs={};NEEDS.forEach(function(n){needs[n]=22+Math.random()*34;});
+  if(member)needs.word=8+Math.random()*10;
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
+    member:!!member,wallet:Math.round(member?6+Math.random()*20:3+Math.random()*16),
     life:38+Math.random()*20,speed:1.5+Math.random()*0.6,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
@@ -69,7 +72,11 @@ function finishVisit(v){
       if(n==='word')amt*=MOD.word;
       v.needs[n]=Math.min(100,v.needs[n]+amt);
     }
-    if(d.income){S.money+=d.income;S.weekInc+=d.income;}
+    // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
+    if(d.income&&v.wallet>0){
+      var pay=Math.min(v.wallet,Math.round(d.income*(0.7+Math.random()*0.6)));
+      if(pay>0){v.wallet-=pay;S.money+=pay;S.weekInc+=pay;S.weekShop+=pay;var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
+    }
     placeAt(v,exitNodeFor(b));
   }
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
@@ -83,11 +90,12 @@ function goLeave(v){
 function depart(v){
   v.dead=true;
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4-v.annoy*5;
+  if(v.member){S.rep=clamp(S.rep+(avg-58)*0.002,0,100);return;}
   S.rep=clamp(S.rep+(avg-58)*0.006,0,100);
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
-  var p=clamp((avg-42)/50,0,1)*0.36*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
-  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;F.push({x:ENT+0.5,y:ROWS-1.2,t:1.6,text:'+1 성도',col:'#fff2b0'});}
+  var p=clamp((avg-42)/50,0,1)*0.2*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
+  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;F.push({x:ENT+0.5,y:PZ-0.6,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 function decide(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;
@@ -97,7 +105,9 @@ function decide(v){
     var n=order[oi];
     if(v.needs[n]>=75)continue;
     var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&usable(b)&&!(v.blocked[b.id]>S.clock)&&!(d.kind==='stage'&&S.evt==='rain');});
-    cands.sort(function(a,b){return (Math.abs(a.x-v.x)+Math.abs(a.y-v.y))-(Math.abs(b.x-v.x)+Math.abs(b.y-v.y));});
+    // 지갑에 돈이 있으면 매장에 조금 더 끌린다
+    var cost=function(b){var d=defOf(b);return Math.abs(b.x-v.x)+Math.abs(b.y-v.y)-(d.income&&v.wallet>=d.income?6:0);};
+    cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});
       if(p){v.path=p;v.pi=0;v.target=b.id;v.want=n;v.state='walk';if(!p.length)arrive(v);return;}

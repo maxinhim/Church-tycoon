@@ -81,23 +81,26 @@ function drawTree(b){
   var c=PJ.c,s=PJ.s,p=rotPt(b.x+.5,b.y+.5),g=P(p[0],p[1],0),hv=hh(b.x*7+b.id,b.y*3+1);
   c.fillStyle='rgba(20,40,10,.22)';c.beginPath();c.ellipse(g[0]+4*s,g[1]+1*s,14*s,6.5*s,0,0,6.283);c.fill();
   box(rrect(b.x+.45,b.y+.45,b.x+.55,b.y+.55),0,.55,'#6b4f3a');
-  if(hv<.38){
+  var dd=D[b.def]||D.tree,lf=dd.leaf,cone=dd.shape?dd.shape==='cone':hv<.38;
+  if(cone){
+    var lc=lf||['#2e6a44','#3f8656'];
     for(var k=0;k<3;k++){
       var zb=.4+k*.34,wd=(15-k*3.6)*s,qb=P(p[0],p[1],zb),qt=P(p[0],p[1],zb+.6);
-      c.fillStyle='#2e6a44';c.beginPath();c.moveTo(qb[0]-wd,qb[1]);c.lineTo(qb[0]+wd,qb[1]);c.lineTo(qt[0],qt[1]);c.closePath();c.fill();
-      c.fillStyle='#3f8656';c.beginPath();c.moveTo(qb[0]-wd,qb[1]);c.lineTo(qb[0],qb[1]+wd*.18);c.lineTo(qt[0],qt[1]);c.closePath();c.fill();
+      c.fillStyle=lc[0];c.beginPath();c.moveTo(qb[0]-wd,qb[1]);c.lineTo(qb[0]+wd,qb[1]);c.lineTo(qt[0],qt[1]);c.closePath();c.fill();
+      c.fillStyle=lc[1];c.beginPath();c.moveTo(qb[0]-wd,qb[1]);c.lineTo(qb[0],qb[1]+wd*.18);c.lineTo(qt[0],qt[1]);c.closePath();c.fill();
     }
   }else{
     var q=P(p[0],p[1],1.0),R=(13+hv*3)*s;
-    c.fillStyle='#3b7539';c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
-    c.fillStyle='#4e9147';c.beginPath();c.arc(q[0]-3*s,q[1]-3*s,R*.74,0,6.283);c.fill();
-    c.fillStyle='#69ad5c';c.beginPath();c.arc(q[0]-5.5*s,q[1]-6.5*s,R*.36,0,6.283);c.fill();
+    var rc=lf||['#3b7539','#4e9147','#69ad5c'];
+    c.fillStyle=rc[0];c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
+    c.fillStyle=rc[1];c.beginPath();c.arc(q[0]-3*s,q[1]-3*s,R*.74,0,6.283);c.fill();
+    c.fillStyle=rc[2];c.beginPath();c.arc(q[0]-5.5*s,q[1]-6.5*s,R*.36,0,6.283);c.fill();
   }
 }
 function drawFlower(b){
   box(rrect(b.x+.12,b.y+.12,b.x+.88,b.y+.88),0,.14,'#8a6a4f','#5e4330');
-  var cols=['#e0567f','#f2c14e','#ffffff','#b574d6','#ff8a4a'],s=PJ.s;
-  for(var i=0;i<9;i++){var p=rotPt(b.x+.2+hh(b.id*3+i,i)*.6,b.y+.2+hh(i*7,b.id+i)*.6);dot(p[0],p[1],.17,Math.max(.6,1.5*s),'#3f7a3a');dot(p[0],p[1],.2,Math.max(.8,2.1*s),cols[i%5]);}
+  var cols=D[b.def].petals||['#e0567f','#f2c14e','#ffffff','#b574d6','#ff8a4a'],s=PJ.s;
+  for(var i=0;i<9;i++){var p=rotPt(b.x+.2+hh(b.id*3+i,i)*.6,b.y+.2+hh(i*7,b.id+i)*.6);dot(p[0],p[1],.17,Math.max(.6,1.5*s),'#3f7a3a');dot(p[0],p[1],.2,Math.max(.8,2.1*s),cols[i%cols.length]);}
 }
 function drawBench(b){
   var x=b.x,y=b.y,parts=[
@@ -133,6 +136,7 @@ function drawEntity(b,cars){
   if(k==='planter'){drawPlanter(b);return;}
   if(k==='gazebo'){drawGazebo(b);return;}
   if(k==='busstop'){drawBusStop(b);return;}
+  if(DECO_DRAW[k]){DECO_DRAW[k](b);return;}
   if(k==='bld')drawBld(b);else if(k==='lot')drawLot(b,cars||0);else if(k==='tree')drawTree(b);
   else if(k==='flower')drawFlower(b);else if(k==='bench')drawBench(b);else if(k==='spire')drawSpire(b);
 }
@@ -152,12 +156,19 @@ function drawVisitor(v){
 function drawRoadCar(e){
   box(e.r1,.02,.16,e.c);box(e.r2,.16,.28,e.c,'#bcd3e0');
 }
+/* 교회 입구: 주차 구역과 부지 사이 울타리의 ENT 칸. 문이 닫혀 있으면 철문이 가로막고, 열면 양쪽으로 젖혀진다 */
 function drawArch(){
-  var y=ROWS-1,s=PJ.s;
-  box(rrect(ENT+.04,y+.06,ENT+.12,y+.14),0,1.15,'#f1ece2');
-  box(rrect(ENT+.88,y+.06,ENT+.96,y+.14),0,1.15,'#f1ece2');
-  box(rrect(ENT,y+.05,ENT+1,y+.15),1.0,1.2,'#3f5ea3');
-  var m=rotPt(ENT+.5,y+.1);cross(m[0],m[1],1.2,.7);
+  var y=PZ,s=PJ.s;
+  box(rrect(ENT-.04,y-.06,ENT+.08,y+.06),0,1.25,'#f1ece2');
+  box(rrect(ENT+.92,y-.06,ENT+1.04,y+.06),0,1.25,'#f1ece2');
+  if(S.open){
+    box(rrect(ENT+.06,y,ENT+.1,y+.42),0,.62,'#3d4650');box(rrect(ENT+.9,y,ENT+.94,y+.42),0,.62,'#3d4650');
+  }else{
+    box(rrect(ENT+.08,y-.02,ENT+.92,y+.02),.04,.66,'#3d4650');
+    for(var i=1;i<8;i++)box(rrect(ENT+i*.11,y-.025,ENT+i*.11+.02,y+.025),.04,.7,'#59626b');
+  }
+  box(rrect(ENT-.06,y-.07,ENT+1.06,y+.07),1.1,1.3,'#3f5ea3');
+  var m=rotPt(ENT+.5,y);cross(m[0],m[1],1.3,.7);
   if(s>.42){var q=P(m[0],m[1],1.1),c=PJ.c;c.font='600 '+(8*s)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
     c.lineWidth=2.5;c.strokeStyle='rgba(20,30,60,.8)';c.strokeText(S.name,q[0],q[1]+10*s);c.fillStyle='#fff';c.fillText(S.name,q[0],q[1]+10*s);}
 }
@@ -180,9 +191,17 @@ function drawGround(){
   for(x=0;x<=rx;x++){var a1=P(x,0,0),a2=P(x,ry,0);c.moveTo(a1[0],a1[1]);c.lineTo(a2[0],a2[1]);}
   for(y=0;y<=ry;y++){var b1=P(0,y,0),b2=P(rx,y,0);c.moveTo(b1[0],b1[1]);c.lineTo(b2[0],b2[1]);}
   c.stroke();
+  // 주차 구역: 아스팔트, 입구로 가는 보도(ENT 열)는 밝게
+  var pz=rrect(0,PZ,COLS,ROWS-1);
+  quad([[pz.x0,pz.y0,.003],[pz.x1,pz.y0,.003],[pz.x1,pz.y1,.003],[pz.x0,pz.y1,.003]],'#7a8187');
+  var wk=rrect(ENT,PZ,ENT+1,ROWS-1);
+  quad([[wk.x0,wk.y0,.004],[wk.x1,wk.y0,.004],[wk.x1,wk.y1,.004],[wk.x0,wk.y1,.004]],'#d8d2c4');
+  c.strokeStyle='rgba(120,110,95,.45)';c.lineWidth=1;c.beginPath();
+  for(y=PZ;y<ROWS-1;y+=.5){var w1=rotPt(ENT,y),w2=rotPt(ENT+1,y),e1=P(w1[0],w1[1],.005),e2=P(w2[0],w2[1],.005);c.moveTo(e1[0],e1[1]);c.lineTo(e2[0],e2[1]);}
+  c.stroke();
   if(PJ.s>.35){
     c.fillStyle='#6a9c56';
-    for(y=0;y<ROWS-1;y++)for(x=0;x<COLS;x++){
+    for(y=0;y<PZ;y++)for(x=0;x<COLS;x++){
       if(hh(x,y)>=.4)continue;
       var pt=rotPt(x+.2+hh(y,x)*.6,y+.2+hh(x+9,y)*.6);q=P(pt[0],pt[1],0);
       if(on(q[0],q[1]))c.fillRect(q[0],q[1]-2.4*PJ.s,1.2*PJ.s+.4,2.4*PJ.s);
@@ -310,3 +329,153 @@ function drawBusStop(b){
   box(rrect(x+.25,y+.45,x+.75,y+.55),0,.24,'#8a6844');
   box(rrect(x+.86,y+.2,x+.9,y+.24),0,1.2,'#59626b');box(rrect(x+.8,y+.16,x+.96,y+.28),1.05,1.25,'#e8d36a');
 }
+
+/* ---------- 매장·꾸미기 요소 ---------- */
+// 정면이 좌우(0·1)면 세로 방향: (가로 a~b, 세로 c~e) 사각형을 돌려 준다
+function axRect(b,a,c,e,g){var v=b.face===0||b.face===1,x=b.x,y=b.y;return v?rrect(x+c,y+a,x+g,y+e):rrect(x+a,y+c,x+e,y+g);}
+function drawMarket(b){
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,cols=['#d65a6e','#e8a33a','#4a8fc7','#5aa36a'];
+  box(rrect(x+.05,y+.05,x+w-.05,y+h-.05),0,.05,'#c9b38a','#d8c49c');
+  var st=[];for(var j=0;j<h;j++)for(var i=0;i<w;i++)st.push({i:i,j:j,k:i+j});
+  st.sort(function(a,c){var p=rotPt(x+a.i+.5,y+a.j+.5),q=rotPt(x+c.i+.5,y+c.j+.5);return (p[0]+p[1])-(q[0]+q[1]);});
+  st.forEach(function(t,n){
+    var sx=x+t.i,sy=y+t.j,col=cols[(t.i*2+t.j+b.id)%4];
+    box(rrect(sx+.18,sy+.3,sx+.82,sy+.7),.05,.38,'#a07a52','#c9a77a');
+    for(var q=0;q<3;q++){var p=rotPt(sx+.3+q*.2,sy+.5);dot(p[0],p[1],.42,Math.max(1,2.2*PJ.s),['#e0453a','#f2c14e','#7fb35a'][(q+n)%3]);}
+    [[.16,.26],[.78,.26],[.16,.68],[.78,.68]].forEach(function(o){box(rrect(sx+o[0],sy+o[1],sx+o[0]+.05,sy+o[1]+.05),.05,.85,'#6b4f3a');});
+    var r=rrect(sx+.1,sy+.2,sx+.9,sy+.8);
+    quad([[r.x0,r.y0,.98],[r.x1,r.y0,.98],[r.x1,r.y1,.82],[r.x0,r.y1,.82]],col,EDGE);
+    quad([[r.x0,r.y1,.82],[r.x1,r.y1,.82],[r.x1,r.y1,.74],[r.x0,r.y1,.74]],shade(col,.8));
+  });
+}
+function drawTopiary(b){
+  var c=PJ.c,s=PJ.s,p=rotPt(b.x+.5,b.y+.5);
+  box(rrect(b.x+.36,b.y+.36,b.x+.64,b.y+.64),0,.18,'#b9694c');
+  var q=P(p[0],p[1],.45),R=8*s;
+  c.fillStyle='#3b7539';c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
+  c.fillStyle='#5a9a4f';c.beginPath();c.arc(q[0]-2*s,q[1]-2.5*s,R*.6,0,6.283);c.fill();
+}
+// 물길: 이웃 칸이 물길이면 그쪽으로 물이 이어진다
+function drawCanal(b){
+  var x=b.x,y=b.y,isC=function(nx,ny){if(nx<0||ny<0||nx>=COLS||ny>=ROWS)return false;var o=bById(occ[ny][nx]);return !!o&&D[o.def].kind==='canal';};
+  var n=[isC(x+1,y),isC(x-1,y),isC(x,y+1),isC(x,y-1)],e=.2;
+  box(rrect(x,y,x+1,y+1),0,.06,'#7fae63','#86b86f');
+  var x0=n[1]?x:x+e,x1=n[0]?x+1:x+1-e,y0=n[3]?y:y+e,y1=n[2]?y+1:y+1-e;
+  box(rrect(x+e-.08,y+e-.08,x+1-e+.08,y+1-e+.08),0,.1,'#a8a294','#b8b2a6');
+  if(n[0]||n[1])box(rrect(x0-.0,y+e-.08,x1,y+1-e+.08),0,.1,'#a8a294','#b8b2a6');
+  if(n[2]||n[3])box(rrect(x+e-.08,y0,x+1-e+.08,y1),0,.1,'#a8a294','#b8b2a6');
+  var wc='#5fa3d0',r1=rrect(x+e,y+e,x+1-e,y+1-e);
+  quad([[r1.x0,r1.y0,.07],[r1.x1,r1.y0,.07],[r1.x1,r1.y1,.07],[r1.x0,r1.y1,.07]],wc);
+  if(n[0]||n[1]){var r2=rrect(x0,y+e,x1,y+1-e);quad([[r2.x0,r2.y0,.07],[r2.x1,r2.y0,.07],[r2.x1,r2.y1,.07],[r2.x0,r2.y1,.07]],wc);}
+  if(n[2]||n[3]){var r3=rrect(x+e,y0,x+1-e,y1);quad([[r3.x0,r3.y0,.07],[r3.x1,r3.y0,.07],[r3.x1,r3.y1,.07],[r3.x0,r3.y1,.07]],wc);}
+  var t=(S.clock*.6+b.id*.37)%1,p=rotPt(x+.3+t*.4,y+.5);dot(p[0],p[1],.075,Math.max(.6,1.3*PJ.s),'rgba(220,240,255,.85)');
+}
+function drawBirdbath(b){
+  var x=b.x,y=b.y,p=rotPt(x+.5,y+.5),c=PJ.c,s=PJ.s;
+  box(rrect(x+.38,y+.38,x+.62,y+.62),0,.1,'#b8b2a6');
+  box(rrect(x+.45,y+.45,x+.55,y+.55),.1,.5,'#c9c2b6');
+  box(rrect(x+.26,y+.26,x+.74,y+.74),.5,.6,'#d8d2c6','#86bfe0');
+  var q=P(p[0]+.12,p[1]-.05,.62);c.fillStyle='#6b5a4a';c.beginPath();c.ellipse(q[0],q[1]-2*s,2.4*s,1.6*s,0,0,6.283);c.fill();
+  c.beginPath();c.arc(q[0]+2*s,q[1]-3.4*s,1.3*s,0,6.283);c.fill();
+}
+// 울타리: 칸 가운데를 지나는 한 줄. 정면 방향이 좌우면 세로로 놓인다
+function drawFence(b){
+  var d=D[b.def],st=d.style;
+  if(st==='stone'){box(axRect(b,0,.4,1,.6),0,.32,'#a59d90','#b8b2a6');for(var i=0;i<4;i++){var p=b.face===0||b.face===1?rotPt(b.x+.5,b.y+.12+i*.25):rotPt(b.x+.12+i*.25,b.y+.5);dot(p[0],p[1],.2,Math.max(.6,1.3*PJ.s),i%2?'#8a8276':'#c9c2b6');}return;}
+  if(st==='brick'){box(axRect(b,0,.42,1,.58),0,.42,'#b9694c');box(axRect(b,0,.39,1,.61),.42,.48,'#d8cfc0');return;}
+  var post=st==='iron'?'#2f343a':'#f4f1ea',rail=st==='iron'?'#3d434a':'#ebe6dc',ph=st==='iron'?.62:.55;
+  [0.04,0.5,0.92].forEach(function(o){box(axRect(b,o,.46,o+.06,.54),0,ph,post);});
+  box(axRect(b,0,.47,1,.53),.14,.19,rail);box(axRect(b,0,.47,1,.53),.38,.43,rail);
+  if(st==='picket')for(var k=0;k<5;k++){var o2=.14+k*.16;box(axRect(b,o2,.47,o2+.05,.53),0,.48,post);}
+  if(st==='iron')for(var m=0;m<6;m++){var o3=.12+m*.14;box(axRect(b,o3,.485,o3+.025,.515),0,.56,post);}
+}
+function drawLamp2(b){
+  var x=b.x+.5,y=b.y+.5,c=PJ.c,s=PJ.s;
+  box(rrect(x-.1,y-.1,x+.1,y+.1),0,.08,'#59626b');
+  box(rrect(x-.04,y-.04,x+.04,y+.04),.08,1.5,'#3d4650');
+  box(rrect(x-.3,y-.03,x+.3,y+.03),1.45,1.5,'#3d4650');
+  [-.26,.26].forEach(function(o){
+    box(rrect(x+o-.08,y-.08,x+o+.08,y+.08),1.25,1.42,'#f5e6a8','#fff4c2');
+    var p=rotPt(x+o,y),q=P(p[0],p[1],1.33),g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],14*s);
+    g.addColorStop(0,'rgba(255,240,180,.34)');g.addColorStop(1,'rgba(255,240,180,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],14*s,0,6.283);c.fill();
+  });
+}
+function drawBollard(b){
+  var x=b.x+.5,y=b.y+.5;
+  box(rrect(x-.08,y-.08,x+.08,y+.08),0,.36,'#3d4650');
+  box(rrect(x-.07,y-.07,x+.07,y+.07),.36,.46,'#f5e6a8','#3d4650');
+}
+function drawStoneLamp(b){
+  var x=b.x+.5,y=b.y+.5,c=PJ.c,s=PJ.s;
+  box(rrect(x-.24,y-.24,x+.24,y+.24),0,.12,'#a8a294');
+  box(rrect(x-.08,y-.08,x+.08,y+.08),.12,.55,'#b8b2a6');
+  box(rrect(x-.2,y-.2,x+.2,y+.2),.55,.62,'#b8b2a6');
+  box(rrect(x-.15,y-.15,x+.15,y+.15),.62,.88,'#c9c2b6');
+  fr('L',rrect(x-.15,y-.15,x+.15,y+.15),x-.07,x+.07,.68,.82,'#f5d98a');
+  hip(rrect(x-.26,y-.26,x+.26,y+.26),.88,.3,'#a8a294');
+  var p=rotPt(x,y),q=P(p[0],p[1],.75),g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],12*s);
+  g.addColorStop(0,'rgba(255,225,150,.32)');g.addColorStop(1,'rgba(255,225,150,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],12*s,0,6.283);c.fill();
+}
+function drawBin(b){
+  var x=b.x+.5,y=b.y+.5;
+  box(rrect(x-.14,y-.14,x+.14,y+.14),0,.4,'#3f7a52');
+  box(rrect(x-.16,y-.16,x+.16,y+.16),.4,.46,'#2f5f40');
+}
+function drawBoard(b){
+  box(axRect(b,.12,.46,.18,.54),0,1.0,'#6b4f3a');box(axRect(b,.82,.46,.88,.54),0,1.0,'#6b4f3a');
+  box(axRect(b,.1,.47,.9,.53),.45,.95,'#8a6844');
+  var v=b.face===0||b.face===1;
+  for(var i=0;i<3;i++){var a=.2+i*.22;box(axRect(b,a,v?.44:.53,a+.16,v?.47:.56),.55+(i%2)*.12,.78+(i%2)*.08,'#f6f1e4');}
+  box(axRect(b,.04,.4,.96,.6),1.0,1.06,'#5e4330');
+}
+function drawBell(b){
+  var x=b.x,y=b.y,c=PJ.c,s=PJ.s;
+  box(axRect(b,.16,.44,.24,.56),0,1.35,'#8a6844');box(axRect(b,.76,.44,.84,.56),0,1.35,'#8a6844');
+  box(axRect(b,.1,.42,.9,.58),1.35,1.45,'#6b4f3a');
+  var p=rotPt(x+.5,y+.5),q=P(p[0],p[1],1.02),q2=P(p[0],p[1],1.32);
+  c.fillStyle='#b8862f';c.beginPath();c.moveTo(q2[0]-3*s,q2[1]);c.lineTo(q2[0]+3*s,q2[1]);c.lineTo(q[0]+7*s,q[1]);c.lineTo(q[0]-7*s,q[1]);c.closePath();c.fill();
+  c.fillStyle='#d9a94a';c.beginPath();c.ellipse(q[0],q[1],7*s,2.6*s,0,0,6.283);c.fill();
+}
+function drawBikeRack(b){
+  box(axRect(b,.06,.3,.94,.34),0,.05,'#59626b');
+  for(var i=0;i<3;i++){var a=.16+i*.3;box(axRect(b,a,.3,a+.04,.7),.05,.34,'#9aa3a8');}
+}
+function drawParasol(b){
+  var x=b.x+.5,y=b.y+.5,c=PJ.c,s=PJ.s;
+  box(rrect(x-.22,y-.22,x+.22,y+.22),.3,.36,'#e8e2d4');box(rrect(x-.04,y-.04,x+.04,y+.04),0,.3,'#8a8276');
+  box(rrect(x-.025,y-.025,x+.025,y+.025),.36,1.2,'#d8d2c6');
+  var p=rotPt(x,y),top=P(p[0],p[1],1.3),rim=P(p[0],p[1],1.02);
+  for(var i=0;i<8;i++){
+    var a0=i/8*6.283,a1=(i+1)/8*6.283;
+    c.fillStyle=i%2?'#f4efe6':'#d65a4a';c.beginPath();c.moveTo(top[0],top[1]);
+    c.lineTo(rim[0]+Math.cos(a0)*20*s,rim[1]+Math.sin(a0)*9*s);c.lineTo(rim[0]+Math.cos(a1)*20*s,rim[1]+Math.sin(a1)*9*s);c.closePath();c.fill();
+  }
+}
+var DECO_DRAW={market:drawMarket,topiary:drawTopiary,canal:drawCanal,birdbath:drawBirdbath,fence:drawFence,lamp2:drawLamp2,bollard:drawBollard,
+  stonelamp:drawStoneLamp,bin:drawBin,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol};
+
+/* ---------- 울타리: 도로 | 주차 구역 | 교회 부지 ----------
+   부지 둘레와 부지·주차 구역 경계는 흰 나무 울타리, 주차 구역 둘레와 도로 쪽은 짙은 철망 울타리.
+   한 칸 길이 조각마다 따로 정렬해 건물·사람과 앞뒤가 맞게 그린다 */
+var FENCE=null;
+function fenceSegs(){
+  if(FENCE)return FENCE;
+  var out=[],x,y;
+  for(x=0;x<COLS;x++){
+    out.push({x:x,y:0,ax:'x',st:'w'});
+    if(x!==ENT){out.push({x:x,y:PZ,ax:'x',st:'w'});out.push({x:x,y:ROWS-1,ax:'x',st:'m'});}
+  }
+  for(y=0;y<ROWS-1;y++){var st=y<PZ?'w':'m';out.push({x:0,y:y,ax:'y',st:st});out.push({x:COLS,y:y,ax:'y',st:st});}
+  return (FENCE=out);
+}
+function fenceRect(f){return f.ax==='x'?rrect(f.x,f.y-.04,f.x+1,f.y+.04):rrect(f.x-.04,f.y,f.x+.04,f.y+1);}
+function drawFenceSeg(f){
+  var w=f.st==='w',post=w?'#f4f1ea':'#2f4a3c',rail=w?'#e9e4d8':'#3b5a49',h=w?.42:.5;
+  var R=function(a,b,z0,z1,col,t){var r=f.ax==='x'?rrect(f.x+a,f.y-t,f.x+b,f.y+t):rrect(f.x-t,f.y+a,f.x+t,f.y+b);box(r,z0,z1,col);};
+  R(0,.06,0,h,post,.035);
+  R(0,1,h*.3,h*.3+.05,rail,.02);R(0,1,h*.78,h*.78+.05,rail,.02);
+  if(w)for(var i=1;i<5;i++)R(i*.2-.02,i*.2+.02,0,h*.9,post,.02);
+  else R(.5-.03,.5+.03,0,h,post,.03);
+}
+// 도로 쪽 울타리의 사람 출입구 기둥
+function drawRoadGap(){var y=ROWS-1;box(rrect(ENT-.04,y-.05,ENT+.06,y+.05),0,.7,'#2f4a3c');box(rrect(ENT+.94,y-.05,ENT+1.04,y+.05),0,.7,'#2f4a3c');}

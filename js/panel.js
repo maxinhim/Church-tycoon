@@ -13,7 +13,7 @@ function effTags(d){
   if(d.rep&&t.length<2)t.push('평판 ↑');
   if(d.beauty&&t.length<2)t.push(d.beauty>=1?'분위기 +'+d.beauty:'분위기 ↑');
   if(d.fill&&t.length<2){var bn=null;for(var n in d.fill)if(!bn||d.fill[n]>d.fill[bn])bn=n;t.push(NK[bn]+' +'+d.fill[bn]);}
-  if(d.income&&t.length<2)t.push('수입 +'+d.income);
+  if(d.income&&t.length<2)t.push('판매 ~'+d.income);
   return t.slice(0,2);
 }
 function effText(d){
@@ -26,14 +26,15 @@ function effText(d){
   if(d.fill){for(var n in d.fill)p.push('방문자 '+NK[n]+' +'+d.fill[n]);}
   if(d.beauty)p.push('분위기 +'+d.beauty);
   if(d.vis)p.push('방문자 +'+Math.round(d.vis*100)+'%');
-  if(d.income)p.push('이용당 +'+d.income);
+  if(d.income)p.push('한 번 팔 때 약 '+d.income);
   p.push('유지비 '+d.up+'/주');
   return p.join(' · ');
 }
 /* 기능 패널: 동그란 버튼(건축·행사·현황)과 상단 메뉴 버튼으로 연다.
    '행사' 버튼 안에는 행사·사역자 두 탭이 있다 */
 var GROUP_TITLE={build:'건축',minis:'행사',status:'현황',menu:'메뉴'};
-function tabGroup(t){return (t==='staff'||t==='events')?'minis':t;}
+var SUBTABS={minis:[['events','행사'],['staff','사역자']],status:[['status','현황'],['finance','재정']]};
+function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
 function openGroup(g){
   UI.lastBuilt=null;
   // 지도에서 짓는 중에 건축 버튼을 누르면 짓기를 그만두고 목록으로
@@ -41,7 +42,7 @@ function openGroup(g){
   if(!UI.fold&&tabGroup(UI.tab)===g){closeDock();return;}
   // 건축이 아닌 패널로 옮기면 짓던 것(미리보기)은 취소한다
   if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;}
-  UI.tab=g==='minis'?(UI.minisTab||'events'):g;UI.fold=false;UI.confirmNew=false;
+  UI.tab=g==='minis'?(UI.minisTab||'events'):(g==='status'?(UI.statusTab||'status'):g);UI.fold=false;UI.confirmNew=false;
   renderPanel();
 }
 // 닫으면 짓던 것도 함께 취소한다 (미리보기만 지도에 남지 않게)
@@ -57,9 +58,9 @@ function renderPanel(){
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   $('#dtitle').textContent=GROUP_TITLE[g];
-  $('#subtabs').innerHTML=g==='minis'?[['events','행사'],['staff','사역자']].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'';
+  $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'';
   panel.className=(t==='build')?'build':'scroll';
-  if(t==='build')renderBuild();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
+  if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
 function renderBuild(){
   var chips=CATS.map(function(c){return '<button class="chip'+(UI.cat===c[0]&&UI.tool!=='demolish'?' on':'')+'" data-act="cat" data-v="'+c[0]+'">'+c[1]+'</button>';}).join('')+
@@ -102,6 +103,7 @@ function renderDetail(){
       if(nf>1)tileBtn+='<button class="btn" data-act="floordown">맨 위층 철거 +'+fmt(floorCostOf(b)*0.5)+'</button>';
     }
     var lines=[effText(bd)],doorUI='';
+    if(b.door&&!usable(b)){var lp=linkPlan(b);if(!lp.why&&lp.tiles.length)tileBtn='<button class="btn pri" data-act="link">입구까지 길 잇기 '+fmt(lp.cost)+'</button>'+tileBtn;}
     if(b.door){
       var warn=!b.acc?'':(!b.acc.ent?'입구까지 이어진 길이 없어요':(!b.acc.ext?'출구에서 나갈 길이 없어요':''));
       lines.push(doorText(b)+(warn?' · '+bad(warn+'. 방문자가 이용하지 못해요'):''));
@@ -118,7 +120,10 @@ function renderDetail(){
     h='<div class="tx"><b>'+pieceName(sp)+'</b> · 높이 '+sp.l+(sp.s?'→'+(sp.l+1):'')+sw+'</div><div class="btns"><button class="btn bad" data-act="dempiece">철거 +'+fmt(pieceCost(sp)*0.5)+'</button></div>';
   }else{
     var lb=canUnbuild(UI.lastBuilt)&&bById(UI.lastBuilt.bid);
-    if(lb)h='<div class="tx"><b>'+defOf(lb).name+'</b>을(를) 지었어요. 잘못 지었다면 이번 주 안에는 전액 돌려받을 수 있어요</div><div class="btns"><button class="btn" data-act="undoLast">되돌리기 +'+fmt(UI.lastBuilt.cost)+'</button></div>';
+    if(lb){
+      var lk=lb.door&&!usable(lb)?linkPlan(lb):null,lkb=lk&&!lk.why&&lk.tiles.length?'<button class="btn pri" data-act="link" data-v="'+lb.id+'">입구까지 길 잇기 '+fmt(lk.cost)+'</button>':'';
+      h='<div class="tx"><b>'+defOf(lb).name+'</b>을(를) 지었어요.'+(lkb?' '+bad('아직 길이 이어지지 않았어요.'):'')+' 잘못 지었다면 이번 주 안에는 전액 돌려받을 수 있어요</div><div class="btns">'+lkb+'<button class="btn" data-act="undoLast">되돌리기 +'+fmt(UI.lastBuilt.cost)+'</button></div>';
+    }
     else h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 입구·출구를 옮길 수 있어요.')+'</div>';
   }
   el.innerHTML=h;
@@ -205,7 +210,7 @@ function renderMenu(){
   panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="14" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
     (UI.confirmNew?'<div class="sec">난이도를 고르면 처음부터 시작해요 (지금 진행은 사라져요)</div><div class="diffs">'+Object.keys(DIFF).map(function(k){return '<button class="btn'+(k==='normal'?' pri':'')+'" data-act="newgame" data-v="'+k+'"><b>'+DIFF[k].name+'</b><small>'+DIFF[k].desc+'</small></button>';}).join('')+'<button class="btn" data-act="newgame">취소</button></div>':
       '<div class="btns"><button class="btn" data-act="newgame">새로 시작</button></div>')+'<p class="hint">지금 난이도: '+curDiff().name+'</p>'+
-    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건축 목록의 카드에는 지으면 늘어나는 효과와 주간 유지비가 적혀 있어요</li><li>카드를 고르면 목록이 닫히고 지도에 미리보기가 놓입니다. 끌거나 지도를 눌러 옮기고, 둘레 화살표로 정면(출입구) 방향을 고른 뒤 왼쪽 위 초록 ✓로 짓고, 오른쪽 위 빨간 ✕로 그만둡니다 (PC: Enter·Esc·R)</li><li>조경은 짓고 나면 옆자리에 미리보기가 다시 놓여 ✓만 눌러 이어 지을 수 있어요. 큰 건물은 지은 주 안에 목록에서 전액 되돌릴 수 있어요</li><li>길: 시작할 곳을 누르고 화살표로 방향, 아래 띠에서 종류·경사·높이를 고른 뒤 ✓로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>오른쪽 아래 동그란 버튼: 건축 · 행사(행사·사역자) · 현황. 같은 버튼을 다시 누르면 닫힙니다. 교회 이름·새로 시작은 위쪽 톱니바퀴 메뉴</li><li>행사 버튼: 행사 탭에서 특별행사·절기 행사를, 사역자 탭에서 부교역자 청빙·직분자 임명·사역팀을 다룹니다</li><li>건물은 시간이 지나면 낡아요. 주황 ! 표시는 수리, 빨간 ? 표시는 입구·출구에 닿는 길이 없다는 뜻이에요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
+    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>교회 문: 처음엔 닫혀 있어요. 주차 구역과 부지 사이 교회 입구 위의 \'교회 문 열기\'를 눌러야 방문자가 들어와요. 닫으면 방문자가 오지 않고 주일 헌금이 크게 줄어요</li><li>방문자는 바닥 타일·길·계단·다리 위로만 걸어요. 새 건물은 입구까지 바닥을 깔거나, 건물을 눌러 \'입구까지 길 잇기\'를 쓰세요</li><li>도로 위 4줄은 주차 구역이에요. 주차장·주차 타워는 그곳에만, 그곳엔 주차장만 지을 수 있어요</li><li>매장(카페·식당·빵집·서점·나눔장터 등)은 방문자가 물건을 사면 수익이 생겨요 (건물 위 금색 숫자)</li><li>오른쪽 위 시계: 한 주는 48초, 주일이 끝나면 주간 정산 영수증이 떠요. 현황 › 재정에서 내역과 대출을 볼 수 있어요</li><li>대출: 신용 한도 안에서 빌리고, 매주 주일 정산 때 원금과 이자를 나눠 갚아요. 남은 원금은 언제든 한 번에 갚을 수 있어요</li><li>건축 목록의 카드에는 지으면 늘어나는 효과와 주간 유지비가 적혀 있어요</li><li>카드를 고르면 목록이 닫히고 지도에 미리보기가 놓입니다. 끌거나 지도를 눌러 옮기고, 둘레 화살표로 정면(출입구) 방향을 고른 뒤 왼쪽 위 초록 ✓로 짓고, 오른쪽 위 빨간 ✕로 그만둡니다 (PC: Enter·Esc·R)</li><li>조경은 짓고 나면 옆자리에 미리보기가 다시 놓여 ✓만 눌러 이어 지을 수 있어요. 큰 건물은 지은 주 안에 목록에서 전액 되돌릴 수 있어요</li><li>길: 시작할 곳을 누르고 화살표로 방향, 아래 띠에서 종류·경사·높이를 고른 뒤 ✓로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>오른쪽 아래 동그란 버튼: 건축 · 행사(행사·사역자) · 현황. 같은 버튼을 다시 누르면 닫힙니다. 교회 이름·새로 시작은 위쪽 톱니바퀴 메뉴</li><li>행사 버튼: 행사 탭에서 특별행사·절기 행사를, 사역자 탭에서 부교역자 청빙·직분자 임명·사역팀을 다룹니다</li><li>건물은 시간이 지나면 낡아요. 주황 ! 표시는 수리, 빨간 ? 표시는 입구·출구에 닿는 길이 없다는 뜻이에요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
     '<div class="sec">만든 방식과 참고 자료</div>'+
     '<p class="hint" style="padding:0 0 4px">그래픽과 시스템은 모두 이 페이지의 코드로 새로 그렸고, 외부 이미지·소리·소스를 가져오지 않았습니다. 개발 중 참고한 공개 자료입니다.</p>'+
     '<ul class="refs"><li><a href="https://kenney.nl/assets/isometric-landscape" target="_blank" rel="noopener">Kenney 아이소메트릭 에셋 (CC0)</a> · 나중에 그림을 바꿀 때 쓸 후보</li>'+
@@ -215,4 +220,24 @@ function renderMenu(){
   var inp=$('#churchName');
   inp.addEventListener('input',function(){S.name=inp.value.trim()||'새빛교회';$('#cname').textContent=S.name;});
   inp.addEventListener('change',save);
+}
+
+function renderFinance(){
+  var h='<div class="staff">';
+  h+='<div class="qnums"><div><span>자금</span><b class="'+(S.money<0?'neg':'')+'">'+fmt(S.money)+'</b></div><div><span>빚</span><b>'+fmt(debt())+'</b></div><div><span>신용 한도</span><b>'+fmt(creditLimit())+'</b></div><div><span>이번 주 매장</span><b class="pos">+'+fmt(S.weekShop)+'</b></div></div>';
+  h+='<div class="sec">지난 주일 정산</div>'+(S.rcpt?'<div class="rcpt">'+rcptHtml(S.rcpt,true)+'</div>':'<p class="hint">첫 주일이 지나면 정산 내역이 보여요. 헌금은 출석(좌석 안의 성도)과 만족도에 따라 들어와요.</p>');
+  h+='<div class="sec">받은 대출</div>';
+  if(!S.loans.length)h+='<p class="hint">받은 대출이 없어요.</p>';
+  S.loans.forEach(function(l,i){
+    var L=LOANS[l.k];
+    h+=srow(L.name,'남은 원금 '+fmt(l.bal)+' · 주 '+fmt(l.pay)+' · '+l.left+'주 남음','매주 주일 정산 때 원금과 이자를 갚아요 (주 이율 '+(L.rate*100).toFixed(1)+'%)',
+      '<button class="btn" data-act="repay" data-v="'+i+'"'+(S.money<l.bal?' disabled':'')+'>모두 갚기 '+fmt(Math.ceil(l.bal))+'</button>');
+  });
+  h+='<div class="sec">대출 받기</div><p class="hint" style="padding-top:0">빚 합계는 신용 한도까지예요. 성도와 평판이 늘면 한도가 올라가요.</p>';
+  Object.keys(LOANS).forEach(function(k){
+    var L=LOANS[k],why=loanBlock(k),pay=loanPayment(L.amt,L.rate,L.weeks);
+    h+=srow(L.name+' '+fmt(L.amt),L.weeks+'주 동안 주 '+fmt(pay)+' · 모두 '+fmt(pay*L.weeks),L.desc+(why?'<br>'+bad(why):''),'<button class="btn pri" data-act="borrow" data-v="'+k+'"'+(why?' disabled':'')+'>빌리기</button>');
+  });
+  h+='</div>';
+  panel.innerHTML=h;
 }
