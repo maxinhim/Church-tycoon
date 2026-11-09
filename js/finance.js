@@ -111,7 +111,7 @@ function rcptWhy(r,k){
     L.push('늘리려면: 좌석(예배당), 만족도, 재정·목양 사역팀');
   }else if(k==='online'){L.push('교회 문을 닫은 주일에는 온라인 헌금만 들어와요: 성도 '+x.m+'명 × 1.2');L.push('문을 열면 주일 헌금으로 바뀌어요');}
   else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × 0.5 × 평판 보정 '+pct(0.5+x.rep/100)+' (평판 '+x.rep+')');}
-  else if(k==='shop'){L.push('방문자가 주중에 매장(카페·식당·빵집·서점 등)에서 산 금액의 합계예요');L.push('이 중 '+pct(x.shopRate)+'는 주일 정산 때 재료비로 나가요');}
+  else if(k==='shop'){L.push('방문자가 주중에 매장(카페·식당·빵집·서점 등)에서 산 금액의 합계예요');L.push('이 중 '+pct(x.shopRate)+'는 팔 때마다 재료비로 바로 나가요');}
   else if(k==='other'){L.push('행사·특별 후원 등 매장 밖에서 주중에 들어온 돈이에요');}
   else if(k==='sponsor'){L.push('개척 초기 후원: 260 − 3.5 × 지난 주 수('+x.week+') — 주마다 줄어 약 75주 뒤 끝나요');}
   else if(k==='opex'){
@@ -125,6 +125,11 @@ function rcptWhy(r,k){
   else if(k==='loan'){L.push((x.loans.length?x.loans.map(function(l){return l.n+' 주 '+fmt(l.p);}).join(', '):'대출 상환')+' (원금과 이자를 나눠 갚아요)');L.push('남은 원금은 아래에서 한 번에 갚을 수 있어요');}
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');
 }
+// 합계에는 주중에 이미 들어온 매장 순수익이 들어 있다 → 정산 순간 자금이 얼마 변했는지 따로 알려 준다
+function settleNote(r){
+  if(r.settle==null||!r.pre)return '';
+  return '<p class="rn">정산 때 자금 '+(r.settle<0?'−':'+')+fmt(Math.abs(r.settle))+' · 주중에 이미 번 '+(r.pre<0?'−':'+')+fmt(Math.abs(r.pre))+'은 포함돼 있어요</p>';
+}
 function rcptHtml(r,full){
   var wn=r.wx&&WEATHER[r.wx]?'<div class="rw">'+wxIcon(r.wx)+'주일 날씨 '+WEATHER[r.wx].n+(r.wxLost>0?' · 출석 '+r.wxLost+'명 줄었어요':'')+'</div>':'';
   return '<div class="rk">'+(Math.floor(r.w/52)+1)+'년 '+(r.w%52+1)+'주 · 주일 정산'+(full?' <small>· 항목을 누르면 계산 방식</small>':'')+'</div>'+wn+'<ul>'+rcptLines(r).map(function(l){
@@ -132,7 +137,7 @@ function rcptHtml(r,full){
     if(!full)return '<li>'+row+'</li>';
     var open=UI.fexp===l[2];
     return '<li class="rx'+(open?' open':'')+'"><button class="rxb" data-act="fexp" data-v="'+l[2]+'" aria-expanded="'+open+'">'+row+'</button>'+(open?'<ul class="rwhy">'+rcptWhy(r,l[2])+'</ul>':'')+'</li>';}).join('')+
-    '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+(full?'':'<p class="rh">눌러서 재정 보기</p>');
+    '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+settleNote(r)+(full?'':'<p class="rh">눌러서 재정 보기</p>');
 }
 function showReceipt(){
   var el=$('#rcpt');if(!el||!S.rcpt)return;

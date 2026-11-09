@@ -470,6 +470,10 @@ async function rulesChecks(browser, url) {
     spawnV(false); const v = V[V.length - 1]; v.wallet = 30; enter(v, shopB);
     const m0 = S.money, ws0 = S.weekShop; finishVisit(v);
     o.shop = S.money > m0 && S.weekShop > ws0 && v.wallet < 30 && F.some(f => /^\+\d+$/.test(f.text));
+    // 재료비는 판 순간 나가고, 정산 때 자금 변동 = 영수증의 '정산 때' 금액 (합계에 주중 순수익이 들어 있어도 설명이 맞음)
+    o.shopSup = S.weekSup > 0 && S.money - m0 === (S.weekShop - S.weekSup);
+    { const ms = S.money, wi = S.weekInc, wsup = S.weekSup; weekEnd(); const r = S.rcpt;
+      o.settle = S.money - ms === r.settle && r.pre === Math.round(wi - wsup) && r.net === r.settle + r.pre && /정산 때 자금/.test(rcptHtml(r, false)); }
     o.shopCat = DEFS.filter(d => d.cat === 'shop').length >= 7 && ['market', 'bakery', 'bookstore'].every(id => D[id] && D[id].income > 0);
     // 대출: 한도 안에서 빌리고, 주일마다 갚고, 한 번에 갚을 수 있음
     const lim = creditLimit(), m1 = S.money;
@@ -534,6 +538,7 @@ async function rulesChecks(browser, url) {
   check(r.gatePop, '교회 문: 카드는 평소엔 숨어 있고 교회 입구를 누르면 뜸');
   check(r.closeTwice, '교회 문: 입구 카드에서 닫기');
   check(r.shop && r.shopCat, '매장: 방문자가 지갑의 돈으로 사 가고 수익·금액 글씨가 뜸, 매장 분류 7종 이상');
+  check(r.shopSup && r.settle, '재정: 매장 재료비는 팔 때 바로 나가고, 영수증에 정산 때 자금 변동을 따로 보여 줌');
   check(r.borrow && r.bigLocked && r.limit, '대출: 한도 안에서 빌림, 건축 대출은 목표 2개 후');
   check(r.repayWeekly && r.repayAll, '대출: 주일 정산 때 원리금 상환, 남은 원금 한 번에 갚기');
   check(r.receipt, '주일 정산: 영수증 카드가 뜸');

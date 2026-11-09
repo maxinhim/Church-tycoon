@@ -51,14 +51,15 @@ function weekEnd(){
   var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,visits:S.visitsWeek,rep:Math.round(S.rep),week:S.week,
     up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,team:Math.round(teamPay()),assoc:Math.round(assocPay()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
   var loan=payLoans();
-  // 매장 재료비: 판매액의 절반
-  var supply=Math.round(S.weekShop*SHOP_COST);
+  // 매장 재료비는 팔 때마다 바로 나갔다(S.weekSup). 정산 때는 나머지만 오간다
+  var supply=S.weekSup||0;
   var exp=opex+pay+loan+supply,give=offering+online+visGive+sponsor;
   var inc=give+S.weekInc;
-  S.money+=give-opex-pay-loan-supply;
+  var settle=give-opex-pay-loan,pre=S.weekInc-supply;
+  S.money+=settle;
   S.hist.push({inc:inc,exp:exp});if(S.hist.length>12)S.hist.shift();
   S.posWeeks=inc-exp>0?S.posWeeks+1:0;
-  S.rcpt={w:S.week,closed:closed,attend:attend,offering:offering,online:online,visGive:visGive,shop:Math.round(S.weekShop),other:Math.round(S.weekInc-S.weekShop),sponsor:sponsor,opex:opex,pay:pay,loan:loan,supply:supply,wx:wxNow(),wxLost:wxLost,net:Math.round(inc-exp),x:X};
+  S.rcpt={w:S.week,closed:closed,attend:attend,offering:offering,online:online,visGive:visGive,shop:Math.round(S.weekShop),other:Math.round(S.weekInc-S.weekShop),sponsor:sponsor,opex:opex,pay:pay,loan:loan,supply:supply,wx:wxNow(),wxLost:wxLost,net:Math.round(inc-exp),settle:Math.round(settle),pre:Math.round(pre),x:X};
   if(closed)S.tempMood-=6;
   var msg=closed?'문을 닫은 주일 · 온라인 헌금 +'+fmt(online):'주일예배 · 출석 '+attend+'명 · 헌금 +'+fmt(offering)+(S.weekShop?' · 매장 +'+fmt(S.weekShop):'')+' · 지출 −'+fmt(exp);
   var churn=m*0.012;
@@ -72,7 +73,7 @@ function weekEnd(){
   S.members=Math.max(0,m-lose+gain);
   if(lose>gain)msg+=' · 성도 '+(lose-gain)+'명이 떠났어요';
   S.rep=clamp(S.rep+A.rep+MOD.rep+(mood-60)*0.015-(S.rep>50?(S.rep-50)*0.05:0),0,100);
-  S.weekInc=0;S.weekShop=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
+  S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(st.left>0)st.left--;if(st.cd>0)st.cd--;}

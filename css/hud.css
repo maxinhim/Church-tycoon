@@ -61,6 +61,7 @@
 #rcpt .pos,.rcpt .pos{color:var(--good)} #rcpt .neg,.rcpt .neg{color:var(--bad)}
 #rcpt li.tot,.rcpt li.tot{border-top:1px solid var(--line);margin-top:3px;padding-top:3px;font-weight:700}
 #rcpt li.tot span,.rcpt li.tot span{color:var(--ink)}
+.rn{margin:4px 0 0;font-size:10.5px;line-height:1.35;color:var(--muted)}
 .rh{margin:5px 0 0;font-size:10.5px;color:var(--muted);text-align:right}
 @media (prefers-reduced-motion:no-preference){#rcpt.on{animation:rcIn .35s ease-out}}
 @keyframes rcIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}

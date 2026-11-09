@@ -97,7 +97,7 @@ function finishVisit(v){
     // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
     if(d.income&&v.wallet>0){
       var pay=Math.min(v.wallet,Math.round(d.income*SHOP_K*wxSale(d)*(0.7+Math.random()*0.6)));
-      if(pay>0){v.wallet-=pay;S.money+=pay;S.weekInc+=pay;S.weekShop+=pay;sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
+      if(pay>0){var sup=Math.round(pay*SHOP_COST);v.wallet-=pay;S.money+=pay-sup;S.weekInc+=pay;S.weekShop+=pay;S.weekSup=(S.weekSup||0)+sup;sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
     placeAt(v,exitNodeFor(b));
   }
