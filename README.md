@@ -20,6 +20,7 @@
 - `index.html` — 마크업과 CSS/JS 로드만 담당
 - `css/` — `theme.css`(색·기본 스타일), `hud.css`(상단바·지도 도구·상태바), `panel.css`(하단 패널·오버레이), `responsive.css`(가로 화면 등)
 - `tests/` — 검증 스크립트 (게임에는 포함되지 않음)
+- `docs/art/sheet-prompts.md` — 모든 이미지 시트 프롬프트와 디자인 콘셉트 (`python3 tools/build_prompts.py`로 만들고, 같은 스크립트가 모바일 복사 페이지 `docs/art/gemini-prompts.html`도 만듭니다)
 - `assets/decor/` — 조경·꾸미기 그림 조각. `python3 tools/slice_sheet.py docs/art/sheets/decor-b.json`으로 시트에서 잘라 만듭니다 (`js/sprite-data.js`도 함께 생성)
 - `js/` — 빌드 도구 없이 클래식 `<script>`로 순서대로 로드하며, 전역 스코프를 공유합니다. `index.html`의 로드 순서를 바꾸지 마세요.
   - 데이터·상태: `config` → `buildings` → `state`
