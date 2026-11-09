@@ -155,3 +155,7 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 .rcpt ul.rwhy{margin:3px 0 6px 6px;padding:6px 8px;border-left:3px solid var(--accent);background:var(--chip);border-radius:0 6px 6px 0;gap:3px;font-size:12px;line-height:1.45}
 .rcpt ul.rwhy li{display:list-item;list-style:'· ' inside;color:var(--ink)}
 .rcpt .rk small{color:var(--muted);font-weight:400}
+/* 바닥 카드: 종류 고르기 (색 점 + 이름 + 바꾸는 값) */
+#selCard .fsr{flex-wrap:wrap;max-width:300px}
+#selCard .fsw{display:inline-flex;align-items:center;gap:4px}
+#selCard .fsw i{width:10px;height:10px;border-radius:3px;background:var(--fc);border:1px solid rgba(0,0,0,.25);flex:none}

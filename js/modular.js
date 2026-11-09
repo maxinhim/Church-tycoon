@@ -93,7 +93,7 @@ function placeTile(x,y,def){
   // 같은 높이에 선 이웃 칸끼리만 하나로 합친다
   DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1],def);if(r&&nb.indexOf(r)<0&&bLevel(r)===p.l)nb.push(r);});
   if(!nb.length){
-    var nr={id:S.nextId++,def:def,x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0};if(p.deck)nr.z=p.l;
+    var nr={id:S.nextId++,def:def,x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0,bw:S.week};if(p.deck)nr.z=p.l;
     S.buildings.push(nr);
   }else{
     nb.sort(function(a,b){return b.tiles.length-a.tiles.length||a.id-b.id;});

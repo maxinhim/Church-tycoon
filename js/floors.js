@@ -37,6 +37,19 @@ function floorUndo(){
   else{sl.set(u.prev);S.money+=D[u.id].cost;}
   recalc();save();return true;
 }
+/* 깔린 바닥을 다른 종류로 바꾸기: 걷어낼 때 돌려받는 반값을 새 바닥 값에서 빼고 계산한다.
+   id가 'f_erase'면 걷어낸다(반값 환불). 데크 조각은 pid로 고른다 */
+var FLOOR_IDS=['f_block','f_brick','f_gravel','f_wood','f_step','f_clover'];
+function floorSwapCost(prev,id){return (id==='f_erase'?0:D[id].cost)-(prev?Math.floor(D[prev].cost*.5):0);}
+function floorSwap(x,y,id,pid){
+  var sl=floorSlot(x,y,pid);if(!sl)return '바닥이 없어요';
+  if(sl.busy)return '건물이 있어요';
+  var prev=sl.get();
+  if(id==='f_erase'&&!prev)return '걷어낼 바닥이 없어요';
+  if(prev===id)return '이미 같은 바닥이에요';
+  var c=floorSwapCost(prev,id);if(c>0&&S.money<c)return '자금이 '+fmt(c-S.money)+' 모자라요';
+  S.money-=c;sl.set(id==='f_erase'?null:id);recalc();save();return '';
+}
 function floorLine(c,ax,ay,bx,by){var a=rotPt(ax,ay),b=rotPt(bx,by),p=P(a[0],a[1],.006),q=P(b[0],b[1],.006);c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);}
 var FLOOR_TEX={f_block:'t_block',f_brick:'t_brick',f_gravel:'t_gravel',f_wood:'t_wood',f_step:'t_step',f_clover:'t_clover'};
 function drawFloorTile(id,x,y){

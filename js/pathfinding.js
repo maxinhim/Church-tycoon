@@ -117,6 +117,8 @@ function refreshNav(){
   refreshLinks();
   // 이용 가능 여부는 문이 열려 있다고 보고 계산한다 (닫아 둔 동안 '?' 표시가 온 지도에 뜨지 않게)
   NAV.all=true;NAV.reach=navReach(gateNode());NAV.all=false;
+  // 둘러볼 수 있는 곳: 입구에서 닿는 교회 부지 안의 바닥·길·데크 노드
+  NAV.walk=Object.keys(NAV.reach).map(Number).filter(function(n){return isPieceNode(n)||((n/COLS)|0)<PZ;});
   S.buildings.forEach(function(b){
     if(!b.door){b.acc=null;return;}
     var en=doorNode(b.door.ent),ex=doorNode(b.door.ext);

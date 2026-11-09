@@ -6,7 +6,16 @@
    · 철거는 두 번 눌러야 한다 (작은 카드에서 잘못 눌러도 바로 사라지지 않게)
    지도 빈 곳을 누르거나 Esc를 누르면 닫힌다. 버튼 동작은 패널과 같은 onPanel로 처리한다. */
 var scHtml='',scKey='',scMore=false,scArm=0;
-function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI.sel))||(UI.selPiece&&pieceById(UI.selPiece)));}
+function selFloorOk(){var f=UI.selFloor;if(!f)return false;var sl=floorSlot(f.x,f.y,f.pid);return !!sl&&!!sl.get();}
+function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI.sel))||(UI.selPiece&&pieceById(UI.selPiece))||selFloorOk());}
+// 바닥 바꾸기 줄: 지금 바닥을 뺀 종류마다 (걷어낸 반값을 뺀) 바꾸는 값
+function floorRow(prev,pid,x,y){
+  var h=FLOOR_IDS.filter(function(id){return id!==prev;}).map(function(id){
+    var c=floorSwapCost(prev,id);
+    return '<button class="btn sm fsw" data-act="fswap" data-v="'+id+'" style="--fc:'+D[id].wall+'" aria-label="'+D[id].name+'(으)로 '+(prev?'바꾸기':'깔기')+' '+(c<0?'환불 ':'')+fmt(Math.abs(c))+'"><i></i>'+D[id].name+' '+(c<0?'+':'')+fmt(Math.abs(c))+'</button>';
+  }).join('');
+  return '<div class="scb fsr">'+h+'</div>';
+}
 function scBtn(act,label,cls,v,aria){return '<button class="btn sm'+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v!=null?' data-v="'+v+'"':'')+(aria?' aria-label="'+aria+'"':'')+'>'+label+'</button>';}
 function scDem(label,cost){
   var armed=performance.now()<scArm;
@@ -17,7 +26,7 @@ function renderSelCard(){
   var on=selCardOn();
   el.hidden=!on;
   if(!on){scHtml='';scKey='';return;}
-  var key=UI.sel?'b'+UI.sel:'p'+UI.selPiece;
+  var key=UI.sel?'b'+UI.sel:(UI.selPiece?'p'+UI.selPiece:'f'+UI.selFloor.x+','+UI.selFloor.y);
   if(key!==scKey){scKey=key;scMore=false;scArm=0;}
   var h='',row='',more='';
   if(UI.sel){
@@ -42,10 +51,17 @@ function renderSelCard(){
     if(st)mb+=scBtn('demtile',(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5));
     mb+=scDem(isRoom(b)?'전체 철거':'철거',bd.cost*0.5);
     more+='<div class="scb">'+mb+'</div>';
-  }else{
-    var p=pieceById(UI.selPiece),sw=p.k==='sky'&&NAV.badSky[p.id];
-    h='<div class="sct"><b>'+pieceName(p)+'</b><span>높이 '+p.l+(p.s?'→'+(p.l+1):'')+'</span></div>'+(sw?'<div class="scw">역할이 다른 건물을 이어 방문자가 건너지 않아요</div>':'');
+  }else if(UI.selPiece){
+    var p=pieceById(UI.selPiece),sw=p.k==='sky'&&NAV.badSky[p.id],dk=isDeckPiece(p)&&!deckCovered(p);
+    h='<div class="sct"><b>'+pieceName(p)+(p.f&&D[p.f]?' · '+D[p.f].name:'')+'</b><span>높이 '+p.l+(p.s?'→'+(p.l+1):'')+'</span></div>'+(sw?'<div class="scw">역할이 다른 건물을 이어 방문자가 건너지 않아요</div>':'');
+    // 데크에는 바닥 타일을 바로 깔거나 바꿀 수 있다
+    if(dk)h+=floorRow(p.f||null,p.id,p.x,p.y);
+    if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmt(Math.floor(D[p.f].cost*.5)),'','f_erase');
     row+=scDem('철거',pieceCost(p)*0.5);
+  }else{
+    var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get();
+    h='<div class="sct"><b>'+D[cur].name+'</b><span>바꾸면 걷어낸 값의 반을 빼고 계산해요</span></div>'+floorRow(cur,0,sf.x,sf.y);
+    row+=scDem('철거',Math.floor(D[cur].cost*.5));
   }
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
   h+='<div class="scb">'+row+'</div>'+(scMore?more:'');
@@ -59,7 +75,8 @@ function syncSelCard(){
   if(scArm&&performance.now()>=scArm){scArm=0;renderSelCard();}
   var x,y,top;
   if(UI.sel){var b=bById(UI.sel),dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2);top=toScreen(m[0],m[1],bLevel(b)*LV+bHeight(b)+.3);var bot=toScreen(m[0],m[1],bLevel(b)*LV);}
-  else{var p=pieceById(UI.selPiece),mp=rotPt(p.x+.5,p.y+.5);top=toScreen(mp[0],mp[1],p.l*LV+.5);bot=toScreen(mp[0],mp[1],p.l*LV);}
+  else if(UI.selPiece){var p=pieceById(UI.selPiece),mp=rotPt(p.x+.5,p.y+.5);top=toScreen(mp[0],mp[1],p.l*LV+.5);bot=toScreen(mp[0],mp[1],p.l*LV);}
+  else{var sf=UI.selFloor,mf=rotPt(sf.x+.5,sf.y+.5),fz=groundZ(sf.x+.5,sf.y+.5);top=toScreen(mf[0],mf[1],fz+.3);bot=toScreen(mf[0],mf[1],fz);}
   var vw=window.innerWidth,vh=window.innerHeight,w=el.offsetWidth,h=el.offsetHeight,tb=$('#top').getBoundingClientRect().bottom+8,below=top[1]-h-10<tb;
   x=clamp(top[0],w/2+8,vw-w/2-8);
   y=below?clamp(bot[1]+16,tb,vh-h-8):clamp(top[1]-h-10,tb,vh-h-8);
@@ -67,7 +84,7 @@ function syncSelCard(){
   el.style.setProperty('--ax',Math.round(clamp(top[0]-(x-w/2),14,w-14))+'px');
   el.style.transform='translate('+Math.round(x-w/2)+'px,'+Math.round(y)+'px)';
 }
-function closeSelCard(){UI.sel=null;UI.selPiece=null;UI.selTile=null;renderSelCard();}
+function closeSelCard(){UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.selFloor=null;renderSelCard();}
 function setupSelCard(){
   var el=$('#selCard');
   el.addEventListener('click',function(e){
@@ -77,7 +94,7 @@ function setupSelCard(){
     if(a==='scdem'){
       // 두 번 눌러야 철거 (3초 안에)
       if(performance.now()>=scArm){scArm=performance.now()+3000;renderSelCard();return;}
-      scArm=0;b.dataset.act=UI.sel?'demolish':'dempiece';onPanel(e);b.dataset.act='scdem';renderSelCard();return;
+      scArm=0;b.dataset.act=UI.sel?'demolish':(UI.selPiece?'dempiece':'demfloor');onPanel(e);b.dataset.act='scdem';renderSelCard();return;
     }
     onPanel(e);renderSelCard();
   });

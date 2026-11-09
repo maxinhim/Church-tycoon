@@ -174,8 +174,6 @@ function plOk(){
     var ter=isTerDef(UI.tool),g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':(ter?terApply(g0.x,g0.y,UI.tool,UI.tlv,UI.fdir):paintFloor(g0.x,g0.y,UI.tool,g0.pid));
     if(fw){toast(fw,1400);sfx('error',.4);return;}
     plLock=now+150;plBuzz();sfx(ter?'place':'floor',.45,90);
-    // 경사로는 한 칸씩 (다음 칸은 직접 고른다)
-    if(UI.tool==='ter_ramp'){renderDetail();hud(true);return;}
     var nx=g0.x+DIRS[UI.fdir][0],ny=g0.y+DIRS[UI.fdir][1];
     if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ){
       // 데크 위에서 칠하고 있었으면 같은 높이의 다음 데크로, 없으면 땅으로
@@ -268,7 +266,7 @@ function renderPbar(){
     var tg=UI.ghost,tp=tg?terPlan(tg.x,tg.y,UI.tool,UI.tlv,UI.fdir):null,tw=tg?cellWhy(tg.x,tg.y,UI.tool):'지도를 눌러 칸을 고르세요';
     var ramp=UI.tool==='ter_ramp';
     h='<div class="ptx"><b>'+d.name+'</b>'+(tp&&!tp.why?' <span class="pc">'+fmt(tp.cost)+'</span>':'')+(tw?' · '+bad(tw):'')+'<br><span class="pt">'+
-      (ramp?'낮은 칸을 누르고 화살표를 높은 칸 쪽으로 돌린 뒤 ✓':'칸을 누르고 높이를 고른 뒤 ✓로 한 칸씩. 화살표 쪽으로 이어 가요')+'</span></div><div class="prow">'+
+      (ramp?'칸을 누르고 화살표로 오를 방향을 고른 뒤 ✓. 화살표 쪽 땅이 낮으면 한 층 높여 줘요(값 포함). 이어 누르면 더 높이 올라가요':'칸을 누르고 높이를 고른 뒤 ✓로 한 칸씩. 화살표 쪽으로 이어 가요')+'</span></div><div class="prow">'+
       (ramp?'':'<div class="seg"><button class="btn" data-act="tlv" data-v="-1" aria-label="한 층 낮게"'+(UI.tlv<=0?' disabled':'')+'>▼</button><span class="lvl">'+(UI.tlv?'높이 '+UI.tlv:'땅')+'</span><button class="btn" data-act="tlv" data-v="1" aria-label="한 층 높게"'+(UI.tlv>=MAXH-1?' disabled':'')+'>▲</button></div>')+
       undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else{

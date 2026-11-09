@@ -840,7 +840,10 @@ async function terrainChecks(browser, url) {
     terApply(19, 12, 'ter_set', 1);
     o.ramp1 = terApply(19, 12, 'ter_ramp', 0, 3) === '';
     o.ramp2 = terApply(19, 13, 'ter_ramp', 0, 3) === '';
-    o.rampBad = terApply(25, 5, 'ter_ramp', 0, 3) !== '';
+    const m0 = S.money; o.rampBad = terApply(17, 9, 'ter_ramp', 0, 0) !== '';
+    // 화살표 쪽 땅이 낮으면 한 층 높여 주고 값을 합산한다
+    const m1 = S.money; o.rampAuto = terApply(25, 5, 'ter_ramp', 0, 3) === '' && th(25, 4) === 1 && tslope(25, 5) === 3 && m1 - S.money === TER_RAMP + TER_UP;
+    o.rampUndo = (terUndo(UI.undo.pop()), th(25, 4) === 0 && !isRamp(25, 5) && S.money === m1);
     // 고원 위에 기도실, 문 앞 바닥
     o.levelBad = levelWhy(D.pray, 19, 12, 2) !== '' && levelWhy(D.chapel, 17, 8, 2) !== '';
     o.built = build('pray', 19, 9, 2);
@@ -892,7 +895,8 @@ async function terrainChecks(browser, url) {
     S.t = WEEK - .001; weekEnd(); o.why = ['offering', 'opex', 'supply', 'pay'].every(k => rcptWhy(S.rcpt, k).indexOf('<li>') === 0);
     return o;
   });
-  check(r.ramp1 && r.ramp2 && r.rampBad, '지형: 흙 경사로는 한 층 높은 칸 쪽으로만 만들어짐');
+  check(r.ramp1 && r.ramp2 && r.rampBad, '지형: 흙 경사로 (두 층 이상 높은 쪽으로는 못 냄)');
+  check(r.rampAuto && r.rampUndo, '지형: 경사로 쪽 땅이 낮으면 한 층 높여 주고 값 합산, 되돌리기 가능');
   check(r.levelBad, '지형: 높이가 다른 칸·경사로에 걸쳐서는 못 지음');
   check(r.built && r.onTop, '지형: 높인 땅 위에 건물을 지음');
   check(r.reach && r.climb, '지형: 방문자가 경사로로 고원 위 건물에 닿음');
@@ -955,6 +959,22 @@ async function deckChecks(browser, url) {
     setPlaceLevel(tr, D.tree, 5, 3, 2); tr.x = 5; tr.y = 3; rebuildOcc(); o.moved = tr.z == null;
     draw(); ROT = 2; draw(); ROT = 0;
     save(); const L = load(); o.saved = L.buildings.some(b => b.def === 'cafe' && b.z === 1);
+    // 바닥 타일을 누르면 카드가 뜨고 바로 바꾼다 (걷어낸 반값을 뺀 값)
+    S.floor['8,4'] = 'f_block'; recalc(); UI.fold = true; UI.tool = null;
+    const fm = rotPt(8.5, 4.5), fq = toScreen(fm[0], fm[1], 0); onTap(fq[0], fq[1]);
+    const card = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="fswap"][data-v="f_wood"]');
+    const m2 = S.money; document.querySelector('#selCard [data-act="fswap"][data-v="f_wood"]').click();
+    o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost - Math.floor(D.f_block.cost * .5);
+    const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && S.money - m3 === Math.floor(D.f_wood.cost * .5);
+    // 건축 목록: 지금 지을 수 있는 것부터 싼 순서
+    S.money = 1000; const ord = buildOrder('worship'), can = d => !isLocked(d.id) && S.money >= d.cost;
+    const k = ord.findIndex(d => !can(d)); o.order = ord.slice(0, k < 0 ? ord.length : k).every((d, i, a) => !i || a[i - 1].cost <= d.cost) && (k < 0 || ord.slice(k).every(d => !can(d)));
+    S.money = 999999;
+    // 방문자: 새 건물에 끌리고, 발길이 적은 바닥을 골라 둘러본다
+    o.novel = novelty(cafe) > novelty(Object.assign({}, cafe, { bw: S.week - 20, uses: 50 }));
+    recalc(); const W = NAV.walk; W.forEach(n => { TRAF[n] = 50; }); const fresh = W[W.length - 1]; delete TRAF[fresh];
+    let hits = 0; for (let i = 0; i < 60; i++) if (wanderGoal({ x: 15, y: 20, node: gateNode() }) === fresh) hits++;
+    o.wander = W.length > 5 && hits > 0;
     return o;
   });
   check(r.level && r.half, '데크: 데크 위 높이를 고르고, 데크 밖으로 걸치면 못 지음');
@@ -965,6 +985,9 @@ async function deckChecks(browser, url) {
   check(r.tree && r.room && r.tile, '데크: 나무·칸 건물·바닥 타일도 데크 위에');
   check(r.cap, '데크: 데크 높이와 층수를 합쳐 10층 제한');
   check(r.moved && r.saved, '데크: 땅으로 옮기면 데크 높이가 풀리고, 저장 후에도 유지');
+  check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(걷어낸 반값을 뺀 값) 걷어낼 수 있음');
+  check(r.order, '건축 목록: 지금 지을 수 있는 것부터 싼 순서로');
+  check(r.novel && r.wander, '방문자: 새 건물에 끌리고, 발길이 적은 바닥으로 둘러봄');
   check(errs.length === 0, '데크: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

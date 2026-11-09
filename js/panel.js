@@ -64,6 +64,16 @@ function renderPanel(){
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
+/* 건축 목록 순서: 지금 지을 수 있는 것(잠금이 풀렸고 자금이 되는 것)을 앞에, 각각 싼 것부터.
+   지우기 같은 도구(값 0)는 맨 뒤. 분류를 열 때만 정렬한다 (자금이 바뀌어도 누르는 도중 카드가 움직이지 않게) */
+function buildOrder(cat){
+  var can=function(d){return !isLocked(d.id)&&S.money>=d.cost;};
+  return DEFS.filter(function(d){return d.cat===cat;}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
+    var ta=a.d.cost?0:1,tb=b.d.cost?0:1;if(ta!==tb)return ta-tb;
+    var ca=can(a.d)?0:1,cb=can(b.d)?0:1;if(ca!==cb)return ca-cb;
+    return a.d.cost-b.d.cost||a.i-b.i;
+  }).map(function(o){return o.d;});
+}
 function renderBuild(){
   var chips=CATS.map(function(c){return '<button class="chip'+(UI.cat===c[0]&&UI.tool!=='demolish'?' on':'')+'" data-act="cat" data-v="'+c[0]+'">'+c[1]+'</button>';}).join('')+
     '<button class="chip warn'+(UI.tool==='demolish'?' on':'')+'" data-act="dem">철거</button>';
@@ -71,7 +81,7 @@ function renderBuild(){
   var cards=$('#cards');
   if(UI.tool==='demolish'){cards.innerHTML='<p class="hint">철거할 건물을 지도에서 누르세요. 건축비의 절반이 돌아옵니다.</p>';}
   else{
-    DEFS.filter(function(d){return d.cat===UI.cat;}).forEach(function(d){
+    buildOrder(UI.cat).forEach(function(d){
       var el=document.createElement('button');el.className='card';el.dataset.act='pick';el.dataset.v=d.id;
       el.appendChild(iconCanvas(d));
       var lk=isLocked(d.id);if(lk)el.classList.add('lock');

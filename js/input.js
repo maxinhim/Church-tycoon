@@ -31,8 +31,10 @@ function onTap(px,py){
   if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   // 지은 것을 누르면 패널을 열지 않고 그 위에 작은 카드만 띄운다 (열려 있던 패널은 닫는다)
   var dem=UI.tool==='demolish',sel=pickBuilding(px,py),stl=UI.selTile,pp=sel?null:pickPieceAt(px,py);
-  if((sel||pp)&&!UI.fold)closeDock();
-  UI.sel=sel;UI.selTile=stl;UI.selPiece=pp?pp.id:null;
+  // 건물·길이 아니면 깔린 바닥 타일 (누르면 바로 바꾸기·철거 카드)
+  var ft=null;if(!sel&&!pp){var gt=groundTile(px,py);if(gt.x>=0&&gt.y>=0&&gt.x<COLS&&gt.y<PZ&&!gt.pid&&S.floor[gt.x+','+gt.y]&&!isRamp(gt.x,gt.y))ft={x:gt.x,y:gt.y};}
+  if((sel||pp||ft)&&!UI.fold)closeDock();
+  UI.sel=sel;UI.selTile=stl;UI.selPiece=pp?pp.id:null;UI.selFloor=ft;
   // 철거 모드에서 골랐으면 철거 버튼이 보이게 펼쳐 둔다
   if(dem&&(sel||pp)){scKey=sel?'b'+sel:'p'+pp.id;scMore=true;}
   renderDetail();
@@ -114,6 +116,13 @@ function onPanel(e){
   }
   else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);sfx(fw2?'error':'build',fw2?.4:.8);renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
+  else if(a==='fswap'||a==='demfloor'){
+    var tid=a==='demfloor'?'f_erase':v,sp=UI.selPiece&&pieceById(UI.selPiece),sf=UI.selFloor;
+    var fx=sp?sp.x:sf&&sf.x,fy=sp?sp.y:sf&&sf.y,fw=fx==null?'바닥을 먼저 고르세요':floorSwap(fx,fy,tid,sp?sp.id:0);
+    if(fw){toast(fw,1600);sfx('error',.4);}
+    else{sfx(tid==='f_erase'?'demolish':'floor',.6);toast(tid==='f_erase'?'바닥을 걷어냈어요':D[tid].name+'(으)로 바꿨어요',1200);if(tid==='f_erase'&&sf&&!sp)UI.selFloor=null;}
+    renderDetail();hud(true);
+  }
   else if(a==='fexp'){UI.fexp=UI.fexp===v?null:v;renderFinance();}
   else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}

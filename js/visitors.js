@@ -15,6 +15,23 @@ function spawnV(member){
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
 }
 var JOIN_P=0.07;
+/* 발자국: 노드마다 지나간 사람 수 (저장하지 않음, 주마다 절반으로 줄어든다).
+   둘러보는 방문자는 발길이 덜 닿은 곳(새로 깐 길·데크)을 골라 간다 */
+var TRAF={};
+function trafWeek(){for(var k in TRAF){TRAF[k]*=.5;if(TRAF[k]<.5)delete TRAF[k];}}
+// 새로 지은 건물(6주 안)과 아직 덜 쓰인 건물에 끌린다
+function novelty(b){var age=b.bw==null?99:S.week-b.bw;return (age<6?8*(1-age/6):0)+((b.uses||0)<8?3:0);}
+// 둘러볼 곳: 부지 안 바닥 노드 몇 개를 뽑아, 발길이 적고 너무 멀지 않은 곳
+function wanderGoal(v){
+  var L=NAV.walk||[];if(!L.length)return -1;
+  var best=-1,bs=1e9;
+  for(var i=0;i<12;i++){
+    var n=L[(Math.random()*L.length)|0];if(n===v.node)continue;
+    var q=nodePos(n),sc=(TRAF[n]||0)*1.5+Math.hypot(q.x-v.x,q.y-v.y)*.12+Math.random()*2;
+    if(sc<bs){bs=sc;best=n;}
+  }
+  return best;
+}
 function placeAt(v,n){var p=nodePos(n);v.x=p.x;v.y=p.y;v.z=p.z;v.node=n;}
 function moveAlong(v,dt){
   var rem=v.speed*wxSpeed()*dt;
@@ -22,7 +39,7 @@ function moveAlong(v,dt){
     var p=v.path[v.pi];
     if(!nodeOk(p.n))return 'blocked';
     var dx=p.x-v.x,dy=p.y-v.y,d=Math.hypot(dx,dy);
-    if(d<=rem){v.x=p.x;v.y=p.y;v.z=p.z;v.node=p.n;v.pi++;rem-=d;}
+    if(d<=rem){v.x=p.x;v.y=p.y;v.z=p.z;if(v.node!==p.n)TRAF[p.n]=(TRAF[p.n]||0)+1;v.node=p.n;v.pi++;rem-=d;}
     else{var k=rem/d;v.x+=dx*k;v.y+=dy*k;v.z+=(p.z-v.z)*k;rem=0;}
   }
   return v.pi>=v.path.length;
@@ -110,7 +127,9 @@ function decide(v){
     if(v.needs[n]>=75)continue;
     var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&usable(b)&&!(v.blocked[b.id]>S.clock)&&wxOpen(d);});
     // 지갑에 돈이 있으면 매장에 조금 더 끌린다
-    var cost=function(b){var d=defOf(b);return Math.abs(b.x-v.x)+Math.abs(b.y-v.y)-(d.income&&v.wallet>=d.income?6:0);};
+    // 가까운 곳을 먼저 보되, 새로 지었거나 덜 쓰인 건물에 더 끌리고, 사람마다 조금씩 다르게 고른다
+    var jit={};cands.forEach(function(b){jit[b.id]=Math.random()*6;});
+    var cost=function(b){var d=defOf(b);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.6-(d.income&&v.wallet>=d.income?6:0)-novelty(b)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});
@@ -119,9 +138,8 @@ function decide(v){
   }
   v.idleN++;
   if(v.idleN>=3){goLeave(v);return;}
-  var tx=clamp(Math.floor(v.x)+((Math.random()*7)|0)-3,0,COLS-1),ty=clamp(Math.floor(v.y)+((Math.random()*7)|0)-3,0,ROWS-1);
-  if(!groundOk(tx,ty)){v.t=0.5;return;}
-  var tg=gid(tx,ty),wp=navPath(v.node,function(m){return m===tg;});
+  var tg=wanderGoal(v);if(tg<0||!nodeOk(tg)){v.t=0.5;return;}
+  var wp=navPath(v.node,function(m){return m===tg;});
   if(wp&&wp.length){v.path=wp;v.pi=0;v.target=0;v.want='';v.state='walk';}else v.t=0.6;
 }
 function stepV(v,dt){

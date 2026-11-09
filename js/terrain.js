@@ -69,16 +69,25 @@ function terPlan(x,y,id,lvl,dir){
   });
   if(why)return {why:why};
   if(!changed)return {why:'이미 그 높이예요'};
-  return {cells:cells,lvl:lvl,cost:cost,moves:moves,b:b};
+  return {cells:cells.map(function(c){return {x:c.x,y:c.y,h:lvl,s:null};}),lvl:lvl,cost:cost,moves:moves,b:b};
 }
 function rampPlan(x,y,dir){
   if(occ[y][x])return {why:'건물이 있는 칸은 경사로로 만들 수 없어요'};
   if(piecesAt(x,y).length)return {why:'길이 있는 칸은 경사로로 만들 수 없어요'};
   var h=th(x,y),nx=x+DIRS[dir][0],ny=y+DIRS[dir][1];
   if(tslope(x,y)===dir)return {why:'이미 이 방향 경사로예요'};
-  if(nx<0||ny<0||nx>=COLS||ny>=PZ||th(nx,ny)!==h+1)return {why:'화살표 쪽 칸이 한 층 높아야 해요. 그 칸을 먼저 높여 주세요'};
   if(h+1>MAXH-1)return {why:'더 높이는 만들 수 없어요'};
-  return {cells:[{x:x,y:y}],ramp:dir,lvl:h,cost:TER_RAMP,moves:[]};
+  var zw=terZoneWhy(nx,ny);if(zw)return {why:'화살표 쪽 칸이 '+zw.replace('이에요','이라 경사로를 낼 수 없어요')};
+  var plan={cells:[{x:x,y:y,h:h,s:dir}],cost:TER_RAMP,moves:[],up:null};
+  // 화살표 쪽 칸이 한 층 높지 않으면 그 칸을 한 층 높여 준다 (비용 합산). 더 높으면 못 낸다
+  var nh=th(nx,ny);
+  if(nh>h+1)return {why:'화살표 쪽 칸이 두 층 이상 높아요. 그 칸을 낮추거나 한 칸 더 높은 곳에서 시작하세요'};
+  if(nh<h+1||(isRamp(nx,ny)&&nh!==h+1)){
+    if(occ[ny][nx])return {why:'화살표 쪽 칸에 건물이 있어 그 땅을 높일 수 없어요'};
+    var up=terPlan(nx,ny,'ter_set',h+1);if(up.why)return {why:'화살표 쪽 칸: '+up.why};
+    plan.cells=plan.cells.concat(up.cells);plan.moves=up.moves;plan.cost+=up.cost;plan.up={x:nx,y:ny};
+  }
+  return plan;
 }
 // 계획대로 바꾼다. 실패하면 그 까닭, 성공하면 ''
 function terApply(x,y,id,lvl,dir){
@@ -89,8 +98,8 @@ function terApply(x,y,id,lvl,dir){
   S.money-=p.cost;
   p.cells.forEach(function(c){
     var k=c.x+','+c.y;
-    if(p.lvl)S.hgt[k]=p.lvl;else delete S.hgt[k];
-    if(p.ramp!=null)S.slp[k]=p.ramp;else delete S.slp[k];
+    if(c.h)S.hgt[k]=c.h;else delete S.hgt[k];
+    if(c.s!=null)S.slp[k]=c.s;else delete S.slp[k];
   });
   p.moves.forEach(function(m){m.p.l=m.l;});
   if(UI.undo)UI.undo.push({ter:prev,moves:pm,cost:p.cost});
@@ -140,6 +149,8 @@ function drawTerGhost(){
   }
   atZ(isRamp(x,y)&&!g.pid?th(x,y)*LV+.45:z,function(){footprint(x,y,1,1,ok?'rgba(255,210,63,.22)':'rgba(235,70,60,.3)',col,[4,3]);});
   if(UI.tool==='ter_ramp'){
+    var rp=terPlan(x,y,'ter_ramp',0,UI.fdir);
+    if(rp.up){c.globalAlpha=.42;box(rrect(rp.up.x+.03,rp.up.y+.03,rp.up.x+.97,rp.up.y+.97),th(rp.up.x,rp.up.y)*LV,(th(x,y)+1)*LV,ok?'#ffd23f':'#f07a6e');c.globalAlpha=1;}
     var dx=DIRS[UI.fdir][0],dy=DIRS[UI.fdir][1],cx=x+.5,cy=y+.5,tip=rotPt(cx+dx*.9,cy+dy*.9),l=rotPt(cx-dy*.25,cy+dx*.25),r=rotPt(cx+dy*.25,cy-dx*.25),zz=th(x,y)*LV+.08;
     quad([[tip[0],tip[1],zz+.5*LV],[l[0],l[1],zz],[r[0],r[1],zz]],col,'rgba(30,30,30,.6)');
   }
