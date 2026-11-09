@@ -607,6 +607,9 @@ async function ministryChecks(browser, url) {
     const seatsWorn = A.seats;
     o.worn = condFactor(room) < 1 && needRepair().indexOf(room) >= 0;
     o.repair = repair(room) === '' && room.cond === 100 && A.seats > seatsWorn;
+    // 노후는 천천히(한 주 기본 0.8), 수리비는 낡은 만큼 건물 값의 10%까지
+    room.cond = 50; o.repair = o.repair && repairCost(room) === Math.round(D.room.cost * 0.05);
+    room.cond = 100; room.weekUses = 0; const md = MOD.decay; MOD.decay = 1; decayWeek(); MOD.decay = md; o.repair = o.repair && Math.abs(room.cond - 99.2) < 1e-9; room.cond = 100;
     // 사역자·행사·현황 패널이 그려진다
     ['staff', 'events', 'status', 'menu'].forEach(t => { UI.tab = t; UI.fold = false; renderPanel(); });
     o.panels = document.getElementById('panel').textContent.length > 0;
@@ -633,7 +636,7 @@ async function ministryChecks(browser, url) {
   check(r.office, '직분자: 성도 8명마다 집사 한 명까지 임명');
   check(r.event && r.season, '행사: 비용을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
   check(r.dlgShown && r.dlg, '목회 고민: 카드가 뜨고, 고르면 효과가 나고 닫힘');
-  check(r.worn && r.repair, '노후: 낡으면 좌석이 줄고, 수리하면 돌아옴');
+  check(r.worn && r.repair, '노후: 낡으면 좌석이 줄고, 수리하면 돌아옴 (한 주 기본 0.8씩 낡고, 수리비는 건물 값의 10%까지)');
   check(r.panels, '패널: 사역자·행사·현황·메뉴 탭이 그려짐');
   check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 50,000');
   check(r.passive, '균형: 손대지 않으면 30주 동안 저절로 커지지 않고 초반 파산도 없음');

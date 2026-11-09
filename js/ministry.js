@@ -262,7 +262,9 @@ function condOf(b){return b.cond==null?100:b.cond;}
 function wearStage(b){if(!maintainable(b))return 0;var c=condOf(b);return c<=60?3:(c<=70?2:(c<=80?1:0));}
 var WEAR_EFF=[1,.9,.75,.55],WEAR_NAME=['','거미줄','하얀 연기','검은 연기'];
 function condFactor(b){return WEAR_EFF[wearStage(b)];}
-function repairCost(b){return Math.round(defOf(b).cost*0.25*(100-condOf(b))/100);}
+// 노후·수리: 한 주에 기본 0.8 + 이용 한 번에 0.008씩 낡고(관리팀·행정 부교역자가 줄여 줌), 수리비는 낡은 만큼 건물 값의 10%까지
+var DECAY_BASE=0.8,DECAY_USE=0.008,REPAIR_K=0.1;
+function repairCost(b){return Math.round(defOf(b).cost*REPAIR_K*(100-condOf(b))/100);}
 function repair(b){
   var c=repairCost(b);if(c<=0)return '고칠 곳이 없어요';
   if(S.money<c)return '수리비가 부족해요';
@@ -278,7 +280,7 @@ function repairAll(){
 function decayWeek(){
   S.buildings.forEach(function(b){
     if(!maintainable(b))return;
-    b.cond=Math.max(0,condOf(b)-(1.6+(b.weekUses||0)*0.016)*MOD.decay);
+    b.cond=Math.max(0,condOf(b)-(DECAY_BASE+(b.weekUses||0)*DECAY_USE)*MOD.decay);
     b.weekUses=0;
   });
 }
