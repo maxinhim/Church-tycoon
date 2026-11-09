@@ -1,13 +1,14 @@
 'use strict';
 /* ---------- 길찾기 (땅 + 길·계단·다리) ----------
-   노드: 땅 칸 = y*COLS+x, 높이가 있는 길 조각(다리·계단) = 1000+조각 id.
+   노드: 땅 칸 = y*COLS+x, 높이가 있는 길 조각(다리·계단) = PN+조각 id (PN은 땅 칸 수보다 훨씬 큰 값).
    땅 높이의 평지 길은 땅 칸과 같은 노드로 본다.
    두 노드는 맞닿은 면의 높이(포트)가 같을 때만 이어진다. */
 var NAV={reach:{},badSky:{}};
 function gid(x,y){return y*COLS+x;}
 function gateNode(){return gid(ENT,ROWS-1);}
-function isPieceNode(n){return n>=1000;}
-function nodePiece(n){return pieceById(n-1000);}
+var PN=100000;
+function isPieceNode(n){return n>=PN;}
+function nodePiece(n){return pieceById(n-PN);}
 function groundOk(x,y){return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x];}
 function nodeOk(n){return isPieceNode(n)?!!nodePiece(n):groundOk(n%COLS,(n/COLS)|0);}
 function nodePos(n){
@@ -19,7 +20,7 @@ function isNodePiece(p){return p.k!=='sky'&&(p.l>0||p.s>0);}
 // (x,y) 칸에서 d 방향 면이 lvl 높이로 열린 다리·계단 노드
 function pieceNodeAt(x,y,d,lvl){
   var ps=piecesAt(x,y);
-  for(var i=0;i<ps.length;i++){var q=ps[i];if(isNodePiece(q)&&portLevel(q,d)===lvl)return 1000+q.id;}
+  for(var i=0;i<ps.length;i++){var q=ps[i];if(isNodePiece(q)&&portLevel(q,d)===lvl)return PN+q.id;}
   return -1;
 }
 // 이웃 노드마다 cb(노드, 경계 높이 z)

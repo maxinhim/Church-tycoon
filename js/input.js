@@ -77,6 +77,7 @@ function onPanel(e){
   if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='pick'){
+    if(UI.tool!==v&&isLocked(v)){toast(D[v].name+'은(는) '+lockText(lockGoal(v))+' 지을 수 있어요',1800);return;}
     UI.tool=(UI.tool===v)?null:v;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.pc=UI.tool==='path'?newCursor():null;
     if(UI.tool&&UI.tool!=='path'){var c=viewCenter();placeGhost(groundTile(c[0],c[1]));}else UI.ghost=null;
     refreshCards();renderDetail();
@@ -85,7 +86,7 @@ function onPanel(e){
   else if(a==='face'){UI.face=screenToWorldDir(+v);if(UI.ghost){var gd=faceDims(D[UI.tool],UI.face);UI.ghost.x=clamp(UI.ghost.x,0,COLS-gd.w);UI.ghost.y=clamp(UI.ghost.y,0,ROWS-1-gd.h);}renderDetail();}
   else if(a==='pdir'){UI.pc.dir=screenToWorldDir(+v);renderDetail();}
   else if(a==='pslope'){UI.pc.slope=+v;renderDetail();}
-  else if(a==='pkind'){UI.pc.k=v;renderDetail();}
+  else if(a==='pkind'){if(v==='sky'&&isLocked('sky')){toast('연결 다리는 '+lockText(lockGoal('sky'))+' 지을 수 있어요',1800);return;}UI.pc.k=v;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
@@ -94,7 +95,7 @@ function onPanel(e){
     var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();return !!u&&removeTile(u.x,u.y,1);})();
     if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
   }
-  else if(a==='floorup'){var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);renderDetail();hud(true);}
+  else if(a==='floorup'){var fb=bById(UI.sel),bs0=snapStats(),fw2=addFloor(fb);toast(fw2||'한 층 올렸어요',1400);if(!fw2&&fb){var fdm=bDims(fb);statFx(bs0,fb.x+fdm.w/2,fb.y+fdm.h/2,bHeight(fb));}renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
@@ -104,18 +105,37 @@ function onPanel(e){
     renderDetail();hud(true);
   }
   else if(a==='confirm'){
-    if(UI.tool&&UI.ghost&&build(UI.tool,UI.ghost.x,UI.ghost.y,UI.face)){toast(D[UI.tool].name+'을(를) 지었어요',1600);UI.ghost=null;}
+    var cb0=snapStats(),gx=UI.ghost&&UI.ghost.x,gy=UI.ghost&&UI.ghost.y;
+    if(UI.tool&&UI.ghost&&!isLocked(UI.tool)&&build(UI.tool,gx,gy,UI.face)){
+      var cdm=faceDims(D[UI.tool],UI.face);statFx(cb0,gx+cdm.w/2,gy+cdm.h/2,heightOf(UI.tool)+.2);
+      toast(D[UI.tool].name+'을(를) 지었어요',1600);UI.ghost=null;
+    }
     renderDetail();hud(true);
   }
   else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
-  else if(a==='hire'){var s=STAFF[v],lv=S.staff[v];if(lv<3&&S.money>=s.costs[lv]){S.money-=s.costs[lv];S.staff[v]++;recalc();save();toast(s.name+' 단계 '+S.staff[v]+'로 올렸어요',1800);}renderStaff();hud(true);}
+  else if(a==='hire'){var hw=hireTeam(v);toast(hw||STAFF[v].name+' 단계 '+S.staff[v]+'로 올렸어요',1800);renderStaff();hud(true);}
   else if(a==='fire'){if(S.staff[v]>0){S.staff[v]--;recalc();save();}renderStaff();hud(true);}
-  else if(a==='newgame'){if(UI.confirmNew){restart();}else{UI.confirmNew=true;renderMenu();}}
+  else if(a==='newgame'){if(v&&DIFF[v]){restart(v);}else{UI.confirmNew=!UI.confirmNew;renderMenu();}}
+  else{
+    var msg='',done='';
+    if(a==='rest'){msg=restWeek();done='한 주 쉬었어요. 체력이 회복됐어요';}
+    else if(a==='hireA'){var cnd=S.cands[+v];msg=hireAssoc(+v);done=cnd?cnd.name+' '+cnd.title+'님을 청빙했어요':'';}
+    else if(a==='dismiss'){dismissAssoc(+v);done='부교역자가 사임했어요';}
+    else if(a==='searchA'){msg=searchCands();done='새 후보를 찾았어요';}
+    else if(a==='appoint'){msg=appoint(v);done=OFFICE[v]?OFFICE[v].name+'를 임명했어요':'';if(!msg)F.push({x:ENT+.5,y:ROWS-2,z:1.4,t:2.2,d:2.2,text:OFFICE[v].name+' 임직',col:'#ffe28a',big:1});}
+    else if(a==='runEv'){msg=runEvent(v);done=EVENTS[v]?EVENTS[v].name+'을(를) 열었어요':'';if(!msg)F.push({x:ENT+.5,y:ROWS-2,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
+    else if(a==='repair'){msg=repair(bById(UI.sel));done='수리를 마쳤어요';}
+    else if(a==='repairAll'){msg=repairAll();done='낡은 건물을 모두 고쳤어요';}
+    else if(a==='buyLand'){msg=buyLand();done='부지를 넓혔어요';}
+    else return;
+    toast(msg||done,1800);renderPanel();hud(true);
+  }
 }
 function tapRoomTile(t){
   UI.ghost={x:t.x,y:t.y};
-  var p=tilePlan(t.x,t.y,UI.tool);
+  var p=tilePlan(t.x,t.y,UI.tool),tb0=snapStats();
   if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){
+    var tf=tileOf(roomAt(t.x,t.y,UI.tool),t.x,t.y).f;statFx(tb0,t.x+.5,t.y+.5,roomTop(tf)+.2);
     UI.undo.push({x:t.x,y:t.y});
     var rb=roomAt(t.x,t.y,UI.tool),d=defOf(rb);
     toast((p.kind==='floor'?tileOf(rb,t.x,t.y).f+'층으로 올렸어요':'칸을 지었어요')+' · '+d.name,1400);

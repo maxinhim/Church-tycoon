@@ -62,11 +62,11 @@ function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*(0
 function finishVisit(v){
   var b=bById(v.inside);
   if(b){
-    var d=defOf(b);b.inUse=Math.max(0,b.inUse-1);b.uses=(b.uses||0)+1;
+    var d=defOf(b);b.inUse=Math.max(0,b.inUse-1);b.uses=(b.uses||0)+1;b.weekUses=(b.weekUses||0)+1;
     for(var n in d.fill){
       var amt=d.fill[n];
-      if(n==='care')amt*=1+0.15*S.staff.care;
-      if(n==='word')amt*=1+0.08*S.staff.praise;
+      if(n==='care')amt*=MOD.care;
+      if(n==='word')amt*=MOD.word;
       v.needs[n]=Math.min(100,v.needs[n]+amt);
     }
     if(d.income){S.money+=d.income;S.weekInc+=d.income;}
@@ -85,8 +85,9 @@ function depart(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4-v.annoy*5;
   S.rep=clamp(S.rep+(avg-58)*0.006,0,100);
   S.visitsWeek++;
-  var p=clamp((avg-42)/50,0,1)*0.6*(1+0.1*S.staff.evang)*(v.needs.word>=45?1:0.25);
-  if(Math.random()<p){S.members++;S.joinedWeek++;F.push({x:ENT+0.5,y:ROWS-1.2,t:1.6,text:'+1 성도'});}
+  // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
+  var p=clamp((avg-42)/50,0,1)*0.5*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
+  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;F.push({x:ENT+0.5,y:ROWS-1.2,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 function decide(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;
@@ -95,7 +96,7 @@ function decide(v){
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
     if(v.needs[n]>=75)continue;
-    var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&usable(b)&&!(v.blocked[b.id]>S.clock);});
+    var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&usable(b)&&!(v.blocked[b.id]>S.clock)&&!(d.kind==='stage'&&S.evt==='rain');});
     cands.sort(function(a,b){return (Math.abs(a.x-v.x)+Math.abs(a.y-v.y))-(Math.abs(b.x-v.x)+Math.abs(b.y-v.y));});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});

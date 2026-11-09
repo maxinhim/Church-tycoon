@@ -44,7 +44,7 @@ function stackDef(b){
   var d=D[b.def],f=b.floors||1;if(f<=1)return d;
   var key=b.def+'|'+f;if(PDC[key])return PDC[key];
   var o={},k;for(k in d)o[k]=d[k];
-  ['seats','fcap','ccap','kcap','cap','up'].forEach(function(k2){o[k2]=d[k2]*f;});
+  ['seats','fcap','ccap','kcap','cap','up','park'].forEach(function(k2){o[k2]=d[k2]*f;});
   o.cost=d.cost+(f-1)*floorCostOf(b);o.name=d.name+' ('+f+'층)';
   return (PDC[key]=o);
 }
@@ -77,6 +77,7 @@ function tilePlan(x,y,def){
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};
+  if(!owned(x,y))return {ok:false,why:'아직 사지 않은 땅이에요'};
   if(piecesAt(x,y).length)return {ok:false,why:'길이 있어요'};
   return {ok:true,kind:'new',cost:D[def].cost};
 }

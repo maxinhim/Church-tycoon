@@ -22,7 +22,7 @@ function renderPanel(){
   if(UI.fold)return;
   var t=UI.tab;
   panel.className=(t==='build')?'build':'scroll';
-  if(t==='build')renderBuild();else if(t==='staff')renderStaff();else if(t==='status')renderStatus();else renderMenu();
+  if(t==='build')renderBuild();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
 function renderBuild(){
   var chips=CATS.map(function(c){return '<button class="chip'+(UI.cat===c[0]&&UI.tool!=='demolish'?' on':'')+'" data-act="cat" data-v="'+c[0]+'">'+c[1]+'</button>';}).join('')+
@@ -30,11 +30,13 @@ function renderBuild(){
   panel.innerHTML='<div class="chips">'+chips+'</div><div class="cards" id="cards"></div><div class="detail" id="detail"></div>';
   var cards=$('#cards');
   if(UI.tool==='demolish'){cards.innerHTML='<p class="hint">철거할 건물을 지도에서 누르세요. 건축비의 절반이 돌아옵니다.</p>';}
+  else if(UI.cat==='land'){cards.innerHTML=landHtml();}
   else{
     DEFS.filter(function(d){return d.cat===UI.cat;}).forEach(function(d){
       var el=document.createElement('button');el.className='card';el.dataset.act='pick';el.dataset.v=d.id;
       el.appendChild(iconCanvas(d));
-      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+fmt(d.cost)+'</span>');
+      var lk=isLocked(d.id);if(lk)el.classList.add('lock');
+      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?'목표 '+lockGoal(d.id)+'개 후':fmt(d.cost))+'</span>');
       cards.appendChild(el);
     });
   }
@@ -42,7 +44,7 @@ function renderBuild(){
 }
 function refreshCards(){
   var cs=document.querySelectorAll('#cards .card');
-  for(var i=0;i<cs.length;i++){var d=D[cs[i].dataset.v];cs[i].classList.toggle('poor',S.money<d.cost);cs[i].classList.toggle('sel',UI.tool===d.id);}
+  for(var i=0;i<cs.length;i++){var d=D[cs[i].dataset.v];if(!d)continue;cs[i].classList.toggle('poor',S.money<d.cost||isLocked(d.id));cs[i].classList.toggle('sel',UI.tool===d.id);}
 }
 function dirPad(act,cur){
   var lab=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'],rot=[45,135,225,315];
@@ -108,6 +110,7 @@ function renderDetail(){
       doorUI='<div class="doors"><span class="lbl">입구</span><button class="btn sm" data-act="door" data-v="ent:-1" aria-label="입구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ent:1" aria-label="입구를 다음 자리로">▶</button>'+
         '<span class="lbl">출구</span><button class="btn sm" data-act="door" data-v="ext:-1" aria-label="출구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ext:1" aria-label="출구를 다음 자리로">▶</button></div>';
     }
+    if(maintainable(b)){var cd=Math.round(condOf(b));lines.push('건물 상태 '+cd+'%'+(cd<60?' · '+bad('낡아서 효과가 줄었어요'):''));if(cd<100)tileBtn+='<button class="btn" data-act="repair">수리 '+fmt(repairCost(b))+'</button>';}
     if(b.links&&b.links.length)lines.push('연결 다리로 이어짐: '+b.links.map(function(id){var o=bById(id);return o?defOf(o).name:'';}).join(', '));
     h='<div class="tx full"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+lines.join('<br>')+'</div>'+doorUI+
       '<div class="btns">'+tileBtn+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
@@ -121,23 +124,72 @@ function renderDetail(){
   el.innerHTML=h;
   var cs=$('#cards');if(cs)cs.hidden=UI.tool==='path'||(!UI.tool&&!!(UI.sel||UI.selPiece));
 }
+function stars(n){return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n);}
+function meter(v){var p=Math.round(clamp(v,0,1)*100);return '<div class="bar"><i style="width:'+p+'%;background:'+(p<30?'var(--bad)':p<60?'var(--gold)':'var(--good)')+'"></i></div>';}
+function srow(title,meta,desc,btns,extra){
+  return '<div class="srow"><div class="tx"><b>'+title+'</b> <span class="meta">'+meta+'</span><p>'+desc+'</p>'+(extra||'')+'</div><div class="btns">'+btns+'</div></div>';
+}
 function renderStaff(){
-  var h='<div class="staff">';
+  var h='<div class="staff"><div class="sec">담임목사</div>';
+  h+=srow('목회자 체력',Math.round(S.stam)+' / 100','행사·임직에 쓰여요. 매주 '+Math.round(MOD.regen)+'씩 회복하지만, 목양 수용력을 넘는 성도가 많으면 덜 회복돼요. 30 아래면 만족도와 설교 효과가 떨어져요.',
+    '<button class="btn" data-act="rest"'+(S.restCd>0?' disabled':'')+'>'+(S.restCd>0?S.restCd+'주 뒤 쉴 수 있음':'한 주 쉬기')+'</button>',meter(S.stam/100));
+  h+=srow('목양 수용력',S.members+' / '+Math.round(MOD.cap)+'명','담임목사·부교역자·직분자·돌봄팀이 함께 돌볼 수 있는 성도 수예요. 넘으면 성도가 떠나고 목회자가 지쳐요.','',meter(MOD.cap/Math.max(1,S.members)));
+  h+='<div class="sec">부교역자 · '+S.assoc.length+' / '+assocSlots()+'명</div>';
+  if(!S.assoc.length)h+='<p class="hint">아직 함께 사역하는 부교역자가 없어요. 성도 50명마다 한 명씩 더 청빙할 수 있어요.</p>';
+  S.assoc.forEach(function(a,i){
+    h+=srow(a.name+' '+a.title,FIELDS[a.field].name+' '+stars(a.skill)+' · 사례비 주 '+a.pay,FIELDS[a.field].desc+' (별마다), 목양 수용력 +35, 체력 회복 +3','<button class="btn" data-act="dismiss" data-v="'+i+'">사임</button>');
+  });
+  h+='<p class="hint">청빙 후보 · 6주마다 새 후보가 찾아와요. 청빙 비용은 사례비 4주치예요.</p>';
+  S.cands.forEach(function(c,i){
+    var full=S.assoc.length>=assocSlots();
+    h+=srow(c.name+' '+c.title+' 후보',FIELDS[c.field].name+' '+stars(c.skill)+' · 사례비 주 '+c.pay,FIELDS[c.field].desc+' (별마다)',
+      '<button class="btn pri" data-act="hireA" data-v="'+i+'"'+(full||S.money<c.fee?' disabled':'')+'>'+(full?'자리 없음':'청빙 '+fmt(c.fee))+'</button>');
+  });
+  h+='<div class="btns"><button class="btn" data-act="searchA"'+(S.money<100?' disabled':'')+'>다른 후보 찾기 · 100</button></div>';
+  h+='<div class="sec">직분자 임명 · 모두 '+offTotal()+'명</div>';
+  Object.keys(OFFICE).forEach(function(k){
+    var o=OFFICE[k],mx=officeMax(k),lk=o.goal>S.goal;
+    h+=srow(o.name,S.off[k]+' / '+mx+'명 · 성도 '+o.per+'명마다 한 명',o.desc+'. 임직식 비용 '+fmt(o.cost)+', 체력 '+o.stam,
+      lk?'<button class="btn" disabled>'+lockText(o.goal)+'</button>':'<button class="btn pri" data-act="appoint" data-v="'+k+'"'+(S.off[k]>=mx||S.money<o.cost||S.stam<o.stam?' disabled':'')+'>임명</button>');
+  });
+  h+='<div class="sec">사역팀 · 주 '+fmt(teamPay())+'</div>';
   Object.keys(STAFF).forEach(function(k){
-    var s=STAFF[k],lv=S.staff[k],next=s.costs[lv];
-    h+='<div class="srow"><div class="tx"><b>'+s.name+'</b> <span style="color:var(--muted);font-size:12px">단계 '+lv+'/3 · 주 '+s.week*lv+'</span><p>'+s.desc+'</p><div class="pips">'+[0,1,2].map(function(i){return '<i class="'+(i<lv?'on':'')+'"></i>';}).join('')+'</div></div>'+
-      '<div class="btns">'+(lv>0?'<button class="btn" data-act="fire" data-v="'+k+'" aria-label="'+s.name+' 축소">−</button>':'')+
-      (lv<3?'<button class="btn pri" data-act="hire" data-v="'+k+'"'+(S.money<next?' disabled':'')+'>'+fmt(next)+'</button>':'<button class="btn" disabled>최대</button>')+'</div></div>';
+    var t=STAFF[k],lv=S.staff[k]||0,lk=(t.goal||0)>S.goal,next=t.costs[lv];
+    var btn=lk?'<button class="btn" disabled>'+lockText(t.goal)+'</button>':
+      (lv>0?'<button class="btn" data-act="fire" data-v="'+k+'" aria-label="'+t.name+' 축소">−</button>':'')+
+      (lv<3?'<button class="btn pri" data-act="hire" data-v="'+k+'"'+(S.money<next?' disabled':'')+'>'+fmt(next)+'</button>':'<button class="btn" disabled>최대</button>');
+    h+=srow(t.name,'단계 '+lv+'/3 · 주 '+t.week*lv,t.desc,btn,'<div class="pips">'+[0,1,2].map(function(i){return '<i class="'+(i<lv?'on':'')+'"></i>';}).join('')+'</div>');
   });
   h+='</div>';
   panel.innerHTML=h;
 }
+function renderEvents(){
+  var act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
+  var h='<div class="staff"><p class="hint">행사는 자금과 목회자 체력(지금 '+Math.round(S.stam)+')을 써요. 올해 '+weekOfYear()+'주째예요.</p>';
+  if(act.length)h+='<div class="qev">'+act.map(function(id){return '<span>진행 중 · '+EVENTS[id].name+' '+S.ev[id].left+'주</span>';}).join('')+'</div>';
+  Object.keys(EVENTS).forEach(function(id){
+    var e=EVENTS[id];if(e.hidden)return;
+    var why=evBlock(id),meta='비용 '+fmt(evCost(e))+' · 체력 '+e.stam+(e.season?' · '+e.season[0]+'~'+e.season[1]+'주':'')+(e.cd?' · 열면 '+e.cd+'주 뒤 다시':'');
+    h+=srow(e.name,meta,e.desc+(why?'<br>'+bad(why):''),'<button class="btn pri" data-act="runEv" data-v="'+id+'"'+(why?' disabled':'')+'>열기</button>');
+  });
+  h+='</div>';
+  panel.innerHTML=h;
+}
+function landHtml(){
+  var L=S.land,n=landNext(),w=L.x1-L.x0+1,hgt=L.y1-L.y0+1;
+  return '<div class="landbox"><p><b>지금 부지 '+w+'×'+hgt+'칸</b> · 점선 안쪽에만 지을 수 있어요.</p>'+
+    (n?'<p>다음 넓히기: '+(n.x1-n.x0+1)+'×'+(n.y1-n.y0+1)+'칸 · '+fmt(n.cost)+'</p><div class="btns"><button class="btn pri" data-act="buyLand"'+(S.money<n.cost?' disabled':'')+'>부지 사기 '+fmt(n.cost)+'</button></div>':'<p>지도 전체가 교회 부지예요.</p>')+'</div>';
+}
+
 function renderStatus(){
-  var c=S.cov||{},rows=[['좌석',c.seat],['교제 공간',c.fel],['돌봄',c.care],['편의',c.comf],['주차',c.park]];
+  var c=S.cov||{},rows=[['좌석',c.seat],['교제 공간',c.fel],['돌봄',c.care],['편의',c.comf],['주차',c.park],['목양',c.past]];
   var h='<div class="sec">성도 만족도</div><div class="cov"><span>전체</span><div class="bar"><i style="width:'+Math.round(S.mood)+'%"></i></div><span class="v">'+Math.round(S.mood)+'%</span>';
   rows.forEach(function(r){var v=Math.round((r[1]||0)*100);h+='<span>'+r[0]+'</span><div class="bar"><i style="width:'+v+'%;background:'+(v<60?'var(--bad)':'var(--good)')+'"></i></div><span class="v">'+v+'%</span>';});
   h+='</div><div class="sec">이번 주</div><div class="legend"><span>지금 부지에 '+V.length+'명</span><span>이번 주 방문 '+S.visitsWeek+'</span><span>새 성도 '+S.joinedWeek+'</span></div>';
   h+='<div class="legend" style="margin-top:6px">'+NEEDS.map(function(n){return '<span><i style="background:'+NC[n]+'"></i>'+NK[n]+'</span>';}).join('')+'<span>머리 위 점은 방문자가 찾는 것</span></div>';
+  var w=warnings(),rp=needRepair(),rc=rp.reduce(function(t,b){return t+repairCost(b);},0);
+  h+='<div class="sec">챙길 일</div>'+(w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="hint">지금은 특별히 챙길 일이 없어요.</p>');
+  if(rp.length)h+='<div class="btns"><button class="btn pri" data-act="repairAll"'+(S.money<rc?' disabled':'')+'>낡은 건물 '+rp.length+'곳 모두 수리 · '+fmt(rc)+'</button></div>';
   h+='<div class="sec">주간 수입과 지출</div>'+chart();
   h+='<div class="sec">소식</div><ul class="log">'+(S.log.length?S.log.map(function(l){return '<li>'+(Math.floor(l.w/52)+1)+'년차 '+(l.w%52+1)+'주 · '+l.msg+'</li>';}).join(''):'<li>아직 소식이 없어요. 한 주가 지나면 기록됩니다.</li>')+'</ul>';
   panel.innerHTML=h;
@@ -159,8 +211,9 @@ function chart(){
 }
 function renderMenu(){
   panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="14" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
-    '<div class="btns"><button class="btn'+(UI.confirmNew?' bad':'')+'" data-act="newgame">'+(UI.confirmNew?'정말 처음부터 시작할까요? 한 번 더 누르세요':'새로 시작')+'</button></div>'+
-    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 정면 방향을 고르고, 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li><li>길 탭: 시작할 곳을 누르고 방향·경사·종류·높이를 고른 뒤 건설하기로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
+    (UI.confirmNew?'<div class="sec">난이도를 고르면 처음부터 시작해요 (지금 진행은 사라져요)</div><div class="diffs">'+Object.keys(DIFF).map(function(k){return '<button class="btn'+(k==='normal'?' pri':'')+'" data-act="newgame" data-v="'+k+'"><b>'+DIFF[k].name+'</b><small>'+DIFF[k].desc+'</small></button>';}).join('')+'<button class="btn" data-act="newgame">취소</button></div>':
+      '<div class="btns"><button class="btn" data-act="newgame">새로 시작</button></div>')+'<p class="hint">지금 난이도: '+curDiff().name+'</p>'+
+    '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>건물을 고르면 미리보기가 놓입니다. 정면 방향을 고르고, 미리보기를 끌거나 지도를 눌러 옮긴 뒤 짓기를 누르세요</li><li>길 탭: 시작할 곳을 누르고 방향·경사·종류·높이를 고른 뒤 건설하기로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>연결 다리: 같은 역할 건물의 위층 벽끼리 이으면, 한 건물이 차면 방문자가 다리를 건너 옆 건물로 갑니다</li><li>건물 쌓기: 지은 건물을 누르고 층 올리기(최대 5층). 칸 건물은 같은 칸을 다시 눌러 올립니다</li><li>바닥 탭: 땅을 눌러 바닥 타일을 칠합니다</li><li>부지 탭: 점선 안쪽이 교회 땅이에요. 자금으로 부지를 넓힙니다</li><li>오른쪽 막대그래프 버튼: 현황을 지도 위에 바로 띄웁니다</li><li>사역자 탭: 부교역자 청빙, 직분자 임명, 사역팀. 행사 탭: 특별행사와 절기 행사</li><li>건물은 시간이 지나면 낡아요. 주황 ! 표시는 수리, 빨간 ? 표시는 입구·출구에 닿는 길이 없다는 뜻이에요</li><li>지은 건물을 누르면 입구·출구를 ◀ ▶로 옮깁니다. 방문자는 입구로 들어가 출구로 나옵니다</li></ul>'+
     '<div class="sec">만든 방식과 참고 자료</div>'+
     '<p class="hint" style="padding:0 0 4px">그래픽과 시스템은 모두 이 페이지의 코드로 새로 그렸고, 외부 이미지·소리·소스를 가져오지 않았습니다. 개발 중 참고한 공개 자료입니다.</p>'+
     '<ul class="refs"><li><a href="https://kenney.nl/assets/isometric-landscape" target="_blank" rel="noopener">Kenney 아이소메트릭 에셋 (CC0)</a> · 나중에 그림을 바꿀 때 쓸 후보</li>'+

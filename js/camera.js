@@ -22,7 +22,7 @@ function rotateView(){
   ROT=(ROT+1)%4;centerOn(w[0],w[1]);toast(['남쪽','서쪽','북쪽','동쪽'][ROT]+'에서 보는 시점',1200);
 }
 function homeView(){
-  var f=fitZoom();cam.z=clamp(f*1.75,ZMIN,ZMAX);
+  var f=fitZoom();cam.z=clamp(f*3.2,ZMIN,ZMAX);
   var b=S.buildings.filter(function(b){return defOf(b).kind==='bld';})[0];
   if(b){var d=bDims(b);centerOn(b.x+d.w/2,b.y+d.h/2+1.5);}else centerOn(COLS/2,ROWS/2);
 }

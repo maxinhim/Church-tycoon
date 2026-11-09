@@ -31,11 +31,12 @@ function draw(){
   if(!ctx)return;
   var c=ctx;
   c.setTransform(DPR,0,0,DPR,0,0);
-  var g=c.createLinearGradient(0,0,0,VH);g.addColorStop(0,'#1d4255');g.addColorStop(1,'#0c1c26');
-  c.fillStyle=g;c.fillRect(0,0,VW,VH);
+  // 지도 밖도 잔디 (우주처럼 떠 보이지 않게)
+  c.fillStyle='#80b169';c.fillRect(0,0,VW,VH);
   PJ.c=c;PJ.ox=cam.ox;PJ.oy=cam.oy;PJ.s=cam.z;
   drawGround();
   drawFloors();
+  drawOutTrees(true);
   var sb=UI.sel?bById(UI.sel):null;
   if(sb){
     if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
@@ -50,7 +51,7 @@ function draw(){
       b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.f=function(){drawRoomTile(b,t,map);};E.push(rt);});
       return;
     }
-    var d=D[b.def],r=rrect(b.x,b.y,b.x+d.w,b.y+d.h);
+    var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h);
     r.f=function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);};E.push(r);
   });
   S.paths.forEach(function(p){
@@ -60,11 +61,11 @@ function draw(){
   V.forEach(function(v){
     if(v.state==='inside')return;
     var p=rotPt(v.x,v.y),z=v.z||0;
-    E.push({x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,zb:z,zt:z+.7,on:v.node>=1000?v.node-1000:0,f:function(){drawVisitor(v);}});
+    E.push({x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,zb:z,zt:z+.7,on:v.node>=PN?v.node-PN:0,f:function(){drawVisitor(v);}});
   });
   for(var k=0;k<2;k++){
-    var span=COLS+8,wx=k===0?((S.clock*1.6+3)%span)-4:COLS+4-((S.clock*1.25+9)%span),ly=k===0?ROWS-1+.58:ROWS-1+.14;
-    if(wx<0||wx+.8>COLS)continue;
+    var span=COLS+2*BAND,wx=k===0?((S.clock*1.6+3)%span)-BAND:COLS+BAND-((S.clock*1.25+9)%span),ly=k===0?ROWS-1+.58:ROWS-1+.14;
+    if(wx<-BAND||wx+.8>COLS+BAND)continue;
     (function(wx,ly,col){
       var r1=rrect(wx,ly,wx+.8,ly+.3),r2=rrect(wx+.18,ly+.03,wx+.58,ly+.27);
       E.push({x0:r1.x0,y0:r1.y0,x1:r1.x1,y1:r1.y1,f:function(){drawRoadCar({r1:r1,r2:r2,c:col});}});
@@ -72,6 +73,8 @@ function draw(){
   }
   var ar=rrect(ENT,ROWS-1+.05,ENT+1,ROWS-1+.15);ar.f=drawArch;E.push(ar);
   sortEnt(E).forEach(function(e){e.f();});
+  drawOutTrees(false);
+  drawMarkers(c);
   if(isRoomDef(UI.tool))drawRoomGhost();
   if(isFloorDef(UI.tool)&&UI.ghost)footprint(UI.ghost.x,UI.ghost.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[4,3]);
   if(UI.tool==='path')drawPathGhost();
@@ -87,10 +90,18 @@ function draw(){
     c.fillStyle='#ffd23f';c.strokeStyle='rgba(30,30,30,.6)';c.lineWidth=1.5;c.beginPath();
     c.moveTo(q[0]-7*s,q[1]-10*s);c.lineTo(q[0]+7*s,q[1]-10*s);c.lineTo(q[0],q[1]);c.closePath();c.fill();c.stroke();
   }
-  F.forEach(function(f){
-    var p=rotPt(f.x,f.y),q=P(p[0],p[1],1.1+(1.6-f.t)*.6);
-    c.globalAlpha=clamp(f.t,0,1);c.font='700 '+Math.max(11,13*cam.z)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
-    c.lineWidth=3;c.strokeStyle='rgba(15,30,20,.85)';c.strokeText(f.text,q[0],q[1]);c.fillStyle='#fff';c.fillText(f.text,q[0],q[1]);c.globalAlpha=1;
+  drawFx(c);
+}
+// 건물 위 표시: 주황 '!'는 수리 필요(상태 50% 미만), 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가
+function drawMarkers(c){
+  var s=Math.max(.7,cam.z);
+  S.buildings.forEach(function(b){
+    var bad=b.door&&!usable(b),worn=maintainable(b)&&condOf(b)<50;
+    if(!bad&&!worn)return;
+    var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bHeight(b)+.35);
+    c.fillStyle=bad?'#d6453a':'#e8892c';c.strokeStyle='#fff';c.lineWidth=1.5;
+    c.beginPath();c.arc(q[0],q[1],7*s,0,6.283);c.fill();c.stroke();
+    c.fillStyle='#fff';c.font='800 '+(9*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(bad?'?':'!',q[0],q[1]+.5);
   });
 }
 function iconCanvas(d){

@@ -140,7 +140,7 @@ async function seededRun(browser, url) {
     const c = window.__ct; c.init();
     let built = 0;
     c.DEFS.slice(0, 6).forEach(d => {
-      for (let y = 0; y < 14; y++) for (let x = 0; x < 14; x++) if (c.canPlace(d, x, y)) { c.build(d.id, x, y); built++; return; }
+      for (let y = 0; y < ROWS - 1; y++) for (let x = 0; x < COLS; x++) if (c.canPlace(d, x, y)) { c.build(d.id, x, y); built++; return; }
     });
     for (let i = 0; i < 4000; i++) c.update(0.1);
     c.draw();
@@ -163,7 +163,7 @@ async function modularChecks(browser, url) {
   });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 99999;
+    window.__ct.init(); S.money = 99999; S.land = { x0: 0, y0: 0, x1: COLS - 1, y1: ROWS - 2 }; S.goal = GOALS.length; S.dlg = null;
     const rooms = () => S.buildings.filter(b => b.def === 'mroom');
     // 왼쪽부터 5칸이 비어 있는 줄을 찾는다
     let X = -1, Y = -1;
@@ -226,7 +226,7 @@ async function pathChecks(browser, url) {
   });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 99999;
+    window.__ct.init(); S.money = 99999; S.land = { x0: 0, y0: 0, x1: COLS - 1, y1: ROWS - 2 }; S.goal = GOALS.length; S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     const starter = S.buildings.find(b => b.def === 'room');
@@ -310,7 +310,7 @@ async function stackChecks(browser, url) {
   });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999;
+    window.__ct.init(); S.money = 999999; S.land = { x0: 0, y0: 0, x1: COLS - 1, y1: ROWS - 2 }; S.goal = GOALS.length; S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     // 완성품 건물 층 올리기
@@ -333,7 +333,7 @@ async function stackChecks(browser, url) {
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky';
     o.skyBuilt = pcBuild() === '' && S.paths.some(p => p.k === 'sky');
     o.linked = A.links.indexOf(B.id) >= 0 && B.links.indexOf(A.id) >= 0;
-    o.skyNotNav = !NAV.reach[1000 + S.paths.find(p => p.k === 'sky').id];
+    o.skyNotNav = !NAV.reach[PN + S.paths.find(p => p.k === 'sky').id];
     // A가 꽉 차면 다리를 건너 B로
     A.inUse = defOf(A).cap;
     spawnV(); const v = V[V.length - 1]; v.target = A.id; arrive(v);
@@ -392,6 +392,96 @@ async function stackChecks(browser, url) {
   await ctx.close();
 }
 
+// 목회 운영: 목표 보상·잠금 해제, 사역팀·부교역자·직분자, 행사, 고민 카드, 부지, 노후·수리, 난이도, 균형
+async function ministryChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 2024;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init();
+    const o = {};
+    o.normalStart = S.diff === 'normal' && S.money === DIFF.normal.money;
+    o.locked = isLocked('chapel') && hireTeam('admin') !== '' && appoint('deacon') !== '';
+    // 목표 달성: 후원금·평판·잠금 해제·축하 카드
+    const m0 = S.money, r0 = S.rep; S.members = 12; recalc(); checkGoal();
+    o.goal = S.goal === 1 && S.money === m0 + GOALS[0].r && S.rep >= r0 + GOALS[0].rep - 0.001 && !isLocked('chapel') && !document.getElementById('cele').hidden && CF.length > 0;
+    // 부지: 산 땅 밖에는 못 짓고, 사면 넓어진다
+    S.money = 99999;
+    o.landBlock = !canPlace(D.room, 2, 2, 2) && !owned(2, 2);
+    const L0 = Object.assign({}, S.land); buyLand();
+    o.land = S.land.x0 < L0.x0 && S.land.y0 < L0.y0 && S.landLv === 1;
+    // 사역팀·부교역자·직분자
+    const cap0 = MOD.cap;
+    o.team = hireTeam('evang') === '' && S.staff.evang === 1 && MOD.vis > 1;
+    refreshCands(); const fee = S.cands[0].fee, mA = S.money;
+    o.assoc = hireAssoc(0) === '' && S.assoc.length === 1 && S.money === mA - fee && MOD.cap >= cap0 + 35 && assocPay() > 0;
+    o.assocLimit = hireAssoc(0) !== '';
+    S.members = 16; recalc();
+    o.office = appoint('deacon') === '' && S.off.deacon === 1 && appoint('deacon') === '' && appoint('deacon') !== '';
+    // 행사: 비용·체력·재개 대기, 절기 제한
+    S.members = 20; recalc();
+    const st0 = S.stam, mm = S.money;
+    o.event = runEvent('street') === '' && S.money === mm - EVENTS.street.cost && S.stam === st0 - EVENTS.street.stam && evBlock('street') !== '' && MOD.vis > 1.3;
+    S.week = 2; o.season = evBlock('christmas') !== '';
+    // 고민 카드: 선택하면 효과가 나고 닫힌다
+    S.dlg = 'illness'; showDlg(); const mz = S.money;
+    o.dlgShown = !document.getElementById('dlg').hidden;
+    o.dlg = chooseDlg(0) === '' && S.dlg === null && S.money === mz - 300;
+    // 노후와 수리
+    const room = S.buildings.find(b => b.def === 'room'); room.cond = 20; recalc();
+    const seatsWorn = A.seats;
+    o.worn = condFactor(room) < 1 && needRepair().indexOf(room) >= 0;
+    o.repair = repair(room) === '' && room.cond === 100 && A.seats > seatsWorn;
+    // 사역자·행사·현황 패널이 그려진다
+    ['staff', 'events', 'status', 'menu'].forEach(t => { UI.tab = t; UI.fold = false; renderPanel(); });
+    o.panels = document.getElementById('panel').textContent.length > 0;
+    // 난이도: 테스트로 새로 시작하면 자금 50,000
+    restart('easy'); o.easy = S.diff === 'easy' && S.money === 50000;
+    restart('normal');
+    // 균형: 아무것도 하지 않으면 1년 동안 저절로 커지지 않고, 초반에 바로 파산하지도 않는다
+    let minMoney = S.money;
+    for (let w = 0; w < 30; w++) { if (S.dlg) chooseDlg(dlgById(S.dlg).o.length - 1); for (let i = 0; i < 240; i++) update(0.1); minMoney = Math.min(minMoney, S.money); }
+    o.passive = S.members < 25 && minMoney > 0 && !S.over;
+    // 지도 밖도 잔디색으로 칠해진다
+    draw(); const px = document.getElementById('cv').getContext('2d').getImageData(3, 3, 1, 1).data;
+    o.lawn = px[1] > px[0] && px[1] > px[2] && px[1] > 120;
+    return o;
+  });
+  check(r.normalStart, '난이도: 기본은 보통(자금 6,000)으로 시작');
+  check(r.locked, '목표: 처음엔 예배당·관리팀·집사 임명이 잠겨 있음');
+  check(r.goal, '목표: 달성하면 후원금·평판·잠금 해제와 축하 카드·꽃가루');
+  check(r.landBlock && r.land, '부지: 산 땅 밖에는 못 짓고, 사면 넓어짐');
+  check(r.team, '사역팀: 꾸리면 효과가 반영됨');
+  check(r.assoc && r.assocLimit, '부교역자: 청빙 비용·사례비·목양 수용력, 자리 수 제한');
+  check(r.office, '직분자: 성도 8명마다 집사 한 명까지 임명');
+  check(r.event && r.season, '행사: 비용·체력을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
+  check(r.dlgShown && r.dlg, '목회 고민: 카드가 뜨고, 고르면 효과가 나고 닫힘');
+  check(r.worn && r.repair, '노후: 낡으면 좌석이 줄고, 수리하면 돌아옴');
+  check(r.panels, '패널: 사역자·행사·현황·메뉴 탭이 그려짐');
+  check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 50,000');
+  check(r.passive, '균형: 손대지 않으면 30주 동안 저절로 커지지 않고 초반 파산도 없음');
+  check(r.lawn, '지도 밖: 빈 공간이 잔디색으로 채워짐');
+  // 화면 조작: 현황 버튼, 건물을 지으면 수치 글씨
+  await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; UI.tab = 'build'; UI.cat = 'worship'; renderPanel(); });
+  await page.click('#bStat');
+  const quick = await page.evaluate(() => !document.getElementById('quick').hidden && /만족도/.test(document.getElementById('quick').textContent));
+  await page.click('#cards [data-v="room"]');
+  const placed = await page.evaluate(() => { const L = S.land; for (let y = L.y0; y <= L.y1; y++) for (let x = L.x0; x <= L.x1; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
+  if (placed) await page.click('[data-act="confirm"]');
+  const fx = await page.evaluate(() => F.some(f => /좌석 \+/.test(f.text)));
+  check(quick, '빠른 현황: 지도 구석 버튼으로 바로 열림');
+  check(placed && fx, '건축 효과: 지으면 건물 위에 "좌석 +n" 글씨가 뜸');
+  check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -402,6 +492,7 @@ async function stackChecks(browser, url) {
     await modularChecks(browser, url);
     await pathChecks(browser, url);
     await stackChecks(browser, url);
+    await ministryChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

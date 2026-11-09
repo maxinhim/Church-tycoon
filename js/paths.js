@@ -30,6 +30,7 @@ function pieceFits(p){
   if(p.k==='sky'&&p.s)return '연결 다리는 평지로만 지을 수 있어요';
   if(p.k==='sky'&&p.l<1)return '연결 다리는 2층 높이부터 지을 수 있어요';
   if(occ[p.y][p.x])return '건물이 있어요';
+  if(!owned(p.x,p.y))return '아직 사지 않은 땅이에요';
   var ps=piecesAt(p.x,p.y);
   for(var i=0;i<ps.length;i++){
     var q=ps[i];
@@ -288,8 +289,8 @@ function skyRoute(A,B){
   while(c){chain.push(c);c=prev[c.id];}
   chain.reverse();
   var z=chain[0].l*LV,out=[],e0=skyAttach(chain[0],A)[0],e1=skyAttach(end,B)[0];
-  out.push({x:chain[0].x+.5+DIRS[e0][0]*.5,y:chain[0].y+.5+DIRS[e0][1]*.5,z:z,n:1000+chain[0].id});
-  chain.forEach(function(p){out.push({x:p.x+.5,y:p.y+.5,z:z,n:1000+p.id});});
-  out.push({x:end.x+.5+DIRS[e1][0]*.5,y:end.y+.5+DIRS[e1][1]*.5,z:z,n:1000+end.id});
+  out.push({x:chain[0].x+.5+DIRS[e0][0]*.5,y:chain[0].y+.5+DIRS[e0][1]*.5,z:z,n:PN+chain[0].id});
+  chain.forEach(function(p){out.push({x:p.x+.5,y:p.y+.5,z:z,n:PN+p.id});});
+  out.push({x:end.x+.5+DIRS[e1][0]*.5,y:end.y+.5+DIRS[e1][1]*.5,z:z,n:PN+end.id});
   return out;
 }

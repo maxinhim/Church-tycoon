@@ -1,0 +1,98 @@
+'use strict';
+/* ---------- 효과와 빠른 현황 ----------
+   · 건물을 지으면 그 위로 "좌석 +24" 같은 글씨가 올라가며 사라진다 (F 목록, 실제 시간 기준)
+   · 목표 달성 축하 카드와 종이 꽃가루 (CF 목록, 화면 좌표)
+   · 지도 구석 버튼으로 여는 빠른 현황(#quick)
+   · 목회 고민거리 선택 카드(#dlg) */
+var REDUCED=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
+var STATFX=[['seats','좌석','#ffffff'],['fcap','교제 공간','#ffd08a'],['kcap','돌봄 공간','#ffb6d2'],['ccap','편의 공간','#a9f0e4'],['park','주차','#d6e2ff'],['beauty','분위기','#c8f7a6'],['vis','방문자','#fff2b0']];
+function snapStats(){var o={};STATFX.forEach(function(s){o[s[0]]=A?A[s[0]]||0:0;});return o;}
+// before: snapStats()로 미리 찍어 둔 값. 늘어난 항목만 차례로 띄운다
+function statFx(before,wx,wy,z){
+  var after=snapStats(),i=0;
+  STATFX.forEach(function(s){
+    var d=after[s[0]]-before[s[0]];if(d<=0.05)return;
+    var txt=s[0]==='vis'?'+'+Math.round(d*100)+'%':'+'+(Math.abs(d-Math.round(d))>0.05?d.toFixed(1):Math.round(d));
+    F.push({x:wx,y:wy,z:z,t:2.4,d:2.4,delay:i*0.25,text:s[1]+' '+txt,col:s[2],big:1});i++;
+  });
+}
+function stepFx(rdt){
+  for(var i=0;i<F.length;i++){var f=F[i];if(f.delay>0)f.delay-=rdt;else f.t-=rdt;}
+  F=F.filter(function(f){return f.t>0;});
+  for(var j=0;j<CF.length;j++){var p=CF[j];p.vy+=420*rdt;p.vx*=0.995;p.x+=p.vx*rdt;p.y+=p.vy*rdt;p.r+=p.vr*rdt;p.life-=rdt;}
+  CF=CF.filter(function(p){return p.life>0&&p.y<VH+40;});
+}
+function drawFx(c){
+  F.forEach(function(f){
+    if(f.delay>0)return;
+    var dur=f.d||1.6,k=1-f.t/dur,p=rotPt(f.x,f.y),q=P(p[0],p[1],(f.z==null?1.1:f.z)+k*(f.big?1.5:.9));
+    var a=f.t<0.6?f.t/0.6:(k<0.1?k/0.1:1);
+    var size=f.big?Math.max(14,16*cam.z):Math.max(11,13*cam.z);
+    c.globalAlpha=clamp(a,0,1);c.font='800 '+size+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
+    c.lineWidth=f.big?4:3;c.strokeStyle='rgba(15,25,35,.85)';c.strokeText(f.text,q[0],q[1]);
+    c.fillStyle=f.col||'#fff';c.fillText(f.text,q[0],q[1]);c.globalAlpha=1;
+  });
+  CF.forEach(function(p){
+    c.save();c.translate(p.x,p.y);c.rotate(p.r);c.globalAlpha=clamp(p.life,0,1);c.fillStyle=p.col;c.fillRect(-p.w/2,-p.h/2,p.w,p.h);c.restore();
+  });
+}
+
+/* ---------- 목표 달성 축하 ---------- */
+var CF=[],celeTimer=0;
+function celebrate(g,lines){
+  var el=$('#cele');if(!el)return;
+  el.innerHTML='<div class="cbox" role="status"><div class="ckick">목표 달성</div><h2>'+g.n+'</h2><ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul><p class="chint">눌러서 닫기</p></div>';
+  el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  clearTimeout(celeTimer);celeTimer=setTimeout(function(){el.hidden=true;},7000);
+  if(!REDUCED.matches){
+    var cols=['#ffd23f','#ff6b6b','#4ecdc4','#7aa0ff','#ffffff','#c77dff','#8bd450'];
+    for(var i=0;i<160;i++){
+      var fromLeft=i%2===0;
+      CF.push({x:fromLeft?-10:VW+10,y:VH*0.55+Math.random()*VH*0.3,vx:(fromLeft?1:-1)*(260+Math.random()*420),vy:-(380+Math.random()*420),
+        r:Math.random()*6,vr:(Math.random()-.5)*14,w:5+Math.random()*6,h:3+Math.random()*4,col:cols[i%cols.length],life:2.6+Math.random()*1.4});
+    }
+  }
+  toast('목표 달성 · '+g.n,3000);
+}
+
+/* ---------- 빠른 현황 ---------- */
+function warnings(){
+  var w=[],c=S.cov||{};
+  if(S.money<0)w.push('자금이 마이너스예요. -1,500 아래로 내려가면 문을 닫아요');
+  else if(lastNet(S)<0)w.push('지난주 적자 '+fmt(lastNet(S)));
+  if(c.seat<1)w.push('좌석이 부족해 성도가 떠나요');
+  if(c.past<1)w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
+  var idle=evIdleWeeks();if(idle>6)w.push('행사를 연 지 '+idle+'주 됐어요. 공동체가 침체돼요');
+  if(S.stam<30)w.push('목회자가 지쳤어요. 쉬거나 중보기도팀을 꾸리세요');
+  var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');
+  var un=S.buildings.filter(function(b){return b.door&&!usable(b);}).length;if(un)w.push('이용할 수 없는 건물 '+un+'곳 (문·길 확인)');
+  if(c.park<0.7)w.push('주차가 모자라 방문자가 줄어요');
+  return w;
+}
+function qbar(label,v){
+  var p=Math.round(clamp(v,0,1)*100);
+  return '<span>'+label+'</span><div class="bar"><i style="width:'+p+'%;background:'+(p<60?'var(--bad)':p<90?'var(--gold)':'var(--good)')+'"></i></div><span class="v">'+p+'%</span>';
+}
+function renderQuick(){
+  var el=$('#quick');if(!el)return;
+  el.hidden=!UI.quick;$('#bStat')&&$('#bStat').setAttribute('aria-pressed',String(!!UI.quick));
+  if(!UI.quick)return;
+  var c=S.cov||{},net=lastNet(S),w=warnings(),act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
+  el.innerHTML='<div class="qh"><b>현황</b><button class="btn sm" data-q="close" aria-label="현황 닫기">✕</button></div>'+
+    '<div class="qnums"><div><span>만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
+    '<div><span>이번 주 방문</span><b>'+S.visitsWeek+'</b></div><div><span>새 성도</span><b>'+S.joinedWeek+'</b></div></div>'+
+    '<div class="cov">'+qbar('좌석',c.seat)+qbar('교제',c.fel)+qbar('돌봄',c.care)+qbar('편의',c.comf)+qbar('주차',c.park)+qbar('목양',c.past)+qbar('체력',S.stam/100)+'</div>'+
+    (act.length?'<div class="qev">'+act.map(function(id){return '<span>'+EVENTS[id].name+' · '+S.ev[id].left+'주</span>';}).join('')+'</div>':'')+
+    (w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>');
+}
+
+/* ---------- 목회 고민거리 카드 ---------- */
+function showDlg(){
+  var el=$('#dlg');if(!el)return;
+  var d=S.dlg?dlgById(S.dlg):null;
+  if(!d){el.hidden=true;return;}
+  el.hidden=false;
+  el.innerHTML='<div class="box" role="dialog" aria-modal="true" aria-labelledby="dlgT"><div class="ckick">목회 고민</div><h2 id="dlgT">'+d.t+'</h2><p>'+d.x+'</p><div class="dopts">'+
+    d.o.map(function(o,i){var off=o.ok&&!o.ok();return '<button class="btn'+(i===0?' pri':'')+'" data-act="dlg" data-v="'+i+'"'+(off?' disabled':'')+'><b>'+o.l+'</b><small>'+o.d+'</small></button>';}).join('')+
+    '</div><p class="chint">고르는 동안 시간이 멈춰요</p></div>';
+}
