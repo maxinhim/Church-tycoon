@@ -636,8 +636,8 @@ async function ministryChecks(browser, url) {
   const staffTab = await page.evaluate(() => UI.tab === 'staff' && /부교역자/.test(document.getElementById('panel').textContent));
   await page.click('#fab [data-fab="build"]');
   await page.click('#cards [data-v="room"]');
-  // 고르면 패널이 닫히고, 미리보기 둘레에 ✓·✕와 방향 화살표 4개, 아래 안내 띠
-  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && !document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 4 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
+  // 고르면 패널이 닫히고, 미리보기 둘레에 ✓·✕와 방향 화살표 4개 (건물은 안내 띠 없음)
+  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 4 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
   const btnPos = await page.evaluate(() => { syncPlace(); const r = s => document.querySelector(s).getBoundingClientRect(); const ok = r('#place [data-pl="ok"]'), no = r('#place [data-pl="no"]'); const bx = plBox(); return ok.left < no.left && ok.bottom <= bx.t + 4 && no.bottom <= bx.t + 4; });
   const effCard = await page.evaluate(() => /좌석 \+24/.test(document.querySelector('#cards [data-v="room"]').textContent));
   await page.click('#fab [data-fab="minis"]');
@@ -646,7 +646,8 @@ async function ministryChecks(browser, url) {
   const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   // 화살표로 정면 방향 바꾸기
   const faced = await page.evaluate(() => { syncPlace(); const el = [...document.querySelectorAll('#place .parr')].find(e => +e.dataset.v !== UI.face); const want = +el.dataset.v; el.click(); syncPlace(); return UI.face === want && el.classList.contains('on'); });
-  const barQuiet = await page.evaluate(() => { renderPbar(); return !/좌석 \+/.test(document.getElementById('pbar').textContent); });
+  const barQuiet = await page.evaluate(() => { renderPbar(); return document.getElementById('pbar').hidden; });
+  const blockedTip = await page.evaluate(() => { const g = { ...UI.ghost }; UI.ghost = { x: S.buildings[0].x, y: S.buildings[0].y }; syncPlace(); const ok = document.querySelector('#place [data-pl="ok"]'); const off = ok.classList.contains('off'); plLock = 0; ok.click(); const t = document.getElementById('toast'); const said = !t.hidden && t.textContent.length > 0; UI.ghost = g; syncPlace(); return off && said; });
   const m0 = await page.evaluate(() => S.money);
   if (placed) await page.click('#place [data-pl="ok"]');
   const fx = await page.evaluate(() => !F.some(f => /^(좌석|교제 공간|돌봄 공간|편의 공간|주차|분위기|방문자) \+/.test(f.text)));
@@ -661,14 +662,14 @@ async function ministryChecks(browser, url) {
     const g0 = { ...UI.ghost }; plLock = 0; plOk();
     const moved = UI.tool === 'tree' && (UI.ghost.x !== g0.x || UI.ghost.y !== g0.y) && S.buildings.length === n0 + 1;
     const noArrows = [...document.querySelectorAll('#place .parr')].every(e => e.hidden);
-    const und = document.querySelector('#pbar [data-act="undo"]'); und.click();
-    return moved && noArrows && S.buildings.length === n0 && S.money === mA;
+    syncPlace(); const und = document.querySelector('#place [data-pl="undo"]'); const undoOnMap = !und.hidden && document.getElementById('pbar').hidden; und.click();
+    return moved && noArrows && undoOnMap && S.buildings.length === n0 && S.money === mA;
   });
   await page.click('#place [data-pl="no"]');
   const ended = await page.evaluate(() => UI.tool === null && !document.getElementById('dock').hidden);
   // 길: 지도 위 ✓로 한 칸씩
   await page.click('#dock [data-v="path"]'); await page.click('#cards [data-v="path"]');
-  const pathOk = await page.evaluate(() => { const n = S.paths.length; plLock = 0; const okBtn = document.querySelector('#place [data-pl="ok"]'); syncPlace(); if (okBtn.disabled) { UI.pc.x = 4; UI.pc.y = ROWS - 4; UI.pc.l = 0; syncPlace(); } plOk(); return S.paths.length === n + 1 && !!document.querySelector('#pbar [data-act="pkind"]'); });
+  const pathOk = await page.evaluate(() => { const n = S.paths.length; plLock = 0; const okBtn = document.querySelector('#place [data-pl="ok"]'); syncPlace(); if (okBtn.classList.contains('off')) { UI.pc.x = 4; UI.pc.y = ROWS - 4; UI.pc.l = 0; syncPlace(); } plOk(); return S.paths.length === n + 1 && !!document.querySelector('#pbar [data-act="pkind"]'); });
   await page.keyboard.press('Escape');
   const escEnds = await page.evaluate(() => UI.tool === null);
   // 바닥: 화살표 = 깔아 나갈 방향, ✓마다 한 칸 칠하고 나아감. 지도를 누르면 자리만 옮김
@@ -695,12 +696,13 @@ async function ministryChecks(browser, url) {
   const smallBtns = await page.evaluate(() => { startPlace('bench'); syncPlace(); const r = document.querySelector('#place [data-pl="ok"]').getBoundingClientRect(); const a = document.querySelector('#place .parr').getBoundingClientRect(); endPlace(); return r.width <= 40 && a.width <= 34; });
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼으로 요약·챙길 일이 열리고, 다시 누르면 닫힘');
   check(minis && staffTab, '기능 버튼: 행사 버튼 안에 행사·사역자 탭');
-  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개와 안내 띠');
+  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개, 건물은 안내 띠 없음');
   check(btnPos, '지도에서 짓기: ✓는 왼쪽 위, ✕는 오른쪽 위 (미리보기보다 위)');
   check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
   check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
-  check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨를 지도·안내 띠에 띄우지 않음 (효과는 건축 카드에서만)');
+  check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨·안내 띠를 띄우지 않음 (효과는 건축 카드에서만)');
+  check(blockedTip, '지도에서 짓기: 못 짓는 자리에서 회색 ✓를 누르면 이유를 알려 줌');
   check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 목록으로 돌아오고, 그 주에는 전액 되돌리기');
   check(repeat, '지도에서 짓기: 조경은 옆자리로 이어 짓기, 방향 화살표 없음, 되돌리면 전액 환불');
   check(ended, '지도에서 짓기: ✕로 그만두면 목록으로 돌아옴');

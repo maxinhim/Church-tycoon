@@ -83,14 +83,18 @@ function syncPlace(){
   });
   // ✓·✕는 미리보기 위쪽 좌우. 화살표와 겹치지 않게 충분히 띄운다.
   // 위쪽(교회 이름표 줄)에 자리가 없으면 미리보기 아래로 내린다
-  var mid=(bx.l+bx.r)/2,half=Math.max((bx.r-bx.l)/2,28),top=Math.min(bx.t-18,show?minY-38:1e9),tb=$('#top').getBoundingClientRect().bottom+22;
+  var hasUn=k==='bld'&&UI.undo.length>0,mid=(bx.l+bx.r)/2,half=Math.max((bx.r-bx.l)/2,hasUn?46:28),top=Math.min(bx.t-18,show?minY-38:1e9),tb=$('#top').getBoundingClientRect().bottom+22;
   if(top<tb)top=Math.max(bx.b+18,show?maxY+38:-1e9);
   var ok=root.querySelector('[data-pl="ok"]'),no=root.querySelector('[data-pl="no"]');
   plMove(ok,cl(mid-half,22,vw-22),cl(top,22,vh-22),38);
   plMove(no,cl(mid+half,22,vw-22),cl(top,22,vh-22),38);
+  // 조경 이어 짓기 중이면 ✓·✕ 사이에 되돌리기 (건물은 안내 띠가 없으므로 여기에만 있다)
+  var un=root.querySelector('[data-pl="undo"]');un.hidden=!hasUn;
+  if(!un.hidden)plMove(un,cl(mid,22,vw-22),cl(top,22,vh-22),32);
   var can=k==='path'?plPathWhy()==='':(k==='floor'?!floorWhy(UI.ghost.x,UI.ghost.y,UI.tool):!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face));
-  ok.disabled=!can;
-  ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?D[UI.tool].name+' 짓기':'여기에는 지을 수 없어요'));
+  // 못 지을 때도 누를 수는 있게 두고(회색), 누르면 이유를 알려 준다
+  ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
+  ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost):'여기에는 지을 수 없어요'));
 }
 function plPathWhy(){var p=pcPiece();return p?(pieceFits(p)||(S.money<pieceCost(p)?'자금이 부족해요':'')):'시작할 곳을 먼저 누르세요';}
 // 화살표: 건물은 정면(기본 출입구) 방향, 길은 다음 칸이 이어질 방향
@@ -166,7 +170,7 @@ function unbuild(u){
 }
 function renderPbar(){
   var el=$('#pbar');if(!el)return;
-  var k=placeKind();el.hidden=!k;if(!k){plHtml='';syncPlace();return;}
+  var k=placeKind();el.hidden=!k||k==='bld';if(el.hidden){plHtml='';syncPlace();return;}
   var h='',undo=UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'',d=D[UI.tool];
   if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
@@ -201,11 +205,12 @@ function setupPlace(){
   var root=$('#place'),arrow='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M12 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   root.innerHTML=[0,1,2,3].map(function(d){return '<button class="parr" data-pl="dir" data-v="'+d+'" aria-label="방향 '+(d+1)+'">'+arrow+'</button>';}).join('')+
     '<button class="pok" data-pl="ok" aria-label="짓기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+    '<button class="pun" data-pl="undo" data-act="undo" aria-label="방금 지은 것 되돌리기" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
     '<button class="pno" data-pl="no" aria-label="그만두기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>';
   root.addEventListener('click',function(e){
     var b=e.target.closest('[data-pl]');if(!b)return;
     var a=b.dataset.pl;
-    if(a==='ok')plOk();else if(a==='no')endPlace();else if(a==='dir')plDir(+b.dataset.v);
+    if(a==='ok')plOk();else if(a==='no')endPlace();else if(a==='undo')onPanel(e);else if(a==='dir')plDir(+b.dataset.v);
   });
   $('#pbar').addEventListener('click',onPanel);
   // PC: Enter 짓기, Esc 그만두기, R 방향 돌리기
