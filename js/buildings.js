@@ -122,6 +122,10 @@ mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flo
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
 mk('ter_set','땅 높이','land',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 60',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','land',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
+/* 꾸미기에 마음 쓰도록: 기능 건물(예배·교제·매장·돌봄·편의·주차)은 1.5배 값.
+   정원·장식·바닥·길·지형은 그대로 (초기 자금은 두 배로 늘렸다) */
+var BUILD_K=1.5,PRICY_CATS=['worship','fellow','shop','care','comfort','park'];
+DEFS.forEach(function(d){if(PRICY_CATS.indexOf(d.cat)>=0)d.cost=Math.round(d.cost*BUILD_K/10)*10;});
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 function heightOf(id){
   var d=D[id];

@@ -13,6 +13,7 @@ function spawnV(member){
     life:55+Math.random()*30,speed:1.9+Math.random()*0.7,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
+  gripeInit(V[V.length-1]);
 }
 // 한 주가 48초라 한 주에 오는 방문자가 예전(240초)보다 적어, 한 번 방문의 정착 확률을 올려 한 주 합계를 맞춘다
 var JOIN_P=0.14;
@@ -97,8 +98,9 @@ function finishVisit(v){
     // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
     if(d.income&&v.wallet>0){
       var pay=Math.min(v.wallet,Math.round(d.income*SHOP_K*wxSale(d)*(0.7+Math.random()*0.6)));
-      if(pay>0){var sup=Math.round(pay*SHOP_COST);v.wallet-=pay;S.money+=pay-sup;S.weekInc+=pay;S.weekShop+=pay;S.weekSup=(S.weekSup||0)+sup;sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
+      if(pay>0){var sup=Math.round(pay*SHOP_COST);v.wallet-=pay;S.money+=pay-sup;S.weekInc+=pay;S.weekShop+=pay;S.weekSup=(S.weekSup||0)+sup;gripeBought(v,b);sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
+    gripeUsed(v,b);
     placeAt(v,exitNodeFor(b));
   }
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
@@ -110,7 +112,7 @@ function goLeave(v){
   if(!p.length)depart(v);
 }
 function depart(v){
-  v.dead=true;
+  v.dead=true;gripeLeave(v);
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4-v.annoy*5;
   if(v.member){S.rep=clamp(S.rep+(avg-58)*0.002,0,100);return;}
   S.rep=clamp(S.rep+(avg-58)*0.006,0,100);
@@ -122,6 +124,9 @@ function depart(v){
 function decide(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;
   if(v.life<=0||avg>=80){goLeave(v);return;}
+  // 둘레를 둘러보고(삭막한지·쓰레기통), 급한 일(화장실·쉴 자리·마실 것)이 있으면 그것부터
+  gripeLook(v);
+  if(v.urge&&urgeGo(v))return;
   var order=NEEDS.slice().sort(function(a,b){return v.needs[a]-v.needs[b];});
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
@@ -147,8 +152,10 @@ function stepV(v,dt){
   v.life-=dt;
   // 비·폭염·눈 속을 걸으면 편의 욕구가 떨어진다
   if(v.state!=='inside'){var dr=wxDrain();if(dr)v.needs.comf=Math.max(0,v.needs.comf-dr*dt);}
+  // 걸은 거리(지난 프레임)와 머문 시간으로 급한 일이 생긴다
+  gripeTick(v,dt,v.mv||0);v.mv=0;
   if(v.state==='walk'||v.state==='leave'){
-    var r=moveAlong(v,dt);
+    var ox=v.x,oy=v.y,r=moveAlong(v,dt);v.mv=Math.abs(v.x-ox)+Math.abs(v.y-oy);
     if(r==='blocked'){
       if(v.state==='leave')goLeave(v);else{v.state='idle';v.t=0.2;v.target=0;}
       return;
@@ -159,7 +166,7 @@ function stepV(v,dt){
     if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
     if(b.inUse<defOf(b).cap)enter(v,b);
     else if(linkWithSpace(b)&&startXfer(v,b,linkWithSpace(b))){}
-    else{v.wait-=dt;if(v.wait<=0){v.annoy++;v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
+    else{v.wait-=dt;if(v.wait<=0){v.annoy++;addGripe('crowd',defOf(b).name);v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
   }else if(v.state==='xfer'){
     var to=bById(v.target),r2=moveAlong(v,dt);
     if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}

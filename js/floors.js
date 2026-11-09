@@ -82,7 +82,7 @@ function drawFloors(){
 }
 
 /* ---------- 입구까지 길 잇기 ----------
-   건물의 입구·출구 앞에서 이미 걸어서 닿는 바닥까지, 잔디를 가장 적게 지나는 길을 찾아 보도블록을 깐다.
+   건물의 입구·출구 앞에서 이미 걸어서 닿는 바닥까지, 잔디를 가장 적게 지나는 길을 찾아 고른 바닥(기본 보도블록)을 깐다.
    잔디 칸은 비용 1, 이미 걸을 수 있는 칸은 0으로 보는 0-1 너비 우선 탐색 */
 var LINK_FLOOR='f_block';
 function linkPlan(b){
@@ -122,10 +122,11 @@ function walkSearch(sx,sy,add){
   }
   return null;
 }
-function linkDoor(b){
+function linkDoor(b,fid){
   var p=linkPlan(b);if(p.why)return p.why;
   if(!p.tiles.length)return '이미 길이 이어져 있어요';
-  if(S.money<p.cost)return '자금이 부족해요 ('+fmt(p.cost)+' 필요)';
-  S.money-=p.cost;p.tiles.forEach(function(t){S.floor[t.x+','+t.y]=LINK_FLOOR;});
+  var id=FLOOR_IDS.indexOf(fid)>=0?fid:LINK_FLOOR,c=p.tiles.length*D[id].cost;
+  if(S.money<c)return '자금이 부족해요 ('+fmt(c)+' 필요)';
+  S.money-=c;p.tiles.forEach(function(t){S.floor[t.x+','+t.y]=id;});
   recalc();save();return '';
 }

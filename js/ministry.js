@@ -7,8 +7,8 @@
 /* ---------- 난이도 ---------- */
 var DIFF={
   easy:{name:'테스트',money:50000,cost:.8,churn:.7,desc:'자금 50,000으로 넉넉하게 시험해 봅니다'},
-  normal:{name:'보통',money:6000,cost:1,churn:1,desc:'적은 자금에서 차근차근 세워 갑니다'},
-  hard:{name:'어려움',money:4000,cost:1.2,churn:1.25,desc:'더 적은 자금, 더 높은 운영비와 이탈'}
+  normal:{name:'보통',money:12000,cost:1,churn:1,desc:'적은 자금에서 차근차근 세워 갑니다'},
+  hard:{name:'어려움',money:8000,cost:1.2,churn:1.25,desc:'더 적은 자금, 더 높은 운영비와 이탈'}
 };
 function curDiff(){return DIFF[S.diff]||DIFF.normal;}
 
@@ -175,7 +175,9 @@ function refreshMods(){
   var st=S.staff,m={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
   m.vis*=(1+0.2*st.evang)*(1+0.12*st.media)*(1+0.06*st.edu);
   m.join*=(1+0.1*st.evang)*(1+0.12*st.newcomer);
-  m.mood+=2*st.praise+st.care+2*st.prayer;
+  // 만족도에 더하고 빼는 것들을 이름과 함께 남겨 현황에서 설명한다
+  var mp=[],part=function(n,v){if(Math.abs(v)>=0.05)mp.push([n,v]);m.mood+=v;};
+  part('사역팀 (찬양·돌봄·중보기도)',2*st.praise+st.care+2*st.prayer);
   m.offer*=1+0.12*st.praise;m.word*=1+0.06*st.praise;
   m.care*=(1+0.15*st.care)*(1+0.12*st.edu);
   m.cap+=8*st.care;m.loss*=1-0.04*st.prayer;
@@ -184,7 +186,7 @@ function refreshMods(){
   S.assoc.forEach(function(a){
     m.cap+=35;var k=a.skill;
     if(a.field==='edu')m.care*=1+0.04*k;
-    else if(a.field==='praise'){m.word*=1+0.04*k;m.mood+=0.6*k;}
+    else if(a.field==='praise'){m.word*=1+0.04*k;part('찬양 부교역자',0.6*k);}
     else if(a.field==='visit'){m.cap+=12*k;m.loss*=1-0.03*k;}
     else if(a.field==='admin'){m.upkeep*=1-0.03*k;m.decay*=1-0.06*k;}
     else if(a.field==='mission'){m.vis*=1+0.04*k;m.rep+=0.15*k;}
@@ -192,15 +194,19 @@ function refreshMods(){
   var o=S.off;
   m.cap+=6*o.deacon+10*o.kwonsa+18*o.elder;
   m.upkeep*=1-Math.min(0.12,0.01*o.deacon);
-  m.mood+=Math.min(6,0.4*o.kwonsa);
+  part('권사',Math.min(6,0.4*o.kwonsa));
   m.loss*=1-Math.min(0.2,0.02*o.elder);
   m.rep+=Math.min(1,0.1*o.elder);
-  activeEvents().forEach(function(id){if(EVENTS[id].mods)EVENTS[id].mods(m);});
+  var em=m.mood;activeEvents().forEach(function(id){if(EVENTS[id].mods)EVENTS[id].mods(m);});
+  var ev=m.mood-em;m.mood=em;part('진행 중인 행사',ev);
   // 행사를 오래 열지 않으면 공동체가 침체된다
-  var idle=evIdleWeeks();if(idle>6)m.mood-=Math.min(15,(idle-6)*1.5);
-  // 많이 낡은 건물(상태 50% 미만)이 늘수록 성도 만족이 떨어진다
-  var worn=S.buildings.filter(function(b){return wearStage(b)>=3;}).length;m.mood-=Math.min(12,worn*1.2);
-  m.mood+=S.tempMood;
+  var idle=evIdleWeeks();if(idle>6)part('행사를 연 지 '+idle+'주 (침체)',-Math.min(15,(idle-6)*1.5));
+  // 많이 낡은 건물이 늘수록 성도 만족이 떨어진다
+  var worn=S.buildings.filter(function(b){return wearStage(b)>=3;}).length;part('검은 연기 나는 낡은 건물 '+worn+'곳',-Math.min(12,worn*1.2));
+  part('최근 일 (고민 선택·행사 여운)',S.tempMood);
+  // 지난주 방문자가 겪은 불편(화장실·쉴 자리·삭막함 등)
+  part('지난주 방문자 불편',-(S.gripPen||0));
+  m.parts=mp;
   MOD=m;
 }
 /* ---------- 목회 고민거리: 가끔 선택을 묻는 카드가 뜨고, 고르는 동안 게임이 멈춘다 ---------- */

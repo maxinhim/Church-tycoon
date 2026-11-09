@@ -77,7 +77,7 @@ function weekEnd(){
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(st.left>0)st.left--;if(st.cd>0)st.cd--;}
-  decayWeek();trafWeek();
+  decayWeek();trafWeek();gripeWeek();
   for(var k in OFFICE){var mx=officeMax(k);if(S.off[k]>mx){addLog('성도가 줄어 '+OFFICE[k].name+' '+(S.off[k]-mx)+'명이 직분을 내려놓았어요');S.off[k]=mx;}}
   if(S.week-S.candWeek>=6)refreshCands();
   var ev='';

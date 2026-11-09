@@ -17,6 +17,10 @@ function floorRow(prev,pid,x,y){
   }).join('');
   return '<div class="scb fsr">'+h+'</div>';
 }
+function linkRow(n){
+  return '<div class="scb fsr">'+FLOOR_IDS.map(function(id){var c=n*D[id].cost;
+    return '<button class="btn sm fsw" data-act="linkf" data-v="'+id+'" style="--fc:'+D[id].wall+'"'+(S.money<c?' disabled':'')+' aria-label="'+D[id].name+'(으)로 '+n+'칸 잇기 '+fmt(c)+'"><i></i>'+D[id].name+' '+fmt(c)+'</button>';}).join('')+'</div>';
+}
 function scBtn(act,label,cls,v,aria){return '<button class="btn sm'+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v!=null?' data-v="'+v+'"':'')+(aria?' aria-label="'+aria+'"':'')+'>'+label+'</button>';}
 function scDem(label,cost){
   var armed=performance.now()<scArm;
@@ -40,9 +44,12 @@ function renderSelCard(){
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
-    if(b.door&&!usable(b)){var lp=linkPlan(b);if(!lp.why&&lp.tiles.length)row+=scBtn('link','길 잇기 '+fmt(lp.cost),'pri');}
+    var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
+    if(lk)row+=scBtn('link',UI.linkPick===b.id?'길 잇기 ⌄':'길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
     var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
     if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));
+    // 길 잇기를 누르면: 어떤 바닥으로 이을지 고르는 줄 (칸 수 × 한 칸 값)
+    if(lk&&UI.linkPick===b.id)h+=linkRow(lp.tiles.length);
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
     if(b.door)more+='<div class="scd"><span>입구</span>'+scBtn('door','◀','','ent:-1','입구를 이전 자리로')+scBtn('door','▶','','ent:1','입구를 다음 자리로')+

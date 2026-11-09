@@ -18,7 +18,8 @@ function newState(dk){
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,fel:1,care:1,comf:1,park:1,past:1},
-    hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0};
+    hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
+    grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
@@ -47,4 +48,4 @@ function calcMood(){
   var mood=100*(0.26*seat+0.16*fel+0.12*care+0.1*comf+0.14*park+0.22*past)+Math.min(8,A.beauty*0.8)+MOD.mood;
   return {mood:clamp(mood,0,100),seat:seat,fel:fel,care:care,comf:comf,park:park,past:past};
 }
-function recalc(){refreshNav();refreshMods();A=agg();var m=calcMood();S.mood=m.mood;S.cov=m;}
+function recalc(){refreshNav();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;}

@@ -103,7 +103,8 @@ function onPanel(e){
     startPlace(v);
   }
   else if(a==='cancel'){endPlace();}
-  else if(a==='link'){var lbd=bById(v?+v:UI.sel),lw=linkDoor(lbd);toast(lw||'입구까지 보도블록을 깔았어요',1600);renderDetail();hud(true);}
+  else if(a==='link'){UI.linkPick=UI.linkPick===UI.sel?null:UI.sel;renderDetail();}
+  else if(a==='linkf'){var lbd=bById(UI.sel),lw=linkDoor(lbd,v);UI.linkPick=null;if(lw){toast(lw,1600);sfx('error',.4);}else{toast('입구까지 '+D[v].name+'을(를) 깔았어요',1600);sfx('floor',.5);}renderDetail();hud(true);}
   else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}
   else if(a==='pslope'){UI.pc.slope=+v;renderDetail();}
   else if(a==='pkind'){if(v==='sky'&&isLocked('sky')){toast('연결 다리는 '+lockText(lockGoal('sky'))+' 지을 수 있어요',1800);return;}UI.pc.k=v;renderDetail();}
@@ -137,6 +138,7 @@ function onPanel(e){
     UI.selFloor=null;UI.tab='build';UI.fold=false;UI.cat='land';startPlace('ter_ramp');UI.ghost={x:rf.x,y:rf.y};renderDetail();
   }
   else if(a==='fexp'){UI.fexp=UI.fexp===v?null:v;renderFinance();}
+  else if(a==='mexp'){UI.mexp=UI.mexp===v?null:v;renderStatus();}
   else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){

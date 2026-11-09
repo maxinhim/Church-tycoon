@@ -45,7 +45,14 @@
 .pips{display:flex;gap:3px;margin-top:3px}
 .pips i{width:16px;height:5px;border-radius:3px;background:var(--line)}
 .pips i.on{background:var(--accent)}
-.cov{display:grid;grid-template-columns:62px 1fr 38px;gap:4px 8px;align-items:center;font-size:12px}
+.cov{display:flex;flex-direction:column;gap:2px;font-size:12px}
+.cov .covb{all:unset;box-sizing:border-box;display:grid;grid-template-columns:62px 1fr 38px;gap:8px;align-items:center;width:100%;padding:3px 4px;border-radius:6px;cursor:pointer}
+.cov .covb:hover,.cov .covb.open{background:var(--chip)}
+.cov .covb:focus-visible{outline:2px solid var(--accent)}
+.cov .covb>span:first-child::after{content:' ›';opacity:.5}
+.cov .covb.open>span:first-child::after{content:' ⌄'}
+.cov ul.rwhy{margin:2px 0 6px 6px;padding:6px 8px;border-left:3px solid var(--accent);background:var(--chip);border-radius:0 6px 6px 0;font-size:12px;line-height:1.45;list-style:none}
+.cov ul.rwhy li{list-style:'· ' inside;color:var(--ink);margin:1px 0}
 .cov .bar{height:7px}
 .cov .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
 .sec{font-family:var(--f-display);font-weight:700;font-size:14px;margin:10px 0 5px}
@@ -84,6 +91,8 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 /* 사역자·행사 패널 */
 .srow .meta{color:var(--muted);font-size:12px}
 .srow .bar{margin-top:5px;height:6px}
+.srow .evc{align-self:center;font-size:12.5px;font-weight:700;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.srow .evc.neg{color:var(--bad)}
 .card.lock{opacity:.55}
 .card.lock .pr{color:var(--muted);font-weight:500}
 .diffs{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}

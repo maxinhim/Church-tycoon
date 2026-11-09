@@ -1026,6 +1026,74 @@ async function deckChecks(browser, url) {
   await ctx.close();
 }
 
+// 방문자 불편·만족도 설명·길 잇기 바닥 고르기·가격
+async function gripeChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 7;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.dlg = null; S.open = true;
+    const o = {};
+    // 가격: 기능 건물 1.5배, 꾸미기는 그대로, 초기 자금 두 배
+    o.price = S.money === 12000 && DIFF.hard.money === 8000 && D.wc.cost === 540 && D.chapel.cost === 4200 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 750;
+    S.money = 999999; S.goal = GOALS.length; recalc();
+    const put = id => { for (let y = PZ - 3; y > 0; y--) for (let x = 2; x < COLS - 3; x++) if (canPlace(D[id], x, y, 2)) { build(id, x, y, 2); const nb = S.buildings[S.buildings.length - 1]; recalc(); return nb; } return null; };
+    // 길 잇기: 고른 바닥으로 깔고 값은 칸 수 × 그 바닥 값
+    const cafe = put('cafe'); const lp = linkPlan(cafe), m0 = S.money;
+    UI.sel = cafe.id; UI.fold = true; renderSelCard();
+    document.querySelector('#selCard [data-act="link"]').click();
+    const row = [...document.querySelectorAll('#selCard [data-act="linkf"]')].map(b => b.dataset.v);
+    document.querySelector('#selCard [data-act="linkf"][data-v="f_brick"]').click();
+    o.link = lp.tiles.length > 0 && row.length === FLOOR_IDS.length && usable(cafe) && m0 - S.money === lp.tiles.length * D.f_brick.cost && lp.tiles.every(t => S.floor[t.x + ',' + t.y] === 'f_brick');
+    UI.sel = null; closeSelCard && closeSelCard();
+    // 화장실: 급한데 없으면 불편 + 일찍 돌아감, 있으면 찾아간다
+    S.grip = {}; spawnV(false); const v = V[V.length - 1]; v.urge = 'wc'; v.life = 50;
+    o.noWc = urgeGo(v) === false && S.grip.wc === 1 && v.life <= 3 && v.annoy === 1 && !v.urge;
+    // 문 앞에서 길을 이을 수 있는 자리를 찾을 때까지 (못 이으면 철거하고 다음 자리)
+    let wc = null;
+    for (let y = PZ - 3; y > 0 && !wc; y--) for (let x = 2; x < COLS - 3 && !wc; x++) if (canPlace(D.wc, x, y, 2)) {
+      build('wc', x, y, 2); const nb = S.buildings[S.buildings.length - 1]; recalc(); linkDoor(nb); recalc();
+      if (usable(nb)) wc = nb; else { demolish(nb.id); recalc(); } }
+    spawnV(false); const v2 = V[V.length - 1]; v2.urge = 'wc';
+    o.goWc = usable(wc) && urgeGo(v2) === true && v2.target === wc.id;
+    enter(v2, wc); finishVisit(v2); o.goWc = o.goWc && !v2.urge && v2.wcT > 1e8;
+    // 쓰레기: 매장에서 사고 쓰레기통이 없으면 떠날 때 불편
+    spawnV(false); const v3 = V[V.length - 1]; v3.wallet = 30; enter(v3, cafe); finishVisit(v3);
+    o.trash = v3.trash === true; depart(v3); o.trash = o.trash && S.grip.bin === 1;
+    // 다리: 오래 걸으면 쉴 자리를 찾는다
+    spawnV(false); const v4 = V[V.length - 1]; gripeTick(v4, .1, 99); o.legs = v4.urge === 'seat' || v4.urge === 'drink';
+    // 주일 정산: 불편 비율만큼 다음 주 만족도가 내려가고, 챙길 일에 무엇을 지을지 보인다
+    S.grip = { wc: 6, seat: 4 }; S.gripN = 20; gripeWeek(); recalc();
+    o.pen = S.gripPen === 7.5 && MOD.parts.some(p => /불편/.test(p[0]) && p[1] === -7.5);
+    o.warn = warnings().some(t => /화장실을 못 찾은 방문자 6명 → 화장실/.test(t)) && warnings().some(t => /쉴 곳/.test(t));
+    // 만족도 항목을 누르면 계산 방식이 펼쳐진다
+    UI.tab = 'status'; UI.statusTab = 'status'; UI.fold = false; renderPanel(); renderStatus();
+    const rows = document.querySelectorAll('#panel .covb').length;
+    document.querySelector('#panel .covb[data-v="seat"]').click();
+    const seat = document.querySelector('#panel ul.rwhy'); const st = seat ? seat.textContent : '';
+    document.querySelector('#panel .covb[data-v="all"]').click();
+    const al = (document.querySelector('#panel ul.rwhy') || {}).textContent || '';
+    o.mood = rows === 7 && /좌석 \d+ ÷ 필요/.test(st) && /비중 26%/.test(st) && /시설·목양 점수/.test(al) && /불편/.test(al);
+    ['past', 'fel', 'care', 'comf', 'park'].forEach(k => { o.mood = o.mood && moodWhy(k).indexOf('<li>') === 0; });
+    return o;
+  });
+  check(r.price, '가격: 초기 자금 두 배, 기능 건물·칸 위층 1.5배, 꾸미기·바닥은 그대로');
+  check(r.link, '길 잇기: 카드에서 바닥 종류를 골라 그 바닥으로 깔고, 값은 칸 수 × 그 바닥 값');
+  check(r.noWc && r.goWc, '불편: 화장실이 급하면 찾아가고, 없으면 불편을 겪고 일찍 돌아감');
+  check(r.trash && r.legs, '불편: 매장에서 산 뒤 쓰레기통이 없으면 불편, 오래 걸으면 쉴 자리·마실 것을 찾음');
+  check(r.pen && r.warn, '불편: 지난주 불편 비율만큼 만족도가 내려가고, 챙길 일에 지을 것이 보임');
+  check(r.mood, '현황: 만족도 항목을 누르면 계산 방식이 펼쳐짐');
+  check(errs.length === 0, '불편: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -1040,6 +1108,7 @@ async function deckChecks(browser, url) {
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
     await deckChecks(browser, url);
+    await gripeChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);
