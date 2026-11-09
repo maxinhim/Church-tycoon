@@ -509,3 +509,30 @@ function drawFenceSeg(f){
 }
 // 도로 쪽 울타리의 사람 출입구 기둥
 function drawRoadGap(){var y=ROWS-1;box(rrect(ENT-.04,y-.05,ENT+.06,y+.05),0,.7,'#2f4a3c');box(rrect(ENT+.94,y-.05,ENT+1.04,y+.05),0,.7,'#2f4a3c');}
+/* ---------- 낡은 건물 표시 (상태 단계별) ----------
+   1: 앞 모서리 처마 밑 거미줄 / 2: 지붕에서 하얀 연기 / 3: 검은 연기 (거미줄도 함께).
+   연기는 몇 덩이만 천천히 올라가 화면을 많이 가리지 않는다 */
+function frontTile(b){var best=null,bk=-1e9;b.tiles.forEach(function(t){var r=rrect(t.x,t.y,t.x+1,t.y+1),k=r.x1+r.y1;if(k>bk){bk=k;best=t;}});return best;}
+function drawWear(b){
+  var st=wearStage(b);if(!st)return;
+  var c=PJ.c,s=PJ.s,r,top,wall;
+  if(isRoom(b)){var t=frontTile(b);r=rrect(t.x,t.y,t.x+1,t.y+1);top=roomTop(t.f);wall=top*.85;}
+  else{var dm=bDims(b);r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h);top=bHeight(b);wall=Math.min(top*.7,(D[b.def].H||1)*(b.floors||1)*.9);}
+  // 거미줄: 화면 앞쪽 모서리 벽 윗부분에 부채꼴
+  var q=P(r.x1,r.y1,wall),R=Math.max(5,11*s);
+  c.save();c.strokeStyle='rgba(250,250,250,.85)';c.lineWidth=Math.max(.6,.8*s);c.beginPath();
+  for(var i=0;i<=5;i++){var a=Math.PI*(1.12+i*.152);c.moveTo(q[0],q[1]);c.lineTo(q[0]+Math.cos(a)*R,q[1]+Math.sin(a)*R*.9);}
+  for(var k=1;k<=3;k++){var rr=R*k/3.2;for(var j=0;j<5;j++){var a0=Math.PI*(1.12+j*.152),a1=Math.PI*(1.12+(j+1)*.152);
+    var p0=[q[0]+Math.cos(a0)*rr,q[1]+Math.sin(a0)*rr*.9],p1=[q[0]+Math.cos(a1)*rr,q[1]+Math.sin(a1)*rr*.9],mx=(p0[0]+p1[0])/2-(p0[0]+p1[0]-2*q[0])*.07,my=(p0[1]+p1[1])/2-(p0[1]+p1[1]-2*q[1])*.07;
+    c.moveTo(p0[0],p0[1]);c.quadraticCurveTo(mx,my,p1[0],p1[1]);}}
+  c.stroke();c.restore();
+  if(st<2)return;
+  // 연기: 지붕 가운데에서 위로 피어오른다
+  var cx=(r.x0+r.x1)/2,cy=(r.y0+r.y1)/2,base=P(cx,cy,top),n=5,ph=(b.id*.37)%1,k=Math.max(.65,s);
+  for(var m=0;m<n;m++){
+    var u=(S.clock*.3+ph+m/n)%1,a=Math.min(1,u*6)*(1-u),rad=(5+u*12)*k,x=base[0]+Math.sin(u*5+b.id)*4*k+u*12*k,y=base[1]-u*58*k;
+    c.fillStyle=st>=3?'rgba(40,36,34,'+(.8*a).toFixed(3)+')':'rgba(250,250,250,'+(.85*a).toFixed(3)+')';
+    c.strokeStyle=st>=3?'rgba(20,18,16,'+(.35*a).toFixed(3)+')':'rgba(150,160,170,'+(.45*a).toFixed(3)+')';c.lineWidth=1;
+    c.beginPath();c.arc(x,y,rad,0,6.283);c.fill();c.stroke();
+  }
+}

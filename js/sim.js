@@ -41,6 +41,12 @@ function weekEnd(){
   var visGive=Math.round(S.visitsWeek*0.5*(0.5+S.rep/100));
   var sponsor=Math.round(Math.max(0,260-3.5*S.week));
   var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(teamPay()+assocPay());
+  // 재정 화면에서 항목마다 어떻게 계산됐는지 보여 주려고 계산 재료를 함께 남긴다
+  var loanList=S.loans.map(function(l){return {n:LOANS[l.k].name,p:Math.round(l.pay)};});
+  var upTop=S.buildings.map(function(b){var d=defOf(b),u=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);return {n:d.name,u:u,w:wearStage(b)};})
+    .filter(function(o){return o.u>0;}).sort(function(a,b){return b.u-a.u;}).slice(0,3);
+  var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,visits:S.visitsWeek,rep:Math.round(S.rep),week:S.week,
+    up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,team:Math.round(teamPay()),assoc:Math.round(assocPay()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
   var loan=payLoans();
   // 매장 재료비: 판매액의 절반
   var supply=Math.round(S.weekShop*SHOP_COST);
@@ -49,7 +55,7 @@ function weekEnd(){
   S.money+=give-opex-pay-loan-supply;
   S.hist.push({inc:inc,exp:exp});if(S.hist.length>12)S.hist.shift();
   S.posWeeks=inc-exp>0?S.posWeeks+1:0;
-  S.rcpt={w:S.week,closed:closed,attend:attend,offering:offering,online:online,visGive:visGive,shop:Math.round(S.weekShop),other:Math.round(S.weekInc-S.weekShop),sponsor:sponsor,opex:opex,pay:pay,loan:loan,supply:supply,wx:wxNow(),wxLost:wxLost,net:Math.round(inc-exp)};
+  S.rcpt={w:S.week,closed:closed,attend:attend,offering:offering,online:online,visGive:visGive,shop:Math.round(S.weekShop),other:Math.round(S.weekInc-S.weekShop),sponsor:sponsor,opex:opex,pay:pay,loan:loan,supply:supply,wx:wxNow(),wxLost:wxLost,net:Math.round(inc-exp),x:X};
   if(closed)S.tempMood-=6;
   var msg=closed?'문을 닫은 주일 · 온라인 헌금 +'+fmt(online):'주일예배 · 출석 '+attend+'명 · 헌금 +'+fmt(offering)+(S.weekShop?' · 매장 +'+fmt(S.weekShop):'')+' · 지출 −'+fmt(exp);
   var churn=m*0.012;

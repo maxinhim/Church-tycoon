@@ -119,11 +119,17 @@ async function playChecks(browser, url) {
   await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
   for (const b of ['#bRot', '#bIn', '#bOut', '#bHome']) await page.click(b);
   // 톱니바퀴를 열어 배속을 바꾸고, 1×가 아니면 톱니바퀴에 표시가 붙는다
+  // 보통 모드에서는 빨리 감기(2×~8×)가 숨겨지고 일시정지·1×만 보인다
   await page.click('#bGear');
+  const fastHidden = await page.evaluate(() => S.diff !== 'easy' && [2, 4, 8].every(v => document.querySelector('.sp [data-sp="' + v + '"]').hidden) && !document.querySelector('.sp [data-sp="0"]').hidden);
+  await page.evaluate(() => { S.diff = 'easy'; syncSpeed(); });
   for (const s of ['0', '2', '4']) await page.click(`.sp [data-sp="${s}"]`);
   const badge = await page.evaluate(() => !document.getElementById('spBadge').hidden && document.getElementById('spBadge').textContent === '4×');
+  // 음악 버튼은 게임 속도를 바꾸지 않는다
+  const sndSafe = await page.evaluate(() => { document.getElementById('bMusic').click(); document.getElementById('bMusic').click(); return UI.speed === 4; });
+  check(fastHidden && sndSafe, '게임 속도: 보통 모드는 일시정지·1×만, 테스트 모드는 8×까지, 소리 버튼은 속도와 무관');
   await page.click('.sp [data-sp="1"]');
-  const badgeOff = await page.evaluate(() => document.getElementById('spBadge').hidden);
+  const badgeOff = await page.evaluate(() => { const h = document.getElementById('spBadge').hidden; S.diff = 'normal'; syncSpeed(); return h; });
   await page.mouse.click(300, 200);
   const gearClosed = await page.evaluate(() => document.getElementById('gearMenu').hidden);
   check(badge && badgeOff && gearClosed, '톱니바퀴: 배속을 바꾸면 표시가 붙고, 바깥을 누르면 닫힘');
@@ -511,7 +517,7 @@ async function rulesChecks(browser, url) {
     S.members = 20; S.wx.cur = 'storm'; S.t = WEEK - 0.05; S.wx.day = 6; update(0.1);
     o.wxSunday = S.rcpt.wx === 'storm' && S.rcpt.wxLost > 0 && /폭우/.test(document.getElementById('rcpt').textContent);
     hud(true);
-    o.wxClock = new RegExp(WEATHER[S.wx.cur].n).test(document.getElementById('wxNow').textContent) && /내일|월요일/.test(document.getElementById('wxNext').textContent);
+    o.wxClock = new RegExp(WEATHER[S.wx.cur].n).test(document.getElementById('wxNow').textContent) && /내일|일 뒤/.test(document.getElementById('wxNext').textContent);
     // 날씨마다 그려 보기 (비·눈 효과, 우산, 번개, 무지개)
     for (let i = 0; i < 20; i++) spawnV(false);
     Object.keys(WEATHER).forEach(k => { S.wx.cur = k; WX.k = {}; WX.k[k] = 1; S.wx.wet = 1; S.wx.bow = 10; stepWx(0.5); WX.flash = 1; WX.bolt = { x: 5, y: 5, z: 1, t: .3 }; draw(); });
@@ -535,7 +541,7 @@ async function rulesChecks(browser, url) {
   check(r.clock, '시계: 오른쪽 위, 한 주 240초, 주일 강조');
   check(r.finance, '재정 탭: 현황 버튼 안에 대출·정산 내역');
   check(r.wxSeason, '날씨: 여름엔 폭염·폭우, 겨울엔 눈 (계절별)');
-  check(r.wxAdvance && r.wxClock, '날씨: 하루마다 바뀌고 시계에 오늘·내일 날씨');
+  check(r.wxAdvance && r.wxClock, '날씨: 차례가 되면 다음 날씨로 바뀌고 시계에 오늘·다음 날씨');
   check(r.wxRain && r.wxWind && r.wxSun, '날씨: 비엔 야외 자리 쉼·실내 매장 붐빔, 바람엔 파라솔 접고 연날리기, 맑으면 야외 자리 인기');
   check(r.wxRainbow, '날씨: 비가 그치면 무지개가 뜰 수 있음');
   check(r.wxStorm, '날씨: 벼락이 건물을 상하게 하고, 십자가 첨탑이 피뢰침이 됨');
@@ -871,6 +877,19 @@ async function terrainChecks(browser, url) {
     draw(); ROT = 1; draw(); ROT = 0;
     // 저장 후 다시 불러와도 높이 유지
     save(); const L = load(); o.saved = L.hgt['20,8'] === 2 && L.slp['19,12'] === 3;
+    // 노후 단계: 80·70·60% 이하에서 거미줄·하얀 연기·검은 연기, 효율 90·75·55%
+    const pb = S.buildings.find(b => b.def === 'pray');
+    o.wear = [[90, 0, 1], [80, 1, .9], [70, 2, .75], [60, 3, .55]].every(t => { pb.cond = t[0]; return wearStage(pb) === t[1] && condFactor(pb) === t[2]; });
+    pb.cond = 50; draw(); pb.cond = 100;
+    // 주차 분류
+    o.park = ['lot', 'lots', 'parktower', 'bikerack'].every(id => D[id].cat === 'park') && CATS.some(c => c[0] === 'park');
+    // 날씨는 2~3일씩 이어진다
+    let changes = 0; const adv = window.advanceWx; window.advanceWx = function () { changes++; adv(); };
+    for (let d = 0; d < 21; d++) { S.wx.day = -1; wxTick(.01); }
+    window.advanceWx = adv;
+    o.wxSlow = changes >= 7 && changes <= 11;
+    // 재정 항목 설명
+    S.t = WEEK - .001; weekEnd(); o.why = ['offering', 'opex', 'supply', 'pay'].every(k => rcptWhy(S.rcpt, k).indexOf('<li>') === 0);
     return o;
   });
   check(r.ramp1 && r.ramp2 && r.rampBad, '지형: 흙 경사로는 한 층 높은 칸 쪽으로만 만들어짐');
@@ -884,6 +903,10 @@ async function terrainChecks(browser, url) {
   check(r.pieceMoved, '지형: 땅에 놓인 길이 땅과 함께 움직임');
   check(r.pick, '지형: 화면에서 높인 땅의 윗면을 누르면 그 칸이 잡힘');
   check(r.saved, '지형: 저장·불러오기 후에도 높이 유지');
+  check(r.wear, '노후: 단계마다 표시가 바뀌고 효율이 90·75·55%로 떨어짐');
+  check(r.park, '주차: 주차장·소형 주차장·주차 타워·자전거 거치대가 주차 분류에');
+  check(r.wxSlow, '날씨: 2~3일마다 바뀜');
+  check(r.why, '재정: 항목마다 계산 방식 설명이 있음');
   check(errs.length === 0, '지형: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

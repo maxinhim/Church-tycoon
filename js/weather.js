@@ -1,6 +1,6 @@
 'use strict';
 /* ---------- 날씨 ----------
-   날씨는 하루(약 34초)마다 바뀌고, 다음 날 날씨를 미리 알려 준다(시계의 '내일').
+   날씨는 2~3일(약 70~100초)마다 바뀌고, 다음 날씨와 며칠 뒤인지 미리 알려 준다(시계의 '내일'·'2일 뒤').
    계절(올해 몇째 주)에 따라 나오는 날씨가 다르다. 겨울엔 눈, 여름엔 폭염·폭우.
    · 맑음: 방문자 조금 늘고, 야외 자리(벤치·피크닉·파라솔·야외 예배터)의 효과가 커진다
    · 흐림: 구름 그림자가 지나간다
@@ -30,7 +30,7 @@ var WX_SEASON={
 var OUTDOOR=['stage','bench','picnic','parasol','playground','market'];
 function seasonKey(){var w=weekOfYear();return w>=10&&w<=22?'spring':(w<=35&&w>22?'summer':(w<=47&&w>35?'autumn':'winter'));}
 function ensureWx(){
-  if(!S.wx)S.wx={cur:'sun',next:'cloud',day:dayIdx(),snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1};
+  if(!S.wx)S.wx={cur:'sun',next:'cloud',day:dayIdx(),left:3,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1};
   return S.wx;
 }
 function rollWx(cur){
@@ -79,7 +79,8 @@ function wxAttend(){
   if(c==='heat')return 0.93;
   return 1;
 }
-// 하루가 바뀔 때
+function wxSpan(){return Math.random()<0.5?2:3;}
+// 날씨가 바뀔 때
 function advanceWx(){
   var w=ensureWx(),prev=w.cur;
   w.cur=w.next;w.next=rollWx(w.cur);w.hits=0;w.lt=4+Math.random()*6;
@@ -97,7 +98,8 @@ function advanceWx(){
 // 매 갱신: 날 바뀜, 눈 쌓임, 물웅덩이, 무지개, 벼락
 function wxTick(dt){
   var w=ensureWx(),di=dayIdx();
-  if(di!==w.day){w.day=di;advanceWx();}
+  // 날마다 하루씩 줄이고, 다 지나면 다음 날씨로 (한 날씨가 2~3일 이어진다)
+  if(di!==w.day){w.day=di;if(w.left==null)w.left=1;w.left--;if(w.left<=0){advanceWx();w.left=wxSpan();}}
   var c=w.cur;
   w.snow=c==='snow'?Math.min(1,w.snow+dt/50):Math.max(0,w.snow-dt/(c==='heat'||c==='sun'?30:80));
   w.wet=(c==='rain'||c==='storm')?Math.min(1,w.wet+dt/15):Math.max(0,w.wet-dt/(c==='wind'||c==='heat'?15:45));

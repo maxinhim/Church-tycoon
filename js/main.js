@@ -1,7 +1,7 @@
 'use strict';
 function restart(dk){
   S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.lastBuilt=null;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
-  $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
+  $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);syncSpeed();save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
 }
 /* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */
 var portraitMQ=window.matchMedia('(orientation: portrait)');
@@ -27,27 +27,33 @@ function resize(){
 
 function setGear(open){$('#gearMenu').hidden=!open;$('#bGear').setAttribute('aria-expanded',String(open));}
 // 속도가 1×가 아니면 톱니바퀴에 작은 표시 (메뉴를 닫아도 멈춤·배속을 알 수 있게)
-function syncSpeed(){var b=$('#spBadge');b.hidden=UI.speed===1;b.textContent=UI.speed===0?'II':UI.speed+'×';$('#bGear').setAttribute('aria-label','설정: 게임 속도'+(UI.speed===0?' (일시정지 중)':UI.speed===1?'':' ('+UI.speed+'배속)')+'와 메뉴');}
+// 빠르게 감기(2×~8×)는 테스트 모드에서만. 일시정지·1×는 모든 모드
+function fastOk(){return S&&S.diff==='easy';}
+function gameSpeed(){return fastOk()?UI.speed:Math.min(1,UI.speed);}
+function syncSpeed(){
+  if(!fastOk()&&UI.speed>1)UI.speed=1;
+  document.querySelectorAll('.sp button[data-sp]').forEach(function(x){var v=+x.dataset.sp;x.hidden=v>1&&!fastOk();x.classList.toggle('on',v===UI.speed);});var b=$('#spBadge');b.hidden=UI.speed===1;b.textContent=UI.speed===0?'II':UI.speed+'×';$('#bGear').setAttribute('aria-label','설정: 게임 속도'+(UI.speed===0?' (일시정지 중)':UI.speed===1?'':' ('+UI.speed+'배속)')+'와 메뉴');}
 /* ---------- 시작 ---------- */
 var last=0;
 function frame(ts){
   var dt=Math.min(0.25,(ts-last)/1000||0);last=ts;
   stepFx(dt);stepWx(dt);stepAudio(dt);
   // 목회 고민 카드가 열려 있으면 시간이 멈춘다
-  if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*UI.speed;while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
+  if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*gameSpeed();while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
   draw();syncPlace();syncGate();syncSelCard();hud(false);
   requestAnimationFrame(frame);
 }
 function init(){
   cv=$('#cv');ctx=cv.getContext('2d');
   S=load();if(!S.cands||!S.cands.length)refreshCands();rebuildOcc();recalc();
-  document.querySelectorAll('.sp button').forEach(function(b){
+  // 속도 버튼만 (같은 줄 모양의 소리 버튼은 audio.js가 맡는다)
+  document.querySelectorAll('.sp button[data-sp]').forEach(function(b){
     b.addEventListener('click',function(){
       UI.speed=+b.dataset.sp;
-      document.querySelectorAll('.sp button').forEach(function(x){x.classList.toggle('on',x===b);});
       syncSpeed();
     });
   });
+  syncSpeed();
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){b.addEventListener('click',function(){openGroup(b.dataset.fab);});});
   $('#bMenu').addEventListener('click',function(){setGear(false);openGroup('menu');});
   $('#bGear').addEventListener('click',function(){setGear($('#gearMenu').hidden);});

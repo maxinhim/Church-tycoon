@@ -114,6 +114,7 @@ function onPanel(e){
   }
   else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);sfx(fw2?'error':'build',fw2?.4:.8);renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
+  else if(a==='fexp'){UI.fexp=UI.fexp===v?null:v;renderFinance();}
   else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){

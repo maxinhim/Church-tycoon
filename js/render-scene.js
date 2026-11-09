@@ -61,12 +61,12 @@ function draw(){
     if(b.id===mvId)return;
     if(isRoom(b)){
       var map=roomMap(b);
-      var rz=bLevel(b)*LV;
-      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);});};E.push(rt);});
+      var rz=bLevel(b)*LV,ft=frontTile(b);
+      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);if(t===ft)drawWear(b);});};E.push(rt);});
       return;
     }
     var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bLevel(b)*LV;
-    r.zb=bz;r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);});};E.push(r);
+    r.zb=bz;r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);drawWear(b);});};E.push(r);
   });
   S.paths.forEach(function(p){
     var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;
@@ -114,7 +114,7 @@ function draw(){
   if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);});
   drawFx(c);
 }
-// 건물 위 표시: 주황 '!'는 수리 필요(상태 50% 미만), 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가
+// 건물 위 표시: 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가
 function drawMarkers(c){
   var s=Math.max(.7,cam.z);
   // 문이 닫혀 있으면 교회 입구 위에 자물쇠 (누르면 문 열기 카드)
@@ -128,12 +128,12 @@ function drawMarkers(c){
   var mv=movingId();
   S.buildings.forEach(function(b){
     if(b.id===mv)return;
-    var bad=b.door&&!usable(b),worn=maintainable(b)&&condOf(b)<50;
-    if(!bad&&!worn)return;
+    var bad=b.door&&!usable(b);
+    if(!bad)return;
     var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bLevel(b)*LV+bHeight(b)+.35);
-    c.fillStyle=bad?'#d6453a':'#e8892c';c.strokeStyle='#fff';c.lineWidth=1.5;
+    c.fillStyle='#d6453a';c.strokeStyle='#fff';c.lineWidth=1.5;
     c.beginPath();c.arc(q[0],q[1],7*s,0,6.283);c.fill();c.stroke();
-    c.fillStyle='#fff';c.font='800 '+(9*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(bad?'?':'!',q[0],q[1]+.5);
+    c.fillStyle='#fff';c.font='800 '+(9*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('?',q[0],q[1]+.5);
   });
 }
 function iconCanvas(d){

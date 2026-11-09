@@ -39,13 +39,13 @@ mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H
 mk('playground','놀이터','care',2,2,900,4,'playground','#e0c48a','#e8892c',{kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
 mk('mcare','돌봄실 칸','care',1,1,420,3,'mroom','#f3e6d2','#8a5a2b',{rname:'돌봄실',per:{kcap:5,cap:3,up:3},fk:'care',kcap:5,fill:{care:43},cap:3,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 돌봄실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
 mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',ccap:12,fill:{comf:60},cap:3,dur:3,desc:'꼭 필요한 편의시설'});
-mk('lot','주차장','comfort',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
-mk('lots','소형 주차장','comfort',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
+mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
+mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
 mk('info','안내실','comfort',1,1,500,5,'bld','#e8eef2','#3f5ea3',{H:.75,roof:'flat',deco:'info',ccap:6,fill:{comf:30,fel:10},cap:3,dur:3,vis:0.03,desc:'처음 온 사람을 맞이하는 안내 창구. 방문자 +3%'});
 mk('nurse','수유실','comfort',1,1,600,5,'bld','#f6eef0','#c77d8f',{H:.75,roof:'hip',rh:.45,ccap:4,kcap:2,fill:{comf:44,care:16},cap:2,dur:4,desc:'아기와 부모를 위한 조용한 방'});
 mk('lounge','휴게실','comfort',2,1,800,7,'bld','#e9efe6','#5c8a5a',{H:.8,roof:'flat',bigwin:1,ccap:10,fill:{comf:50,fel:8},cap:6,dur:4,desc:'잠시 앉아 쉬어가는 실내 공간'});
 mk('shop','매점','shop',1,1,450,3,'bld','#f2ede4','#d1a02e',{H:.7,roof:'flat',deco:'awning',ccap:4,fill:{comf:30,fel:6},cap:3,dur:3,income:3,desc:'간식과 음료를 파는 작은 매점'});
-mk('parktower','주차 타워','comfort',2,2,3000,18,'bld','#c9ced3','#59626b',{H:1.6,roof:'flat',deco:'park',park:24,desc:'좁은 땅에 많은 차를 세우는 주차 타워. 층을 올리면 더 늘어나요'});
+mk('parktower','주차 타워','park',2,2,3000,18,'bld','#c9ced3','#59626b',{H:1.6,roof:'flat',deco:'park',park:24,desc:'좁은 땅에 많은 차를 세우는 주차 타워. 층을 올리면 더 늘어나요'});
 mk('busstop','버스 정류장','comfort',1,1,300,2,'busstop','#3f5ea3','#d6e2ea',{dir:'face',vis:0.05,desc:'교회 앞 버스 정류장. 방문자 +5%'});
 mk('mcomf','편의실 칸','comfort',1,1,360,2,'mroom','#dfe6ea','#6c8794',{rname:'편의실',per:{ccap:6,cap:4,up:2},fk:'comf',ccap:6,fill:{comf:43},cap:4,dur:4,desc:'같은 칸끼리 이어 붙이면 하나의 편의실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
 mk('tree','나무','garden',1,1,110,0,'tree','#3d7a3d','#3d7a3d',{beauty:1,desc:'부지 분위기가 좋아집니다'});
@@ -110,7 +110,7 @@ mk('stringlight','줄조명','deco',1,1,160,0,'spr','#8a6844','#f5e6a8',{hgt:1.6
 mk('spotlight','정원 조명','deco',1,1,90,0,'spr','#3d4650','#f5e6a8',{hgt:.5,beauty:0.3,desc:'나무와 꽃을 위로 비추는 작은 조명'});
 mk('bridge_a','아치 돌다리','garden',1,1,420,0,'spr','#9aa3a8','#c9c2b6',{hgt:.8,dir:'axis',beauty:1.2,desc:'물길 위에 놓는 둥근 돌다리'});
 mk('bridge_w','나무 다리','garden',1,1,240,0,'spr','#a07a52','#8a6844',{hgt:.35,dir:'axis',beauty:0.7,desc:'물길 위에 놓는 납작한 나무 다리'});
-mk('bikerack','자전거 거치대','deco',1,1,120,0,'bikerack','#9aa3a8','#59626b',{park:1,desc:'자전거 세 대를 세울 수 있어요. 주차 +1 (부지 안에도 둘 수 있어요)'});
+mk('bikerack','자전거 거치대','park',1,1,120,0,'bikerack','#9aa3a8','#59626b',{park:1,desc:'자전거 세 대를 세울 수 있어요. 주차 +1 (부지 안에도 둘 수 있어요)'});
 mk('parasol','파라솔 테이블','deco',1,1,240,1,'parasol','#e8e2d4','#d65a4a',{fill:{comf:16,fel:12},cap:4,dur:3,beauty:0.5,desc:'햇빛을 가리는 파라솔 아래 쉼 자리'});
 mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
 mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.04,desc:'단정한 회색 보도블록'});

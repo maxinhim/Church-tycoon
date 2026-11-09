@@ -145,3 +145,13 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 .dopts{display:flex;flex-direction:column;gap:6px}
 #dlg .ckick{align-self:flex-start}
 @media (prefers-reduced-motion:reduce){.fab .fc{transition:none}}
+/* 재정: 항목을 누르면 그 아래에 계산 방식이 펼쳐진다 */
+.rcpt li.rx{display:block}
+.rcpt .rxb{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px;width:100%;cursor:pointer;padding:3px 4px;border-radius:6px}
+.rcpt .rxb:hover,.rcpt li.open .rxb{background:var(--chip)}
+.rcpt .rxb:focus-visible{outline:2px solid var(--accent)}
+.rcpt .rxb span::after{content:' ›';opacity:.5}
+.rcpt li.open .rxb span::after{content:' ⌄'}
+.rcpt ul.rwhy{margin:3px 0 6px 6px;padding:6px 8px;border-left:3px solid var(--accent);background:var(--chip);border-radius:0 6px 6px 0;gap:3px;font-size:12px;line-height:1.45}
+.rcpt ul.rwhy li{display:list-item;list-style:'· ' inside;color:var(--ink)}
+.rcpt .rk small{color:var(--muted);font-weight:400}

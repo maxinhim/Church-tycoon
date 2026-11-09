@@ -199,7 +199,7 @@ function refreshMods(){
   // 행사를 오래 열지 않으면 공동체가 침체된다
   var idle=evIdleWeeks();if(idle>6)m.mood-=Math.min(15,(idle-6)*1.5);
   // 많이 낡은 건물(상태 50% 미만)이 늘수록 성도 만족이 떨어진다
-  var worn=S.buildings.filter(function(b){return maintainable(b)&&condOf(b)<50;}).length;m.mood-=Math.min(12,worn*1.2);
+  var worn=S.buildings.filter(function(b){return wearStage(b)>=3;}).length;m.mood-=Math.min(12,worn*1.2);
   m.mood+=S.tempMood;
   MOD=m;
 }
@@ -249,15 +249,18 @@ function chooseDlg(i){
 /* ---------- 건물 노후와 수리 ---------- */
 function maintainable(b){var k=D[b.def]&&D[b.def].kind;return k==='bld'||k==='mroom';}
 function condOf(b){return b.cond==null?100:b.cond;}
-// 상태 70% 아래부터 효과가 줄어 0%에서는 40%
-function condFactor(b){var c=condOf(b);return c>=70?1:0.4+0.6*c/70;}
+/* 노후 단계: 지도에 보이는 표시와 효율이 함께 바뀐다
+   80% 이하 거미줄·효율 90% → 70% 이하 하얀 연기·75% → 60% 이하 검은 연기·55% */
+function wearStage(b){if(!maintainable(b))return 0;var c=condOf(b);return c<=60?3:(c<=70?2:(c<=80?1:0));}
+var WEAR_EFF=[1,.9,.75,.55],WEAR_NAME=['','거미줄','하얀 연기','검은 연기'];
+function condFactor(b){return WEAR_EFF[wearStage(b)];}
 function repairCost(b){return Math.round(defOf(b).cost*0.25*(100-condOf(b))/100);}
 function repair(b){
   var c=repairCost(b);if(c<=0)return '고칠 곳이 없어요';
   if(S.money<c)return '수리비가 부족해요';
   S.money-=c;b.cond=100;recalc();save();return '';
 }
-function needRepair(){return S.buildings.filter(function(b){return maintainable(b)&&condOf(b)<75;});}
+function needRepair(){return S.buildings.filter(function(b){return wearStage(b)>0;});}
 function repairAll(){
   var list=needRepair(),cost=list.reduce(function(t,b){return t+repairCost(b);},0);
   if(!list.length)return '고칠 건물이 없어요';

@@ -88,21 +88,50 @@ function syncGate(){
 var rcptTimer=0;
 function rcptLines(r){
   var L=[];
-  if(r.closed)L.push(['온라인 헌금 (문 닫음)',r.online]);else L.push(['주일 헌금 · 출석 '+r.attend+'명',r.offering]);
-  if(r.visGive)L.push(['방문자 헌금',r.visGive]);
-  if(r.shop)L.push(['매장 판매',r.shop]);
-  if(r.other)L.push(['그 밖의 수입',r.other]);
-  if(r.sponsor)L.push(['개척 후원',r.sponsor]);
-  L.push(['운영비·유지비',-r.opex]);
-  if(r.pay)L.push(['사례비',-r.pay]);
-  if(r.supply)L.push(['매장 재료비',-r.supply]);
-  if(r.loan)L.push(['대출 상환',-r.loan]);
+  if(r.closed)L.push(['온라인 헌금 (문 닫음)',r.online,'online']);else L.push(['주일 헌금 · 출석 '+r.attend+'명',r.offering,'offering']);
+  if(r.visGive)L.push(['방문자 헌금',r.visGive,'visGive']);
+  if(r.shop)L.push(['매장 판매',r.shop,'shop']);
+  if(r.other)L.push(['그 밖의 수입',r.other,'other']);
+  if(r.sponsor)L.push(['개척 후원',r.sponsor,'sponsor']);
+  L.push(['운영비·유지비',-r.opex,'opex']);
+  if(r.pay)L.push(['사례비',-r.pay,'pay']);
+  if(r.supply)L.push(['매장 재료비',-r.supply,'supply']);
+  if(r.loan)L.push(['대출 상환',-r.loan,'loan']);
   return L;
+}
+/* 재정 항목 설명: 무엇이 그 금액을 정했는지 (지난 주일 정산의 실제 숫자로) */
+function pct(v){return Math.round(v*100)+'%';}
+function rcptWhy(r,k){
+  var x=r.x;if(!x)return '다음 주일 정산부터 계산 내역이 보여요.';
+  var L=[];
+  if(k==='offering'){
+    L.push('출석 '+r.attend+'명 = 성도 '+x.m+'명 중 좌석('+x.seats+'석) 안에 든 '+x.full+'명'+(r.wxLost>0?' − 주일 날씨로 '+r.wxLost+'명 줄어듦':''));
+    L.push('헌금 = 출석 × 9 × 만족도 보정 '+pct(0.4+0.6*x.mood/100)+' (만족도 '+x.mood+'%) × 사역 보정 '+pct(x.offerMod));
+    L.push('출석이 많을수록 한 사람당 효과가 줄어요 (÷ '+(1+r.attend/500).toFixed(2)+')');
+    L.push('늘리려면: 좌석(예배당), 만족도, 재정·목양 사역팀');
+  }else if(k==='online'){L.push('교회 문을 닫은 주일에는 온라인 헌금만 들어와요: 성도 '+x.m+'명 × 1.2');L.push('문을 열면 주일 헌금으로 바뀌어요');}
+  else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × 0.5 × 평판 보정 '+pct(0.5+x.rep/100)+' (평판 '+x.rep+')');}
+  else if(k==='shop'){L.push('방문자가 주중에 매장(카페·식당·빵집·서점 등)에서 산 금액의 합계예요');L.push('이 중 '+pct(x.shopRate)+'는 주일 정산 때 재료비로 나가요');}
+  else if(k==='other'){L.push('행사·특별 후원 등 매장 밖에서 주중에 들어온 돈이에요');}
+  else if(k==='sponsor'){L.push('개척 초기 후원: 260 − 3.5 × 지난 주 수('+x.week+') — 주마다 줄어 약 75주 뒤 끝나요');}
+  else if(k==='opex'){
+    L.push('(기본 운영비 110 + 성도 '+x.m+'명 × 2.6 + 건물 유지비 '+fmt(x.up)+')');
+    L.push('× 사역 보정 '+pct(x.upMod)+' (관리팀·행정·집사가 줄여 줘요) × 난이도 '+x.dn+' '+pct(x.dc));
+    L.push('낡은 건물은 유지비가 최대 60%까지 늘어나요');
+    if(x.upTop&&x.upTop.length)L.push('유지비가 큰 건물: '+x.upTop.map(function(o){return o.n+' '+fmt(o.u)+(o.w?' ('+WEAR_NAME[o.w]+')':'');}).join(', '));
+  }
+  else if(k==='pay'){L.push('사역팀 '+fmt(x.team)+' + 부교역자 '+fmt(x.assoc));L.push('행사 › 사역자 탭에서 단계를 낮추거나 사임시키면 줄어요');}
+  else if(k==='supply'){L.push('매장 판매 '+fmt(r.shop)+' × '+pct(x.shopRate)+' — 판 만큼 재료를 다시 사 와요');}
+  else if(k==='loan'){L.push((x.loans.length?x.loans.map(function(l){return l.n+' 주 '+fmt(l.p);}).join(', '):'대출 상환')+' (원금과 이자를 나눠 갚아요)');L.push('남은 원금은 아래에서 한 번에 갚을 수 있어요');}
+  return L.map(function(t){return '<li>'+t+'</li>';}).join('');
 }
 function rcptHtml(r,full){
   var wn=r.wx&&WEATHER[r.wx]?'<div class="rw">'+wxIcon(r.wx)+'주일 날씨 '+WEATHER[r.wx].n+(r.wxLost>0?' · 출석 '+r.wxLost+'명 줄었어요':'')+'</div>':'';
-  return '<div class="rk">'+(Math.floor(r.w/52)+1)+'년 '+(r.w%52+1)+'주 · 주일 정산</div>'+wn+'<ul>'+rcptLines(r).map(function(l){
-    return '<li><span>'+l[0]+'</span><b class="'+(l[1]<0?'neg':'pos')+'">'+(l[1]<0?'−':'+')+fmt(Math.abs(l[1]))+'</b></li>';}).join('')+
+  return '<div class="rk">'+(Math.floor(r.w/52)+1)+'년 '+(r.w%52+1)+'주 · 주일 정산'+(full?' <small>· 항목을 누르면 계산 방식</small>':'')+'</div>'+wn+'<ul>'+rcptLines(r).map(function(l){
+    var row='<span>'+l[0]+'</span><b class="'+(l[1]<0?'neg':'pos')+'">'+(l[1]<0?'−':'+')+fmt(Math.abs(l[1]))+'</b>';
+    if(!full)return '<li>'+row+'</li>';
+    var open=UI.fexp===l[2];
+    return '<li class="rx'+(open?' open':'')+'"><button class="rxb" data-act="fexp" data-v="'+l[2]+'" aria-expanded="'+open+'">'+row+'</button>'+(open?'<ul class="rwhy">'+rcptWhy(r,l[2])+'</ul>':'')+'</li>';}).join('')+
     '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+(full?'':'<p class="rh">눌러서 재정 보기</p>');
 }
 function showReceipt(){
