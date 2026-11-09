@@ -59,6 +59,17 @@ mk('lavender','라벤더 화단','garden',1,1,90,0,'flower','#6b4f3a','#9a7ad6',
 mk('canal','물길','garden',1,1,140,1,'canal','#9aa3a8','#5fa3d0',{beauty:1.1,desc:'돌로 테두리를 두른 물길. 옆에 이어 지으면 물이 이어져 흘러요'});
 mk('birdbath','새 물그릇','garden',1,1,240,0,'birdbath','#c9c2b6','#86bfe0',{beauty:1,desc:'작은 새들이 쉬어 가는 돌 물그릇'});
 mk('flower','화단','garden',1,1,70,0,'flower','#6b4f3a','#d9567a',{beauty:1,desc:'꽃이 피는 작은 화단'});
+mk('fir','전나무','garden',1,1,150,0,'tree','#2e6a44','#2e6a44',{shape:'cone',leaf:['#1f5236','#2e6a44','#3f8656'],beauty:1.1,desc:'곧게 뻗은 늘푸른 전나무'});
+mk('birch','자작나무','garden',1,1,170,0,'tree','#3d7a3d','#7fb35a',{shape:'round',leaf:['#5f9a3c','#7fb35a','#a8d07a'],beauty:1.2,desc:'하얀 줄기가 고운 자작나무'});
+mk('conetopiary','원뿔 회양목','garden',1,1,100,0,'topiary','#3f7d3c','#5a9a4f',{beauty:0.8,desc:'원뿔 모양으로 다듬은 회양목'});
+mk('azalea','진달래 덤불','garden',1,1,90,0,'flower','#3f7d3c','#e46aa0',{petals:['#e46aa0','#f39cc2','#d14a86'],beauty:1,desc:'분홍 진달래가 소복한 덤불'});
+mk('hydrangea','수국 덤불','garden',1,1,100,0,'flower','#3f7d3c','#7f8ee0',{petals:['#7f8ee0','#a59be6','#5d7fd6'],beauty:1.1,desc:'파랑·보라 꽃송이가 탐스러운 수국'});
+mk('rose','장미 덤불','garden',1,1,110,0,'flower','#3f7d3c','#d63a46',{petals:['#d63a46','#e8606a','#b82a36'],beauty:1.2,desc:'붉은 장미가 핀 덤불'});
+mk('sunflower','해바라기 화단','garden',1,1,90,0,'flower','#6b4f3a','#f2c14e',{petals:['#f2c14e','#e8a830','#f6d76a'],beauty:1.1,desc:'키 큰 해바라기가 모인 화단'});
+mk('pampas','억새','garden',1,1,80,0,'flower','#7a8a4a','#e8dcc0',{petals:['#e8dcc0','#d6c6a0','#f2ead6'],beauty:0.9,desc:'바람에 하늘거리는 억새 한 무더기'});
+mk('urn','돌 화분','garden',1,1,150,0,'planter','#b8b2a6','#5a9a4f',{beauty:1,desc:'담쟁이가 늘어진 돌 항아리 화분'});
+mk('basket','걸이 화분','garden',1,1,120,0,'planter','#3d4650','#e57a95',{beauty:0.8,desc:'쇠기둥에 매단 꽃바구니'});
+mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe0',{beauty:1.6,desc:'수련이 떠 있는 둥근 돌 물그릇'});
 mk('bench','벤치','deco',1,1,160,0,'bench','#8a6a46','#8a6a46',{ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
@@ -80,6 +91,7 @@ mk('stonelamp','석등','deco',1,1,320,0,'stonelamp','#b8b2a6','#f5d98a',{beauty
 mk('bin','쓰레기통','deco',1,1,50,0,'bin','#3f7a52','#2f5f40',{ccap:1,beauty:0.1,desc:'마당이 깨끗해져요. 편의 수용 +1'});
 mk('board','게시판','deco',1,1,150,0,'board','#8a6844','#6b4f3a',{beauty:0.3,vis:0.01,desc:'교회 소식을 붙이는 작은 게시판. 방문자 +1%'});
 mk('bell','종','deco',1,1,600,1,'bell','#8a6844','#b8862f',{beauty:1.2,rep:0.1,desc:'나무 틀에 매단 작은 종. 평판이 조금 오릅니다'});
+mk('lantern','초롱 등','deco',1,1,140,0,'lamp','#7a5530','#f5e6a8',{beauty:0.7,desc:'나무 기둥에 매단 종이 초롱'});
 mk('bikerack','자전거 거치대','deco',1,1,120,0,'bikerack','#9aa3a8','#59626b',{park:1,desc:'자전거 세 대를 세울 수 있어요. 주차 +1 (부지 안에도 둘 수 있어요)'});
 mk('parasol','파라솔 테이블','deco',1,1,240,1,'parasol','#e8e2d4','#d65a4a',{fill:{comf:16,fel:12},cap:4,dur:3,beauty:0.5,desc:'햇빛을 가리는 파라솔 아래 쉼 자리'});
 mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});

@@ -66,7 +66,7 @@ function declNames(text) {
 }
 
 /* ---------- 정적 파일 서버 ---------- */
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png' };
 function serve() {
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
@@ -746,6 +746,17 @@ async function ministryChecks(browser, url) {
   check(floorDir && floorTap, '지도에서 짓기: 바닥은 화살표 방향으로 ✓마다 한 칸씩 깔리고, 지도를 누르면 자리만 옮김');
   check(rotates, '건물 방향: 화살표로 정면을 바꾸면 벤치·예배실·쌍등·정류장·피크닉 테이블 그림이 돎');
   check(smallBtns, '지도에서 짓기: ✓·✕ 38px, 화살표 32px로 작아짐');
+  // 그림 조각: 모두 불러와 쓰고, 그림이 없으면 벡터로 그린다
+  await page.waitForFunction(() => SPR_N === SPR_TOTAL, null, { timeout: 8000 }).catch(() => {});
+  const sprites = await page.evaluate(() => {
+    if (SPR_TOTAL < 20 || SPR_N !== SPR_TOTAL) return 'loaded ' + SPR_N + '/' + SPR_TOTAL;
+    const miss = Object.keys(SPR_DATA).filter(id => !D[id]); if (miss.length) return 'no def ' + miss;
+    const t = { x: 5, y: 20, def: 'cherry', id: 3, face: 2 };
+    if (!drawSprEntity(t)) return 'not drawn';
+    const keep = SPR.cherry; delete SPR.cherry; let ok = !drawSprEntity(t); try { drawEntity(t); } catch (e) { ok = false; } SPR.cherry = keep;
+    return ok ? 'ok' : 'no fallback';
+  });
+  check(sprites === 'ok', '그림 조각: 조경·꾸미기 그림을 모두 불러와 그리고, 없으면 벡터 그림으로 (' + sprites + ')');
   check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

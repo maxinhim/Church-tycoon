@@ -94,6 +94,7 @@ function drawLot(b,cars){
   parts.forEach(function(p){box(p.r1,.04,.18,p.c);box(p.r2,.18,.3,p.c,'#bcd3e0');});
 }
 function drawTree(b){
+  if(!b.def&&drawSprOutTree(b))return;
   var c=PJ.c,s=PJ.s,p=rotPt(b.x+.5,b.y+.5),g=P(p[0],p[1],0),hv=hh(b.x*7+b.id,b.y*3+1);
   c.fillStyle='rgba(20,40,10,.22)';c.beginPath();c.ellipse(g[0]+4*s,g[1]+1*s,14*s,6.5*s,0,0,6.283);c.fill();
   box(rrect(b.x+.45,b.y+.45,b.x+.55,b.y+.55),0,.55,'#6b4f3a');
@@ -135,6 +136,7 @@ function drawSpire(b){
 }
 function drawEntity(b,cars){
   var k=D[b.def].kind;
+  if(drawSprEntity(b))return;
   if(k==='mroom'){drawRoom(b);return;}
   if(k==='path'){drawPiece({x:b.x,y:b.y,l:0,s:1,d:3,k:'stone'});return;}
   if(k==='floor'){drawFloorTile(b.def,b.x,b.y);return;}

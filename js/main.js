@@ -64,7 +64,7 @@ function init(){
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gatePop').hidden)closeGatePop();});
   $('#rcpt').addEventListener('click',function(){$('#rcpt').hidden=true;UI.statusTab='finance';if(UI.fold||tabGroup(UI.tab)!=='status')openGroup('status');else{UI.tab='finance';renderPanel();}});
   if(!S.open)setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
-  setupInput();setupPlace();setupSelCard();
+  setupInput();setupPlace();setupSelCard();loadSprites();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
   if(portraitMQ.addEventListener)portraitMQ.addEventListener('change',syncOrientation);else portraitMQ.addListener(syncOrientation);
