@@ -21,28 +21,6 @@
    "by": 0.95,
    "back": "chapel_b"
   },
-  "7": {
-   "id": "mission_b",
-   "fw": 1.0,
-   "by": 0.95
-  },
-  "1": {
-   "id": "mission",
-   "fw": 1.0,
-   "by": 0.95,
-   "back": "mission_b"
-  },
-  "8": {
-   "id": "hall_b",
-   "fw": 1.0,
-   "by": 0.95
-  },
-  "2": {
-   "id": "hall",
-   "fw": 1.0,
-   "by": 0.95,
-   "back": "hall_b"
-  },
   "9": {
    "id": "dining_b",
    "fw": 1.0,

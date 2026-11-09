@@ -15,7 +15,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ---------------------------------------------------------------- 공통 블록
 STYLE = """STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -33,6 +34,7 @@ ISO = """PROJECTION (all world objects on this sheet)
 def layout(cols, rows, empty_last=True, fill=False):
     n = cols * rows
     L = ["LAYOUT",
+         "- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.",
          "- Exactly %d columns x %d rows of equal square cells (%d cells total)." % (cols, rows, n),
          "- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet."]
     if fill:
@@ -112,8 +114,8 @@ sheet('F', '중간 건물 2x2 (앞·뒤)', (5, 5),
       ["It contains medium church buildings with a 2x2 footprint, each shown from the front and from the back.",
        "Rows 1-2 and rows 3-4 hold five vertical FRONT/BACK pairs each. Row 5 holds four single objects.",
        "Rows 1-2 (front on top, back below): small worship chapel, cream walls, slate-blue gable roof with a small cross on the ridge, arched double door; music room, cream walls, round rose window without any pattern of letters, small bell-shaped roof vent; youth hall, light grey walls with a bold orange stripe, flat roof, big glass door; small-group house, warm cream walls, wooden porch, two windows with curtains; children's hall, pastel yellow and sky blue walls, round windows, a little slide on the side.",
-       "Rows 3-4 (front on top, back below): study house, cream walls, green roof, rows of windows, a bicycle by the wall; seniors' rest house, warm wood walls, low tiled roof in a Korean style, a bench on the porch; book cafe, white walls, dark green awning, big shop windows with books and cups; parking tower, two levels of concrete decks with a ramp, open sides, a few cars inside; playground, a small play set with a slide, swings and sandbox inside a low fence.",
-       "Row 5 (singles): round garden pond with lily pads and a stone rim, 2x2; wooden pavilion with a tiled roof, 2x2; small parking lot with two empty painted spaces, 2x1, painted lines only, no ground texture outside the lines; fountain plaza with a round basin, 2x2; (empty)."],
+       "Rows 3-4 (front on top, back below): study house, cream walls, green roof, rows of windows, a bicycle by the wall; seniors' rest house, warm wood walls, a low shingled gable roof, a bench on the porch; book cafe, white walls, dark green awning, big shop windows with books and cups; parking tower, two levels of concrete decks with a ramp, open sides, a few cars inside; playground, a small play set with a slide, swings and sandbox inside a low fence.",
+       "Row 5 (singles): round garden pond with lily pads and a stone rim, 2x2; white wooden gazebo with a shingled roof, 2x2; small parking lot with two empty painted spaces, 2x1, painted lines only, no ground texture outside the lines; fountain plaza with a round basin, 2x2; (empty)."],
       pair='v')
 
 sheet('G', '큰 건물 3x2·3x3 (앞·뒤)', (4, 4),
@@ -212,19 +214,32 @@ sheet('N', '계절·행사 장식', (5, 5),
 
 sheet('E2', '보충: 글자 없는 매장·안내실·첨탑', (4, 4),
       '시트 E·F에서 쓰지 못한 칸만 다시 받는다: 영어 간판이 그려진 매점·카페·빵집·서점·찬양실, 게시판처럼 나온 안내실, 분홍 번짐이 생긴 첨탑·쌍등 가로등. 지난번 문제(글자, 2x1이 정육면체로 그려짐, 불빛 번짐)를 막는 문장을 넣었다.',
-      '매점·카페·빵집·기독교 서점·찬양실·안내실, 십자가 첨탑, 쌍등 가로등',
-      ["It contains a few small shops and church buildings, each shown from the front and from the back, plus two tall single objects.",
+      '매점·카페·빵집·기독교 서점·찬양실·안내실, 십자가 첨탑, 쌍등 가로등, 정자(서양식)',
+      ["It contains a few small shops and church buildings, each shown from the front and from the back, plus three single objects.",
        "ABSOLUTELY NO LETTERS: shop signs, awnings and windows must not contain any letters or words in any language. A sign board may show only one tiny simple picture (a cup, a loaf of bread, a book or a music note) on a plain colored panel.",
        "FOOTPRINT: a 2x1 building is clearly twice as long as it is deep (its long front side is about twice its short side); do not draw it as a cube. A 1x1 building is a small square box. A 2x2 building is square and larger.",
        "Rows 1 to 3 hold two FRONT/BACK pairs each (columns 1-2 and 3-4). Row 4 holds two single objects.",
        "Row 1: snack kiosk, 1x1, wooden walls, yellow striped awning over a serving counter, a small sign with a cup picture; cafe, 2x1, brown walls, green striped awning, big windows, one small outdoor table, a sign with a cup picture.",
        "Row 2: bakery, 2x1, cream walls, orange awning, bread display window, small chimney, a sign with a bread picture; Christian bookstore, 2x1, pale green and white walls, blue awning, books in the window, a sign with a book picture.",
        "Row 3: music room, 2x2, cream walls, slate-blue roof, a round window, a sign with a music note picture, no instruments outside; welcome information kiosk, 1x1, a small closed booth with walls, a roof and a wide service window with a counter (NOT a notice board).",
-       "Row 4 (singles, front view only): tall slender church cross tower, 1x1, brick and stone, about 2.5 W tall, plain stone cross on top with NO glow; double-headed black street lamp with pale yellow lamp glass and NO glow or light around it; (empty); (empty)."],
+       "Row 4 (singles): tall slender church cross tower, 1x1, brick and stone, about 2.5 W tall, plain stone cross on top with NO glow; double-headed black street lamp with pale yellow lamp glass and NO glow or light around it; white wooden Western garden gazebo, 2x2, octagonal, with a shingled roof and railings (not East Asian); (empty)."],
       pair='h')
 
+sheet('E3', '보충: 서양식으로 다시 받는 건물', (3, 3),
+      '시트 F·G에서 한옥처럼 나온 건물 4종(경로 쉼터·소그룹실·선교관·친교실)을 서양식으로 다시 받는다. 정자는 시트 E2의 빈칸에 넣었다. 받기 전까지 게임에서는 이 건물들을 코드 그림으로 그린다.',
+      '경로 쉼터(2x2)·소그룹실(2x2)·선교관(3x2)·친교실(3x2)',
+      ["It contains four Western-style church buildings, each shown from the front and from the back.",
+       "IMPORTANT: every building is clearly Western (European / North American small town). No curved roof eaves, no dark clay tiles, nothing that looks like East Asian architecture.",
+       "Columns 1, 2 and 3 of rows 1-2 hold three vertical FRONT/BACK pairs (front on top, back below). Row 3 holds one horizontal pair: front in column 1, back in column 2.",
+       "Column 1, rows 1-2: seniors' rest house, footprint 2x2, warm cream clapboard walls, a low wooden-shingle gable roof, a wide white porch with a bench and two rocking chairs, flower boxes under the windows.",
+       "Column 2, rows 1-2: small-group house, footprint 2x2, red brick cottage, slate-blue gable roof with a small chimney, a green front door with a little porch light (no glow), two curtained windows.",
+       "Column 3, rows 1-2: mission house, footprint 3x2, two storeys, red brick walls, white window frames, a steep slate roof, a flag pole with a blank flag beside the door.",
+       "Row 3, columns 1-2: fellowship hall, footprint 3x2, long cream-plaster building with timber trim, a wooden-shingle gable roof, wide double doors under a small gable, a long row of windows; column 1 is the front view, column 2 the back view. Row 3 column 3: (empty)."],
+      pair='v')
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('E2', '보충 — 시트 D~H 결과에서 빠진 매장·안내실·첨탑만 다시 받기 (지금 먼저)'),
+ORDER = [('E3', '보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)'),
+         ('E2', '보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자'),
          ('K', 'UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다'),
          ('L', 'UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다'),
          ('D', '땅·바닥 질감 — 화면 면적이 가장 넓다'),
@@ -238,12 +253,13 @@ def build_md():
            "`python3 tools/build_prompts.py`로 만든 문서다. 손으로 고치지 말고 스크립트를 고친 뒤 다시 만든다.",
            "모바일에서는 `gemini-prompts.html`(게시된 프롬프트 페이지)에서 시트마다 복사 버튼으로 복사한다.", "",
            "## 디자인 콘셉트",
-           "- **한 줄 요약**: 햇살 좋은 날 한국 동네의 작고 따뜻한 교회. 1990년대 후반 아이소메트릭 픽셀아트, 따뜻한 갈색 윤곽선, 빛은 늘 왼쪽 위에서.",
+           "- **한 줄 요약**: 햇살 좋은 날 작고 따뜻한 동네 교회. 건물은 서양식(유럽·북미 작은 마을)으로만 통일하고 동양식 지붕·한옥은 쓰지 않는다. 1990년대 후반 아이소메트릭 픽셀아트, 따뜻한 갈색 윤곽선, 빛은 늘 왼쪽 위에서.",
            "- **모든 프롬프트는 같은 STYLE GUIDE 블록으로 시작한다** (화풍·윤곽선 색·빛·팔레트·금지 사항). 팔레트는 지금 게임의 건물 색과 UI 파란색(#2a56c6)을 그대로 썼다.",
            "- **참고 이미지를 함께 붙인다**: 시트 B 또는 C 이미지를 Gemini에 같이 첨부하면 픽셀 크기와 색이 훨씬 잘 맞는다 (STYLE GUIDE 마지막 줄이 그것을 따르라고 지시한다).",
            "- **글자는 그림에 넣지 않는다**: Gemini는 한글을 정확히 못 쓰고, 버튼 글씨는 바뀌기 때문에 모든 글자는 게임의 웹 글꼴로 쓴다. 제목도 엠블럼만 받고 글씨는 글꼴로 얹는다.",
            "- **방향**: 앞모습은 앞면이 오른쪽 아래, 뒷모습은 뒷면이 오른쪽 아래. 게임이 좌우 뒤집기로 네 방향을 만든다 (자세한 표는 `gemini-prompts.md`). 차·계단만 긴 쪽이 \"\\\\\".",
-           "- **맨 오른쪽 아래 칸은 비운다** (Gemini 워터마크).", "",
+           "- **맨 오른쪽 아래 칸은 비운다** (Gemini 워터마크).",
+           "- **2K로 받는다**: 모든 프롬프트 LAYOUT 첫 줄에 2048×2048 지시가 있다. Gemini에서 해상도를 고를 수 있으면 2K를 고른다.", "",
            "## 받는 순서 (권장)"]
     for i, (k, why) in enumerate(ORDER, 1):
         out.append("%d. 시트 %s — %s" % (i, k, why))
@@ -323,7 +339,7 @@ def build_html():
 
 
 if __name__ == '__main__':
-    SHEETS.sort(key=lambda x: x['key'] != 'E2')  # 지금 받을 보충 시트를 맨 위에
+    SHEETS.sort(key=lambda x: {'E3': 0, 'E2': 1}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))

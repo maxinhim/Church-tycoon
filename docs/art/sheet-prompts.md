@@ -4,26 +4,28 @@
 모바일에서는 `gemini-prompts.html`(게시된 프롬프트 페이지)에서 시트마다 복사 버튼으로 복사한다.
 
 ## 디자인 콘셉트
-- **한 줄 요약**: 햇살 좋은 날 한국 동네의 작고 따뜻한 교회. 1990년대 후반 아이소메트릭 픽셀아트, 따뜻한 갈색 윤곽선, 빛은 늘 왼쪽 위에서.
+- **한 줄 요약**: 햇살 좋은 날 작고 따뜻한 동네 교회. 건물은 서양식(유럽·북미 작은 마을)으로만 통일하고 동양식 지붕·한옥은 쓰지 않는다. 1990년대 후반 아이소메트릭 픽셀아트, 따뜻한 갈색 윤곽선, 빛은 늘 왼쪽 위에서.
 - **모든 프롬프트는 같은 STYLE GUIDE 블록으로 시작한다** (화풍·윤곽선 색·빛·팔레트·금지 사항). 팔레트는 지금 게임의 건물 색과 UI 파란색(#2a56c6)을 그대로 썼다.
 - **참고 이미지를 함께 붙인다**: 시트 B 또는 C 이미지를 Gemini에 같이 첨부하면 픽셀 크기와 색이 훨씬 잘 맞는다 (STYLE GUIDE 마지막 줄이 그것을 따르라고 지시한다).
 - **글자는 그림에 넣지 않는다**: Gemini는 한글을 정확히 못 쓰고, 버튼 글씨는 바뀌기 때문에 모든 글자는 게임의 웹 글꼴로 쓴다. 제목도 엠블럼만 받고 글씨는 글꼴로 얹는다.
 - **방향**: 앞모습은 앞면이 오른쪽 아래, 뒷모습은 뒷면이 오른쪽 아래. 게임이 좌우 뒤집기로 네 방향을 만든다 (자세한 표는 `gemini-prompts.md`). 차·계단만 긴 쪽이 "\\".
 - **맨 오른쪽 아래 칸은 비운다** (Gemini 워터마크).
+- **2K로 받는다**: 모든 프롬프트 LAYOUT 첫 줄에 2048×2048 지시가 있다. Gemini에서 해상도를 고를 수 있으면 2K를 고른다.
 
 ## 받는 순서 (권장)
-1. 시트 E2 — 보충 — 시트 D~H 결과에서 빠진 매장·안내실·첨탑만 다시 받기 (지금 먼저)
-2. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
-3. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
-4. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
-5. 시트 E — 작은 건물
-6. 시트 F — 중간 건물
-7. 시트 G — 큰 건물
-8. 시트 H — 가장 큰 건물·입구
-9. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
-10. 시트 I — 길·계단·탈것
-11. 시트 N — 계절 장식
-12. 시트 M — 행사·사역 그림
+1. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
+2. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
+3. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
+4. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
+5. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
+6. 시트 E — 작은 건물
+7. 시트 F — 중간 건물
+8. 시트 G — 큰 건물
+9. 시트 H — 가장 큰 건물·입구
+10. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
+11. 시트 I — 길·계단·탈것
+12. 시트 N — 계절 장식
+13. 시트 M — 행사·사역 그림
 
 ## 그림으로 바꾸지 않는 것
 - **칸 건물(예배실 칸 등)**: 이웃 칸과 이어 붙는 벽·지붕 모양이 16가지가 넘어 시트로 맞추기 어렵다. 지금처럼 코드로 그리고 색만 팔레트에 맞춘다.
@@ -31,16 +33,17 @@
 - **날씨 효과(비·눈·번개·무지개)·그림자·선택 표시**: 움직이고 투명해야 해서 코드로 그린다.
 - **글자·숫자**: 모두 웹 글꼴.
 
-## 시트 E2 — 보충: 글자 없는 매장·안내실·첨탑 (4x4)
+## 시트 E3 — 보충: 서양식으로 다시 받는 건물 (3x3)
 
-- **쓰는 곳**: 매점·카페·빵집·기독교 서점·찬양실·안내실, 십자가 첨탑, 쌍등 가로등
-- **메모**: 시트 E·F에서 쓰지 못한 칸만 다시 받는다: 영어 간판이 그려진 매점·카페·빵집·서점·찬양실, 게시판처럼 나온 안내실, 분홍 번짐이 생긴 첨탑·쌍등 가로등. 지난번 문제(글자, 2x1이 정육면체로 그려짐, 불빛 번짐)를 막는 문장을 넣었다.
+- **쓰는 곳**: 경로 쉼터(2x2)·소그룹실(2x2)·선교관(3x2)·친교실(3x2)
+- **메모**: 시트 F·G에서 한옥처럼 나온 건물 4종(경로 쉼터·소그룹실·선교관·친교실)을 서양식으로 다시 받는다. 정자는 시트 E2의 빈칸에 넣었다. 받기 전까지 게임에서는 이 건물들을 코드 그림으로 그린다.
 
 ```
-Create a single square image: a sprite sheet for an isometric church-building management game. It contains a few small shops and church buildings, each shown from the front and from the back, plus two tall single objects.
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains four Western-style church buildings, each shown from the front and from the back.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -56,6 +59,55 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
+- Exactly 3 columns x 3 rows of equal square cells (9 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+- The bottom-right cell (row 3, column 3) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
+
+FRONT/BACK PAIRS (vertical)
+Pairs are stacked vertically: a cell in an odd row shows the FRONT VIEW and the cell DIRECTLY BELOW it shows the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (main entrance, door, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings run with their long side from the lower-left to the upper-right of the cell, with the main entrance on that long front side.
+
+CONTENTS (left to right, top to bottom)
+IMPORTANT: every building is clearly Western (European / North American small town). No curved roof eaves, no dark clay tiles, nothing that looks like East Asian architecture.
+Columns 1, 2 and 3 of rows 1-2 hold three vertical FRONT/BACK pairs (front on top, back below). Row 3 holds one horizontal pair: front in column 1, back in column 2.
+Column 1, rows 1-2: seniors' rest house, footprint 2x2, warm cream clapboard walls, a low wooden-shingle gable roof, a wide white porch with a bench and two rocking chairs, flower boxes under the windows.
+Column 2, rows 1-2: small-group house, footprint 2x2, red brick cottage, slate-blue gable roof with a small chimney, a green front door with a little porch light (no glow), two curtained windows.
+Column 3, rows 1-2: mission house, footprint 3x2, two storeys, red brick walls, white window frames, a steep slate roof, a flag pole with a blank flag beside the door.
+Row 3, columns 1-2: fellowship hall, footprint 3x2, long cream-plaster building with timber trim, a wooden-shingle gable roof, wide double doors under a small gable, a long row of windows; column 1 is the front view, column 2 the back view. Row 3 column 3: (empty).
+```
+
+## 시트 E2 — 보충: 글자 없는 매장·안내실·첨탑 (4x4)
+
+- **쓰는 곳**: 매점·카페·빵집·기독교 서점·찬양실·안내실, 십자가 첨탑, 쌍등 가로등, 정자(서양식)
+- **메모**: 시트 E·F에서 쓰지 못한 칸만 다시 받는다: 영어 간판이 그려진 매점·카페·빵집·서점·찬양실, 게시판처럼 나온 안내실, 분홍 번짐이 생긴 첨탑·쌍등 가로등. 지난번 문제(글자, 2x1이 정육면체로 그려짐, 불빛 번짐)를 막는 문장을 넣었다.
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains a few small shops and church buildings, each shown from the front and from the back, plus three single objects.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -75,7 +127,7 @@ Rows 1 to 3 hold two FRONT/BACK pairs each (columns 1-2 and 3-4). Row 4 holds tw
 Row 1: snack kiosk, 1x1, wooden walls, yellow striped awning over a serving counter, a small sign with a cup picture; cafe, 2x1, brown walls, green striped awning, big windows, one small outdoor table, a sign with a cup picture.
 Row 2: bakery, 2x1, cream walls, orange awning, bread display window, small chimney, a sign with a bread picture; Christian bookstore, 2x1, pale green and white walls, blue awning, books in the window, a sign with a book picture.
 Row 3: music room, 2x2, cream walls, slate-blue roof, a round window, a sign with a music note picture, no instruments outside; welcome information kiosk, 1x1, a small closed booth with walls, a roof and a wide service window with a counter (NOT a notice board).
-Row 4 (singles, front view only): tall slender church cross tower, 1x1, brick and stone, about 2.5 W tall, plain stone cross on top with NO glow; double-headed black street lamp with pale yellow lamp glass and NO glow or light around it; (empty); (empty).
+Row 4 (singles): tall slender church cross tower, 1x1, brick and stone, about 2.5 W tall, plain stone cross on top with NO glow; double-headed black street lamp with pale yellow lamp glass and NO glow or light around it; white wooden Western garden gazebo, 2x2, octagonal, with a shingled roof and railings (not East Asian); (empty).
 ```
 
 ## 시트 D — 땅·바닥 질감 (4x4)
@@ -87,7 +139,8 @@ Row 4 (singles, front view only): tall slender church cross tower, 1x1, brick an
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains flat ground textures seen from directly above.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -97,6 +150,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - Every used cell is filled completely, edge to edge, by its picture (no magenta inside used cells, no margin).
@@ -119,7 +173,8 @@ Row 4: calm blue water with small ripples; a row of grey cut-stone coping blocks
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains small church buildings, each shown from the front and from the back.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -135,6 +190,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 6 columns x 6 rows of equal square cells (36 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -166,7 +222,8 @@ Row 6 (singles, only the front view): bronze bell in a wooden frame seen from th
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains medium church buildings with a 2x2 footprint, each shown from the front and from the back.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -182,6 +239,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -197,8 +255,8 @@ Pairs are stacked vertically: a cell in an odd row shows the FRONT VIEW and the 
 CONTENTS (left to right, top to bottom)
 Rows 1-2 and rows 3-4 hold five vertical FRONT/BACK pairs each. Row 5 holds four single objects.
 Rows 1-2 (front on top, back below): small worship chapel, cream walls, slate-blue gable roof with a small cross on the ridge, arched double door; music room, cream walls, round rose window without any pattern of letters, small bell-shaped roof vent; youth hall, light grey walls with a bold orange stripe, flat roof, big glass door; small-group house, warm cream walls, wooden porch, two windows with curtains; children's hall, pastel yellow and sky blue walls, round windows, a little slide on the side.
-Rows 3-4 (front on top, back below): study house, cream walls, green roof, rows of windows, a bicycle by the wall; seniors' rest house, warm wood walls, low tiled roof in a Korean style, a bench on the porch; book cafe, white walls, dark green awning, big shop windows with books and cups; parking tower, two levels of concrete decks with a ramp, open sides, a few cars inside; playground, a small play set with a slide, swings and sandbox inside a low fence.
-Row 5 (singles): round garden pond with lily pads and a stone rim, 2x2; wooden pavilion with a tiled roof, 2x2; small parking lot with two empty painted spaces, 2x1, painted lines only, no ground texture outside the lines; fountain plaza with a round basin, 2x2; (empty).
+Rows 3-4 (front on top, back below): study house, cream walls, green roof, rows of windows, a bicycle by the wall; seniors' rest house, warm wood walls, a low shingled gable roof, a bench on the porch; book cafe, white walls, dark green awning, big shop windows with books and cups; parking tower, two levels of concrete decks with a ramp, open sides, a few cars inside; playground, a small play set with a slide, swings and sandbox inside a low fence.
+Row 5 (singles): round garden pond with lily pads and a stone rim, 2x2; white wooden gazebo with a shingled roof, 2x2; small parking lot with two empty painted spaces, 2x1, painted lines only, no ground texture outside the lines; fountain plaza with a round basin, 2x2; (empty).
 ```
 
 ## 시트 G — 큰 건물 3x2·3x3 (앞·뒤) (4x4)
@@ -210,7 +268,8 @@ Row 5 (singles): round garden pond with lily pads and a stone rim, 2x2; wooden p
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains large church buildings, each shown from the front and from the back.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -226,6 +285,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -254,7 +314,8 @@ Row 3, column 4 (single): large parking lot, 3x2, painted white parking lines on
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains the largest buildings and the church entrance.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -270,6 +331,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 3 columns x 3 rows of equal square cells (9 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -299,7 +361,8 @@ Row 3: white festival tent with an open front and folding tables, 2x2; church si
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains paths, stairs, bridges and vehicles.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -315,6 +378,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -345,7 +409,8 @@ Row 5: tall roadside street lamp; parked bicycle; small parked scooter; pile of 
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains walking visitors of a church, small and simple.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -355,6 +420,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 6 columns x 6 rows of equal square cells (36 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -382,7 +448,8 @@ Row 6: little girl in a pink dress with pigtails (the last cell, row 6 column 6,
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains user-interface icons.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -397,6 +464,7 @@ ICON STYLE (this sheet is NOT isometric)
 - Every icon is about the same visual weight and fills about 65% of its cell, centered.
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 7 columns x 7 rows of equal square cells (49 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -422,7 +490,8 @@ Row 7: arched church door (open the church); small bank building with columns (l
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains user-interface frames and buttons in the same pixel style.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -432,6 +501,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 4 columns x 4 rows of equal square cells (16 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
@@ -455,7 +525,8 @@ Row 4: the progress bar fill, gold #d1a02e, same height as the track; small roun
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains small square scene illustrations for event and team cards.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -465,6 +536,7 @@ STYLE GUIDE (identical for every sheet of this game)
 - If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - Every used cell is filled completely, edge to edge, by its picture (no magenta inside used cells, no margin).
@@ -488,7 +560,8 @@ Row 5: two volunteers waving to neighbors from a church tent (outreach team); fo
 Create a single square image: a sprite sheet for an isometric church-building management game. It contains seasonal and festival decorations for a church garden, one object per cell.
 
 STYLE GUIDE (identical for every sheet of this game)
-- Theme: a warm, hopeful small neighborhood church in a Korean town on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
 - Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
 - Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
 - Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
@@ -504,6 +577,7 @@ PROJECTION (all world objects on this sheet)
 - Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
 
 LAYOUT
+- Output a high-resolution 2K image: exactly 2048 x 2048 pixels (never smaller). Keep the pixel art crisp at this size.
 - Exactly 5 columns x 5 rows of equal square cells (25 cells total).
 - Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
 - The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
