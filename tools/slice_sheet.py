@@ -194,4 +194,5 @@ def main(paths):
 
 if __name__ == '__main__':
     main(sys.argv[1:] or [os.path.join(ROOT, 'docs/art/sheets', n) for n in
-                         ('decor-b.json', 'decor-c.json', 'sheet-D.json', 'sheet-E.json', 'sheet-F.json', 'sheet-G.json', 'sheet-H.json')])
+                         ('decor-b.json', 'decor-c.json', 'sheet-D.json', 'sheet-E.json', 'sheet-F.json', 'sheet-G.json', 'sheet-H.json',
+                          'sheet-E2.json', 'sheet-E3.json')])

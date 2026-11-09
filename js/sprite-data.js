@@ -1,5 +1,5 @@
 'use strict';
-/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json)를 고친 뒤 다시 만들 것 */
+/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json)를 고친 뒤 다시 만들 것 */
 var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"by":0.1,"sway":1},
 "fir":{"src":"assets/decor/fir.png","w":105,"h":150,"fw":0.58,"by":0.1,"sway":0.8},
 "cherry":{"src":"assets/decor/cherry.png","w":129,"h":144,"fw":0.82,"by":0.1,"sway":1},
@@ -126,4 +126,18 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "gate_c":{"src":"assets/bld/gate_c.png","w":265,"h":319,"fw":1.0,"by":0.3,"sway":0},
 "gym_b":{"src":"assets/bld/gym_b.png","w":317,"h":289,"fw":1.0,"by":0.95,"sway":0},
 "grand_b":{"src":"assets/bld/grand_b.png","w":299,"h":323,"fw":1.0,"by":0.95,"sway":0},
-"gate_o":{"src":"assets/bld/gate_o.png","w":271,"h":318,"fw":1.0,"by":0.3,"sway":0}};
+"gate_o":{"src":"assets/bld/gate_o.png","w":271,"h":318,"fw":1.0,"by":0.3,"sway":0},
+"shop":{"src":"assets/bld/shop.png","w":120,"h":147,"fw":1.0,"by":0.95,"sway":0,"back":"shop_b","fl":1},
+"shop_b":{"src":"assets/bld/shop_b.png","w":118,"h":153,"fw":1.0,"by":0.95,"sway":0},
+"cafe":{"src":"assets/bld/cafe.png","w":131,"h":147,"fw":1.05,"by":0.95,"sway":0},
+"praise":{"src":"assets/bld/praise.png","w":146,"h":156,"fw":1.0,"by":0.95,"sway":0,"back":"praise_b","fl":1},
+"praise_b":{"src":"assets/bld/praise_b.png","w":146,"h":156,"fw":1.0,"by":0.95,"sway":0},
+"gazebo":{"src":"assets/bld/gazebo.png","w":118,"h":152,"fw":1.0,"by":0.95,"sway":0},
+"elder":{"src":"assets/bld/elder.png","w":321,"h":305,"fw":1.05,"by":0.95,"sway":0,"back":"elder_b"},
+"cell":{"src":"assets/bld/cell.png","w":263,"h":281,"fw":1.1,"by":0.95,"sway":0,"back":"cell_b"},
+"mission":{"src":"assets/bld/mission.png","w":299,"h":313,"fw":1.0,"by":0.95,"sway":0,"back":"mission_b","fl":1},
+"elder_b":{"src":"assets/bld/elder_b.png","w":325,"h":307,"fw":1.05,"by":0.95,"sway":0},
+"cell_b":{"src":"assets/bld/cell_b.png","w":278,"h":282,"fw":1.1,"by":0.95,"sway":0},
+"mission_b":{"src":"assets/bld/mission_b.png","w":304,"h":306,"fw":1.0,"by":0.95,"sway":0},
+"hall":{"src":"assets/bld/hall.png","w":373,"h":325,"fw":1.0,"by":0.95,"sway":0,"back":"hall_b"},
+"hall_b":{"src":"assets/bld/hall_b.png","w":386,"h":322,"fw":1.0,"by":0.95,"sway":0}};
