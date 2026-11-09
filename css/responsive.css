@@ -1,9 +1,8 @@
 /* 낮은 가로 화면(휴대폰): 버튼과 패널을 조금 작게 */
 @media (max-height:480px){
-  #ui{--fabh:66px;--toph:50px}
+  #ui{--fabh:66px;--toph:40px}
   .fab .fc{width:48px;height:48px}
   .fab svg{width:21px;height:21px}
-  #status{padding:5px 10px}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 

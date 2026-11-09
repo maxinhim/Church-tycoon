@@ -114,11 +114,19 @@ async function playChecks(browser, url) {
 
   // 동그란 기능 버튼·하위 탭·메뉴·닫기
   await page.click('#fab [data-fab="minis"]'); await page.click('#subtabs [data-v="staff"]');
-  await page.click('#fab [data-fab="status"]'); await page.click('#bMenu');
+  await page.click('#fab [data-fab="status"]'); await page.click('#bGear'); await page.click('#bMenu');
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="close"]');
   await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
   for (const b of ['#bRot', '#bIn', '#bOut', '#bHome']) await page.click(b);
-  for (const s of ['0', '2', '4', '1']) await page.click(`.sp [data-sp="${s}"]`);
+  // 톱니바퀴를 열어 배속을 바꾸고, 1×가 아니면 톱니바퀴에 표시가 붙는다
+  await page.click('#bGear');
+  for (const s of ['0', '2', '4']) await page.click(`.sp [data-sp="${s}"]`);
+  const badge = await page.evaluate(() => !document.getElementById('spBadge').hidden && document.getElementById('spBadge').textContent === '4×');
+  await page.click('.sp [data-sp="1"]');
+  const badgeOff = await page.evaluate(() => document.getElementById('spBadge').hidden);
+  await page.mouse.click(300, 200);
+  const gearClosed = await page.evaluate(() => document.getElementById('gearMenu').hidden);
+  check(badge && badgeOff && gearClosed, '톱니바퀴: 배속을 바꾸면 표시가 붙고, 바깥을 누르면 닫힘');
   await page.waitForTimeout(300);
 
   await page.setViewportSize({ width: 1280, height: 720 }); await page.waitForTimeout(300);

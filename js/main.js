@@ -25,6 +25,9 @@ function resize(){
   else{cam.z=clamp(cam.z,ZMIN,ZMAX);centerOn(keep[0],keep[1]);}
 }
 
+function setGear(open){$('#gearMenu').hidden=!open;$('#bGear').setAttribute('aria-expanded',String(open));}
+// 속도가 1×가 아니면 톱니바퀴에 작은 표시 (메뉴를 닫아도 멈춤·배속을 알 수 있게)
+function syncSpeed(){var b=$('#spBadge');b.hidden=UI.speed===1;b.textContent=UI.speed===0?'II':UI.speed+'×';$('#bGear').setAttribute('aria-label','설정: 게임 속도'+(UI.speed===0?' (일시정지 중)':UI.speed===1?'':' ('+UI.speed+'배속)')+'와 메뉴');}
 /* ---------- 시작 ---------- */
 var last=0;
 function frame(ts){
@@ -42,10 +45,15 @@ function init(){
     b.addEventListener('click',function(){
       UI.speed=+b.dataset.sp;
       document.querySelectorAll('.sp button').forEach(function(x){x.classList.toggle('on',x===b);});
+      syncSpeed();
     });
   });
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){b.addEventListener('click',function(){openGroup(b.dataset.fab);});});
-  $('#bMenu').addEventListener('click',function(){openGroup('menu');});
+  $('#bMenu').addEventListener('click',function(){setGear(false);openGroup('menu');});
+  $('#bGear').addEventListener('click',function(){setGear($('#gearMenu').hidden);});
+  // 톱니바퀴 메뉴 바깥을 누르거나 Esc를 누르면 닫는다
+  document.addEventListener('pointerdown',function(e){if(!$('#gearMenu').hidden&&!e.target.closest('#gear'))setGear(false);});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gearMenu').hidden){setGear(false);$('#bGear').focus();}});
   $('#dock').addEventListener('click',onPanel);
   $('#over').addEventListener('click',function(e){if(e.target.closest('[data-act="restart"]'))restart();});
   $('#dlg').addEventListener('click',function(e){var b=e.target.closest('[data-act="dlg"]');if(!b)return;var why=chooseDlg(+b.dataset.v);if(why)toast(why,1600);showDlg();renderPanel();hud(true);});
