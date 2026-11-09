@@ -237,8 +237,21 @@ sheet('E3', '보충: 서양식으로 다시 받는 건물', (3, 3),
        "Row 3, columns 1-2: fellowship hall, footprint 3x2, long cream-plaster building with timber trim, a wooden-shingle gable roof, wide double doors under a small gable, a long row of windows; column 1 is the front view, column 2 the back view. Row 3 column 3: (empty)."],
       pair='v')
 
+sheet('E4', '보충: 간판 없는 빵집·서점', (3, 3),
+      '시트 E·E2에서 두 번 다 영어 간판 글씨가 그려진 빵집·기독교 서점만 다시 받는다. 간판을 아예 빼고 진열창(빵·책)과 차양 색으로만 구분하게 했다. 시트 E2가 격자를 무시해서 격자 지시도 더 세게 넣었다.',
+      '빵집(2x1)·기독교 서점(2x1)',
+      ["It contains two small shops, each shown from the front and from the back.",
+       "GRID: the image must be divided into exactly 3 columns and 3 rows of equal square cells, no more and no fewer. Only four cells are used; every other cell stays plain flat magenta.",
+       "NO SIGNS AT ALL: no sign board, no plaque, no banner, no lettering, no logo, no numbers anywhere on or near the buildings. The shop type is shown ONLY by what is in its windows and by the awning color.",
+       "FOOTPRINT: both shops are 2x1, clearly twice as long as they are deep (do not draw a cube). The long front side with the door faces the lower-right.",
+       "Row 1: column 1 = FRONT view, column 2 = BACK view of a bakery: cream plaster walls with timber trim, a red-and-white striped awning, a big display window full of round loaves, baguettes and pastries on shelves, a small brick chimney, a flower box under the window. The back view shows a plain cream wall with one small window and a back door. Column 3 stays empty.",
+       "Row 2: column 1 = FRONT view, column 2 = BACK view of a small Christian bookstore: red brick walls, a dark green awning, two display windows with neat rows of colorful book spines and a small wooden cross standing on a shelf, a wooden door with a glass pane. The back view shows a plain brick wall with one small window. Column 3 stays empty.",
+       "Row 3: all three cells stay empty (the bottom-right cell must be plain magenta)."],
+      pair='h')
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('E3', '보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)'),
+ORDER = [('E4', '보충 — 간판 없는 빵집·서점 (지금 먼저)'),
+         ('E3', '보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)'),
          ('E2', '보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자'),
          ('K', 'UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다'),
          ('L', 'UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다'),
@@ -339,7 +352,7 @@ def build_html():
 
 
 if __name__ == '__main__':
-    SHEETS.sort(key=lambda x: {'E3': 0, 'E2': 1}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
+    SHEETS.sort(key=lambda x: {'E4': 0, 'E3': 1, 'E2': 2}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))
