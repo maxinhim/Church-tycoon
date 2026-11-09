@@ -117,7 +117,7 @@ function syncPlace(){
   });
   // ✓·✕는 미리보기 위쪽 좌우. 화살표와 겹치지 않게 충분히 띄운다.
   // 위쪽(교회 이름표 줄)에 자리가 없으면 미리보기 아래로 내린다
-  var hasUn=k==='bld'&&UI.undo.length>0,mid=(bx.l+bx.r)/2,half=Math.max((bx.r-bx.l)/2,hasUn?46:28),top=Math.min(bx.t-18,show?minY-38:1e9),tb=$('#top').getBoundingClientRect().bottom+22;
+  var tf=isTileFloor(),hasUn=(k==='bld'||tf)&&UI.undo.length>0,mid=(bx.l+bx.r)/2,half=Math.max((bx.r-bx.l)/2,hasUn?46:28),top=Math.min(bx.t-18,show?minY-38:1e9),tb=$('#top').getBoundingClientRect().bottom+22;
   if(top<tb)top=Math.max(bx.b+18,show?maxY+38:-1e9);
   var ok=root.querySelector('[data-pl="ok"]'),no=root.querySelector('[data-pl="no"]');
   plMove(ok,cl(mid-half,22,vw-22),cl(top,22,vh-22),38);
@@ -128,7 +128,18 @@ function syncPlace(){
   var can=k==='path'?plPathWhy()==='':(k==='floor'?!cellWhy(UI.ghost.x,UI.ghost.y,UI.tool):!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face));
   // 못 지을 때도 누를 수는 있게 두고(회색), 누르면 이유를 알려 준다
   ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
-  ok.setAttribute('aria-label',line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
+  // 바닥 타일: ✓ 왼쪽에 한 칸 값(바꾸면 바꾸는 값)
+  var pr=root.querySelector('.ppr'),fc=tf?floorCostAt():null;pr.hidden=fc==null;
+  if(fc!=null){var t=(fc.swap?'바꾸기 ':'')+(fc.c<0?'+':'')+fmt(Math.abs(fc.c));if(pr.textContent!==t)pr.textContent=t;pr.classList.toggle('off',!can);
+    pr.style.transform='translate('+Math.round(Math.max(60,cl(mid-half,22,vw-22)-23))+'px,'+Math.round(cl(top,22,vh-22))+'px) translate(-100%,-50%)';}
+  ok.setAttribute('aria-label',fc!=null?(can?(fc.swap?'바꾸기':'깔기')+' '+fmt(Math.abs(fc.c))+', 다음 칸으로':'여기에는 깔 수 없어요'):line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
+}
+// 미리보기 칸에 바닥을 깔거나 바꿀 때 드는 값
+function floorCostAt(){
+  var g=UI.ghost,d=D[UI.tool];if(!g||!d)return null;
+  var sl=floorSlot(g.x,g.y,g.pid),pv=sl&&sl.get();
+  if(UI.tool==='f_erase')return pv&&D[pv]?{c:-Math.floor(D[pv].cost*0.5),swap:false}:null;
+  return pv&&pv!==UI.tool?{c:floorSwapCost(pv,UI.tool),swap:true}:{c:d.cost,swap:false};
 }
 // 바닥 미리보기를 d 방향 다음 칸으로 (데크 위면 같은 높이의 다음 데크, 없으면 땅)
 function floorStep(g,d){
@@ -261,9 +272,11 @@ function unbuild(u){
   var d=defOf(b);demolish(b.id);S.money+=u.cost-Math.floor(d.cost*0.5);save();
   return true;
 }
+// 바닥 타일 깔기: 아래 띠 없이 지도 위 ✓·✕·화살표와 ✓ 옆 값 표시만 쓴다
+function isTileFloor(){return placeKind()==='floor'&&!isTerDef(UI.tool);}
 function renderPbar(){
   var el=$('#pbar');if(!el)return;
-  var k=placeKind();el.hidden=!k||k==='bld';if(el.hidden){plHtml='';syncPlace();return;}
+  var k=placeKind();el.hidden=!k||k==='bld'||isTileFloor();if(el.hidden){plHtml='';syncPlace();return;}
   var h='',undo=UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'',d=D[UI.tool];
   if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
@@ -271,9 +284,9 @@ function renderPbar(){
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
   }else if(k==='path'){
     var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sky=c.k==='sky',sl=sky?0:c.slope;
-    var info=!p?'지도를 눌러 시작할 곳을 고르세요. 지어 둔 길을 누르면 그 끝에서 이어 짓습니다':
-      (pw?bad(pw):'<b>'+pieceName(p)+'</b> <span class="pc">'+fmt(pieceCost(p))+'</span> · 높이 '+c.l+(sl?'→'+(c.l+sl):'')+' · ✓로 한 칸씩 이어요');
-    h='<div class="ptx">'+info+'</div><div class="prow">'+
+    // 안내 문장 없이 이름·값·높이만. 못 짓는 칸이면 ✓가 흐려지고, 누르면 이유를 짧게 알려 준다
+    var info=p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span> · 높이 '+c.l+(sl?'→'+(c.l+sl):''):'';
+    h=(info?'<div class="ptx">'+info+'</div>':'')+'<div class="prow">'+
       segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크'],['sky','연결 다리']])+
       segBtns('pslope',sl,[[-1,'내리막'],[0,'평지'],[1,'오르막']],sky)+
       '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=0?' disabled':'')+'>▼</button><span class="lvl">'+(c.l?c.l+1+'층':'땅')+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
@@ -307,6 +320,7 @@ function setupPlace(){
   root.innerHTML=[0,1,2,3].map(function(d){return '<button class="parr" data-pl="dir" data-v="'+d+'" aria-label="방향 '+(d+1)+'">'+arrow+'</button>';}).join('')+
     '<button class="pok" data-pl="ok" aria-label="짓기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
     '<button class="pun" data-pl="undo" data-act="undo" aria-label="방금 지은 것 되돌리기" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+    '<span class="ppr" aria-hidden="true" hidden></span>'+
     '<button class="pno" data-pl="no" aria-label="그만두기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>';
   root.addEventListener('click',function(e){
     var b=e.target.closest('[data-pl]');if(!b)return;

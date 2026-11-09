@@ -100,6 +100,9 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 #place button{position:absolute;left:0;top:0;pointer-events:auto;display:grid;place-items:center;padding:0;border-radius:50%;touch-action:manipulation}
 #place button[hidden]{display:none}
 #place svg{width:60%;height:60%}
+#place .ppr{position:absolute;left:0;top:0;pointer-events:none;padding:1px 7px;border-radius:9px;background:var(--card);color:var(--ink);font:600 11px/1.5 'IBM Plex Sans KR',sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+#place .ppr[hidden]{display:none}
+#place .ppr.off{color:var(--muted);text-decoration:line-through}
 .pok,.pno{width:38px;height:38px;border:2px solid #fff;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .pok{background:#27a85a}
 .pno{background:#d6453a}
@@ -115,6 +118,7 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 #pbar .ptx{flex:1 1 220px;min-width:0;line-height:1.35}
 #pbar .ptx b{color:var(--ink);font-size:12.5px}
 #pbar .pc{color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+#pbar .pc.off{color:var(--muted);text-decoration:line-through}
 #pbar .pt{font-size:11px}
 #pbar .btn{height:30px;padding:0 10px;font-size:12px}
 .prow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:1 1 100%}

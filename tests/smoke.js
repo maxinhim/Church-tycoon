@@ -662,6 +662,13 @@ async function ministryChecks(browser, url) {
   const faced = await page.evaluate(() => { syncPlace(); const el = [...document.querySelectorAll('#place .parr')].find(e => +e.dataset.v !== UI.face); const want = +el.dataset.v; el.click(); syncPlace(); return UI.face === want && el.classList.contains('on'); });
   const barQuiet = await page.evaluate(() => { renderPbar(); return document.getElementById('pbar').hidden; });
   const blockedTip = await page.evaluate(() => { const g = { ...UI.ghost }; UI.ghost = { x: S.buildings[0].x, y: S.buildings[0].y }; syncPlace(); const ok = document.querySelector('#place [data-pl="ok"]'); const off = ok.classList.contains('off'); plLock = 0; ok.click(); const t = document.getElementById('toast'); const said = !t.hidden && t.textContent.length > 0; UI.ghost = g; syncPlace(); return off && said; });
+  // 길·바닥을 깔 때: 바닥은 아래 띠 없이 ✓ 옆 값만, 길은 안내 문장 없이 이름·값·고르는 버튼만
+  const quietLine = await page.evaluate(() => { const keep = { tool: UI.tool, ghost: UI.ghost };
+    startPlace('f_block'); renderPbar(); syncPlace(); const pr = document.querySelector('#place .ppr');
+    const fl = document.getElementById('pbar').hidden && !pr.hidden && /\d/.test(pr.textContent);
+    startPlace('path'); renderPbar(); const t = document.getElementById('pbar').innerText;
+    const pa = !document.getElementById('pbar').hidden && !/지도를 눌러|✓로/.test(t) && !!document.querySelector('#pbar [data-act="pkind"]');
+    startPlace(keep.tool); UI.ghost = keep.ghost; renderDetail(); return fl && pa; });
   const m0 = await page.evaluate(() => S.money);
   if (placed) await page.click('#place [data-pl="ok"]');
   const fx = await page.evaluate(() => !F.some(f => /^(좌석|교제 공간|돌봄 공간|편의 공간|주차|분위기|방문자) \+/.test(f.text)));
@@ -748,6 +755,7 @@ async function ministryChecks(browser, url) {
   check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
   check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
+  check(quietLine, '길·바닥 깔기: 안내 문구 박스 없음 (바닥은 ✓ 옆 값만, 길은 고르는 버튼만)');
   check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨·안내 띠를 띄우지 않음 (효과는 건축 카드에서만)');
   check(card === 'ok', '지은 것 누르기: 패널 대신 건물 위 작은 카드, 철거는 두 번 눌러야 (' + card + ')');
   check(moved === 'ok', '옮기기·돌리기: 지은 것을 무료로 다른 자리·방향으로 옮김, 취소하면 그대로 (' + moved + ')');
