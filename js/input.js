@@ -108,22 +108,22 @@ function onPanel(e){
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
-  else if(a==='dempiece'){var pc2=pieceById(UI.selPiece);if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
+  else if(a==='dempiece'){var pc2=pieceById(UI.selPiece);if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);sfx('demolish',.7);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
   else if(a==='undo'){
     var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
     if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
   }
-  else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);renderDetail();hud(true);}
+  else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);sfx(fw2?'error':'build',fw2?.4:.8);renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
     var st=UI.selTile;
-    if(st&&removeTile(st.x,st.y,.5))toast('칸 하나를 철거했어요',1400);
+    if(st&&removeTile(st.x,st.y,.5)){toast('칸 하나를 철거했어요',1400);sfx('demolish',.7);}
     UI.selTile=null;var rb=st&&roomAt(st.x,st.y);UI.sel=rb?rb.id:null;
     renderDetail();hud(true);
   }
   else if(a==='move'){startMove(bById(UI.sel));}
-  else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
+  else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);sfx('demolish',.8);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
   else if(a==='hire'){var hw=hireTeam(v);toast(hw||STAFF[v].name+' 단계 '+S.staff[v]+'로 올렸어요',1800);renderStaff();hud(true);}
   else if(a==='fire'){if(S.staff[v]>0){S.staff[v]--;recalc();save();}renderStaff();hud(true);}
   else if(a==='newgame'){if(v&&DIFF[v]){restart(v);}else{UI.confirmNew=!UI.confirmNew;renderMenu();}}
@@ -140,12 +140,13 @@ function onPanel(e){
     else if(a==='repay'){msg=repayLoan(+v);done='대출을 모두 갚았어요';}
     else return;
     toast(msg||done,1800);renderPanel();hud(true);
+    if(msg)sfx('error',.4);else if(a==='repair'||a==='repairAll')sfx('build',.8);else if(a==='borrow'||a==='repay')sfx('coins',.7);else sfx('click',.5);
   }
 }
 function tapRoomTile(t){
   UI.ghost={x:t.x,y:t.y};
   var p=tilePlan(t.x,t.y,UI.tool);
-  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){
+  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){sfx('build',.7);
     UI.undo.push({x:t.x,y:t.y});
     var rb=roomAt(t.x,t.y,UI.tool),d=defOf(rb);
     toast((p.kind==='floor'?tileOf(rb,t.x,t.y).f+'층으로 올렸어요':'칸을 지었어요')+' · '+d.name,1400);

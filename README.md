@@ -26,11 +26,11 @@
   - 데이터·상태: `config` → `buildings` → `state`
   - 게임 로직: `pathfinding`(바닥·길·계단·다리를 잇는 길찾기, 울타리·교회 문) → `visitors` → `sim` → `build` → `modular`(역할별로 칸을 이어 짓는 건물, 층 쌓기) → `doors`(입구·출구) → `paths`(길·철골 계단·다리·연결 다리) → `floors`(바닥 타일) → `ministry`(난이도·목표·사역팀·부교역자·직분자·행사·고민 카드·노후) → `finance`(교회 문, 대출, 주일 정산 영수증) → `weather`(날씨·계절·화면 효과) → `save`
   - 렌더링: `render-core`(투영·도형) → `sprite-data`(자동 생성: 그림 조각 크기·자리) → `sprites`(그림 조각 불러오기·그리기, 없으면 벡터로) → `render-entities`(건물·방문자) → `render-scene`(장면 합성)
-  - UI·진입점: `camera` → `hud` → `effects`(목표 축하·빠른 현황·고민 카드) → `panel` → `selcard`(지은 것을 누르면 뜨는 작은 카드) → `place`(지도 위에서 짓기·옮기기: ✓·✕·방향 화살표) → `input` → `main`(`init`은 마지막 파일에서 실행)
+  - UI·진입점: `camera` → `hud` → `effects`(목표 축하·빠른 현황·고민 카드) → `panel` → `selcard`(지은 것을 누르면 뜨는 작은 카드) → `place`(지도 위에서 짓기·옮기기: ✓·✕·방향 화살표) → `input` → `audio`(배경 음악·효과음) → `main`(`init`은 마지막 파일에서 실행)
 
 ## 출처
 - 건물·방문자·길 등 대부분의 그래픽과 시스템은 이 프로젝트의 코드로 새로 그렸습니다.
 - 조경·꾸미기·건물·바닥 그림 조각(`assets/`)은 Google Gemini로 생성한 이미지(`docs/art/sheets/`)를 잘라 썼습니다. 생성 프롬프트는 `docs/art/gemini-prompts.md`에 있습니다.
-- 외부 소리·소스는 사용하지 않습니다.
+- 배경 음악·효과음(`assets/audio/`)은 OpenGameArt.org의 CC0 음원입니다. 곡·효과음마다 만든 사람과 주소는 `docs/audio.md`에 있습니다.
 - 폰트: Google Fonts (Gowun Batang, IBM Plex Sans KR)
 - 참고 자료: Kenney 아이소메트릭 에셋(CC0), OpenGameArt(라이선스 확인 필요), OpenRCT2

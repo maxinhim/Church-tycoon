@@ -30,6 +30,7 @@ function drawFx(c){
 var CF=[],celeTimer=0;
 function celebrate(g,lines){
   var el=$('#cele');if(!el)return;
+  sfx('bell',.85,0);setTimeout(function(){sfx('join',.7,0);},300);
   el.innerHTML='<div class="cbox" role="status"><div class="ckick">목표 달성</div><h2>'+g.n+'</h2><ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul><p class="chint">눌러서 닫기</p></div>';
   el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   clearTimeout(celeTimer);celeTimer=setTimeout(function(){el.hidden=true;},7000);

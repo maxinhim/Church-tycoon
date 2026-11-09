@@ -50,12 +50,12 @@ function setGate(open){
   if(open===!!S.open)return;
   S.open=open;
   if(open){
-    addLog('교회 문을 열었어요');toast('교회 문을 열었어요! 방문자가 찾아오기 시작해요',2400);
+    addLog('교회 문을 열었어요');sfx('gate_open',.8,0);toast('교회 문을 열었어요! 방문자가 찾아오기 시작해요',2400);
     F.push({x:ENT+.5,y:PZ-.5,z:1.6,t:2.4,d:2.4,text:'교회 문을 열었어요',col:'#ffe28a',big:1});
   }else{
     // 주차 구역에 있던 사람은 돌아가고, 부지 안에 있던 사람은 볼일을 마치고 나간다
     V.forEach(function(v){if(v.y>=PZ&&v.state!=='leave'&&v.state!=='inside')goLeave(v);});
-    addLog('교회 문을 닫았어요');toast('교회 문을 닫았어요',1800);
+    addLog('교회 문을 닫았어요');sfx('gate_close',.8,0);toast('교회 문을 닫았어요',1800);
   }
   save();hud(true);
 }
@@ -107,6 +107,8 @@ function rcptHtml(r,full){
 }
 function showReceipt(){
   var el=$('#rcpt');if(!el||!S.rcpt)return;
+  // 주일 종소리와 동전 소리
+  sfx('bell',.75,0);setTimeout(function(){sfx('coins',.6,0);},450);
   el.innerHTML=rcptHtml(S.rcpt,false);el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   clearTimeout(rcptTimer);rcptTimer=setTimeout(function(){el.hidden=true;},5000);
 }

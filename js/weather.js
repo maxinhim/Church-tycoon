@@ -107,7 +107,7 @@ function wxTick(dt){
 // 벼락: 첨탑이 있으면 첨탑이 받아 내고, 없으면 건물 하나가 상한다 (하루 두 번까지)
 function strike(){
   var w=ensureWx(),sp=S.buildings.filter(function(b){return b.def==='spire';});
-  var t=null;
+  var t=null;thunder();
   if(sp.length){
     t=sp[(Math.random()*sp.length)|0];
     F.push({x:t.x+.5,y:t.y+.5,z:2.9,t:1.6,d:1.6,text:'피뢰침 덕분에 무사해요',col:'#bfe3ff'});

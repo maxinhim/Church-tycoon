@@ -66,7 +66,7 @@ function declNames(text) {
 }
 
 /* ---------- 정적 파일 서버 ---------- */
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.mp3': 'audio/mpeg' };
 function serve() {
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
@@ -785,6 +785,24 @@ async function ministryChecks(browser, url) {
     const keep = SPR.cherry; delete SPR.cherry; let ok = !drawSprEntity(t); try { drawEntity(t); } catch (e) { ok = false; } SPR.cherry = keep;
     return ok ? 'ok' : 'no fallback';
   });
+  // 소리: 첫 터치에 켜지고 효과음을 모두 불러오며, 날씨에 따라 곡이 바뀌고, 끄기 버튼이 저장된다
+  await page.mouse.click(400, 200);
+  await page.waitForFunction(() => SND.unlocked && Object.keys(SND.buf).length === SFX_LIST.length, null, { timeout: 8000 }).catch(() => {});
+  const audio = await page.evaluate(() => {
+    if (!SND.unlocked) return 'not unlocked';
+    if (Object.keys(SND.buf).length !== SFX_LIST.length) return 'sfx ' + Object.keys(SND.buf).length + '/' + SFX_LIST.length;
+    const keep = S.wx.cur, out = [];
+    ['sun', 'rain', 'storm', 'snow'].forEach(w => { S.wx.cur = w; stepAudio(0.1); out.push(SND.cur); });
+    S.wx.cur = keep;
+    if (out.join() !== 'sun,rain,rain,snow') return 'kind ' + out;
+    if (!SND.el.rain || !/bgm_rain\.mp3$/.test(SND.el.rain.src) || !SND.el.amb) return 'no rain track';
+    sfx('build'); sfx('coin'); thunder();
+    document.getElementById('bMusic').click();
+    const saved = JSON.parse(localStorage.getItem(SND_KEY) || '{}').music === false && !SND.music;
+    stepAudio(0.1); document.getElementById('bMusic').click();
+    return saved && SND.cur === '' ? 'ok' : 'toggle';
+  });
+  check(audio === 'ok', '소리: 첫 터치에 켜짐, 효과음 모두 불러옴, 맑음·비·눈마다 곡이 바뀜, 음악 끄기 저장 (' + audio + ')');
   check(sprites === 'ok', '그림 조각: 조경·꾸미기 그림을 모두 불러와 그리고, 없으면 벡터 그림으로 (' + sprites + ')');
   check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();

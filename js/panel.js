@@ -43,6 +43,7 @@ function openGroup(g){
   // 건축이 아닌 패널로 옮기면 짓던 것(미리보기)은 취소한다
   if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];}
   UI.sel=null;UI.selPiece=null;UI.selTile=null;
+  sfx('page',.35);
   UI.tab=g==='minis'?(UI.minisTab||'events'):(g==='status'?(UI.statusTab||'status'):g);UI.fold=false;UI.confirmNew=false;
   renderPanel();
 }

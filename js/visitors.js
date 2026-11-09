@@ -79,7 +79,7 @@ function finishVisit(v){
     // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
     if(d.income&&v.wallet>0){
       var pay=Math.min(v.wallet,Math.round(d.income*wxSale(d)*(0.7+Math.random()*0.6)));
-      if(pay>0){v.wallet-=pay;S.money+=pay;S.weekInc+=pay;S.weekShop+=pay;var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
+      if(pay>0){v.wallet-=pay;S.money+=pay;S.weekInc+=pay;S.weekShop+=pay;sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
     placeAt(v,exitNodeFor(b));
   }
@@ -99,7 +99,7 @@ function depart(v){
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
   var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
-  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;F.push({x:ENT+0.5,y:PZ-0.6,t:1.6,text:'+1 성도',col:'#fff2b0'});}
+  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:ENT+0.5,y:PZ-0.6,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 function decide(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;

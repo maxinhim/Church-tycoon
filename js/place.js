@@ -168,12 +168,12 @@ function plNear(d,x,y,R){
 function plOk(){
   var k=placeKind(),now=performance.now();
   if(now<plLock)return;
-  if(k==='path'){var why=pcBuild();if(why)toast(why,1600);else{plLock=now+180;plBuzz();}renderDetail();hud(true);return;}
+  if(k==='path'){var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
   // 바닥: 이 칸을 칠하고 화살표 방향으로 한 칸 나아간다
   if(k==='floor'){
     var g0=UI.ghost,fw=g0?paintFloor(g0.x,g0.y,UI.tool):'자리를 먼저 고르세요';
-    if(fw){toast(fw,1400);return;}
-    plLock=now+150;plBuzz();
+    if(fw){toast(fw,1400);sfx('error',.4);return;}
+    plLock=now+150;plBuzz();sfx('floor',.45,90);
     var nx=g0.x+DIRS[UI.fdir][0],ny=g0.y+DIRS[UI.fdir][1];
     if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ){g0.x=nx;g0.y=ny;}
     renderDetail();hud(true);return;
@@ -181,10 +181,10 @@ function plOk(){
   if(k!=='bld'||!UI.ghost)return;
   if(movingId()){plMoveDone();return;}
   var d=D[UI.tool],g=UI.ghost,why2=placeWhy(d,g.x,g.y,UI.face);
-  if(why2){toast(why2,1600);return;}
+  if(why2){toast(why2,1600);sfx('error',.4);return;}
   if(!build(UI.tool,g.x,g.y,plFace()))return;
   var nb=S.buildings[S.buildings.length-1];
-  plBuzz();plLock=now+350;
+  plBuzz();plLock=now+350;sfx(isDecoCat(d)?'place':'build',.8);
   if(REPEAT_CATS.indexOf(d.cat)>=0){
     // 조경·꾸미기는 길처럼 이어서: 한 칸 나아가고 되돌리기를 쌓는다 (막힌 칸이면 회색 ✓로 알려 준다)
     UI.undo.push({bid:nb.id,cost:d.cost,w:S.week});
@@ -213,13 +213,13 @@ function startMove(b){
 function plMoveDone(){
   var b=bById(UI.moving),g=UI.ghost;if(!b||!g){endPlace();return;}
   var face=UI.face,why=placeWhy(D[b.def],g.x,g.y,face);
-  if(why){toast(why,1600);return;}
+  if(why){toast(why,1600);sfx('error',.4);return;}
   var f0=b.face==null?2:b.face,dx=g.x-b.x,dy=g.y-b.y,same=!dx&&!dy&&f0===face,links=(b.links||[]).length;
   if(!same){
     if(b.door&&f0===face)['ent','ext'].forEach(function(k){b.door[k]={x:b.door[k].x+dx,y:b.door[k].y+dy,d:b.door[k].d,l:b.door[k].l};});
     else delete b.door;
     b.x=g.x;b.y=g.y;b.face=face;
-    releaseVisitors(b.id);structureChanged();plBuzz();
+    releaseVisitors(b.id);structureChanged();plBuzz();sfx('place',.7);
   }
   UI.moving=null;UI.tool=null;UI.ghost=null;UI.fold=true;UI.sel=b.id;
   var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(links&&!(b.links||[]).length?' · 연결 다리가 끊겼어요':'')+(b.door&&!usable(b)?' · 입구까지 길을 이어 주세요':'');
