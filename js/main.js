@@ -1,6 +1,6 @@
 'use strict';
 function restart(dk){
-  S=newState(dk||S.diff);V=[];F=[];CF=[];UI.quick=false;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.tab='build';UI.cat='worship';UI.fold=false;ROT=0;
+  S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
   $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
 }
 /* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */
@@ -44,19 +44,12 @@ function init(){
       document.querySelectorAll('.sp button').forEach(function(x){x.classList.toggle('on',x===b);});
     });
   });
-  document.querySelectorAll('.tabs button').forEach(function(b){
-    b.addEventListener('click',function(){
-      if(b.dataset.tab==='fold'){UI.fold=!UI.fold;}
-      else{UI.tab=b.dataset.tab;UI.fold=false;UI.confirmNew=false;}
-      syncTabs();renderPanel();
-    });
-  });
-  $('#panel').addEventListener('click',onPanel);
+  document.querySelectorAll('#fab [data-fab]').forEach(function(b){b.addEventListener('click',function(){openGroup(b.dataset.fab);});});
+  $('#bMenu').addEventListener('click',function(){openGroup('menu');});
+  $('#dock').addEventListener('click',onPanel);
   $('#over').addEventListener('click',function(e){if(e.target.closest('[data-act="restart"]'))restart();});
   $('#dlg').addEventListener('click',function(e){var b=e.target.closest('[data-act="dlg"]');if(!b)return;var why=chooseDlg(+b.dataset.v);if(why)toast(why,1600);showDlg();renderPanel();hud(true);});
   $('#cele').addEventListener('click',function(){$('#cele').hidden=true;});
-  $('#bStat').addEventListener('click',function(){UI.quick=!UI.quick;renderQuick();});
-  $('#quick').addEventListener('click',function(e){if(e.target.closest('[data-q="close"]')){UI.quick=false;renderQuick();}});
   setupInput();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);

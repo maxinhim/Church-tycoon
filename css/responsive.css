@@ -1,14 +1,11 @@
-@media (orientation:landscape) and (max-height:560px){
-  #ui{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,34%);grid-template-rows:auto minmax(0,1fr) auto;column-gap:10px;row-gap:8px}
-  #top{grid-column:1;grid-row:1;max-width:none}
-  #mid{grid-column:1;grid-row:2}
-  #status{grid-column:1;grid-row:3;max-width:none}
-  #dock{grid-column:2;grid-row:1/4;max-width:none;align-self:stretch}
-  #dock.fold{align-self:start}
-  #panel{flex:1;height:auto;min-height:0}
-  #panel.build{overflow-y:auto}
+/* 낮은 가로 화면(휴대폰): 버튼과 패널을 조금 작게 */
+@media (max-height:480px){
+  #ui{--fabh:66px;--toph:50px}
+  .fab .fc{width:48px;height:48px}
+  .fab svg{width:21px;height:21px}
+  #status{padding:5px 10px}
 }
-@media (prefers-reduced-motion:reduce){.bar i,.tabs .fold svg{transition:none}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 
 /* 가로 전용: 세로 화면에서는 안내 화면으로 가리고 게임은 멈춘다 */
 #rotate{display:none;position:fixed;inset:0;z-index:10;background:var(--bg);color:var(--ink);place-items:center;padding:24px;text-align:center}

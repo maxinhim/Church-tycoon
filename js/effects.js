@@ -2,7 +2,7 @@
 /* ---------- 효과와 빠른 현황 ----------
    · 건물을 지으면 그 위로 "좌석 +24" 같은 글씨가 올라가며 사라진다 (F 목록, 실제 시간 기준)
    · 목표 달성 축하 카드와 종이 꽃가루 (CF 목록, 화면 좌표)
-   · 지도 구석 버튼으로 여는 빠른 현황(#quick)
+   · 현황 패널 맨 위의 한눈 요약(만족·수지·챙길 일)
    · 목회 고민거리 선택 카드(#dlg) */
 var REDUCED=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
 var STATFX=[['seats','좌석','#ffffff'],['fcap','교제 공간','#ffd08a'],['kcap','돌봄 공간','#ffb6d2'],['ccap','편의 공간','#a9f0e4'],['park','주차','#d6e2ff'],['beauty','분위기','#c8f7a6'],['vis','방문자','#fff2b0']];
@@ -55,7 +55,7 @@ function celebrate(g,lines){
   toast('목표 달성 · '+g.n,3000);
 }
 
-/* ---------- 빠른 현황 ---------- */
+/* ---------- 현황 한눈 요약 ---------- */
 function warnings(){
   var w=[],c=S.cov||{};
   if(S.money<0)w.push('자금이 마이너스예요. -1,500 아래로 내려가면 문을 닫아요');
@@ -73,17 +73,12 @@ function qbar(label,v){
   var p=Math.round(clamp(v,0,1)*100);
   return '<span>'+label+'</span><div class="bar"><i style="width:'+p+'%;background:'+(p<60?'var(--bad)':p<90?'var(--gold)':'var(--good)')+'"></i></div><span class="v">'+p+'%</span>';
 }
-function renderQuick(){
-  var el=$('#quick');if(!el)return;
-  el.hidden=!UI.quick;$('#bStat')&&$('#bStat').setAttribute('aria-pressed',String(!!UI.quick));
-  if(!UI.quick)return;
+function statusSummary(){
   var c=S.cov||{},net=lastNet(S),w=warnings(),act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
-  el.innerHTML='<div class="qh"><b>현황</b><button class="btn sm" data-q="close" aria-label="현황 닫기">✕</button></div>'+
-    '<div class="qnums"><div><span>만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
+  return '<div class="qnums"><div><span>만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
     '<div><span>이번 주 방문</span><b>'+S.visitsWeek+'</b></div><div><span>새 성도</span><b>'+S.joinedWeek+'</b></div></div>'+
-    '<div class="cov">'+qbar('좌석',c.seat)+qbar('교제',c.fel)+qbar('돌봄',c.care)+qbar('편의',c.comf)+qbar('주차',c.park)+qbar('목양',c.past)+qbar('체력',S.stam/100)+'</div>'+
     (act.length?'<div class="qev">'+act.map(function(id){return '<span>'+EVENTS[id].name+' · '+S.ev[id].left+'주</span>';}).join('')+'</div>':'')+
-    (w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>');
+    '<div class="sec">챙길 일</div>'+(w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>');
 }
 
 /* ---------- 목회 고민거리 카드 ---------- */

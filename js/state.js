@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- 상태 ---------- */
 var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
-var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:false,confirmNew:false,quick:false};
+var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events'};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 // 시작 상태. 처음엔 입구 앞 일부 땅(S.land)만 가지고 시작하고, 나머지는 부지를 사서 넓힌다

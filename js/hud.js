@@ -24,5 +24,4 @@ function hud(force){
   if(g){$('#goalTxt').textContent='목표 · '+g.n+' ('+g.d+')';$('#goalBar').style.width=clamp(g.p(S)*100,0,100)+'%';}
   else{$('#goalTxt').textContent='모든 목표를 이뤘어요. 자유롭게 키워보세요';$('#goalBar').style.width='100%';}
   if(UI.tab==='build'&&!UI.fold)refreshCards();
-  if(UI.quick)renderQuick();
 }

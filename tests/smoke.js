@@ -112,7 +112,11 @@ async function playChecks(browser, url) {
   a = await state(); await page.waitForTimeout(1500);
   check(!(await overlay()) && a !== await state(), '가로 복귀: 게임이 이어짐');
 
-  for (const t of ['staff', 'status', 'menu', 'build', 'fold', 'fold']) await page.click(`.tabs [data-tab="${t}"]`);
+  // 동그란 기능 버튼·하위 탭·메뉴·닫기
+  await page.click('#fab [data-fab="minis"]'); await page.click('#subtabs [data-v="staff"]');
+  await page.click('#fab [data-fab="status"]'); await page.click('#bMenu');
+  await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="close"]');
+  await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
   for (const b of ['#bRot', '#bIn', '#bOut', '#bHome']) await page.click(b);
   for (const s of ['0', '2', '4', '1']) await page.click(`.sp [data-sp="${s}"]`);
   await page.waitForTimeout(300);
@@ -468,15 +472,30 @@ async function ministryChecks(browser, url) {
   check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 50,000');
   check(r.passive, '균형: 손대지 않으면 30주 동안 저절로 커지지 않고 초반 파산도 없음');
   check(r.lawn, '지도 밖: 빈 공간이 잔디색으로 채워짐');
-  // 화면 조작: 현황 버튼, 건물을 지으면 수치 글씨
-  await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; UI.tab = 'build'; UI.cat = 'worship'; renderPanel(); });
-  await page.click('#bStat');
-  const quick = await page.evaluate(() => !document.getElementById('quick').hidden && /만족도/.test(document.getElementById('quick').textContent));
+  // 화면 조작: 동그란 기능 버튼으로 패널 열고 닫기, 건물을 지으면 수치 글씨
+  await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; UI.cat = 'worship'; closeDock(); });
+  const closedAtStart = await page.evaluate(() => document.getElementById('dock').hidden);
+  await page.click('#fab [data-fab="status"]');
+  const quick = await page.evaluate(() => !document.getElementById('dock').hidden && /만족도/.test(document.getElementById('panel').textContent) && /챙길 일/.test(document.getElementById('panel').textContent) && document.querySelector('#fab [data-fab="status"]').classList.contains('on'));
+  await page.click('#fab [data-fab="status"]');
+  const toggled = await page.evaluate(() => document.getElementById('dock').hidden);
+  await page.click('#fab [data-fab="minis"]');
+  const minis = await page.evaluate(() => UI.tab === 'events' && /행사/.test(document.getElementById('subtabs').textContent) && /사역자/.test(document.getElementById('subtabs').textContent));
+  await page.click('#subtabs [data-v="staff"]');
+  const staffTab = await page.evaluate(() => UI.tab === 'staff' && /부교역자/.test(document.getElementById('panel').textContent));
+  await page.click('#fab [data-fab="build"]');
   await page.click('#cards [data-v="room"]');
+  const compact = await page.evaluate(() => document.getElementById('dock').classList.contains('compact') && getComputedStyle(document.getElementById('cards')).display === 'none');
+  await page.click('#fab [data-fab="minis"]');
+  const cancelled = await page.evaluate(() => UI.tool === null && UI.ghost === null);
+  await page.click('#fab [data-fab="build"]'); await page.click('#cards [data-v="room"]');
   const placed = await page.evaluate(() => { const L = S.land; for (let y = L.y0; y <= L.y1; y++) for (let x = L.x0; x <= L.x1; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   if (placed) await page.click('[data-act="confirm"]');
   const fx = await page.evaluate(() => F.some(f => /좌석 \+/.test(f.text)));
-  check(quick, '빠른 현황: 지도 구석 버튼으로 바로 열림');
+  check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼으로 요약·챙길 일이 열리고, 다시 누르면 닫힘');
+  check(minis && staffTab, '기능 버튼: 행사 버튼 안에 행사·사역자 탭');
+  check(compact, '기능 버튼: 건물을 고르면 패널이 작아져 지도가 넓게 보임');
+  check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
   check(placed && fx, '건축 효과: 지으면 건물 위에 "좌석 +n" 글씨가 뜸');
   check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();

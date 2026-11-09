@@ -68,12 +68,15 @@ function setupInput(){
   $('#bHome').addEventListener('click',homeView);
 }
 function syncTabs(){
-  document.querySelectorAll('.tabs button[role="tab"]').forEach(function(b){b.classList.toggle('on',b.dataset.tab===UI.tab);});
-  $('.tabs .fold').setAttribute('aria-label',UI.fold?'패널 펼치기':'패널 접기');
+  var g=UI.fold?'':tabGroup(UI.tab);
+  document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
+  var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
 function onPanel(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,v=el.dataset.v;
+  if(a==='close'){closeDock();return;}
+  if(a==='subtab'){UI.tab=v;UI.minisTab=v;renderPanel();return;}
   if(a==='cat'){UI.cat=v;UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderBuild();}
   else if(a==='pick'){

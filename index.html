@@ -20,12 +20,11 @@
       <button data-sp="2">2×</button>
       <button data-sp="4">4×</button>
     </div>
+    <button class="ibtn" id="bMenu" aria-label="메뉴 (교회 이름·새로 시작·조작법)" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M4.7 4.7l1.9 1.9M17.4 17.4l1.9 1.9M2.8 12h2.6M18.6 12h2.6M4.7 19.3l1.9-1.9M17.4 6.6l1.9-1.9"/></svg></button>
   </header>
   <div id="mid">
     <div id="toast" hidden></div>
-    <div id="quick" class="glass" hidden></div>
     <div class="tools">
-      <button class="glass" id="bStat" aria-label="현황 바로 보기" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
       <button class="glass" id="bRot" aria-label="화면 회전"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.5 4v4.5H15"/></svg></button>
       <button class="glass" id="bIn" aria-label="확대"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
       <button class="glass" id="bOut" aria-label="축소"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
@@ -38,17 +37,16 @@
     <div class="stat"><span class="k">평판</span><b id="vRep">0</b></div>
     <div class="stat"><span class="k" id="kDate">월요일</span><b id="vDate">1년 1주</b></div>
   </div>
-  <section id="dock" class="glass">
-    <nav class="tabs" role="tablist">
-      <button role="tab" data-tab="build" class="on">건축</button>
-      <button role="tab" data-tab="staff">사역자</button>
-      <button role="tab" data-tab="events">행사</button>
-      <button role="tab" data-tab="status">현황</button>
-      <button role="tab" data-tab="menu">메뉴</button>
-      <button class="fold" data-tab="fold" aria-label="패널 접기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
-    </nav>
+  <section id="dock" class="glass" hidden aria-labelledby="dtitle">
+    <div class="dhead"><h2 id="dtitle">건축</h2><div class="subtabs" id="subtabs" role="tablist"></div>
+      <button class="dclose" data-act="close" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div id="panel"></div>
   </section>
+  <nav id="fab" aria-label="기능">
+    <button class="fab" data-fab="build" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V10l7-5 7 5v11M9.5 21v-6h5v6"/></svg></span><span class="fl">건축</span></button>
+    <button class="fab" data-fab="minis" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9" r="2.5"/><path d="M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6M13.5 15.2c.9-.8 1.9-1.2 3-1.2 2.5 0 4.5 2.4 4.5 5.5"/></svg></span><span class="fl">행사</span></button>
+    <button class="fab" data-fab="status" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-6M21.5 20h-19"/></svg></span><span class="fl">현황</span></button>
+  </nav>
 </div>
 <div id="over" hidden></div>
 <div id="dlg" hidden></div>
