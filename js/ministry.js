@@ -7,20 +7,20 @@
 /* ---------- 난이도 ---------- */
 var DIFF={
   easy:{name:'테스트',money:50000,cost:.8,churn:.7,desc:'자금 50,000으로 넉넉하게 시험해 봅니다'},
-  normal:{name:'보통',money:12000,cost:1,churn:1,desc:'적은 자금에서 차근차근 세워 갑니다'},
-  hard:{name:'어려움',money:8000,cost:1.2,churn:1.25,desc:'더 적은 자금, 더 높은 운영비와 이탈'}
+  normal:{name:'보통',money:20000,cost:1,churn:1,desc:'적은 자금에서 차근차근 세워 갑니다'},
+  hard:{name:'어려움',money:14000,cost:1.2,churn:1.25,desc:'더 적은 자금, 더 높은 운영비와 이탈'}
 };
 function curDiff(){return DIFF[S.diff]||DIFF.normal;}
 
 /* ---------- 목표: 이루면 후원금·평판과 함께 새 건물·사역·행사가 열린다 ---------- */
 var GOALS=[
-  {n:'첫 예배 공동체',d:'성도 12명',t:function(s){return s.members>=12;},p:function(s){return s.members/12;},r:400,rep:3},
-  {n:'작은 예배 공동체',d:'성도 25명 · 평판 40',t:function(s){return s.members>=25&&s.rep>=40;},p:function(s){return Math.min(s.members/25,s.rep/40);},r:700,rep:3},
-  {n:'뿌리내리는 교회',d:'성도 50명 · 만족도 65',t:function(s){return s.members>=50&&s.mood>=65;},p:function(s){return Math.min(s.members/50,s.mood/65);},r:1000,rep:4},
-  {n:'스스로 서는 교회',d:'성도 90명 · 4주 연속 흑자',t:function(s){return s.members>=90&&s.posWeeks>=4;},p:function(s){return Math.min(s.members/90,s.posWeeks/4);},r:1500,rep:4},
-  {n:'동네의 이웃',d:'성도 140명 · 평판 65 · 직분자 10명',t:function(s){return s.members>=140&&s.rep>=65&&offTotal(s)>=10;},p:function(s){return Math.min(s.members/140,s.rep/65,offTotal(s)/10);},r:2200,rep:5},
-  {n:'지역을 섬기는 교회',d:'성도 220명 · 평판 80',t:function(s){return s.members>=220&&s.rep>=80;},p:function(s){return Math.min(s.members/220,s.rep/80);},r:3000,rep:5},
-  {n:'부흥하는 교회',d:'성도 350명 · 만족도 75',t:function(s){return s.members>=350&&s.mood>=75;},p:function(s){return Math.min(s.members/350,s.mood/75);},r:5000,rep:5}
+  {n:'첫 예배 공동체',d:'성도 12명',t:function(s){return s.members>=12;},p:function(s){return s.members/12;},r:800,rep:3},
+  {n:'작은 예배 공동체',d:'성도 25명 · 평판 40',t:function(s){return s.members>=25&&s.rep>=40;},p:function(s){return Math.min(s.members/25,s.rep/40);},r:1400,rep:3},
+  {n:'뿌리내리는 교회',d:'성도 50명 · 만족도 65',t:function(s){return s.members>=50&&s.mood>=65;},p:function(s){return Math.min(s.members/50,s.mood/65);},r:2000,rep:4},
+  {n:'스스로 서는 교회',d:'성도 90명 · 4주 연속 흑자',t:function(s){return s.members>=90&&s.posWeeks>=4;},p:function(s){return Math.min(s.members/90,s.posWeeks/4);},r:3000,rep:4},
+  {n:'동네의 이웃',d:'성도 140명 · 평판 65 · 직분자 10명',t:function(s){return s.members>=140&&s.rep>=65&&offTotal(s)>=10;},p:function(s){return Math.min(s.members/140,s.rep/65,offTotal(s)/10);},r:4400,rep:5},
+  {n:'지역을 섬기는 교회',d:'성도 220명 · 평판 80',t:function(s){return s.members>=220&&s.rep>=80;},p:function(s){return Math.min(s.members/220,s.rep/80);},r:6000,rep:5},
+  {n:'부흥하는 교회',d:'성도 350명 · 만족도 75',t:function(s){return s.members>=350&&s.mood>=75;},p:function(s){return Math.min(s.members/350,s.mood/75);},r:10000,rep:5}
 ];
 function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 // 목표를 n개 이루면 열리는 것들 (건물 id, 'sky'=연결 다리)

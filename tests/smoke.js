@@ -477,9 +477,9 @@ async function rulesChecks(browser, url) {
     o.shopCat = DEFS.filter(d => d.cat === 'shop').length >= 7 && ['market', 'bakery', 'bookstore'].every(id => D[id] && D[id].income > 0);
     // 대출: 한도 안에서 빌리고, 주일마다 갚고, 한 번에 갚을 수 있음
     const lim = creditLimit(), m1 = S.money;
-    o.borrow = borrow('small') === '' && S.money === m1 + 3000 && S.loans.length === 1;
+    o.borrow = borrow('small') === '' && S.money === m1 + LOANS.small.amt && S.loans.length === 1;
     o.bigLocked = (S.goal = 0, loanBlock('big') !== ''); S.goal = GOALS.length;
-    S.members = 6; S.rep = 10; o.limit = loanBlock('mid') !== '' || debt() + 8000 <= creditLimit();
+    S.members = 6; S.rep = 10; o.limit = loanBlock('mid') !== '' || debt() + LOANS.mid.amt <= creditLimit();
     const bal0 = S.loans[0].bal, mm = S.money;
     S.t = WEEK - 0.05; update(0.1);
     o.repayWeekly = S.loans[0].bal < bal0 && S.rcpt && S.rcpt.loan === S.loans[0].pay;
@@ -1042,7 +1042,7 @@ async function gripeChecks(browser, url) {
     window.__ct.init(); S.dlg = null; S.open = true;
     const o = {};
     // 가격: 기능 건물 1.5배, 꾸미기는 그대로, 초기 자금 두 배
-    o.price = S.money === 12000 && DIFF.hard.money === 8000 && D.wc.cost === 540 && D.chapel.cost === 4200 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 750;
+    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.chapel.cost === 5600 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 1000 && GOALS[0].r === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
     o.props = ['bench', 'picnic', 'parasol', 'swing', 'sunbed', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
     S.money = 999999; S.goal = GOALS.length; recalc();
@@ -1086,7 +1086,7 @@ async function gripeChecks(browser, url) {
     ['past', 'fel', 'care', 'comf', 'park'].forEach(k => { o.mood = o.mood && moodWhy(k).indexOf('<li>') === 0; });
     return o;
   });
-  check(r.price, '가격: 초기 자금 두 배, 기능 건물·칸 위층 1.5배, 꾸미기·바닥은 그대로');
+  check(r.price, '가격: 초기 자금 20,000, 기능 건물·칸 위층·목표 보상·대출 2배, 꾸미기·바닥은 그대로');
   check(r.props, '편의 소품: 벤치·피크닉·파라솔·그네·선베드·식수대·쓰레기통·정자는 편의 분류, 값 그대로, 이어 놓기');
   check(r.link, '길 잇기: 카드에서 바닥 종류를 골라 그 바닥으로 깔고, 값은 칸 수 × 그 바닥 값');
   check(r.noWc && r.goWc, '불편: 화장실이 급하면 찾아가고, 없으면 불편을 겪고 일찍 돌아감');

@@ -5,14 +5,14 @@
    대출: 상품마다 금액·기간·주 이율이 정해져 있고, 매주 주일 정산 때 원리금을 균등하게 갚는다.
    남은 원금은 언제든 한 번에 갚을 수 있다. 빚 합계는 신용 한도(성도·평판에 따라)를 넘을 수 없다. */
 var LOANS={
-  small:{name:'소액 대출',amt:3000,weeks:16,rate:.006,desc:'급한 운영비를 메울 때'},
-  mid:{name:'운영 자금 대출',amt:8000,weeks:30,rate:.005,desc:'건물 여러 채를 한꺼번에 지을 때'},
-  big:{name:'건축 대출',amt:20000,weeks:52,rate:.004,goal:2,desc:'큰 예배당을 지을 때'}
+  small:{name:'소액 대출',amt:6000,weeks:16,rate:.006,desc:'급한 운영비를 메울 때'},
+  mid:{name:'운영 자금 대출',amt:16000,weeks:30,rate:.005,desc:'건물 여러 채를 한꺼번에 지을 때'},
+  big:{name:'건축 대출',amt:40000,weeks:52,rate:.004,goal:2,desc:'큰 예배당을 지을 때'}
 };
 var gateAsk=-1e9;
 function loanPayment(p,r,n){return Math.ceil(p*r/(1-Math.pow(1+r,-n)));}
 function debt(){return (S.loans||[]).reduce(function(t,l){return t+l.bal;},0);}
-function creditLimit(){return Math.round((4000+S.members*90+S.rep*60)*(S.diff==='hard'?0.7:1)/100)*100;}
+function creditLimit(){return Math.round((8000+S.members*180+S.rep*120)*(S.diff==='hard'?0.7:1)/100)*100;}
 function loanBlock(k){
   var L=LOANS[k];
   if(L.goal&&S.goal<L.goal)return lockText(L.goal)+' 받을 수 있어요';

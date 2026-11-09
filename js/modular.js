@@ -4,7 +4,7 @@
    지은 칸을 다시 누르면 위층이 올라간다(최대 10층). 칸 하나를 지우면 끊어진 부분은 따로 나뉜다.
    건물 객체: {id, def, x, y, tiles:[{x,y,f}], inUse, uses}  (def는 kind가 'mroom'인 정의, x,y는 칸들의 좌상단)
    정의의 per(칸·층 면적당 수치), fk(채우는 필요), rname(건물 이름)으로 역할별 수치가 정해진다. */
-var MROOM={maxF:10,floorCost:750,fh:.9,fill0:40,fillPer:3,fillMax:66};
+var MROOM={maxF:10,floorCost:1000,fh:.9,fill0:40,fillPer:3,fillMax:66};
 var RDC={},PDC={};
 
 function isRoomDef(id){return !!D[id]&&D[id].kind==='mroom';}
