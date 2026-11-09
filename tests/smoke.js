@@ -794,15 +794,17 @@ async function ministryChecks(browser, url) {
     const keep = S.wx.cur, out = [];
     ['sun', 'rain', 'storm', 'snow'].forEach(w => { S.wx.cur = w; stepAudio(0.1); out.push(SND.cur); });
     S.wx.cur = keep;
-    if (out.join() !== 'sun,rain,rain,snow') return 'kind ' + out;
-    if (!SND.el.rain || !/bgm_rain\.mp3$/.test(SND.el.rain.src) || !SND.el.amb) return 'no rain track';
+    if (out.join() !== 'sun,,,snow') return 'kind ' + out;
+    if (SND.el.rain || !SND.el.amb) return 'rain should have no music, only rain sound';
+    S.wx.cur = 'storm'; SND.thT = 0.01; stepAudio(0.1); const thunderSet = SND.thT > 10; S.wx.cur = keep; stepAudio(0.1);
+    if (!thunderSet) return 'no thunder';
     sfx('build'); sfx('coin'); thunder();
     document.getElementById('bMusic').click();
     const saved = JSON.parse(localStorage.getItem(SND_KEY) || '{}').music === false && !SND.music;
     stepAudio(0.1); document.getElementById('bMusic').click();
     return saved && SND.cur === '' ? 'ok' : 'toggle';
   });
-  check(audio === 'ok', '소리: 첫 터치에 켜짐, 효과음 모두 불러옴, 맑음·비·눈마다 곡이 바뀜, 음악 끄기 저장 (' + audio + ')');
+  check(audio === 'ok', '소리: 첫 터치에 켜짐, 효과음 모두 불러옴, 맑음·눈은 다른 곡·비는 음악 없이 천둥, 음악 끄기 저장 (' + audio + ')');
   // 건축 분류 칩이 모두 패널 안에 보인다 (가로로 숨지 않음)
   const chipsVisible = await page.evaluate(() => { UI.fold = false; UI.tab = 'build'; UI.tool = null; renderPanel(); const c = document.querySelector('#panel .chips'); if (!c) return false; const r = c.getBoundingClientRect(); const ok = [...c.children].length === CATS.length + 1 && [...c.children].every(x => { const q = x.getBoundingClientRect(); return q.width > 0 && q.left >= r.left - 1 && q.right <= r.right + 1; }); UI.fold = true; renderPanel(); return ok; });
   check(chipsVisible, '건축 분류: 바닥·꾸미기·철거까지 모든 칩이 패널 안에 보임');

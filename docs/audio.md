@@ -7,8 +7,7 @@
 | 파일 | 쓰는 곳 | 원본 | 만든 사람 | 출처 |
 |---|---|---|---|---|
 | bgm_sun.mp3 | 맑은 날·흐림·바람·폭염 배경 음악 | first_light_particles (사용자가 후보 5곡 중 선택) | Yoiyami | https://opengameart.org/content/first-light-particles-%E2%80%93-cc0-atmospheric-pianoambient-track |
-| bgm_rain.mp3 | 비·폭우 배경 음악 | hush_hamlet_loop | Zane Little Music | https://opengameart.org/content/hush-hamlet |
-| bgm_snow.mp3 | 눈 오는 날 배경 음악 | musicbox2_cute_tune | Aureolus_Omicron | https://opengameart.org/content/4-music-box-tracks |
+| bgm_snow.mp3 | 눈 오는 날 배경 음악 | wintery loop (사용자가 후보 7곡 중 선택) | Emma_MA | https://opengameart.org/content/wintery-loop |
 | amb_rain.mp3 | 비 올 때 깔리는 빗소리 | amb_rain_loop_1 | Kresiek The Furry | https://opengameart.org/content/amb-rain-loop-1 |
 | sfx_build.mp3 | 건물·칸 짓기, 층 올리기, 수리 | hammer_04 | rubberduck | https://opengameart.org/content/100-cc0-metal-and-wood-sfx |
 | sfx_demolish.mp3 | 철거 | wood_falling_04 | rubberduck | 위와 같음 |
@@ -24,5 +23,5 @@
 | sfx_coin.mp3 | 매장에서 물건이 팔릴 때 | coin.1 | StarNinjas | https://opengameart.org/content/12-coin-sound-effects |
 | sfx_bell.mp3 | 주일 종소리(정산 영수증), 목표 달성 | bell.wav | Fupi | https://opengameart.org/content/correct-bell |
 
-- 천둥(벼락)은 파일 없이 `js/audio.js`의 `thunder()`가 잡음으로 직접 만든다.
+- 비 오는 날은 배경 음악 없이 빗소리(amb_rain)만 깔고, 이따금 먼 천둥이 친다. 천둥(벼락 포함)은 파일 없이 `js/audio.js`의 `thunder()`가 잡음으로 직접 만든다.
 - 다시 만들 때: 원본을 내려받아 `ffmpeg -i 원본 -ac 1 -b:a 80k -af silenceremove=start_periods=1:start_threshold=-50dB sfx_이름.mp3` (음악은 `-ac 2 -b:a 96k`).
