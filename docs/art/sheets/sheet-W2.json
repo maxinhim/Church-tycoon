@@ -9,19 +9,6 @@
  ],
  "out": "assets/bld",
  "cells": {
-  "0": {
-   "id": "chapel",
-   "back": "chapel_b",
-   "fw": 1.0,
-   "by": 0.95,
-   "fl": 1,
-   "box": [
-    0,
-    0,
-    665,
-    665
-   ]
-  },
   "1": {
    "id": "grand",
    "back": "grand_b",
