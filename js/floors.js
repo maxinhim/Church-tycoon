@@ -3,38 +3,38 @@
    땅 칸에 칠하는 바닥(보도블록·벽돌·자갈·나무·꽃잔디). 걸어 다닐 수 있고 분위기 점수를 조금 올린다.
    S.floor = {"x,y": 정의 id} */
 function isFloorDef(id){return !!D[id]&&D[id].kind==='floor';}
+/* 바닥을 칠할 곳: 땅 칸(S.floor) 또는 데크 조각(p.f, pid로 고른다) */
+function floorSlot(x,y,pid){
+  if(pid){var p=pieceById(pid);if(!p||!isDeckPiece(p))return null;
+    return {get:function(){return p.f||null;},set:function(v){if(v)p.f=v;else delete p.f;},busy:deckCovered(p)};}
+  var k=x+','+y;
+  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])};
+}
 // 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
-function floorWhy(x,y,id){
+function floorWhy(x,y,id,pid){
   if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
   if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';
-  if(occ[y][x])return '건물이 있어요';
-  var prev=S.floor[x+','+y]||null;
+  var sl=floorSlot(x,y,pid);if(!sl)return '데크가 없어요';
+  if(sl.busy)return '건물이 있어요';
+  var prev=sl.get();
   if(id==='f_erase')return prev?'':'지울 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
   if(S.money<D[id].cost)return '자금이 부족해요';
   return '';
 }
-function paintFloor(x,y,id){
-  if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
-  if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';
-  if(occ[y][x])return '건물이 있어요';
-  var k=x+','+y,prev=S.floor[k]||null;
-  if(id==='f_erase'){
-    if(!prev)return '지울 바닥이 없어요';
-    delete S.floor[k];S.money+=Math.floor(D[prev].cost*0.5);
-  }else{
-    if(prev===id)return '이미 같은 바닥이에요';
-    if(S.money<D[id].cost)return '자금이 부족해요';
-    S.money-=D[id].cost;S.floor[k]=id;
-  }
-  if(UI.undo)UI.undo.push({x:x,y:y,prev:prev,id:id});
+function paintFloor(x,y,id,pid){
+  var why=floorWhy(x,y,id,pid);if(why&&why!=='자금이 부족해요')return why;
+  var sl=floorSlot(x,y,pid),prev=sl.get();
+  if(id==='f_erase'){sl.set(null);S.money+=Math.floor(D[prev].cost*0.5);}
+  else{if(S.money<D[id].cost)return '자금이 부족해요';S.money-=D[id].cost;sl.set(id);}
+  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id});
   recalc();save();return '';
 }
 function floorUndo(){
   var u=UI.undo.pop();if(!u)return false;
-  var k=u.x+','+u.y;
-  if(u.id==='f_erase'){S.floor[k]=u.prev;S.money-=Math.floor(D[u.prev].cost*0.5);}
-  else{if(u.prev)S.floor[k]=u.prev;else delete S.floor[k];S.money+=D[u.id].cost;}
+  var sl=floorSlot(u.x,u.y,u.pid);if(!sl)return false;
+  if(u.id==='f_erase'){sl.set(u.prev);S.money-=Math.floor(D[u.prev].cost*0.5);}
+  else{sl.set(u.prev);S.money+=D[u.id].cost;}
   recalc();save();return true;
 }
 function floorLine(c,ax,ay,bx,by){var a=rotPt(ax,ay),b=rotPt(bx,by),p=P(a[0],a[1],.006),q=P(b[0],b[1],.006);c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);}

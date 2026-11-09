@@ -48,8 +48,8 @@ function addPiece(p){
   pathsChanged();return '';
 }
 function removePiece(id,rate){
-  var p=pieceById(id);if(!p)return false;
-  S.money+=Math.floor(pieceCost(p)*rate);
+  var p=pieceById(id);if(!p||pieceDemWhy(p))return false;
+  S.money+=Math.floor(pieceCost(p)*rate)+(p.f&&D[p.f]?Math.floor(D[p.f].cost*.5):0);
   S.paths=S.paths.filter(function(q){return q!==p;});
   pathsChanged();return true;
 }
@@ -81,7 +81,7 @@ function pcBuild(){
 }
 function pcUndo(){
   var c=UI.pc,h=c&&c.hist.pop();if(!h)return false;
-  removePiece(h.id,1);c.x=h.x;c.y=h.y;c.l=h.l;return true;
+  if(!removePiece(h.id,1)){c.hist.push(h);return false;}c.x=h.x;c.y=h.y;c.l=h.l;return true;
 }
 // 화면에서 가장 위에 보이는 길 조각
 function pickPieceAt(px,py){
@@ -138,9 +138,11 @@ function drawPiece(p,tint){
   // 윗면
   var ord=[0,1,2,3].map(function(i){return C[i];});
   quad(ord.map(function(q){return [q.rx,q.ry,q.h];}),top,edge);
+  // 데크에 칠한 바닥 타일
+  if(p.f&&D[p.f]&&!p.s&&!tint){atZ(p.l*LV+lift,function(){drawFloorTile(p.f,p.x,p.y);});}
   // 계단 단·데크 널빤지 선
   c.strokeStyle=tint?'rgba(255,255,255,.5)':'rgba(60,40,20,.28)';c.lineWidth=Math.max(.5,PJ.s*.8);c.beginPath();
-  var dd=p.s?p.d:(p.k==='wood'?p.d:-1);
+  var dd=p.s?p.d:(p.k==='wood'&&!p.f?p.d:-1);
   if(dd>=0){
     var n=p.s?4:5;
     for(var i=1;i<n;i++){
@@ -153,7 +155,7 @@ function drawPiece(p,tint){
   }
   c.stroke();
   // 난간: 공중에 뜬 조각에서 이어지지 않은 면
-  if(p.l>g||p.s){
+  if((p.l>g||p.s)&&!deckCovered(p)){
     c.strokeStyle=tint?'rgba(255,255,255,.85)':'#f3efe6';c.lineWidth=Math.max(.8,1.4*PJ.s);c.beginPath();
     for(var d=0;d<4;d++){
       if(pieceLinked(p,d))continue;

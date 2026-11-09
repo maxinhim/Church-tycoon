@@ -29,7 +29,8 @@ function computeWalk(){
   for(var k2 in S.slp||{}){var q=k2.split(','),sx=+q[0],sy=+q[1];if(sy>=0&&sy<PZ&&sx>=0&&sx<COLS)WALK[sy][sx]=true;}
   S.paths.forEach(function(p){if(onGroundPiece(p))WALK[p.y][p.x]=true;});
 }
-function groundOk(x,y){if(!WALK)computeWalk();return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x]&&WALK[y][x];}
+// 데크 위 건물 밑의 땅은 막히지 않는다
+function groundOk(x,y){if(!WALK)computeWalk();return x>=0&&y>=0&&x<COLS&&y<ROWS&&(!occ[y][x]||(DECK.up&&DECK.up[y][x]===1))&&WALK[y][x];}
 function gateOpen(){return !!S.open||NAV.all;}
 // 세로로 한 칸 옮길 때 울타리를 넘는지: 부지 ↔ 주차 구역은 입구 열에서만, 들어올 때는 문이 열려 있어야
 function crossOk(x,y,ny){
@@ -37,13 +38,13 @@ function crossOk(x,y,ny){
   if(y<PZ&&ny>=PZ)return x===ENT;
   return true;
 }
-function nodeOk(n){return isPieceNode(n)?!!nodePiece(n):groundOk(n%COLS,(n/COLS)|0);}
+function nodeOk(n){if(isPieceNode(n)){var p=nodePiece(n);return !!p&&!deckCovered(p);}return groundOk(n%COLS,(n/COLS)|0);}
 function nodePos(n){
   if(!isPieceNode(n)){var gx=n%COLS+.5,gy=((n/COLS)|0)+.5;return {x:gx,y:gy,z:groundZ(gx,gy)};}
   var p=nodePiece(n);return {x:p.x+.5,y:p.y+.5,z:(p.l+.5*p.s)*LV};
 }
 // 연결 다리는 건물 안 통로라 바깥 길찾기에서 뺀다
-function isNodePiece(p){return p.k!=='sky'&&!onGroundPiece(p);}
+function isNodePiece(p){return p.k!=='sky'&&!onGroundPiece(p)&&!deckCovered(p);}
 // (x,y) 칸에서 d 방향 면이 lvl 높이로 열린 다리·계단 노드
 function pieceNodeAt(x,y,d,lvl){
   var ps=piecesAt(x,y);
@@ -103,9 +104,9 @@ function navReach(s){
   for(var i=0;i<q.length;i++)navNext(q[i],function(m){if(!seen[m]){seen[m]=1;q.push(m);}});
   return seen;
 }
-function doorNode(s){
+function doorNode(s,b){
   if(!s)return -1;
-  var o=doorOut(s),lv=cellLevel(s.x,s.y)+s.l;
+  var o=doorOut(s),lv=(b?bLevel(b):cellLevel(s.x,s.y))+s.l;
   if(o.x>=0&&o.y>=0&&o.x<COLS&&o.y<ROWS&&groundOk(o.x,o.y)&&groundPort(o.x,o.y,OPP[s.d])===lv)return gid(o.x,o.y);
   return pieceNodeAt(o.x,o.y,OPP[s.d],lv);
 }

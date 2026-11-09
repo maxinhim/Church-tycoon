@@ -47,8 +47,8 @@ function defaultDoors(b){
   if(!sp.length)sp=doorSpots(b);
   var front=sp.filter(function(s){return s.d===face;});
   if(!front.length)front=sp;
-  var free=front.filter(function(s){var o=doorOut(s);return groundOk(o.x,o.y)&&groundPort(o.x,o.y,OPP[s.d])===cellLevel(s.x,s.y);});
-  if(!free.length)free=sp.filter(function(s){var o=doorOut(s);return groundOk(o.x,o.y)&&groundPort(o.x,o.y,OPP[s.d])===cellLevel(s.x,s.y);});
+  var free=front.filter(function(s){return doorNode(s,b)>=0;});
+  if(!free.length)free=sp.filter(function(s){return doorNode(s,b)>=0;});
   if(free.length)front=free;
   var s=front[Math.floor((front.length-1)/2)];
   return {ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};

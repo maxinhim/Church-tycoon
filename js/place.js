@@ -78,9 +78,9 @@ function endPlace(){
 // 미리보기의 화면 위치: 좌우·위 끝, 방향별 화살표 자리
 function plBox(){
   var k=placeKind(),x,y,w,h,z0,H;
-  if(k==='bld'){if(!UI.ghost)return null;var dm=faceDims(D[UI.tool],UI.face);x=UI.ghost.x;y=UI.ghost.y;w=dm.w;h=dm.h;z0=th(clamp(x,0,COLS-1),clamp(y,0,ROWS-1))*LV;H=heightOf(UI.tool);}
+  if(k==='bld'){if(!UI.ghost)return null;var dm=faceDims(D[UI.tool],UI.face);x=UI.ghost.x;y=UI.ghost.y;w=dm.w;h=dm.h;z0=plLevelZ(D[UI.tool],x,y,UI.face);H=heightOf(UI.tool);}
   else if(k==='path'){var c=UI.pc;if(!c||c.x==null)return null;x=c.x;y=c.y;w=1;h=1;z0=c.l*LV;H=.35;}
-  else if(k==='floor'){if(!UI.ghost)return null;x=UI.ghost.x;y=UI.ghost.y;w=1;h=1;z0=groundZ(x+.5,y+.5);H=.1;if(isTerDef(UI.tool)&&UI.tool==='ter_set')H=Math.max(.1,UI.tlv*LV-z0);}
+  else if(k==='floor'){if(!UI.ghost)return null;x=UI.ghost.x;y=UI.ghost.y;w=1;h=1;z0=ghostZ();H=.1;if(isTerDef(UI.tool)&&UI.tool==='ter_set')H=Math.max(.1,UI.tlv*LV-z0);}
   else return null;
   var L=1e9,R=-1e9,T=1e9,B=-1e9;
   [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(function(p){[z0,z0+H].forEach(function(z){var q=plScr(p[0],p[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
@@ -171,13 +171,17 @@ function plOk(){
   if(k==='path'){var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
   // 바닥: 이 칸을 칠하고 화살표 방향으로 한 칸 나아간다
   if(k==='floor'){
-    var ter=isTerDef(UI.tool),g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':(ter?terApply(g0.x,g0.y,UI.tool,UI.tlv,UI.fdir):paintFloor(g0.x,g0.y,UI.tool));
+    var ter=isTerDef(UI.tool),g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':(ter?terApply(g0.x,g0.y,UI.tool,UI.tlv,UI.fdir):paintFloor(g0.x,g0.y,UI.tool,g0.pid));
     if(fw){toast(fw,1400);sfx('error',.4);return;}
     plLock=now+150;plBuzz();sfx(ter?'place':'floor',.45,90);
     // 경사로는 한 칸씩 (다음 칸은 직접 고른다)
     if(UI.tool==='ter_ramp'){renderDetail();hud(true);return;}
     var nx=g0.x+DIRS[UI.fdir][0],ny=g0.y+DIRS[UI.fdir][1];
-    if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ){g0.x=nx;g0.y=ny;}
+    if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ){
+      // 데크 위에서 칠하고 있었으면 같은 높이의 다음 데크로, 없으면 땅으로
+      var cp=g0.pid&&pieceById(g0.pid),np=cp?piecesAt(nx,ny).filter(function(q){return isDeckPiece(q)&&q.l===cp.l;})[0]:null;
+      g0.x=nx;g0.y=ny;if(np)g0.pid=np.id;else delete g0.pid;
+    }
     renderDetail();hud(true);return;
   }
   if(k!=='bld'||!UI.ghost)return;
@@ -220,7 +224,7 @@ function plMoveDone(){
   if(!same){
     if(b.door&&f0===face)['ent','ext'].forEach(function(k){b.door[k]={x:b.door[k].x+dx,y:b.door[k].y+dy,d:b.door[k].d,l:b.door[k].l};});
     else delete b.door;
-    b.x=g.x;b.y=g.y;b.face=face;
+    b.x=g.x;b.y=g.y;b.face=face;setPlaceLevel(b,D[b.def],g.x,g.y,face);
     releaseVisitors(b.id);structureChanged();plBuzz();sfx('place',.7);
   }
   UI.moving=null;UI.tool=null;UI.ghost=null;UI.fold=true;UI.sel=b.id;
@@ -268,7 +272,7 @@ function renderPbar(){
       (ramp?'':'<div class="seg"><button class="btn" data-act="tlv" data-v="-1" aria-label="한 층 낮게"'+(UI.tlv<=0?' disabled':'')+'>▼</button><span class="lvl">'+(UI.tlv?'높이 '+UI.tlv:'땅')+'</span><button class="btn" data-act="tlv" data-v="1" aria-label="한 층 높게"'+(UI.tlv>=MAXH-1?' disabled':'')+'>▲</button></div>')+
       undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else{
-    var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool):'';
+    var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool,UI.ghost.pid):'';
     h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">한 칸 '+fmt(d.cost)+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)

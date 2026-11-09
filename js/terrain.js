@@ -28,15 +28,8 @@ function bLevel(b){
 function bTopFloors(b){return isRoom(b)?roomMaxF(b):(b.floors||1);}
 // 건물 b의 (x,y) 칸에 l 높이(층)의 벽이 있는지
 function wallAt(b,x,y,l){var k=bLevel(b);return l>=k&&l<k+bFloorsAt(b,x,y);}
-// 화면 좌표에서 가장 위에 보이는 땅 칸 (높인 땅의 윗면을 먼저 찾는다)
-function groundTile(px,py){
-  for(var z=MAXH*LV+.05;z>0;z-=.05){
-    var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
-    if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
-    if(Math.abs(groundZ(w[0],w[1])-z)<.055&&(th(tx,ty)||isRamp(tx,ty)))return {x:tx,y:ty};
-  }
-  var w0=toWorld(px,py,0);return {x:Math.floor(w0[0]),y:Math.floor(w0[1])};
-}
+// 화면 좌표에서 가장 위에 보이는 바닥 칸 (높인 땅 윗면·데크를 먼저 찾는다)
+function groundTile(px,py){return surfaceTile(px,py);}
 
 /* ---------- 바꾸기 ----------
    terPlan: 무엇이 바뀌는지와 비용, 못 하면 why. 아무것도 바꾸지 않는다 */
@@ -126,15 +119,17 @@ function terChanged(cells){
   bump();save();
 }
 
+// 바닥·지형 미리보기 칸의 높이(z): 데크를 골랐으면 데크 윗면
+function ghostZ(){var g=UI.ghost;if(!g)return 0;var p=g.pid&&pieceById(g.pid);return p?p.l*LV+.02:groundZ(g.x+.5,g.y+.5);}
 // 지금 고른 칸에 ✓를 누를 수 있는지 (바닥·지형 공용)
 function cellWhy(x,y,id){
-  if(!isTerDef(id))return floorWhy(x,y,id);
+  if(!isTerDef(id))return floorWhy(x,y,id,UI.ghost&&UI.ghost.pid);
   var p=terPlan(x,y,id,UI.tlv,UI.fdir);return p.why||(S.money<p.cost?'자금이 부족해요':'');
 }
 // 바닥·지형 미리보기: 고른 칸 표시, 땅 높이는 목표 높이까지 반투명 기둥, 경사로는 오르는 쪽 화살표
 function drawTerGhost(){
   var g=UI.ghost,x=g.x,y=g.y;if(x<0||y<0||x>=COLS||y>=ROWS)return;
-  var ok=!cellWhy(x,y,UI.tool),z=groundZ(x+.5,y+.5),c=PJ.c,col=ok?'#ffd23f':'#ff5a4a';
+  var ok=!cellWhy(x,y,UI.tool),z=ghostZ(),c=PJ.c,col=ok?'#ffd23f':'#ff5a4a';
   if(UI.tool==='ter_set'){
     var p=terPlan(x,y,UI.tool,UI.tlv,UI.fdir),cells=p.cells||[{x:x,y:y}];
     c.globalAlpha=.42;
@@ -143,7 +138,7 @@ function drawTerGhost(){
     cells.forEach(function(t){atZ(UI.tlv*LV,function(){footprint(t.x,t.y,1,1,ok?'rgba(255,210,63,.25)':'rgba(235,70,60,.3)',col,[4,3]);});});
     return;
   }
-  atZ(isRamp(x,y)?th(x,y)*LV+.45:z,function(){footprint(x,y,1,1,ok?'rgba(255,210,63,.22)':'rgba(235,70,60,.3)',col,[4,3]);});
+  atZ(isRamp(x,y)&&!g.pid?th(x,y)*LV+.45:z,function(){footprint(x,y,1,1,ok?'rgba(255,210,63,.22)':'rgba(235,70,60,.3)',col,[4,3]);});
   if(UI.tool==='ter_ramp'){
     var dx=DIRS[UI.fdir][0],dy=DIRS[UI.fdir][1],cx=x+.5,cy=y+.5,tip=rotPt(cx+dx*.9,cy+dy*.9),l=rotPt(cx-dy*.25,cy+dx*.25),r=rotPt(cx+dy*.25,cy-dx*.25),zz=th(x,y)*LV+.08;
     quad([[tip[0],tip[1],zz+.5*LV],[l[0],l[1],zz],[r[0],r[1],zz]],col,'rgba(30,30,30,.6)');

@@ -96,7 +96,7 @@ function draw(){
     if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
     else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
   });
-  var gz=UI.ghost?th(clamp(UI.ghost.x,0,COLS-1),clamp(UI.ghost.y,0,ROWS-1))*LV:0;
+  var gz=gd&&UI.ghost?plLevelZ(gd,UI.ghost.x,UI.ghost.y,UI.face):0;
   if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&(movingId()||S.money>=gd.cost);atZ(gz,function(){footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');});}
   drawOutTrees(false);
   drawWxOverlay(c);
@@ -105,7 +105,7 @@ function draw(){
   if((isFloorDef(UI.tool)||isTerDef(UI.tool))&&UI.ghost)drawTerGhost();
   if(UI.tool==='path')drawPathGhost();
   if(gd){
-    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);
+    var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);setPlaceLevel(gb,gd,gb.x,gb.y,gb.face);
     if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
     ensureDoors(gb);
     atZ(gz,function(){c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;drawDoorPads(gb);});

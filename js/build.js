@@ -12,21 +12,12 @@ function zoneWhy(d,x,y,face){
   }
   return '';
 }
-// 높인 땅 위에도 지을 수 있다: 모든 칸이 같은 높이의 평평한 땅이어야 한다 (경사로 위는 안 됨)
-function levelWhy(d,x,y,face){
-  var dm=faceDims(d,face),lv=-1;
-  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){
-    var tx=x+i,ty=y+j;if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
-    if(isRamp(tx,ty))return '흙 경사로 위에는 지을 수 없어요';
-    var h=th(tx,ty);if(lv<0)lv=h;else if(h!==lv)return '땅 높이가 다른 칸에 걸쳐 지을 수 없어요';
-  }
-  if(lv>0&&lv+1>MAXH)return '이 높이에는 지을 수 없어요';
-  return '';
-}
+// 높인 땅·데크 위에도 지을 수 있다: 모든 칸이 같은 높이의 평평한 바닥이어야 한다 (deck.js placeLevel)
+function levelWhy(d,x,y,face){return placeLevel(d,x,y,face).why||'';}
 function canPlace(d,x,y,face){
   var dm=faceDims(d,face),me=movingId();
   if(zoneWhy(d,x,y,face)||levelWhy(d,x,y,face))return false;
-  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){var o=occ[y+j][x+i];if((o&&o!==me)||piecesAt(x+i,y+j).length)return false;}
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){var o=occ[y+j][x+i];if(o&&o!==me)return false;}
   return true;
 }
 function bump(){
@@ -42,7 +33,8 @@ function build(id,x,y,face){
   var d=D[id];if(face==null)face=2;
   if(S.money<d.cost||!canPlace(d,x,y,face))return false;
   S.money-=d.cost;
-  S.buildings.push({id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0});
+  var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0};setPlaceLevel(nb,d,x,y,face);
+  S.buildings.push(nb);
   rebuildOcc();bump();recalc();save();return true;
 }
 function demolish(id){
@@ -58,8 +50,8 @@ function releaseVisitors(id){
     if(v.state==='xfer'&&v.target===id){placeAt(v,gateNode());v.state='idle';v.t=0.2;v.target=0;return;}if(v.inside===id){v.inside=0;v.state='idle';v.t=0.2;}if(v.target===id){v.target=0;if(v.state!=='leave'&&v.state!=='inside'){v.state='idle';v.t=0.2;}}});
 }
 
-/* ---------- 완성품 건물 층 올리기 (같은 건물을 위로, 최대 5층) ---------- */
-var MAXF=5,STACK_CATS=['worship','fellow','care','comfort','park'];
+/* ---------- 완성품 건물 층 올리기 (같은 건물을 위로, 최대 10층) ---------- */
+var MAXF=10,STACK_CATS=['worship','fellow','care','comfort','park'];
 function canStack(b){var d=D[b.def];return !!d&&d.kind==='bld'&&STACK_CATS.indexOf(d.cat)>=0;}
 function floorCostOf(b){return Math.round(D[b.def].cost*0.75/10)*10;}
 function structureChanged(){rebuildOcc();bump();recalc();save();}

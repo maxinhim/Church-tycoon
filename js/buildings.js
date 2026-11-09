@@ -11,7 +11,7 @@ mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.9
 mk('chapel','예배당','worship',3,2,2800,24,'bld','#efe8da','#3f5ea3',{H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:70,fill:{word:60,fel:8},cap:28,dur:6,desc:'종탑이 있는 주일예배 공간'});
 mk('grand','대예배당','worship',4,3,7600,60,'bld','#f2ece0','#34508f',{H:1.5,roof:'gable',rh:.95,deco:'tower',towerH:3.0,stained:1,seats:190,fill:{word:70,fel:10},cap:70,dur:7,desc:'수백 명이 모이는 큰 예배당'});
 mk('pray','기도실','worship',1,1,420,3,'bld','#ece5d6','#6a7fb0',{H:.8,roof:'hip',rh:.55,deco:'crossApex',seats:4,fill:{word:28,comf:12},cap:2,dur:4,desc:'조용히 머무는 작은 기도 공간'});
-mk('mroom','예배실 칸','worship',1,1,400,3,'mroom','#efe8da','#4f6db0',{rname:'예배실',per:{seats:10,cap:4,up:3},fk:'word',seats:10,fill:{word:43},cap:4,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 예배실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
+mk('mroom','예배실 칸','worship',1,1,400,3,'mroom','#efe8da','#4f6db0',{rname:'예배실',per:{seats:10,cap:4,up:3},fk:'word',seats:10,fill:{word:43},cap:4,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 예배실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 10층)'});
 mk('bible','성경공부방','worship',2,1,600,6,'bld','#ece5d6','#5a74b8',{H:.8,roof:'hip',rh:.45,seats:10,fill:{word:36,fel:10},cap:6,dur:5,desc:'말씀을 함께 읽고 나누는 방'});
 mk('praise','찬양실','worship',2,2,1500,16,'bld','#efe6f2','#7a5bb5',{H:1.0,roof:'gable',rh:.55,deco:'crossRidge',stained:1,seats:30,fill:{word:44,comf:8},cap:12,dur:5,desc:'찬양과 기도로 채워지는 공간'});
 mk('dawn','새벽기도실','worship',1,2,900,8,'bld','#e6e9f0','#3c4f7d',{H:.9,roof:'hip',rh:.6,deco:'crossApex',seats:14,fill:{word:40,care:8},cap:6,dur:5,desc:'이른 아침 기도의 자리'});
@@ -27,7 +27,7 @@ mk('bookstore','기독교 서점','shop',2,1,1100,9,'bld','#eef0e6','#4f6db0',{H
 mk('market','나눔장터','shop',3,2,1300,10,'market','#c9b38a','#d65a6e',{fcap:10,ccap:6,fill:{fel:30,comf:22},cap:10,dur:4,income:5,rep:0.2,desc:'중고 물건과 손수 만든 먹거리를 나누는 장터. 수익 일부로 이웃을 도와 평판이 조금 오릅니다'});
 mk('youth','청년부실','fellow',2,2,1500,14,'bld','#e3eef2','#2f8f9d',{H:.95,roof:'flat',deco:'dots',fcap:18,fill:{fel:48,word:12},cap:12,dur:5,desc:'청년들이 모이고 어울리는 방'});
 mk('gym','체육관','fellow',4,3,4200,40,'bld','#e6e9ec','#5a6b7c',{H:1.4,roof:'flat',bigwin:1,fcap:40,ccap:6,fill:{fel:60,comf:10},cap:30,dur:6,desc:'운동과 큰 행사를 함께하는 넓은 공간'});
-mk('mfel','교제실 칸','fellow',1,1,380,3,'mroom','#eadfce','#a0603f',{rname:'교제실',per:{fcap:6,cap:4,up:3},fk:'fel',fcap:6,fill:{fel:43},cap:4,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 교제실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
+mk('mfel','교제실 칸','fellow',1,1,380,3,'mroom','#eadfce','#a0603f',{rname:'교제실',per:{fcap:6,cap:4,up:3},fk:'fel',fcap:6,fill:{fel:43},cap:4,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 교제실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 10층)'});
 mk('pantry','구제창고','care',2,1,850,12,'bld','#c99a64','#8a5a2b',{H:.85,roof:'gable',rh:.5,deco:'barn',kcap:8,fill:{care:56},cap:4,dur:4,rep:0.5,desc:'이웃을 돕는 나눔. 평판이 천천히 오릅니다'});
 mk('counsel','상담실','care',1,1,650,8,'bld','#ece5d6','#7b6aa5',{H:.85,roof:'hip',rh:.5,kcap:4,fill:{care:44,word:10},cap:2,dur:6,rep:0.2,desc:'마음을 들어주는 작은 방'});
 mk('kids','어린이부실','care',2,2,1600,18,'bld','#f6e3b0','#e08a2c',{H:.95,roof:'gable',rh:.55,deco:'dots',kcap:16,ccap:4,fill:{care:20,comf:34,fel:14},cap:10,dur:6,desc:'아이들을 맡기고 마음 놓는 공간'});
@@ -37,7 +37,7 @@ mk('clinic','의료 봉사실','care',2,1,1300,14,'bld','#f4f6f7','#4f9a83',{H:.
 mk('study','공부방','care',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:10},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
 mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H:1.0,roof:'gable',rh:.55,deco:'barn',kcap:22,fill:{care:52},cap:14,dur:5,rep:1.0,desc:'이웃에게 따뜻한 한 끼를 나누는 곳. 평판이 크게 오릅니다'});
 mk('playground','놀이터','care',2,2,900,4,'playground','#e0c48a','#e8892c',{kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
-mk('mcare','돌봄실 칸','care',1,1,420,3,'mroom','#f3e6d2','#8a5a2b',{rname:'돌봄실',per:{kcap:5,cap:3,up:3},fk:'care',kcap:5,fill:{care:43},cap:3,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 돌봄실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
+mk('mcare','돌봄실 칸','care',1,1,420,3,'mroom','#f3e6d2','#8a5a2b',{rname:'돌봄실',per:{kcap:5,cap:3,up:3},fk:'care',kcap:5,fill:{care:43},cap:3,dur:5,desc:'같은 칸끼리 이어 붙이면 하나의 돌봄실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 10층)'});
 mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',ccap:12,fill:{comf:60},cap:3,dur:3,desc:'꼭 필요한 편의시설'});
 mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
 mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
@@ -47,7 +47,7 @@ mk('lounge','휴게실','comfort',2,1,800,7,'bld','#e9efe6','#5c8a5a',{H:.8,roof
 mk('shop','매점','shop',1,1,450,3,'bld','#f2ede4','#d1a02e',{H:.7,roof:'flat',deco:'awning',ccap:4,fill:{comf:30,fel:6},cap:3,dur:3,income:3,desc:'간식과 음료를 파는 작은 매점'});
 mk('parktower','주차 타워','park',2,2,3000,18,'bld','#c9ced3','#59626b',{H:1.6,roof:'flat',deco:'park',park:24,desc:'좁은 땅에 많은 차를 세우는 주차 타워. 층을 올리면 더 늘어나요'});
 mk('busstop','버스 정류장','comfort',1,1,300,2,'busstop','#3f5ea3','#d6e2ea',{dir:'face',vis:0.05,desc:'교회 앞 버스 정류장. 방문자 +5%'});
-mk('mcomf','편의실 칸','comfort',1,1,360,2,'mroom','#dfe6ea','#6c8794',{rname:'편의실',per:{ccap:6,cap:4,up:2},fk:'comf',ccap:6,fill:{comf:43},cap:4,dur:4,desc:'같은 칸끼리 이어 붙이면 하나의 편의실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 5층)'});
+mk('mcomf','편의실 칸','comfort',1,1,360,2,'mroom','#dfe6ea','#6c8794',{rname:'편의실',per:{ccap:6,cap:4,up:2},fk:'comf',ccap:6,fill:{comf:43},cap:4,dur:4,desc:'같은 칸끼리 이어 붙이면 하나의 편의실이 되고, 지은 칸을 다시 누르면 위층이 올라갑니다(최대 10층)'});
 mk('tree','나무','garden',1,1,110,0,'tree','#3d7a3d','#3d7a3d',{beauty:1,desc:'부지 분위기가 좋아집니다'});
 mk('cherry','벚나무','garden',1,1,180,0,'tree','#3d7a3d','#e9a3bd',{shape:'round',leaf:['#d97f9f','#eaa1bb','#f8cfdc'],beauty:1.4,desc:'봄이면 분홍 꽃이 흐드러지는 나무'});
 mk('maple','단풍나무','garden',1,1,170,0,'tree','#3d7a3d','#d65a2c',{shape:'round',leaf:['#b8402a','#d9632f','#f0a04a'],beauty:1.3,desc:'붉게 물든 단풍나무'});

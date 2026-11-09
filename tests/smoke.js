@@ -196,9 +196,9 @@ async function modularChecks(browser, url) {
     // 계단·다리로 잇지 않은 2층은 좌석에 들어가지 않는다
     // 위층은 1층 출입구만 있어도 바로 좌석에 들어간다
     o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === D.mroom.per.seats * 4;
-    for (let k = 0; k < 3; k++) placeTile(X + 1, Y);
-    o.maxFloor = tileOf(rooms()[0], X + 1, Y).f === 5 && !tilePlan(X + 1, Y).ok;
-    for (let k = 0; k < 4; k++) removeTile(X + 1, Y, 1);
+    for (let k = 0; k < 8; k++) placeTile(X + 1, Y);
+    o.maxFloor = tileOf(rooms()[0], X + 1, Y).f === 10 && !tilePlan(X + 1, Y).ok;
+    for (let k = 0; k < 9; k++) removeTile(X + 1, Y, 1);
     o.floorDown = tileOf(rooms()[0], X + 1, Y).f === 1;
     removeTile(X + 1, Y, 1);
     o.split = rooms().length === 2;
@@ -224,7 +224,7 @@ async function modularChecks(browser, url) {
   });
   check(r.merged, '예배실 칸: 이어 지은 3칸이 하나의 예배실로 합쳐짐');
   check(r.floor, '예배실 칸: 2층을 올리면 1층 출입구만으로 2층 좌석까지 쓰임');
-  check(r.maxFloor, '예배실 칸: 5층까지 쌓이고 그 위로는 못 올림');
+  check(r.maxFloor, '예배실 칸: 10층까지 쌓이고 그 위로는 못 올림');
   check(r.floorDown, '예배실 칸: 위층부터 철거됨');
   check(r.split, '예배실 칸: 가운데 칸을 지우면 두 예배실로 나뉨');
   check(r.rejoined && r.joinTwo, '예배실 칸: 다시 이으면 하나로 합쳐짐');
@@ -347,8 +347,8 @@ async function stackChecks(browser, url) {
     // 완성품 건물 층 올리기
     let cell = null;
     for (let y = 0; y < ROWS - 3 && !cell; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.cell, x, y, 2)) { build('cell', x, y, 2); cell = S.buildings[S.buildings.length - 1]; break; }
-    for (let k = 0; k < 4; k++) addFloor(cell);
-    o.stack = cell.floors === 5 && defOf(cell).fcap === D.cell.fcap * 5 && addFloor(cell) !== '' && removeFloor(cell, .5) && cell.floors === 4;
+    for (let k = 0; k < 9; k++) addFloor(cell);
+    o.stack = cell.floors === 10 && defOf(cell).fcap === D.cell.fcap * 10 && addFloor(cell) !== '' && removeFloor(cell, .5) && cell.floors === 9;
     o.noStackGarden = !canStack({ def: 'tree' });
     // 역할이 다른 칸은 합쳐지지도, 쌓이지도 않는다
     let X = -1, Y = -1;
@@ -409,7 +409,7 @@ async function stackChecks(browser, url) {
     o.cats = CATS.length;
     return o;
   });
-  check(r.stack, '쌓기: 완성품 건물을 5층까지 올리고 수용 인원이 층수만큼 늘며, 위층 철거 가능');
+  check(r.stack, '쌓기: 완성품 건물을 10층까지 올리고 수용 인원이 층수만큼 늘며, 위층 철거 가능');
   check(r.noStackGarden, '쌓기: 조경 요소는 층을 올릴 수 없음');
   check(r.roles, '칸 건물: 역할이 다른 칸은 합쳐지지도 쌓이지도 않음');
   check(r.skyBuilt && r.linked, '연결 다리: 같은 역할 건물의 2층끼리 이으면 서로 연결됨');
@@ -911,6 +911,64 @@ async function terrainChecks(browser, url) {
   await ctx.close();
 }
 
+/* ---------- 데크 위에 짓기 ---------- */
+async function deckChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 99;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.money = 999999; S.goal = GOALS.length; S.dlg = null; S.open = true;
+    S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
+    const o = {};
+    // 높이 1 데크 4x3 (x 20..23, y 6..8), 앞쪽(+y)에서 철골 계단으로 오른다
+    for (let x = 20; x < 24; x++) for (let y = 6; y < 9; y++) addPiece({ x: x, y: y, l: 1, s: 0, d: 0, k: 'stone' });
+    addPiece({ x: 21, y: 9, l: 0, s: 1, d: 3, k: 'stone' });
+    // 계단 아래에서 기존 바닥까지
+    const t = walkSearch(21, 10, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); paintFloor(21, 10, 'f_block'); recalc();
+    o.level = placeLevel(D.chapel, 20, 6, 2).l === 1 && placeLevel(D.chapel, 20, 6, 2).deck;
+    o.half = !!placeLevel(D.chapel, 22, 6, 2).why;
+    o.built = build('cafe', 22, 6, 2);
+    const cafe = S.buildings.find(b => b.def === 'cafe');
+    o.onDeck = !!cafe && cafe.z === 1 && bLevel(cafe) === 1;
+    o.reach = !!(cafe.acc && cafe.acc.ok);
+    o.covered = deckCovered(piecesAt(22, 6)[0]) && !nodeOk(PN + piecesAt(22, 6)[0].id);
+    o.noDem = pieceDemWhy(piecesAt(22, 6)[0]) !== '' && !removePiece(piecesAt(22, 6)[0].id, .5);
+    // 데크 아래 땅은 그대로 걸을 수 있다
+    paintFloor(22, 7, 'f_block'); o.under = groundOk(22, 7) || !!S.floor['22,7'];
+    // 나무·칸 건물·바닥 타일도 데크 위에
+    o.tree = build('tree', 20, 8, 2) && S.buildings.find(b => b.def === 'tree' && b.x === 20).z === 1;
+    o.room = placeTile(20, 6, 'mroom') && roomAt(20, 6).z === 1;
+    const dp = piecesAt(21, 6)[0]; o.tile = paintFloor(21, 6, 'f_brick', dp.id) === '' && dp.f === 'f_brick' && floorUndo() && !dp.f;
+    // 땅 높이 + 층수 10층 제한 (데크 높이 1 → 9층까지)
+    build('pray', 23, 8, 2); const pr = S.buildings.find(b => b.def === 'pray' && b.z === 1);
+    for (let k = 0; k < 12; k++) addFloor(pr);
+    o.cap = !!pr && (pr.floors || 1) === 9;
+    // 옮기기: 데크에서 땅으로 옮기면 z가 사라진다
+    const tr = S.buildings.find(b => b.def === 'tree' && b.x === 20);
+    setPlaceLevel(tr, D.tree, 5, 3, 2); tr.x = 5; tr.y = 3; rebuildOcc(); o.moved = tr.z == null;
+    draw(); ROT = 2; draw(); ROT = 0;
+    save(); const L = load(); o.saved = L.buildings.some(b => b.def === 'cafe' && b.z === 1);
+    return o;
+  });
+  check(r.level && r.half, '데크: 데크 위 높이를 고르고, 데크 밖으로 걸치면 못 지음');
+  check(r.built && r.onDeck, '데크: 데크 위에 건물을 지음');
+  check(r.reach, '데크: 방문자가 계단·데크로 데크 위 건물에 닿음');
+  check(r.covered && r.noDem, '데크: 건물 밑 데크는 걸을 수 없고, 철거하려 하면 막고 이유를 알려 줌');
+  check(r.under, '데크: 데크 아래 땅에 바닥을 깔 수 있음');
+  check(r.tree && r.room && r.tile, '데크: 나무·칸 건물·바닥 타일도 데크 위에');
+  check(r.cap, '데크: 데크 높이와 층수를 합쳐 10층 제한');
+  check(r.moved && r.saved, '데크: 땅으로 옮기면 데크 높이가 풀리고, 저장 후에도 유지');
+  check(errs.length === 0, '데크: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -924,6 +982,7 @@ async function terrainChecks(browser, url) {
     await ministryChecks(browser, url);
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
+    await deckChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

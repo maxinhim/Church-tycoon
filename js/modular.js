@@ -1,10 +1,10 @@
 'use strict';
 /* ---------- 칸을 이어 짓는 건물 (역할별) ----------
    1×1 칸을 하나씩 짓는다. 상하좌우로 맞닿은 같은 역할의 칸은 하나의 건물로 합쳐지고,
-   지은 칸을 다시 누르면 위층이 올라간다(최대 5층). 칸 하나를 지우면 끊어진 부분은 따로 나뉜다.
+   지은 칸을 다시 누르면 위층이 올라간다(최대 10층). 칸 하나를 지우면 끊어진 부분은 따로 나뉜다.
    건물 객체: {id, def, x, y, tiles:[{x,y,f}], inUse, uses}  (def는 kind가 'mroom'인 정의, x,y는 칸들의 좌상단)
    정의의 per(칸·층 면적당 수치), fk(채우는 필요), rname(건물 이름)으로 역할별 수치가 정해진다. */
-var MROOM={maxF:5,floorCost:500,fh:.9,fill0:40,fillPer:3,fillMax:66};
+var MROOM={maxF:10,floorCost:500,fh:.9,fill0:40,fillPer:3,fillMax:66};
 var RDC={},PDC={};
 
 function isRoomDef(id){return !!D[id]&&D[id].kind==='mroom';}
@@ -79,9 +79,9 @@ function tilePlan(x,y,def){
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};
-  if(piecesAt(x,y).length)return {ok:false,why:'길이 있어요'};
-  if(isRamp(x,y))return {ok:false,why:'흙 경사로 위에는 지을 수 없어요'};
-  return {ok:true,kind:'new',cost:D[def].cost};
+  // 땅 또는 데크: 그 칸에서 가장 높은 바닥에 짓는다
+  var pl=placeLevel({w:1,h:1},x,y,2);if(pl.why)return {ok:false,why:pl.why};
+  return {ok:true,kind:'new',cost:D[def].cost,l:pl.l,deck:pl.deck};
 }
 function placeTile(x,y,def){
   def=def||'mroom';
@@ -90,13 +90,15 @@ function placeTile(x,y,def){
   S.money-=p.cost;
   if(p.kind==='floor'){tileOf(p.room,x,y).f++;roomsChanged();return true;}
   var nb=[];
-  DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1],def);if(r&&nb.indexOf(r)<0&&bLevel(r)===th(x,y))nb.push(r);});
+  // 같은 높이에 선 이웃 칸끼리만 하나로 합친다
+  DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1],def);if(r&&nb.indexOf(r)<0&&bLevel(r)===p.l)nb.push(r);});
   if(!nb.length){
-    S.buildings.push({id:S.nextId++,def:def,x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0});
+    var nr={id:S.nextId++,def:def,x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0};if(p.deck)nr.z=p.l;
+    S.buildings.push(nr);
   }else{
     nb.sort(function(a,b){return b.tiles.length-a.tiles.length||a.id-b.id;});
     var keep=nb[0];
-    keep.tiles.push({x:x,y:y,f:1});
+    keep.tiles.push({x:x,y:y,f:1});if(p.deck||nb.some(function(r){return r.z!=null;}))keep.z=p.l;
     for(var i=1;i<nb.length;i++)mergeRoom(keep,nb[i]);
   }
   roomsChanged();return true;
@@ -139,7 +141,7 @@ function splitRoom(b){
   comps.sort(function(a,c){return c.length-a.length;});
   b.tiles=comps[0];
   for(var i=1;i<comps.length;i++){
-    S.buildings.push({id:S.nextId++,def:b.def,x:0,y:0,tiles:comps[i],inUse:0,uses:0});
+    var nr={id:S.nextId++,def:b.def,x:0,y:0,tiles:comps[i],inUse:0,uses:0};if(b.z!=null)nr.z=b.z;S.buildings.push(nr);
   }
 }
 /* 화면 좌표에서 가장 위에 보이는 칸(쌓인 칸 포함) 또는 땅 칸 */
@@ -208,7 +210,7 @@ function drawRoomGhost(){
   if(!p.ok&&p.why==='부지 밖이에요')return;
   var rr=roomAt(g.x,g.y,UI.tool),f=rr?tileOf(rr,g.x,g.y).f:0;
   var r=rrect(g.x+.06,g.y+.06,g.x+.94,g.y+.94);
-  var gz=rr?bLevel(rr)*LV:groundZ(g.x+.5,g.y+.5);
+  var gz=rr?bLevel(rr)*LV:(p.l!=null?p.l*LV:groundZ(g.x+.5,g.y+.5));
   c.globalAlpha=.55;
   atZ(gz,function(){box(r,f?roomTop(f):.02,roomTop(f+1),ok?'#7fe0a0':'#f07a6e');});
   c.globalAlpha=1;
