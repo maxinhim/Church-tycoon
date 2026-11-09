@@ -813,6 +813,81 @@ async function ministryChecks(browser, url) {
   await ctx.close();
 }
 
+/* ---------- 지형: 땅 높이·흙 경사로 ---------- */
+async function terrainChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 777;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.money = 999999; S.goal = GOALS.length; S.dlg = null; S.open = true;
+    S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
+    const o = {};
+    // (18..21, 8..11) 높이 2 고원, 앞쪽(+y)에서 흙 경사로 두 칸으로 오른다: (19,13) 0→1, (19,12) 1→2
+    for (let x = 18; x < 22; x++) for (let y = 8; y < 12; y++) terApply(x, y, 'ter_set', 2);
+    terApply(19, 12, 'ter_set', 1);
+    o.ramp1 = terApply(19, 12, 'ter_ramp', 0, 3) === '';
+    o.ramp2 = terApply(19, 13, 'ter_ramp', 0, 3) === '';
+    o.rampBad = terApply(25, 5, 'ter_ramp', 0, 3) !== '';
+    // 고원 위에 기도실, 문 앞 바닥
+    o.levelBad = levelWhy(D.pray, 19, 12, 2) !== '' && levelWhy(D.chapel, 17, 8, 2) !== '';
+    o.built = build('pray', 19, 9, 2);
+    const pr = S.buildings.find(b => b.def === 'pray');
+    o.onTop = !!pr && bLevel(pr) === 2;
+    [[19, 10], [19, 11]].forEach(t => paintFloor(t[0], t[1], 'f_block'));
+    // 경사로 아래에서 기존 바닥까지
+    const t = walkSearch(19, 14, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc();
+    o.reach = !!(pr.acc && pr.acc.ok);
+    const path = navPath(gateNode(), m => m === doorNode(pr.door.ent));
+    o.climb = !!path && Math.abs(path[path.length - 1].z - 2 * LV) < .01;
+    // 경사로를 없애면(평지로) 절벽이라 못 오른다
+    UI.undo = [];
+    terApply(19, 12, 'ter_set', 1);
+    o.cliff = !pr.acc.ok;
+    o.undo = (terUndo(UI.undo.pop()), pr.acc.ok);
+    // 땅을 높이면 위의 건물이 함께 오른다 (여러 칸 건물은 모든 칸이 함께)
+    o.bldUp = build('chapel', 4, 4, 2) && terApply(5, 5, 'ter_set', 3) === '' && (() => { const c = S.buildings.find(b => b.def === 'chapel'); return bLevel(c) === 3 && bTiles(c).every(q => th(q.x, q.y) === 3); })();
+    // 합쳐 10층 제한
+    o.cap = terPlan(5, 5, 'ter_set', 9).why !== '';
+    // 철골 계단으로 고원 옆면에 오르기: (22,9) 땅에서 -x 방향으로? 고원 동쪽(+x) 밖 (22,9) l=0 → (22,9)→(21,9) 계단은 x를 따라 오른다
+    o.stair = addPiece({ x: 23, y: 9, l: 0, s: 1, d: 1, k: 'stone' }) === '' && addPiece({ x: 22, y: 9, l: 1, s: 1, d: 1, k: 'stone' }) === '';
+    paintFloor(24, 9, 'f_block'); paintFloor(21, 9, 'f_block');
+    const reach = (NAV.all = true, navReach(gid(24, 9))); NAV.all = false;
+    o.stairUp = !!reach[gid(21, 9)];
+    o.dbg = [o.stair, o.stairUp, JSON.stringify(piecesAt(23,9)), JSON.stringify(piecesAt(22,9)), groundOk(21,9), groundOk(24,9)].join(' ');
+    // 땅에 놓인 길은 땅과 함께 움직인다
+    addPiece({ x: 26, y: 3, l: 0, s: 0, d: 0, k: 'stone' });
+    terApply(26, 3, 'ter_set', 1);
+    o.pieceMoved = piecesAt(26, 3)[0].l === 1;
+    // 화면에서 높인 땅을 누르면 그 칸이 잡힌다
+    const m = rotPt(20.5, 8.5), q = toScreen(m[0], m[1], 2 * LV), g = groundTile(q[0], q[1]);
+    o.pick = g.x === 20 && g.y === 8;
+    draw(); ROT = 1; draw(); ROT = 0;
+    // 저장 후 다시 불러와도 높이 유지
+    save(); const L = load(); o.saved = L.hgt['20,8'] === 2 && L.slp['19,12'] === 3;
+    return o;
+  });
+  check(r.ramp1 && r.ramp2 && r.rampBad, '지형: 흙 경사로는 한 층 높은 칸 쪽으로만 만들어짐');
+  check(r.levelBad, '지형: 높이가 다른 칸·경사로에 걸쳐서는 못 지음');
+  check(r.built && r.onTop, '지형: 높인 땅 위에 건물을 지음');
+  check(r.reach && r.climb, '지형: 방문자가 경사로로 고원 위 건물에 닿음');
+  check(r.cliff && r.undo, '지형: 경사로가 없으면 절벽이라 못 오르고, 되돌리면 다시 닿음');
+  check(r.bldUp, '지형: 땅을 높이면 건물(모든 칸)이 함께 오름');
+  check(r.cap, '지형: 땅 높이와 건물 층수를 합쳐 10층 제한');
+  check(r.stair && r.stairUp, '지형: 철골 계단으로 높인 땅에 오름' + (r.stair && r.stairUp ? '' : ' ' + r.dbg));
+  check(r.pieceMoved, '지형: 땅에 놓인 길이 땅과 함께 움직임');
+  check(r.pick, '지형: 화면에서 높인 땅의 윗면을 누르면 그 칸이 잡힘');
+  check(r.saved, '지형: 저장·불러오기 후에도 높이 유지');
+  check(errs.length === 0, '지형: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -825,6 +900,7 @@ async function ministryChecks(browser, url) {
     await stackChecks(browser, url);
     await ministryChecks(browser, url);
     await rulesChecks(browser, url);
+    await terrainChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

@@ -1,13 +1,12 @@
 'use strict';
 /* ---------- 입력 ---------- */
-function groundTile(px,py){var w=toWorld(px,py,0);return {x:Math.floor(w[0]),y:Math.floor(w[1])};}
 function pickBuilding(px,py){
   UI.selTile=null;
-  for(var z=6.4;z>=0;z-=0.06){
+  for(var z=MAXH*LV+6.4;z>=0;z-=0.06){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
     var id=occ[ty][tx];
-    if(id){var b=bById(id);if(b&&z<=bHeightAt(b,tx,ty)+.05){if(isRoom(b))UI.selTile={x:tx,y:ty};return id;}}
+    if(id){var b=bById(id),bz=b?bLevel(b)*LV:0;if(b&&z>=bz-.05&&z<=bz+bHeightAt(b,tx,ty)+.05){if(isRoom(b))UI.selTile={x:tx,y:ty};return id;}}
   }
   return null;
 }
@@ -16,7 +15,7 @@ function placeGhost(t){
   UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-1-d.h)};
 }
 function onGhostTile(t){
-  if(!UI.ghost||!UI.tool||!D[UI.tool]||isRoomDef(UI.tool)||isFloorDef(UI.tool)||UI.tool==='path')return false;
+  if(!UI.ghost||!UI.tool||!D[UI.tool]||isRoomDef(UI.tool)||isFloorDef(UI.tool)||isTerDef(UI.tool)||UI.tool==='path')return false;
   var d=faceDims(D[UI.tool],UI.face);return t.x>=UI.ghost.x&&t.x<UI.ghost.x+d.w&&t.y>=UI.ghost.y&&t.y<UI.ghost.y+d.h;
 }
 function onTap(px,py){
@@ -27,7 +26,7 @@ function onTap(px,py){
   if(popOpen)closeGatePop();
   if(isRoomDef(UI.tool)){tapRoomTile(pickTile(px,py));return;}
   // 바닥: 누른 칸으로 시작 자리만 옮긴다 (칠하기는 ✓)
-  if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-2)};if(!UI.fold)renderDetail();return;}
+  if(isFloorDef(UI.tool)||isTerDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-2)};if(!UI.fold)renderDetail();return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
   if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   // 지은 것을 누르면 패널을 열지 않고 그 위에 작은 카드만 띄운다 (열려 있던 패널은 닫는다)
@@ -110,11 +109,12 @@ function onPanel(e){
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
   else if(a==='dempiece'){var pc2=pieceById(UI.selPiece);if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);sfx('demolish',.7);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
   else if(a==='undo'){
-    var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
+    var ok2=isTerDef(UI.tool)?(function(){var u=UI.undo.pop();if(!u)return false;terUndo(u);return true;})():isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
     if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
   }
   else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);sfx(fw2?'error':'build',fw2?.4:.8);renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
+  else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
     var st=UI.selTile;

@@ -75,10 +75,12 @@ function tilePlan(x,y,def){
   if(r){
     if(r.def!==def)return {ok:false,why:'역할이 다른 칸 위에는 쌓을 수 없어요'};
     if(tileOf(r,x,y).f>=MROOM.maxF)return {ok:false,why:MROOM.maxF+'층까지만 올릴 수 있어요'};
+    if(bLevel(r)+tileOf(r,x,y).f+1>MAXH)return {ok:false,why:'땅 높이와 합쳐 '+MAXH+'층을 넘을 수 없어요'};
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};
   if(piecesAt(x,y).length)return {ok:false,why:'길이 있어요'};
+  if(isRamp(x,y))return {ok:false,why:'흙 경사로 위에는 지을 수 없어요'};
   return {ok:true,kind:'new',cost:D[def].cost};
 }
 function placeTile(x,y,def){
@@ -88,7 +90,7 @@ function placeTile(x,y,def){
   S.money-=p.cost;
   if(p.kind==='floor'){tileOf(p.room,x,y).f++;roomsChanged();return true;}
   var nb=[];
-  DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1],def);if(r&&nb.indexOf(r)<0)nb.push(r);});
+  DIRS.forEach(function(dd){var r=roomAt(x+dd[0],y+dd[1],def);if(r&&nb.indexOf(r)<0&&bLevel(r)===th(x,y))nb.push(r);});
   if(!nb.length){
     S.buildings.push({id:S.nextId++,def:def,x:x,y:y,tiles:[{x:x,y:y,f:1}],inUse:0,uses:0});
   }else{
@@ -142,10 +144,10 @@ function splitRoom(b){
 }
 /* 화면 좌표에서 가장 위에 보이는 칸(쌓인 칸 포함) 또는 땅 칸 */
 function pickTile(px,py){
-  for(var z=roomTop(MROOM.maxF)+.1;z>=0;z-=0.05){
+  for(var z=MAXH*LV+roomTop(MROOM.maxF)+.1;z>=0;z-=0.05){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
-    var b=roomAt(tx,ty);
-    if(b&&z<=bHeightAt(b,tx,ty)+.001)return {x:tx,y:ty};
+    var b=roomAt(tx,ty),bz=b?bLevel(b)*LV:0;
+    if(b&&z>=bz&&z<=bz+bHeightAt(b,tx,ty)+.001)return {x:tx,y:ty};
   }
   return groundTile(px,py);
 }
@@ -206,7 +208,8 @@ function drawRoomGhost(){
   if(!p.ok&&p.why==='부지 밖이에요')return;
   var rr=roomAt(g.x,g.y,UI.tool),f=rr?tileOf(rr,g.x,g.y).f:0;
   var r=rrect(g.x+.06,g.y+.06,g.x+.94,g.y+.94);
+  var gz=rr?bLevel(rr)*LV:groundZ(g.x+.5,g.y+.5);
   c.globalAlpha=.55;
-  box(r,f?roomTop(f):.02,roomTop(f+1),ok?'#7fe0a0':'#f07a6e');
+  atZ(gz,function(){box(r,f?roomTop(f):.02,roomTop(f+1),ok?'#7fe0a0':'#f07a6e');});
   c.globalAlpha=1;
 }

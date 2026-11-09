@@ -116,12 +116,12 @@ function strike(){
     if(ms.length&&w.hits<2&&Math.random()<0.6){
       t=ms[(Math.random()*ms.length)|0];w.hits++;
       t.cond=Math.max(0,condOf(t)-8);
-      var dm=bDims(t);F.push({x:t.x+dm.w/2,y:t.y+dm.h/2,z:bHeight(t)+.2,t:1.8,d:1.8,text:'벼락! 상태 −8',col:'#ffe28a'});
+      var dm=bDims(t);F.push({x:t.x+dm.w/2,y:t.y+dm.h/2,z:bLevel(t)*LV+bHeight(t)+.2,t:1.8,d:1.8,text:'벼락! 상태 −8',col:'#ffe28a'});
       toast('벼락이 떨어져 '+defOf(t).name+'이(가) 상했어요. 십자가 첨탑을 세우면 막을 수 있어요',3200);
     }
   }
   WX.flash=1;
-  if(t){var d2=bDims(t);WX.bolt={x:t.x+d2.w/2,y:t.y+d2.h/2,z:bHeight(t),t:0.35};}
+  if(t){var d2=bDims(t);WX.bolt={x:t.x+d2.w/2,y:t.y+d2.h/2,z:bLevel(t)*LV+bHeight(t),t:0.35};}
   else WX.bolt={x:Math.random()*COLS,y:Math.random()*PZ,z:0,t:0.35};
 }
 function wxIcon(k){
@@ -220,7 +220,7 @@ function snowmen(){
   if(!S.wx||S.wx.snow<0.55)return [];
   var out=[];
   for(var y=1;y<PZ-1;y++)for(var x=1;x<COLS-1;x++){
-    if(hh(x*13+5,y*7+11)>0.012||occ[y][x]||S.floor[x+','+y]||piecesAt(x,y).length)continue;
+    if(hh(x*13+5,y*7+11)>0.012||th(x,y)||isRamp(x,y)||occ[y][x]||S.floor[x+','+y]||piecesAt(x,y).length)continue;
     out.push({x:x,y:y});
   }
   return out;

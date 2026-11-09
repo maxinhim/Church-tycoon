@@ -58,7 +58,7 @@ function syncSelCard(){
   if(el.hidden)return;
   if(scArm&&performance.now()>=scArm){scArm=0;renderSelCard();}
   var x,y,top;
-  if(UI.sel){var b=bById(UI.sel),dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2);top=toScreen(m[0],m[1],bHeight(b)+.3);var bot=toScreen(m[0],m[1],0);}
+  if(UI.sel){var b=bById(UI.sel),dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2);top=toScreen(m[0],m[1],bLevel(b)*LV+bHeight(b)+.3);var bot=toScreen(m[0],m[1],bLevel(b)*LV);}
   else{var p=pieceById(UI.selPiece),mp=rotPt(p.x+.5,p.y+.5);top=toScreen(mp[0],mp[1],p.l*LV+.5);bot=toScreen(mp[0],mp[1],p.l*LV);}
   var vw=window.innerWidth,vh=window.innerHeight,w=el.offsetWidth,h=el.offsetHeight,tb=$('#top').getBoundingClientRect().bottom+8,below=top[1]-h-10<tb;
   x=clamp(top[0],w/2+8,vw-w/2-8);

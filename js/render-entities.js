@@ -140,6 +140,7 @@ function drawEntity(b,cars){
   if(k==='mroom'){drawRoom(b);return;}
   if(k==='path'){drawPiece({x:b.x,y:b.y,l:0,s:1,d:3,k:'stone'});return;}
   if(k==='floor'){drawFloorTile(b.def,b.x,b.y);return;}
+  if(k==='terrain'){drawTerIcon(b);return;}
   if(k==='fountain'){drawFountain(b);return;}
   if(k==='lamp'){drawLamp(b);return;}
   if(k==='hedge'){drawHedge(b);return;}

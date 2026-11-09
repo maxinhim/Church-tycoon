@@ -9,11 +9,14 @@
    두 노드는 맞닿은 면의 높이(포트)가 같을 때만 이어진다. */
 var NAV={reach:{},badSky:{},all:false},WALK=null;
 function gid(x,y){return y*COLS+x;}
+// 그 칸에 선 건물의 바닥 높이(층). 건물이 없으면 땅 높이
+function cellLevel(x,y){var id=occ&&occ[y]&&occ[y][x],b=id&&bById(id);return b?bLevel(b):th(x,y);}
 function gateNode(){return gid(ENT,ROWS-1);}
 var PN=100000;
 function isPieceNode(n){return n>=PN;}
 function nodePiece(n){return pieceById(n-PN);}
-function flatPieceAt(x,y){return S.paths.some(function(p){return p.x===x&&p.y===y&&p.l===0&&!p.s&&p.k!=='sky';});}
+function onGroundPiece(p){return p.k!=='sky'&&!p.s&&p.y<ROWS&&p.x<COLS&&p.l===th(p.x,p.y)&&!isRamp(p.x,p.y);}
+function flatPieceAt(x,y){return S.paths.some(function(p){return p.x===x&&p.y===y&&onGroundPiece(p);});}
 function computeWalk(){
   WALK=[];
   for(var y=0;y<ROWS;y++){
@@ -22,7 +25,9 @@ function computeWalk(){
     WALK.push(row);
   }
   for(var k in S.floor){var p=k.split(','),fx=+p[0],fy=+p[1];if(fy>=0&&fy<ROWS&&fx>=0&&fx<COLS)WALK[fy][fx]=true;}
-  S.paths.forEach(function(p){if(p.l===0&&!p.s&&p.k!=='sky'&&p.y<ROWS&&p.x<COLS)WALK[p.y][p.x]=true;});
+  // 흙 경사로는 그 자체로 걸을 수 있는 길
+  for(var k2 in S.slp||{}){var q=k2.split(','),sx=+q[0],sy=+q[1];if(sy>=0&&sy<PZ&&sx>=0&&sx<COLS)WALK[sy][sx]=true;}
+  S.paths.forEach(function(p){if(onGroundPiece(p))WALK[p.y][p.x]=true;});
 }
 function groundOk(x,y){if(!WALK)computeWalk();return x>=0&&y>=0&&x<COLS&&y<ROWS&&!occ[y][x]&&WALK[y][x];}
 function gateOpen(){return !!S.open||NAV.all;}
@@ -34,11 +39,11 @@ function crossOk(x,y,ny){
 }
 function nodeOk(n){return isPieceNode(n)?!!nodePiece(n):groundOk(n%COLS,(n/COLS)|0);}
 function nodePos(n){
-  if(!isPieceNode(n))return {x:n%COLS+.5,y:((n/COLS)|0)+.5,z:0};
+  if(!isPieceNode(n)){var gx=n%COLS+.5,gy=((n/COLS)|0)+.5;return {x:gx,y:gy,z:groundZ(gx,gy)};}
   var p=nodePiece(n);return {x:p.x+.5,y:p.y+.5,z:(p.l+.5*p.s)*LV};
 }
 // 연결 다리는 건물 안 통로라 바깥 길찾기에서 뺀다
-function isNodePiece(p){return p.k!=='sky'&&(p.l>0||p.s>0);}
+function isNodePiece(p){return p.k!=='sky'&&!onGroundPiece(p);}
 // (x,y) 칸에서 d 방향 면이 lvl 높이로 열린 다리·계단 노드
 function pieceNodeAt(x,y,d,lvl){
   var ps=piecesAt(x,y);
@@ -53,8 +58,10 @@ function navNext(n,cb){
     for(d=0;d<4;d++){
       var nx=x+DIRS[d][0],ny=y+DIRS[d][1];
       if(!crossOk(x,y,ny))continue;
-      if(groundOk(nx,ny))cb(gid(nx,ny),0);
-      var pn=pieceNodeAt(nx,ny,OPP[d],0);if(pn>=0)cb(pn,0);
+      // 땅끼리는 맞닿은 면의 높이가 같아야 (절벽은 못 지나간다)
+      var gp=groundPort(x,y,d);if(gp<0)continue;
+      if(groundOk(nx,ny)&&groundPort(nx,ny,OPP[d])===gp)cb(gid(nx,ny),gp*LV);
+      var pn=pieceNodeAt(nx,ny,OPP[d],gp);if(pn>=0)cb(pn,gp*LV);
     }
     return;
   }
@@ -62,7 +69,7 @@ function navNext(n,cb){
   for(d=0;d<4;d++){
     var pl=portLevel(p,d);if(pl<0)continue;
     var mx=p.x+DIRS[d][0],my=p.y+DIRS[d][1];
-    if(pl===0&&groundOk(mx,my)&&crossOk(mx,p.y,my))cb(gid(mx,my),0);
+    if(groundOk(mx,my)&&crossOk(mx,p.y,my)&&groundPort(mx,my,OPP[d])===pl)cb(gid(mx,my),pl*LV);
     var qn=pieceNodeAt(mx,my,OPP[d],pl);if(qn>=0)cb(qn,pl*LV);
   }
 }
@@ -98,9 +105,9 @@ function navReach(s){
 }
 function doorNode(s){
   if(!s)return -1;
-  var o=doorOut(s);
-  if(s.l===0)return groundOk(o.x,o.y)?gid(o.x,o.y):-1;
-  return pieceNodeAt(o.x,o.y,OPP[s.d],s.l);
+  var o=doorOut(s),lv=cellLevel(s.x,s.y)+s.l;
+  if(o.x>=0&&o.y>=0&&o.x<COLS&&o.y<ROWS&&groundOk(o.x,o.y)&&groundPort(o.x,o.y,OPP[s.d])===lv)return gid(o.x,o.y);
+  return pieceNodeAt(o.x,o.y,OPP[s.d],lv);
 }
 /* 문 정리 → 입구 아치에서 닿는 곳 계산 → 건물마다 입구·출구 이용 가능 여부 */
 function refreshNav(){

@@ -64,7 +64,7 @@ function drawFloorTile(id,x,y){
   }
 }
 function drawFloors(){
-  for(var k in S.floor){var p=k.split(','),id=S.floor[k];if(D[id])drawFloorTile(id,+p[0],+p[1]);}
+  for(var k in S.floor){var p=k.split(','),id=S.floor[k],fx=+p[0],fy=+p[1];if(D[id]&&!th(fx,fy)&&!isRamp(fx,fy))drawFloorTile(id,fx,fy);}
 }
 
 /* ---------- 입구까지 길 잇기 ----------
@@ -80,6 +80,7 @@ function linkPlan(b){
     if(s.l>0){var dn0=doorNode(s);if(dn0>=0&&NAV.reach[dn0])continue;return {why:'위층 문은 계단·다리로 이어 주세요'};}
     var o=doorOut(s);
     if(o.y>=PZ)continue;
+    if(o.x<0||o.y<0||o.x>=COLS||groundPort(o.x,o.y,OPP[s.d])!==bLevel(b))return {why:'문 앞 땅 높이가 달라요. 경사로나 계단으로 이어 주세요'};
     var r=walkSearch(o.x,o.y,add);if(!r)return {why:'이을 수 있는 자리가 없어요. 문 위치를 바꿔 보세요'};
     r.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});
   }
@@ -100,6 +101,7 @@ function walkSearch(sx,sy,add){
     }
     for(var d=0;d<4;d++){
       var nx=c[0]+DIRS[d][0],ny=c[1]+DIRS[d][1];if(!free(nx,ny))continue;
+      var gp=groundPort(c[0],c[1],d);if(gp<0||groundPort(nx,ny,OPP[d])!==gp)continue;
       var w=walk(nx,ny)?0:1,nk=nx+','+ny,nd=dist[ck]+w;
       if(dist[nk]==null||nd<dist[nk]){dist[nk]=nd;prev[nk]=ck;if(w)dq.push([nx,ny]);else dq.unshift([nx,ny]);}
     }

@@ -7,9 +7,15 @@ function footprint(x,y,w,h,fill,stroke,dash){
   c.setLineDash([]);
 }
 function sortEnt(E){
-  var n=E.length,adj=[],i,j;
+  var n=E.length,adj=[],i,j,k;
   for(i=0;i<n;i++)adj.push([]);
-  for(i=0;i<n;i++)for(j=i+1;j<n;j++){
+  // 화면에서 좌우로 겹치지 않는 둘은 서로 가릴 수 없으니 비교하지 않는다 (높인 땅 칸이 많아도 빠르게).
+  // 그림이 바닥보다 넓게 삐져나올 수 있어 여유를 둔다
+  var ix=[];for(i=0;i<n;i++){E[i]._l=E[i].x0-E[i].y1-.8;E[i]._r=E[i].x1-E[i].y0+.8;ix.push(i);}
+  ix.sort(function(p,q){return E[p]._l-E[q]._l;});
+  for(var u=0;u<n;u++)for(var w=u+1;w<n;w++){
+    i=ix[u];j=ix[w];if(E[j]._l>=E[i]._r)break;
+    if(i>j){k=i;i=j;j=k;}
     var a=E[i],b=E[j];
     var ab=a.x1<=b.x0+1e-4||a.y1<=b.y0+1e-4,ba=b.x1<=a.x0+1e-4||b.y1<=a.y0+1e-4;
     if(ab&&ba)continue;
@@ -41,26 +47,30 @@ function draw(){
   drawCloudShadows();
   drawOutTrees(true);
   var sb=UI.sel?bById(UI.sel):null;
-  if(sb){
-    if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
-    else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
-  }
-  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)?D[UI.tool]:null,gok=false;
-  if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&(movingId()||S.money>=gd.cost);footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');}
+  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)&&!isTerDef(UI.tool)?D[UI.tool]:null,gok=false;
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
   var mvId=movingId();
+  // 높인 땅·흙 경사로: 칸마다 흙 덩어리 하나
+  terCells().forEach(function(t){
+    if(t.x<0||t.y<0||t.x>=COLS||t.y>=ROWS)return;
+    var cm=rotPt(t.x+.5,t.y+.5),cq=P(cm[0],cm[1],th(t.x,t.y)*LV),pad=80*PJ.s;
+    if(cq[0]<-pad||cq[0]>VW+pad||cq[1]<-pad||cq[1]>VH+pad+MAXH*LV*ZH*PJ.s)return;
+    var rt=rrect(t.x,t.y,t.x+1,t.y+1),h=th(t.x,t.y);rt.zb=0;rt.zt=h*LV;rt.f=function(){drawTerCell(t.x,t.y);};E.push(rt);
+  });
   S.buildings.forEach(function(b){
     if(b.id===mvId)return;
     if(isRoom(b)){
       var map=roomMap(b);
-      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.f=function(){drawRoomTile(b,t,map);};E.push(rt);});
+      var rz=bLevel(b)*LV;
+      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);});};E.push(rt);});
       return;
     }
-    var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h);
-    r.f=function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);};E.push(r);
+    var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bLevel(b)*LV;
+    r.zb=bz;r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);});};E.push(r);
   });
   S.paths.forEach(function(p){
-    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>0?p.l*LV-.14:0;rp.zt=p.k==='sky'?p.l*LV+.72:((p.l===0&&!p.s)?0:pieceTop(p)*LV);
+    var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;
+    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>pg?p.l*LV-.14:pg*LV;rp.zt=p.k==='sky'?p.l*LV+.72:((p.l===pg&&!p.s)?pg*LV:pieceTop(p)*LV);
     rp.f=function(){drawPiece(p);};E.push(rp);
   });
   V.forEach(function(v){
@@ -81,23 +91,27 @@ function draw(){
   fenceSegs().forEach(function(f){var r=fenceRect(f);r.f=function(){drawFenceSeg(f);};E.push(r);});
   snowmen().forEach(function(t){var r=rrect(t.x+.25,t.y+.25,t.x+.75,t.y+.75);r.f=function(){drawSnowman(t);};E.push(r);});
   sortEnt(E).forEach(function(e){e.f();});
+  // 고른 건물·미리보기 바닥 표시는 그림 위에 얹는다 (높인 땅 위에서도 보이게)
+  if(sb)atZ(bLevel(sb)*LV,function(){
+    if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
+    else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
+  });
+  var gz=UI.ghost?th(clamp(UI.ghost.x,0,COLS-1),clamp(UI.ghost.y,0,ROWS-1))*LV:0;
+  if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&(movingId()||S.money>=gd.cost);atZ(gz,function(){footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');});}
   drawOutTrees(false);
   drawWxOverlay(c);
   drawMarkers(c);
   if(isRoomDef(UI.tool))drawRoomGhost();
-  if(isFloorDef(UI.tool)&&UI.ghost)footprint(UI.ghost.x,UI.ghost.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[4,3]);
+  if((isFloorDef(UI.tool)||isTerDef(UI.tool))&&UI.ghost)drawTerGhost();
   if(UI.tool==='path')drawPathGhost();
   if(gd){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);
     if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
     ensureDoors(gb);
-    c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;
-    drawDoorPads(gb);
+    atZ(gz,function(){c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;drawDoorPads(gb);});
   }
   if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.55;drawPiece(spc,'#ffd23f');c.globalAlpha=1;}}
-  if(sb){
-    drawDoorPads(sb);
-  }
+  if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);});
   drawFx(c);
 }
 // 건물 위 표시: 주황 '!'는 수리 필요(상태 50% 미만), 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가
@@ -116,7 +130,7 @@ function drawMarkers(c){
     if(b.id===mv)return;
     var bad=b.door&&!usable(b),worn=maintainable(b)&&condOf(b)<50;
     if(!bad&&!worn)return;
-    var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bHeight(b)+.35);
+    var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bLevel(b)*LV+bHeight(b)+.35);
     c.fillStyle=bad?'#d6453a':'#e8892c';c.strokeStyle='#fff';c.lineWidth=1.5;
     c.beginPath();c.arc(q[0],q[1],7*s,0,6.283);c.fill();c.stroke();
     c.fillStyle='#fff';c.font='800 '+(9*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(bad?'?':'!',q[0],q[1]+.5);

@@ -5,7 +5,7 @@
    d = 경사가 올라가는 방향(DIRS 순서), k = 종류(PATHK).
    계단은 아래가 빈 철골 계단이라 계단 밑과 다리 아래 땅을 그대로 걸을 수 있다.
    연결 다리(k='sky')는 같은 역할 건물의 위층끼리 잇는 실내 통로로, 바깥 길찾기에는 들어가지 않는다. */
-var LV=.9,MAXL=4;
+var LV=.9,MAXL=10;
 var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:40},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:60},
   sky:{name:'연결 다리',col:'#c9d6df',edge:'#5f7a8f',cost:120}};
 var SCREEN_DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 화면 기준 ↘ ↙ ↖ ↗ (회전된 좌표)
@@ -15,8 +15,9 @@ function pieceById(id){for(var i=0;i<S.paths.length;i++)if(S.paths[i].id===id)re
 function pieceTop(p){return p.l+p.s;}
 // d 방향 면이 열린 높이. 경사의 옆면은 막혀 있어 -1
 function portLevel(p,d){if(!p.s)return p.l;if(d===p.d)return p.l+1;if(d===OPP[p.d])return p.l;return -1;}
-function pieceCost(p){return p.s?90+(p.l>0?30:0):PATHK[p.k].cost+(p.l>0?30:0);}
-function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?'철골 계단':PATHK[p.k].name+(p.l>0?' 다리':''));}
+function pieceUp(p){return p.y<ROWS&&p.x<COLS&&p.l>th(p.x,p.y);}
+function pieceCost(p){return p.s?90+(pieceUp(p)?30:0):PATHK[p.k].cost+(pieceUp(p)?30:0);}
+function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?'철골 계단':PATHK[p.k].name+(pieceUp(p)?' 다리':''));}
 // p 위치의 표면 높이(층 단위가 아니라 z)
 function pieceH(p,wx,wy){
   if(!p.s)return p.l*LV;
@@ -26,10 +27,11 @@ function pieceH(p,wx,wy){
 function pieceFits(p){
   if(p.x<0||p.y<0||p.x>=COLS||p.y>=ROWS-1)return '부지 밖이에요';
   if(p.y>=PZ)return '주차 구역에는 길을 놓을 수 없어요 (이미 포장돼 걸을 수 있어요)';
-  if(p.l<0)return '땅보다 낮게는 지을 수 없어요';
+  if(p.l<th(p.x,p.y))return '땅보다 낮게는 지을 수 없어요';
+  if(isRamp(p.x,p.y))return '흙 경사로 위에는 길을 놓을 수 없어요';
   if(pieceTop(p)>MAXL)return MAXL+'층 높이보다 높게는 지을 수 없어요';
   if(p.k==='sky'&&p.s)return '연결 다리는 평지로만 지을 수 있어요';
-  if(p.k==='sky'&&p.l<1)return '연결 다리는 2층 높이부터 지을 수 있어요';
+  if(p.k==='sky'&&p.l<th(p.x,p.y)+1)return '연결 다리는 땅보다 한 층 위부터 지을 수 있어요';
   if(occ[p.y][p.x])return '건물이 있어요';
   var ps=piecesAt(p.x,p.y);
   for(var i=0;i<ps.length;i++){
@@ -98,7 +100,7 @@ function pcStartAt(px,py){
     var pl=portLevel(p,c.dir);
     if(pl<0){c.dir=p.d;pl=p.l+1;}
     c.x=p.x+DIRS[c.dir][0];c.y=p.y+DIRS[c.dir][1];c.l=pl;
-  }else{var t=groundTile(px,py);c.x=t.x;c.y=t.y;c.l=0;}
+  }else{var t=groundTile(px,py);c.x=t.x;c.y=t.y;c.l=(t.x>=0&&t.y>=0&&t.x<COLS&&t.y<ROWS)?th(t.x,t.y):0;}
   c.hist=[];
 }
 
@@ -107,27 +109,28 @@ function pcStartAt(px,py){
 function pieceLinked(p,d){
   var pl=portLevel(p,d);if(pl<0)return false;
   var nx=p.x+DIRS[d][0],ny=p.y+DIRS[d][1];
-  if(pl===0)return true;
+  if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&groundPort(nx,ny,OPP[d])===pl)return true;
+  if(nx<0||ny<0||nx>=COLS||ny>=ROWS)return pl===0;
   if(pieceNodeAt(nx,ny,OPP[d],pl)>=0)return true;
   return S.buildings.some(function(b){
-    return b.door&&[b.door.ent,b.door.ext].some(function(s){return s.l===pl&&s.x===nx&&s.y===ny&&s.d===OPP[d];});
+    return b.door&&[b.door.ent,b.door.ext].some(function(s){return bLevel(b)+s.l===pl&&s.x===nx&&s.y===ny&&s.d===OPP[d];});
   });
 }
 function drawPiece(p,tint){
   if(p.k==='sky'){drawSkyPiece(p,tint);return;}
   if(p.s){drawStair(p,tint);return;}
   var K=PATHK[p.k],top=tint||K.col,edge=tint?'rgba(255,255,255,.8)':K.edge,c=PJ.c;
-  var lift=(!p.s&&p.l===0)?.012:0,deck=.12;
+  var g=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0,gz=g*LV,lift=(!p.s&&p.l===g)?.012:0,deck=.12;
   var W=[[p.x,p.y],[p.x+1,p.y],[p.x+1,p.y+1],[p.x,p.y+1]];
   var C=W.map(function(w){var r=rotPt(w[0],w[1]);return {rx:r[0],ry:r[1],h:pieceH(p,w[0],w[1])+lift};});
   var R=rrect(p.x,p.y,p.x+1,p.y+1);
   // 기둥: 공중에 뜬 부분 아래
-  if(p.l>0){var cx=p.x+.5,cy=p.y+.5;box(rrect(cx-.07,cy-.07,cx+.07,cy+.07),0,pieceH(p,cx,cy)-deck,tint||'#b7a68d');}
+  if(p.l>g){var cx=p.x+.5,cy=p.y+.5;box(rrect(cx-.07,cy-.07,cx+.07,cy+.07),gz,pieceH(p,cx,cy)-deck,tint||'#b7a68d');}
   // 앞쪽 두 옆면(화면 기준 오른쪽 아래·왼쪽 아래)
-  var bottom=function(h){return p.l===0?0:h-deck;};
+  var bottom=function(h){return p.l===g?gz:h-deck;};
   var side=function(sel,shadeK){
     var e=C.filter(sel);if(e.length!==2)return;
-    if(p.l===0&&!p.s)return;
+    if(p.l===g&&!p.s)return;
     quad([[e[0].rx,e[0].ry,bottom(e[0].h)],[e[1].rx,e[1].ry,bottom(e[1].h)],[e[1].rx,e[1].ry,e[1].h],[e[0].rx,e[0].ry,e[0].h]],shade(tint||(p.k==='wood'?'#8d6339':'#b3a283'),shadeK),EDGE);
   };
   side(function(q){return Math.abs(q.ry-R.y1)<1e-6;},.93);
@@ -150,14 +153,14 @@ function drawPiece(p,tint){
   }
   c.stroke();
   // 난간: 공중에 뜬 조각에서 이어지지 않은 면
-  if(p.l>0||p.s){
+  if(p.l>g||p.s){
     c.strokeStyle=tint?'rgba(255,255,255,.85)':'#f3efe6';c.lineWidth=Math.max(.8,1.4*PJ.s);c.beginPath();
     for(var d=0;d<4;d++){
       if(pieceLinked(p,d))continue;
       var a,b2;
       if(d===0){a=[p.x+1,p.y];b2=[p.x+1,p.y+1];}else if(d===1){a=[p.x,p.y];b2=[p.x,p.y+1];}
       else if(d===2){a=[p.x,p.y+1];b2=[p.x+1,p.y+1];}else{a=[p.x,p.y];b2=[p.x+1,p.y];}
-      if(p.l===0&&p.s&&(d===p.d||d===OPP[p.d]))continue;
+      if(p.l===g&&p.s&&(d===p.d||d===OPP[p.d]))continue;
       var r1=rotPt(a[0],a[1]),r2=rotPt(b2[0],b2[1]),h1=pieceH(p,a[0],a[1]),h2=pieceH(p,b2[0],b2[1]);
       var s1=P(r1[0],r1[1],h1),s2=P(r2[0],r2[1],h2),t1=P(r1[0],r1[1],h1+.32),t2=P(r2[0],r2[1],h2+.32);
       c.moveTo(s1[0],s1[1]);c.lineTo(t1[0],t1[1]);c.lineTo(t2[0],t2[1]);c.lineTo(s2[0],s2[1]);
@@ -184,11 +187,12 @@ function drawStair(p,tint){
   var rs=function(wx,wy){return rotPt(wx,wy);};
   // 화면에서 앞쪽에 오는 옆면 판별
   var a=rs(cx+px*.42,cy+py*.42),b=rs(cx-px*.42,cy-py*.42),front=(a[0]+a[1]>b[0]+b[1])?1:-1;
-  var post=function(wx,wy,zt){if(zt>.12)box(rrect(wx-.035,wy-.035,wx+.035,wy+.035),0,zt,shade(steel,.95));};
+  var gz=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y)*LV:0;
+  var post=function(wx,wy,zt){if(zt>gz+.12)box(rrect(wx-.035,wy-.035,wx+.035,wy+.035),gz,zt,shade(steel,.95));};
   var stringer=function(sg){
     var lx=cx-ax*.5+px*.43*sg,ly=cy-ay*.5+py*.43*sg,hx=cx+ax*.5+px*.43*sg,hy=cy+ay*.5+py*.43*sg,r1=rs(lx,ly),r2=rs(hx,hy);
     quad([[r1[0],r1[1],z0-.09],[r2[0],r2[1],z1-.09],[r2[0],r2[1],z1+.02],[r1[0],r1[1],z0+.02]],steel,'rgba(20,25,30,.55)');
-    post(hx,hy,z1-.09);if(p.l>0)post(lx,ly,z0-.09);
+    post(hx,hy,z1-.09);post(lx,ly,z0-.09);
   };
   stringer(-front);
   var n=5,steps=[];
@@ -214,12 +218,12 @@ function drawStair(p,tint){
 // 연결 다리: 기둥 위 바닥판, 유리 벽, 얇은 지붕틀
 function drawSkyPiece(p,tint){
   var z=p.l*LV,c=PJ.c,cx=p.x+.5,cy=p.y+.5;
-  box(rrect(cx-.08,cy-.08,cx+.08,cy+.08),0,z-.13,tint||'#9aa6b0');
+  box(rrect(cx-.08,cy-.08,cx+.08,cy+.08),th(p.x,p.y)*LV,z-.13,tint||'#9aa6b0');
   box(rrect(p.x,p.y,p.x+1,p.y+1),z-.13,z,tint||'#8e9aa4',tint||'#d5dde3');
   var open=function(e){
     var nx=p.x+DIRS[e][0],ny=p.y+DIRS[e][1];
     if(piecesAt(nx,ny).some(function(q){return q.k==='sky'&&q.l===p.l;}))return true;
-    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&occ[ny][nx]){var b=bById(occ[ny][nx]);if(b&&bFloorsAt(b,nx,ny)>p.l)return true;}
+    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&occ[ny][nx]){var b=bById(occ[ny][nx]);if(b&&wallAt(b,nx,ny,p.l))return true;}
     return false;
   };
   var E=[[[p.x+1,p.y],[p.x+1,p.y+1]],[[p.x,p.y],[p.x,p.y+1]],[[p.x,p.y+1],[p.x+1,p.y+1]],[[p.x,p.y],[p.x+1,p.y]]];
@@ -246,7 +250,7 @@ function skyAttach(p,b){
   for(var e=0;e<4;e++){
     var nx=p.x+DIRS[e][0],ny=p.y+DIRS[e][1];
     if(nx<0||ny<0||nx>=COLS||ny>=ROWS)continue;
-    if(occ[ny][nx]===b.id&&bFloorsAt(b,nx,ny)>p.l)out.push(e);
+    if(occ[ny][nx]===b.id&&wallAt(b,nx,ny,p.l))out.push(e);
   }
   return out;
 }
@@ -265,7 +269,7 @@ function refreshLinks(){
         var nx=p.x+DIRS[e][0],ny=p.y+DIRS[e][1];
         if(nx<0||ny<0||nx>=COLS||ny>=ROWS||!occ[ny][nx])continue;
         var b=bById(occ[ny][nx]);
-        if(b&&bFloorsAt(b,nx,ny)>p.l&&att.indexOf(b)<0)att.push(b);
+        if(b&&wallAt(b,nx,ny,p.l)&&att.indexOf(b)<0)att.push(b);
       }
     });
     if(att.length<2)return;

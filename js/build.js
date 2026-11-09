@@ -12,9 +12,20 @@ function zoneWhy(d,x,y,face){
   }
   return '';
 }
+// 높인 땅 위에도 지을 수 있다: 모든 칸이 같은 높이의 평평한 땅이어야 한다 (경사로 위는 안 됨)
+function levelWhy(d,x,y,face){
+  var dm=faceDims(d,face),lv=-1;
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){
+    var tx=x+i,ty=y+j;if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
+    if(isRamp(tx,ty))return '흙 경사로 위에는 지을 수 없어요';
+    var h=th(tx,ty);if(lv<0)lv=h;else if(h!==lv)return '땅 높이가 다른 칸에 걸쳐 지을 수 없어요';
+  }
+  if(lv>0&&lv+1>MAXH)return '이 높이에는 지을 수 없어요';
+  return '';
+}
 function canPlace(d,x,y,face){
   var dm=faceDims(d,face),me=movingId();
-  if(zoneWhy(d,x,y,face))return false;
+  if(zoneWhy(d,x,y,face)||levelWhy(d,x,y,face))return false;
   for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){var o=occ[y+j][x+i];if((o&&o!==me)||piecesAt(x+i,y+j).length)return false;}
   return true;
 }
@@ -55,6 +66,7 @@ function structureChanged(){rebuildOcc();bump();recalc();save();}
 function addFloor(b){
   if(!b||!canStack(b))return '층을 올릴 수 없는 건물이에요';
   var f=b.floors||1;if(f>=MAXF)return MAXF+'층까지만 올릴 수 있어요';
+  if(bLevel(b)+f+1>MAXH)return '땅 높이와 합쳐 '+MAXH+'층을 넘을 수 없어요';
   var c=floorCostOf(b);if(S.money<c)return '자금이 부족해요';
   S.money-=c;b.floors=f+1;structureChanged();return '';
 }

@@ -3,7 +3,10 @@
    아이소메트릭 렌더러
    ====================================================================== */
 var ROT=0, cam={ox:0,oy:0,z:0.6}, ZMIN=0.3, ZMAX=2.6, PJ={c:null,ox:0,oy:0,s:1};
-function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*PJ.s, PJ.oy+(rx+ry)*HH*PJ.s-(z||0)*ZH*PJ.s];}
+// ZB: 지금 그리는 것이 놓인 바닥 높이(z). 높인 땅 위의 건물·바닥은 이 값만 올려 두고 평소처럼 그린다
+var ZB=0;
+function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*PJ.s, PJ.oy+(rx+ry)*HH*PJ.s-((z||0)+ZB)*ZH*PJ.s];}
+function atZ(z,fn){var k=ZB;ZB=z;try{fn();}finally{ZB=k;}}
 function rotPt(x,y){switch(ROT){case 0:return [x,y];case 1:return [ROWS-y,x];case 2:return [COLS-x,ROWS-y];default:return [y,COLS-x];}}
 function unrot(rx,ry){switch(ROT){case 0:return [rx,ry];case 1:return [ry,ROWS-rx];case 2:return [COLS-rx,ROWS-ry];default:return [COLS-ry,rx];}}
 function RX(){return ROT%2?ROWS:COLS;} function RY(){return ROT%2?COLS:ROWS;}
