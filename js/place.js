@@ -140,10 +140,9 @@ function plOk(){
   if(k!=='bld'||!UI.ghost)return;
   var d=D[UI.tool],g=UI.ghost,why2=placeWhy(d,g.x,g.y,UI.face);
   if(why2){toast(why2,1600);return;}
-  var s0=snapStats();
   if(!build(UI.tool,g.x,g.y,UI.face))return;
-  var dm=faceDims(d,UI.face),nb=S.buildings[S.buildings.length-1];
-  statFx(s0,g.x+dm.w/2,g.y+dm.h/2,heightOf(UI.tool)+.2);plBuzz();plLock=now+350;
+  var nb=S.buildings[S.buildings.length-1];
+  plBuzz();plLock=now+350;
   if(REPEAT_CATS.indexOf(d.cat)>=0){
     // 조경은 이어서: 옆 빈자리로 미리보기를 옮기고 되돌리기를 쌓는다
     UI.undo.push({bid:nb.id,cost:d.cost,w:S.week});
@@ -172,7 +171,7 @@ function renderPbar(){
   if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
     var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 건물이 바라볼 방향(정면·출입구)을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';
-    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · '+(why?bad(why):effText(d))+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
+    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
   }else if(k==='path'){
     var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sky=c.k==='sky',sl=sky?0:c.slope;
     var info=!p?'지도를 눌러 시작할 곳을 고르세요. 지어 둔 길을 누르면 그 끝에서 이어 짓습니다':
@@ -188,7 +187,7 @@ function renderPbar(){
     else if(!rp.ok)line=bad(rp.why);
     else if(S.money<rp.cost)line=bad('자금이 부족해요');
     else line=(rp.kind==='floor'?'누르면 위층을 올려요 · ':'누르면 칸을 지어요 · ')+fmt(rp.cost);
-    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · 위층 '+fmt(MROOM.floorCost)+' · '+effText(d)+'<br><span class="pt">'+line+'</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · 위층 '+fmt(MROOM.floorCost)+'<br><span class="pt">'+line+'</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else{
     var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool):'';
     h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">한 칸 '+fmt(d.cost)+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';

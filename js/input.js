@@ -110,7 +110,7 @@ function onPanel(e){
     var ok2=isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
     if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
   }
-  else if(a==='floorup'){UI.lastBuilt=null;var fb=bById(UI.sel),bs0=snapStats(),fw2=addFloor(fb);toast(fw2||'한 층 올렸어요',1400);if(!fw2&&fb){var fdm=bDims(fb);statFx(bs0,fb.x+fdm.w/2,fb.y+fdm.h/2,bHeight(fb));}renderDetail();hud(true);}
+  else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);renderDetail();hud(true);}
   else if(a==='floordown'){if(removeFloor(bById(UI.sel),.5))toast('맨 위층을 철거했어요',1400);renderDetail();hud(true);}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
@@ -140,9 +140,8 @@ function onPanel(e){
 }
 function tapRoomTile(t){
   UI.ghost={x:t.x,y:t.y};
-  var p=tilePlan(t.x,t.y,UI.tool),tb0=snapStats();
+  var p=tilePlan(t.x,t.y,UI.tool);
   if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){
-    var tf=tileOf(roomAt(t.x,t.y,UI.tool),t.x,t.y).f;statFx(tb0,t.x+.5,t.y+.5,roomTop(tf)+.2);
     UI.undo.push({x:t.x,y:t.y});
     var rb=roomAt(t.x,t.y,UI.tool),d=defOf(rb);
     toast((p.kind==='floor'?tileOf(rb,t.x,t.y).f+'층으로 올렸어요':'칸을 지었어요')+' · '+d.name,1400);

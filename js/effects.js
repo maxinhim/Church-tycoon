@@ -1,21 +1,10 @@
 'use strict';
 /* ---------- 효과와 빠른 현황 ----------
-   · 건물을 지으면 그 위로 "좌석 +24" 같은 글씨가 올라가며 사라진다 (F 목록, 실제 시간 기준)
+   · 떠오르는 글씨 (F 목록, 실제 시간 기준) — 건축 효과는 화면을 가려서 띄우지 않는다
    · 목표 달성 축하 카드와 종이 꽃가루 (CF 목록, 화면 좌표)
    · 현황 패널 맨 위의 한눈 요약(만족·수지·챙길 일)
    · 목회 고민거리 선택 카드(#dlg) */
 var REDUCED=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):{matches:false};
-var STATFX=[['seats','좌석','#ffffff'],['fcap','교제 공간','#ffd08a'],['kcap','돌봄 공간','#ffb6d2'],['ccap','편의 공간','#a9f0e4'],['park','주차','#d6e2ff'],['beauty','분위기','#c8f7a6'],['vis','방문자','#fff2b0']];
-function snapStats(){var o={};STATFX.forEach(function(s){o[s[0]]=A?A[s[0]]||0:0;});return o;}
-// before: snapStats()로 미리 찍어 둔 값. 늘어난 항목만 차례로 띄운다
-function statFx(before,wx,wy,z){
-  var after=snapStats(),i=0;
-  STATFX.forEach(function(s){
-    var d=after[s[0]]-before[s[0]];if(d<=0.05)return;
-    var txt=s[0]==='vis'?'+'+Math.round(d*100)+'%':'+'+(Math.abs(d-Math.round(d))>0.05?d.toFixed(1):Math.round(d));
-    F.push({x:wx,y:wy,z:z,t:2.4,d:2.4,delay:i*0.25,text:s[1]+' '+txt,col:s[2],big:1});i++;
-  });
-}
 function stepFx(rdt){
   for(var i=0;i<F.length;i++){var f=F[i];if(f.delay>0)f.delay-=rdt;else f.t-=rdt;}
   F=F.filter(function(f){return f.t>0;});

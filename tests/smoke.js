@@ -646,9 +646,10 @@ async function ministryChecks(browser, url) {
   const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   // 화살표로 정면 방향 바꾸기
   const faced = await page.evaluate(() => { syncPlace(); const el = [...document.querySelectorAll('#place .parr')].find(e => +e.dataset.v !== UI.face); const want = +el.dataset.v; el.click(); syncPlace(); return UI.face === want && el.classList.contains('on'); });
+  const barQuiet = await page.evaluate(() => { renderPbar(); return !/좌석 \+/.test(document.getElementById('pbar').textContent); });
   const m0 = await page.evaluate(() => S.money);
   if (placed) await page.click('#place [data-pl="ok"]');
-  const fx = await page.evaluate(() => F.some(f => /좌석 \+/.test(f.text)));
+  const fx = await page.evaluate(() => !F.some(f => /^(좌석|교제 공간|돌봄 공간|편의 공간|주차|분위기|방문자) \+/.test(f.text)));
   const backToList = await page.evaluate(() => !document.getElementById('dock').hidden && UI.tool === null && !!document.querySelector('#detail [data-act="undoLast"]'));
   await page.click('#detail [data-act="undoLast"]');
   const refunded = await page.evaluate(m => S.money === m && !S.buildings.some(b => b.def === 'room' && b.id === (UI.lastBuilt || {}).bid), m0);
@@ -699,7 +700,7 @@ async function ministryChecks(browser, url) {
   check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
   check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
-  check(placed && fx, '건축 효과: ✓로 지으면 건물 위에 "좌석 +n" 글씨가 뜸');
+  check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨를 지도·안내 띠에 띄우지 않음 (효과는 건축 카드에서만)');
   check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 목록으로 돌아오고, 그 주에는 전액 되돌리기');
   check(repeat, '지도에서 짓기: 조경은 옆자리로 이어 짓기, 방향 화살표 없음, 되돌리면 전액 환불');
   check(ended, '지도에서 짓기: ✕로 그만두면 목록으로 돌아옴');
