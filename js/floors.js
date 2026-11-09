@@ -38,8 +38,12 @@ function floorUndo(){
   recalc();save();return true;
 }
 function floorLine(c,ax,ay,bx,by){var a=rotPt(ax,ay),b=rotPt(bx,by),p=P(a[0],a[1],.006),q=P(b[0],b[1],.006);c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);}
+var FLOOR_TEX={f_block:'t_block',f_brick:'t_brick',f_gravel:'t_gravel',f_wood:'t_wood',f_step:'t_step',f_clover:'t_clover'};
 function drawFloorTile(id,x,y){
   var d=D[id],r=rrect(x,y,x+1,y+1),c=PJ.c,i;
+  // 질감 그림이 있으면 그것으로 (이웃 칸과 이음새 없이 이어진다)
+  var tp=FLOOR_TEX[id]&&texPattern(FLOOR_TEX[id],1);
+  if(tp){quad([[r.x0,r.y0,.005],[r.x1,r.y0,.005],[r.x1,r.y1,.005],[r.x0,r.y1,.005]],tp,'rgba(0,0,0,.06)');return;}
   quad([[r.x0,r.y0,.005],[r.x1,r.y0,.005],[r.x1,r.y1,.005],[r.x0,r.y1,.005]],d.wall,'rgba(0,0,0,.1)');
   c.strokeStyle='rgba(40,30,20,.22)';c.lineWidth=Math.max(.5,.8*PJ.s);c.beginPath();
   if(d.pat==='grid'){floorLine(c,x+.5,y,x+.5,y+1);floorLine(c,x,y+.5,x+1,y+.5);}

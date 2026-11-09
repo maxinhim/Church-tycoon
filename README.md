@@ -21,7 +21,7 @@
 - `css/` — `theme.css`(색·기본 스타일), `hud.css`(상단바·지도 도구·상태바), `panel.css`(하단 패널·오버레이), `responsive.css`(가로 화면 등)
 - `tests/` — 검증 스크립트 (게임에는 포함되지 않음)
 - `docs/art/sheet-prompts.md` — 모든 이미지 시트 프롬프트와 디자인 콘셉트 (`python3 tools/build_prompts.py`로 만들고, 같은 스크립트가 모바일 복사 페이지 `docs/art/gemini-prompts.html`도 만듭니다)
-- `assets/decor/` — 조경·꾸미기 그림 조각. `python3 tools/slice_sheet.py docs/art/sheets/decor-b.json`으로 시트에서 잘라 만듭니다 (`js/sprite-data.js`도 함께 생성)
+- `assets/decor/`·`assets/bld/`·`assets/tex/` — 조경·꾸미기, 건물, 바닥 질감 그림 조각. `python3 tools/slice_sheet.py`로 `docs/art/sheets`의 모든 시트에서 잘라 만듭니다 (`js/sprite-data.js`도 함께 생성)
 - `js/` — 빌드 도구 없이 클래식 `<script>`로 순서대로 로드하며, 전역 스코프를 공유합니다. `index.html`의 로드 순서를 바꾸지 마세요.
   - 데이터·상태: `config` → `buildings` → `state`
   - 게임 로직: `pathfinding`(바닥·길·계단·다리를 잇는 길찾기, 울타리·교회 문) → `visitors` → `sim` → `build` → `modular`(역할별로 칸을 이어 짓는 건물, 층 쌓기) → `doors`(입구·출구) → `paths`(길·철골 계단·다리·연결 다리) → `floors`(바닥 타일) → `ministry`(난이도·목표·사역팀·부교역자·직분자·행사·고민 카드·노후) → `finance`(교회 문, 대출, 주일 정산 영수증) → `weather`(날씨·계절·화면 효과) → `save`
@@ -30,7 +30,7 @@
 
 ## 출처
 - 건물·방문자·길 등 대부분의 그래픽과 시스템은 이 프로젝트의 코드로 새로 그렸습니다.
-- 조경·꾸미기 그림 조각(`assets/decor/`)은 Google Gemini로 생성한 이미지(`docs/art/sheets/decor-b.png`)를 잘라 썼습니다. 생성 프롬프트는 `docs/art/gemini-prompts.md`에 있습니다.
+- 조경·꾸미기·건물·바닥 그림 조각(`assets/`)은 Google Gemini로 생성한 이미지(`docs/art/sheets/`)를 잘라 썼습니다. 생성 프롬프트는 `docs/art/gemini-prompts.md`에 있습니다.
 - 외부 소리·소스는 사용하지 않습니다.
 - 폰트: Google Fonts (Gowun Batang, IBM Plex Sans KR)
 - 참고 자료: Kenney 아이소메트릭 에셋(CC0), OpenGameArt(라이선스 확인 필요), OpenRCT2

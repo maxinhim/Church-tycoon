@@ -1,0 +1,135 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-E.png",
+ "grid": [
+  6,
+  6
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "1": {
+   "id": "pray_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "0": {
+   "id": "pray",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "pray_b"
+  },
+  "3": {
+   "id": "counsel_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "2": {
+   "id": "counsel",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "counsel_b"
+  },
+  "7": {
+   "id": "nurse_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "6": {
+   "id": "nurse",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "nurse_b"
+  },
+  "9": {
+   "id": "wc_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "8": {
+   "id": "wc",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "wc_b"
+  },
+  "13": {
+   "id": "bible_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "12": {
+   "id": "bible",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "bible_b"
+  },
+  "15": {
+   "id": "clinic_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "14": {
+   "id": "clinic",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "clinic_b"
+  },
+  "17": {
+   "id": "nursery_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "16": {
+   "id": "nursery",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "nursery_b"
+  },
+  "19": {
+   "id": "pantry_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "18": {
+   "id": "pantry",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "pantry_b"
+  },
+  "21": {
+   "id": "lounge_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "20": {
+   "id": "lounge",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "lounge_b"
+  },
+  "29": {
+   "id": "dawn_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "28": {
+   "id": "dawn",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "dawn_b"
+  },
+  "31": {
+   "id": "bell_b",
+   "fw": 0.85,
+   "by": 0.35
+  },
+  "30": {
+   "id": "bell",
+   "fw": 0.85,
+   "by": 0.35,
+   "back": "bell_b"
+  }
+ }
+}

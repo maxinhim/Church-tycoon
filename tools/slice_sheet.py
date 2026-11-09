@@ -2,7 +2,7 @@
 """Gemini 스프라이트 시트를 칸마다 잘라 투명 PNG와 js/sprite-data.js를 만든다.
 
 쓰는 법:  python3 tools/slice_sheet.py docs/art/sheets/decor-b.json docs/art/sheets/decor-c.json
-          (시트를 여럿 주면 한 js/sprite-data.js로 합친다. 인자가 없으면 위 둘을 쓴다)
+          (시트를 여럿 주면 한 js/sprite-data.js로 합친다. 인자가 없으면 docs/art/sheets의 모든 시트)
 
 manifest(JSON):
   sheet   시트 이미지 (manifest 기준 상대 경로)
@@ -15,6 +15,10 @@ manifest(JSON):
           back 앞모습 칸이면 짝인 뒷모습 조각의 id (뒷모습 칸도 따로 cells에 적는다)
           fl   앞면이 왼쪽 아래를 향하게 그려진 그림이면 1 (기본은 오른쪽 아래)
           glow 등불의 분홍빛 번짐까지 지우는 강한 배경 제거
+          box  [x0,y0,x1,y1] 칸을 합쳐 그린 그림은 픽셀 범위를 직접 준다
+          tex  바닥 질감 칸: 배경을 지우지 않고 size(기본 128)px 정사각형으로. k = 질감 한 장이 덮는 칸 수
+  uniform 격자선이 고르지 않으면 true: 시트 크기를 칸 수로 똑같이 나눈다
+  bgauto  배경이 바랜 분홍이면 true: 칸 가장자리 색도 배경으로 지운다
 
 처리 순서: 검은 격자선 찾기 → 칸 안쪽만 잘라내기 → 마젠타 배경·그늘진 마젠타·(glow면) 분홍 번짐 지우기
 → 가장자리에 남은 분홍 테두리 1px 지우기 → 작은 부스러기 지우기 → 여백 자르기 → 미리 곱한 알파로 줄이기.
@@ -43,10 +47,20 @@ def find_lines(dark, axis, n):
     return [(lines[i][1] + 1, lines[i + 1][0]) for i in range(n)]
 
 
-def key_mask(c, glow):
+def ring_bg(c):
+    """칸 가장자리 띠의 중간값 색. 배경이 바랜 분홍이어도 그 칸의 배경색을 잡는다."""
+    ring = np.concatenate([c[:6].reshape(-1, 3), c[-6:].reshape(-1, 3), c[:, :6].reshape(-1, 3), c[:, -6:].reshape(-1, 3)])
+    return np.median(ring, axis=0)
+
+
+def key_mask(c, glow, auto=False):
     r, g, b = c[:, :, 0], c[:, :, 1], c[:, :, 2]
     bg = np.array([251, 0, 253])
     near = np.abs(c - bg).sum(axis=2) < 90
+    if auto:
+        m = ring_bg(c)
+        if m[0] - m[1] > 60 and m[2] - m[1] > 30 and m[0] > 150:  # 가장자리가 마젠타·분홍 계열일 때만
+            near |= np.abs(c - m).sum(axis=2) < 95
     shade = (g < 55) & (r > 100) & (b > 100) & (np.abs(r - b) < 90)  # 그늘진 마젠타
     k = near | shade
     if glow:
@@ -104,9 +118,15 @@ def process(manifest_path):
     base = os.path.dirname(os.path.abspath(manifest_path))
     img = np.asarray(Image.open(os.path.join(base, man['sheet'])).convert('RGB')).astype(int)
     cols, rows = man.get('grid', [7, 7])
-    dark = img.sum(axis=2) < 150
-    ry = find_lines(dark, 1, rows)
-    cx = find_lines(dark, 0, cols)
+    if man.get('uniform'):
+        # 격자선이 고르지 않은 시트: 크기를 칸 수로 똑같이 나눈다 (칸을 합친 그림은 cells의 box로 직접)
+        H, W = img.shape[:2]
+        ry = [(round(H * i / rows) + 3, round(H * (i + 1) / rows) - 3) for i in range(rows)]
+        cx = [(round(W * i / cols) + 3, round(W * (i + 1) / cols) - 3) for i in range(cols)]
+    else:
+        dark = img.sum(axis=2) < 150
+        ry = find_lines(dark, 1, rows)
+        cx = find_lines(dark, 0, cols)
     out_dir = os.path.join(ROOT, man['out'])
     os.makedirs(out_dir, exist_ok=True)
     scale = man.get('scale', 0.5)
@@ -114,9 +134,23 @@ def process(manifest_path):
     data = {}
     for key, it in sorted(man['cells'].items(), key=lambda kv: int(kv[0])):
         i = int(key)
-        (y0, y1), (x0, x1) = ry[i // cols], cx[i % cols]
+        if it.get('box'):
+            x0, y0, x1, y1 = it['box']
+        else:
+            (y0, y1), (x0, x1) = ry[i // cols], cx[i % cols]
         c = img[y0 + inset:y1 - inset, x0 + inset:x1 - inset]
-        alpha = ~key_mask(c, it.get('glow', False))
+        if it.get('tex'):
+            # 바닥 질감: 배경을 지우지 않고 정사각형 그대로 (게임이 마름모로 눌러 반복해 깐다)
+            n = min(c.shape[0], c.shape[1])
+            im = Image.fromarray(c[:n, :n].astype(np.uint8), 'RGB')
+            sz = it.get('size', 128)
+            im = im.resize((sz, sz), Image.LANCZOS)
+            name = it['id'] + '.png'
+            im.save(os.path.join(out_dir, name), optimize=True)
+            data[it['id']] = {'src': man['out'] + '/' + name, 'w': sz, 'h': sz, 'tex': 1, 'k': it.get('k', 1)}
+            print('%-12s 칸 %2d  질감 %d' % (it['id'], i, sz))
+            continue
+        alpha = ~key_mask(c, it.get('glow', False), man.get('bgauto', False))
         alpha = defringe(c, alpha)
         alpha = drop_specks(alpha)
         ys, xs = np.nonzero(alpha)
@@ -159,4 +193,5 @@ def main(paths):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:] or [os.path.join(ROOT, 'docs/art/sheets/decor-b.json'), os.path.join(ROOT, 'docs/art/sheets/decor-c.json')])
+    main(sys.argv[1:] or [os.path.join(ROOT, 'docs/art/sheets', n) for n in
+                         ('decor-b.json', 'decor-c.json', 'sheet-D.json', 'sheet-E.json', 'sheet-F.json', 'sheet-G.json', 'sheet-H.json')])

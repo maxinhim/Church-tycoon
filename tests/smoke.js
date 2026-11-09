@@ -770,7 +770,7 @@ async function ministryChecks(browser, url) {
     // 모든 조각은 정의가 쓰거나(def.spr 포함) 앞모습의 뒷모습이어야 한다
     const used = new Set(); DEFS.forEach(d => { if (SPR_DATA[d.spr || d.id]) used.add(d.spr || d.id); });
     Object.values(SPR_DATA).forEach(v => { if (v.back) { if (!SPR_DATA[v.back]) used.add('MISSING ' + v.back); used.add(v.back); } });
-    const miss = Object.keys(SPR_DATA).filter(id => !used.has(id)); if (miss.length) return 'unused ' + miss;
+    const miss = Object.keys(SPR_DATA).filter(id => !used.has(id) && !SPR_DATA[id].tex && !/^gate_/.test(id)); if (miss.length) return 'unused ' + miss;
     if ([...used].some(u => /^MISSING/.test(u))) return 'back missing';
     // 방향: 앞(↘)·뒤집은 앞(↙)·뒷(↖)·뒤집은 뒷(↗). 방향 없는 것은 뒤집지 않는다
     const calls = []; const real = drawSpr; window.drawSpr = function (id, cx, cy, n, sid, mir) { calls.push([id, !!mir]); return true; };

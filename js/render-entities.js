@@ -181,6 +181,7 @@ function drawRoadCar(e){
 /* 교회 입구: 주차 구역과 부지 사이 울타리의 ENT 칸. 문이 닫혀 있으면 철문이 가로막고, 열면 양쪽으로 젖혀진다 */
 function drawArch(){
   var y=PZ,s=PJ.s;
+  if(drawGateSpr()){archName();return;}
   box(rrect(ENT-.04,y-.06,ENT+.08,y+.06),0,1.25,'#f1ece2');
   box(rrect(ENT+.92,y-.06,ENT+1.04,y+.06),0,1.25,'#f1ece2');
   if(S.open){
@@ -191,6 +192,11 @@ function drawArch(){
   }
   box(rrect(ENT-.06,y-.07,ENT+1.06,y+.07),1.1,1.3,'#3f5ea3');
   var m=rotPt(ENT+.5,y);cross(m[0],m[1],1.3,.7);
+  archName();
+}
+// 입구 아치 위 교회 이름
+function archName(){
+  var s=PJ.s,m=rotPt(ENT+.5,PZ);
   if(s>.42){var q=P(m[0],m[1],1.1),c=PJ.c;c.font='600 '+(8*s)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
     c.lineWidth=2.5;c.strokeStyle='rgba(20,30,60,.8)';c.strokeText(S.name,q[0],q[1]+10*s);c.fillStyle='#fff';c.fillText(S.name,q[0],q[1]+10*s);}
 }
@@ -198,9 +204,10 @@ function drawArch(){
 function drawGround(){
   var c=PJ.c,rx=RX(),ry=RY(),B=BAND,x,y,q;
   var on=function(px,py){return px>-80&&py>-80&&px<VW+80&&py<VH+80;};
-  quad([[-B,-B,0],[rx+B,-B,0],[rx+B,ry+B,0],[-B,ry+B,0]],'#80b169');
+  var tg=texPattern('t_grass',2);
+  quad([[-B,-B,0],[rx+B,-B,0],[rx+B,ry+B,0],[-B,ry+B,0]],tg||'#80b169');
   c.fillStyle='#86b86f';c.beginPath();
-  for(y=-B;y<ry+B;y++)for(x=-B;x<rx+B;x++){
+  if(!tg)for(y=-B;y<ry+B;y++)for(x=-B;x<rx+B;x++){
     if(!((x+y)&1))continue;
     var p0=P(x,y,0),p2=P(x+1,y+1,0);
     if(!on(p0[0],p0[1])&&!on(p2[0],p2[1]))continue;
@@ -215,13 +222,14 @@ function drawGround(){
   c.stroke();
   // 주차 구역: 아스팔트, 입구로 가는 보도(ENT 열)는 밝게
   var pz=rrect(0,PZ,COLS,ROWS-1);
-  quad([[pz.x0,pz.y0,.003],[pz.x1,pz.y0,.003],[pz.x1,pz.y1,.003],[pz.x0,pz.y1,.003]],'#7a8187');
+  quad([[pz.x0,pz.y0,.003],[pz.x1,pz.y0,.003],[pz.x1,pz.y1,.003],[pz.x0,pz.y1,.003]],texPattern('t_park',1)||'#7a8187');
   var wk=rrect(ENT,PZ,ENT+1,ROWS-1);
-  quad([[wk.x0,wk.y0,.004],[wk.x1,wk.y0,.004],[wk.x1,wk.y1,.004],[wk.x0,wk.y1,.004]],'#d8d2c4');
+  var tw=texPattern('t_walk',1);
+  quad([[wk.x0,wk.y0,.004],[wk.x1,wk.y0,.004],[wk.x1,wk.y1,.004],[wk.x0,wk.y1,.004]],tw||'#d8d2c4');
   c.strokeStyle='rgba(120,110,95,.45)';c.lineWidth=1;c.beginPath();
-  for(y=PZ;y<ROWS-1;y+=.5){var w1=rotPt(ENT,y),w2=rotPt(ENT+1,y),e1=P(w1[0],w1[1],.005),e2=P(w2[0],w2[1],.005);c.moveTo(e1[0],e1[1]);c.lineTo(e2[0],e2[1]);}
+  if(!tw)for(y=PZ;y<ROWS-1;y+=.5){var w1=rotPt(ENT,y),w2=rotPt(ENT+1,y),e1=P(w1[0],w1[1],.005),e2=P(w2[0],w2[1],.005);c.moveTo(e1[0],e1[1]);c.lineTo(e2[0],e2[1]);}
   c.stroke();
-  if(PJ.s>.35){
+  if(PJ.s>.35&&!tg){
     c.fillStyle='#6a9c56';
     for(y=0;y<PZ;y++)for(x=0;x<COLS;x++){
       if(hh(x,y)>=.4)continue;
@@ -231,7 +239,7 @@ function drawGround(){
   }
   // 도로: 지도 양옆 바깥까지
   var rr=rrect(-B,ROWS-1,COLS+B,ROWS);
-  quad([[rr.x0,rr.y0,.004],[rr.x1,rr.y0,.004],[rr.x1,rr.y1,.004],[rr.x0,rr.y1,.004]],'#5c6670');
+  quad([[rr.x0,rr.y0,.004],[rr.x1,rr.y0,.004],[rr.x1,rr.y1,.004],[rr.x0,rr.y1,.004]],texPattern('t_road',1)||'#5c6670');
   c.lineWidth=Math.max(1,2.4*PJ.s);c.strokeStyle='#c3c8cc';c.beginPath();
   var ca=rotPt(-B,ROWS-1),cb=rotPt(COLS+B,ROWS-1),pa=P(ca[0],ca[1],.01),pb=P(cb[0],cb[1],.01);c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);
   ca=rotPt(-B,ROWS);cb=rotPt(COLS+B,ROWS);pa=P(ca[0],ca[1],.01);pb=P(cb[0],cb[1],.01);c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();

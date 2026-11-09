@@ -1,0 +1,47 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-H.png",
+ "grid": [
+  3,
+  3
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "3": {
+   "id": "gym_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "0": {
+   "id": "gym",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "gym_b"
+  },
+  "4": {
+   "id": "grand_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "1": {
+   "id": "grand",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "grand_b",
+   "fl": 1
+  },
+  "2": {
+   "id": "gate_c",
+   "fw": 1.0,
+   "by": 0.3
+  },
+  "5": {
+   "id": "gate_o",
+   "fw": 1.0,
+   "by": 0.3
+  }
+ }
+}
