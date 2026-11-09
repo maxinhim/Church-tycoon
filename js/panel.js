@@ -41,7 +41,8 @@ function openGroup(g){
   if(g==='build'&&isPlacing()){endPlace();return;}
   if(!UI.fold&&tabGroup(UI.tab)===g){closeDock();return;}
   // 건축이 아닌 패널로 옮기면 짓던 것(미리보기)은 취소한다
-  if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;}
+  if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];}
+  UI.sel=null;UI.selPiece=null;UI.selTile=null;
   UI.tab=g==='minis'?(UI.minisTab||'events'):(g==='status'?(UI.statusTab||'status'):g);UI.fold=false;UI.confirmNew=false;
   renderPanel();
 }
@@ -54,7 +55,7 @@ function renderPanel(){
   panel=$('#panel');
   var dock=$('#dock');
   // 지도에서 짓는 동안은 패널을 닫고 아래 작은 띠만 보인다
-  dock.hidden=UI.fold||isPlacing();syncTabs();renderPbar();
+  dock.hidden=UI.fold||isPlacing();syncTabs();renderPbar();renderSelCard();
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   $('#dtitle').textContent=GROUP_TITLE[g];
@@ -91,43 +92,11 @@ function segBtns(act,val,items,off){
 }
 function bad(t){return '<span style="color:var(--bad)">'+t+'</span>';}
 function renderDetail(){
+  renderSelCard();
   if(isPlacing()){renderPbar();return;}
   var el=$('#detail');if(!el)return;
-  var h='',b;
-  if(UI.sel&&bById(UI.sel)){
-    b=bById(UI.sel);var bd=defOf(b),st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
-    var tileBtn=st?'<button class="btn" data-act="demtile">'+(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5)+'</button>':'';
-    if(canStack(b)){
-      var nf=b.floors||1;
-      if(nf<MAXF)tileBtn+='<button class="btn" data-act="floorup">층 올리기 '+fmt(floorCostOf(b))+'</button>';
-      if(nf>1)tileBtn+='<button class="btn" data-act="floordown">맨 위층 철거 +'+fmt(floorCostOf(b)*0.5)+'</button>';
-    }
-    var lines=[effText(bd)],doorUI='';
-    if(b.door&&!usable(b)){var lp=linkPlan(b);if(!lp.why&&lp.tiles.length)tileBtn='<button class="btn pri" data-act="link">입구까지 길 잇기 '+fmt(lp.cost)+'</button>'+tileBtn;}
-    if(b.door){
-      var warn=!b.acc?'':(!b.acc.ent?'입구까지 이어진 길이 없어요':(!b.acc.ext?'출구에서 나갈 길이 없어요':''));
-      lines.push(doorText(b)+(warn?' · '+bad(warn+'. 방문자가 이용하지 못해요'):''));
-      doorUI='<div class="doors"><span class="lbl">입구</span><button class="btn sm" data-act="door" data-v="ent:-1" aria-label="입구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ent:1" aria-label="입구를 다음 자리로">▶</button>'+
-        '<span class="lbl">출구</span><button class="btn sm" data-act="door" data-v="ext:-1" aria-label="출구를 이전 자리로">◀</button><button class="btn sm" data-act="door" data-v="ext:1" aria-label="출구를 다음 자리로">▶</button></div>';
-    }
-    if(maintainable(b)){var cd=Math.round(condOf(b));lines.push('건물 상태 '+cd+'%'+(cd<60?' · '+bad('낡아서 효과가 줄었어요'):''));if(cd<100)tileBtn+='<button class="btn" data-act="repair">수리 '+fmt(repairCost(b))+'</button>';}
-    if(b.links&&b.links.length)lines.push('연결 다리로 이어짐: '+b.links.map(function(id){var o=bById(id);return o?defOf(o).name:'';}).join(', '));
-    h='<div class="tx full"><b>'+bd.name+'</b> · 이용 '+(b.uses||0)+'회'+(bd.cap?' · 지금 '+b.inUse+'/'+bd.cap+'명':'')+'<br>'+lines.join('<br>')+'</div>'+doorUI+
-      '<div class="btns">'+tileBtn+(canMove(b)?'<button class="btn" data-act="move">옮기기·돌리기</button>':'')+'<button class="btn bad" data-act="demolish">'+(isRoom(b)?'전체 ':'')+'철거 +'+fmt(bd.cost*0.5)+'</button></div>';
-  }else if(UI.selPiece&&pieceById(UI.selPiece)){
-    var sp=pieceById(UI.selPiece);
-    var sw=sp.k==='sky'&&NAV.badSky[sp.id]?'<br>'+bad('역할이 다른 건물을 잇고 있어 방문자가 건너지 않아요'):'';
-    h='<div class="tx"><b>'+pieceName(sp)+'</b> · 높이 '+sp.l+(sp.s?'→'+(sp.l+1):'')+sw+'</div><div class="btns"><button class="btn bad" data-act="dempiece">철거 +'+fmt(pieceCost(sp)*0.5)+'</button></div>';
-  }else{
-    var lb=canUnbuild(UI.lastBuilt)&&bById(UI.lastBuilt.bid);
-    if(lb){
-      var lk=lb.door&&!usable(lb)?linkPlan(lb):null,lkb=lk&&!lk.why&&lk.tiles.length?'<button class="btn pri" data-act="link" data-v="'+lb.id+'">입구까지 길 잇기 '+fmt(lk.cost)+'</button>':'';
-      h='<div class="tx"><b>'+defOf(lb).name+'</b>을(를) 지었어요.'+(lkb?' '+bad('아직 길이 이어지지 않았어요.'):'')+' 잘못 지었다면 이번 주 안에는 전액 돌려받을 수 있어요</div><div class="btns">'+lkb+'<button class="btn" data-act="undoLast">되돌리기 +'+fmt(UI.lastBuilt.cost)+'</button></div>';
-    }
-    else h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 눌러보세요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 무료로 옮기거나 돌릴 수 있고, 입구·출구도 바꿀 수 있어요.')+'</div>';
-  }
+  var h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 누르면 지도 위 카드에 철거 버튼이 나와요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 지도 위 작은 카드에서 옮기기·돌리기, 입구·출구, 철거를 할 수 있어요.')+'</div>';
   el.innerHTML=h;
-  var cs=$('#cards');if(cs)cs.hidden=!UI.tool&&!!(UI.sel||UI.selPiece);
 }
 function stars(n){return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n);}
 function meter(v){var p=Math.round(clamp(v,0,1)*100);return '<div class="bar"><i style="width:'+p+'%;background:'+(p<30?'var(--bad)':p<60?'var(--gold)':'var(--good)')+'"></i></div>';}

@@ -8,7 +8,7 @@ var portraitMQ=window.matchMedia('(orientation: portrait)');
 function isPortrait(){return portraitMQ.matches;}
 function syncOrientation(){
   var p=isPortrait();
-  ['#stage','#ui','#place','#gatePop','#rcpt','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
+  ['#stage','#ui','#place','#gatePop','#selCard','#rcpt','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
 }
 function lockLandscape(){
   try{var o=screen.orientation;if(o&&o.lock)o.lock('landscape').catch(function(){});}catch(e){}
@@ -35,7 +35,7 @@ function frame(ts){
   stepFx(dt);stepWx(dt);
   // 목회 고민 카드가 열려 있으면 시간이 멈춘다
   if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*UI.speed;while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
-  draw();syncPlace();syncGate();hud(false);
+  draw();syncPlace();syncGate();syncSelCard();hud(false);
   requestAnimationFrame(frame);
 }
 function init(){
@@ -64,7 +64,7 @@ function init(){
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gatePop').hidden)closeGatePop();});
   $('#rcpt').addEventListener('click',function(){$('#rcpt').hidden=true;UI.statusTab='finance';if(UI.fold||tabGroup(UI.tab)!=='status')openGroup('status');else{UI.tab='finance';renderPanel();}});
   if(!S.open)setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
-  setupInput();setupPlace();
+  setupInput();setupPlace();setupSelCard();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
   if(portraitMQ.addEventListener)portraitMQ.addEventListener('change',syncOrientation);else portraitMQ.addListener(syncOrientation);

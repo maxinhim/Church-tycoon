@@ -40,7 +40,10 @@ function startPlace(id){
   renderPanel();
 }
 // 그만두면 건축 목록으로 돌아간다 (이미 지은 것은 그대로)
-function endPlace(){UI.moving=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;renderPanel();}
+function endPlace(){
+  // 옮기기를 그만두면 목록이 아니라 그 건물의 카드로 돌아간다
+  if(UI.moving&&bById(UI.moving)){var mid=UI.moving;UI.moving=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;UI.fold=true;UI.sel=mid;renderPanel();return;}
+  UI.moving=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;renderPanel();}
 // 미리보기의 화면 위치: 좌우·위 끝, 방향별 화살표 자리
 function plBox(){
   var k=placeKind(),x,y,w,h,z0,H;
@@ -154,8 +157,9 @@ function plOk(){
     var nx=plNext(d,g.x,g.y);if(nx){g.x=nx.x;g.y=nx.y;}
     toast(d.name+'을(를) 지었어요 · ✓로 옆에 또 짓기',1500);renderDetail();
   }else{
-    // 큰 건물은 하나 짓고 목록으로. 방금 지은 것은 목록에서 전액 되돌릴 수 있다
-    UI.tool=null;UI.ghost=null;UI.lastBuilt={bid:nb.id,cost:d.cost,w:S.week};
+    // 큰 건물은 하나 짓고 끝. 방금 지은 것은 카드에서 이번 주 안에 전액 되돌릴 수 있다
+    // 지은 건물 위에 작은 카드(되돌리기·길 잇기·옮기기)를 띄우고 패널은 닫아 둔다
+    UI.tool=null;UI.ghost=null;UI.fold=true;UI.sel=nb.id;UI.lastBuilt={bid:nb.id,cost:d.cost,w:S.week};
     toast(d.name+'을(를) 지었어요',1600);renderPanel();
   }
   hud(true);
@@ -167,7 +171,7 @@ function canMove(b){return !!b&&!isRoom(b)&&!!D[b.def];}
 function movingId(){var b=UI.moving&&bById(UI.moving);return b&&UI.tool===b.def&&isPlacing()?b.id:0;}
 function startMove(b){
   if(!canMove(b))return;
-  UI.tool=b.def;UI.face=b.face==null?2:b.face;UI.ghost={x:b.x,y:b.y};UI.moving=b.id;
+  UI.tab='build';UI.fold=false;UI.tool=b.def;UI.face=b.face==null?2:b.face;UI.ghost={x:b.x,y:b.y};UI.moving=b.id;
   UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.undo=[];UI.pc=null;
   renderPanel();
 }
@@ -182,7 +186,7 @@ function plMoveDone(){
     b.x=g.x;b.y=g.y;b.face=face;
     releaseVisitors(b.id);structureChanged();plBuzz();
   }
-  UI.moving=null;UI.tool=null;UI.ghost=null;UI.sel=b.id;
+  UI.moving=null;UI.tool=null;UI.ghost=null;UI.fold=true;UI.sel=b.id;
   var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(links&&!(b.links||[]).length?' · 연결 다리가 끊겼어요':'')+(b.door&&!usable(b)?' · 입구까지 길을 이어 주세요':'');
   toast(msg,1800);renderPanel();hud(true);
 }

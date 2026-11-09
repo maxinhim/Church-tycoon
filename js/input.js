@@ -30,10 +30,13 @@ function onTap(px,py){
   if(isFloorDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-2)};if(!UI.fold)renderDetail();return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
   if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
-  UI.sel=pickBuilding(px,py);
-  var pp=UI.sel?null:pickPieceAt(px,py);UI.selPiece=pp?pp.id:null;
-  if((UI.sel||UI.selPiece)&&(UI.tab!=='build'||UI.fold)){UI.tab='build';UI.fold=false;syncTabs();renderPanel();}
-  else renderDetail();
+  // 지은 것을 누르면 패널을 열지 않고 그 위에 작은 카드만 띄운다 (열려 있던 패널은 닫는다)
+  var dem=UI.tool==='demolish',sel=pickBuilding(px,py),stl=UI.selTile,pp=sel?null:pickPieceAt(px,py);
+  if((sel||pp)&&!UI.fold)closeDock();
+  UI.sel=sel;UI.selTile=stl;UI.selPiece=pp?pp.id:null;
+  // 철거 모드에서 골랐으면 철거 버튼이 보이게 펼쳐 둔다
+  if(dem&&(sel||pp)){scKey=sel?'b'+sel:'p'+pp.id;scMore=true;}
+  renderDetail();
 }
 var ptrs=new Map(),gest=null;
 function pts(){return Array.from(ptrs.values());}

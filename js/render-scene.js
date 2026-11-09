@@ -97,9 +97,6 @@ function draw(){
   if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.55;drawPiece(spc,'#ffd23f');c.globalAlpha=1;}}
   if(sb){
     drawDoorPads(sb);
-    var sd2=bDims(sb),mp=rotPt(sb.x+sd2.w/2,sb.y+sd2.h/2),q=P(mp[0],mp[1],bHeight(sb)+.45+Math.sin(S.clock*4)*.06),s=Math.max(.7,cam.z);
-    c.fillStyle='#ffd23f';c.strokeStyle='rgba(30,30,30,.6)';c.lineWidth=1.5;c.beginPath();
-    c.moveTo(q[0]-7*s,q[1]-10*s);c.lineTo(q[0]+7*s,q[1]-10*s);c.lineTo(q[0],q[1]);c.closePath();c.fill();c.stroke();
   }
   drawFx(c);
 }
