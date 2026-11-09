@@ -152,9 +152,9 @@ function renderEvents(){
   if(act.length)h+='<div class="qev">'+act.map(function(id){return '<span>진행 중 · '+EVENTS[id].name+' '+S.ev[id].left+'주</span>';}).join('')+'</div>';
   Object.keys(EVENTS).forEach(function(id){
     var e=EVENTS[id];if(e.hidden)return;
-    // 값은 '열기' 버튼 옆에 바로 보인다
+    // 값은 청빙 버튼처럼 버튼 안에 ('열기 300')
     var why=evBlock(id),c=evCost(e),meta=(e.season?e.season[0]+'~'+e.season[1]+'주':'')+(e.cd?(e.season?' · ':'')+'열면 '+e.cd+'주 뒤 다시':'');
-    h+=srow(e.name,meta,e.desc+(why?'<br>'+bad(why):''),'<span class="evc'+(S.money<c?' neg':'')+'">'+fmt(c)+'</span><button class="btn pri" data-act="runEv" data-v="'+id+'"'+(why?' disabled':'')+' aria-label="'+e.name+' 열기, '+fmt(c)+'">열기</button>');
+    h+=srow(e.name,meta,e.desc+(why?'<br>'+bad(why):''),'<button class="btn pri" data-act="runEv" data-v="'+id+'"'+(why?' disabled':'')+'>열기 '+fmt(c)+'</button>');
   });
   h+='</div>';
   panel.innerHTML=h;
