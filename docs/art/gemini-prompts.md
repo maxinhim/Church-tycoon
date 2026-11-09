@@ -163,3 +163,5 @@ Row 6: white cross sculpture on a stone base; wooden garden pergola arch with cl
 
 ## 다음 시트
 `sheet-prompts.md` 참고 (시트 D~N).
+
+소모임 건물(시트 S1 운동 코트 7종, S2 취미 방 5종 앞·뒤, S3 음악 방 3종 앞·뒤)은 아직 받지 않았다. 받기 전까지 게임에서는 코드 그림(코트 바닥·선·기구, 간판 달린 실내 건물)으로 그린다.

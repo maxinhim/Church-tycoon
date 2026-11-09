@@ -285,8 +285,41 @@ sheet('W3', '고화질: 예배당 뒷모습 다시 (2x1)', (2, 1),
        "Column 2: BACK view of exactly the same chapel (turned 180 degrees): the same red brick, slate roof, white bell tower and cross, arched windows with white frames on the long wall, stone base. The rear gable end has a round window and no door and no porch."],
       empty_last=False, pair='h')
 
+sheet('S1', '소모임 운동 코트', (3, 3),
+      '건축 › 소모임 › 운동의 야외 시설 7종. 지금 게임에서는 코드로 그린 코트를 쓴다. 바닥이 납작한 코트라 앞·뒤가 거의 같아 한 장씩만 받는다 (탁구대·운동기구·농구장은 정면이 오른쪽 아래).',
+      '탁구대(2x1)·야외 운동기구(2x1)·배드민턴장(3x2)·족구장(3x2)·게이트볼장(3x3)·농구장(3x3)·풋살장(5x3)',
+      ["It contains seven small outdoor sports facilities for a church campus, one per cell, each drawn as a low flat court seen from the shared isometric camera.",
+       "Each court is a thin flat slab (about 0.05 W thick) with crisp white painted lines, plus its equipment standing on it. The court surface IS part of the object (draw it), but no grass around it.",
+       "FOOTPRINTS matter: draw each court with exactly the given number of tiles; a 5x3 court is clearly longer than a 3x3 court. Keep the shared scale (one adult person is about 0.35 W tall), so the bigger courts fill more of their cell.",
+       "Row 1: ping-pong table, 2x1: a light stone pad with a dark green table on four legs and a low white net across the middle, two paddles lying on the table; outdoor fitness equipment, 2x1: a sandy pad with a blue pull-up bar on two posts and a small red round waist-twister platform; badminton court, 3x2: dark green surface, white boundary lines, a high white net on two grey posts across the middle.",
+       "Row 2: foot-volleyball court, 3x2: terracotta clay surface, white lines, a LOW net (knee height) on two short posts across the middle; gateball court, 3x3: light green grass-colored surface with white lines, three small white wire hoops and one short red center post; half basketball court, 3x3: red-brown surface, white key and three-point arc, one hoop on a dark pole with a white backboard and an orange rim at the far (upper) side.",
+       "Row 3: small soccer (futsal) court, 5x3: green surface, white lines with a center circle, two small white goal frames with nets at the two short ends; (empty); (empty)."])
+
+sheet('S2', '소모임 취미 방 앞·뒤', (4, 3),
+      '건축 › 소모임 › 취미의 실내 건물 5종을 앞·뒤 한 쌍씩. 지금 게임에서는 간판에 글자를 쓴 코드 그림을 쓴다. 간판에는 글자 대신 작은 그림 하나만.',
+      '보드게임실(2x2)·서예교실(2x2)·미술교실(2x2)·공방(2x2)·요리교실(3x2)',
+      ["It contains five small Western-style hobby club houses for a church campus, each shown from the front and from the back.",
+       "ABSOLUTELY NO LETTERS: each building has one small sign panel that shows only one tiny simple picture (no words, no letters, no numbers).",
+       "Each row holds two FRONT/BACK pairs (columns 1-2 and 3-4), except row 3.",
+       "Row 1: board game room, 2x2, cream walls, a flat purple roof edge, big windows with a table and game pieces visible inside, a sign with a dice picture; calligraphy room, 2x2, white plaster walls, a dark grey hip roof, wooden door, a sign with a brush picture, a small potted bamboo by the door.",
+       "Row 2: art room, 2x2, light walls with a pink flat roof edge, a skylight on the roof, big windows with an easel visible inside, a sign with a paint palette picture; craft workshop (knitting and woodwork), 2x2, warm wood-plank walls, a brown gable roof, a workbench under a small awning by the door, a sign with a yarn ball picture.",
+       "Row 3: cooking class house, 3x2, cream walls with a mustard-yellow flat roof edge, a small chimney, a wide window showing a kitchen counter with pots, a sign with a cooking pot picture (columns 1-2); (empty); (empty)."],
+      pair='h')
+
+sheet('S3', '소모임 음악 방 앞·뒤', (4, 2),
+      '건축 › 소모임 › 음악의 실내 건물 3종을 앞·뒤 한 쌍씩. 간판에는 글자 대신 작은 그림 하나만.',
+      '기타·우쿨렐레 교실(2x2)·밴드연습실(2x2)·합창실(3x2)',
+      ["It contains three small Western-style music club houses for a church campus, each shown from the front and from the back.",
+       "ABSOLUTELY NO LETTERS: each building has one small sign panel that shows only one tiny simple picture (no words, no letters, no numbers).",
+       "Row 1: guitar and ukulele classroom, 2x2, light beige walls with an orange flat roof edge, a big window with guitars on a wall rack inside, a sign with a guitar picture (columns 1-2); band practice room, 2x2, dark charcoal walls with a red flat roof edge, small high windows, a sturdy door with soundproof padding, a sign with a drum picture (columns 3-4).",
+       "Row 2: choir room, 3x2, cream walls, a slate-blue gable roof, tall arched windows, a wide double door, a sign with a music note picture (columns 1-2); (empty); (empty)."],
+      pair='h')
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('W3', '고화질 — 예배당 뒷모습 다시 (지금 먼저)'),
+ORDER = [('S1', '소모임 운동 코트 7종 (지금 먼저)'),
+         ('S2', '소모임 취미 방 5종 앞·뒤 (지금 먼저)'),
+         ('S3', '소모임 음악 방 3종 앞·뒤 (지금 먼저)'),
+         ('W3', '고화질 — 예배당 뒷모습 다시 (지금 먼저)'),
          ('W2', '고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)'),
          ('W1', '고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)'),
          ('E4', '보충 — 간판 없는 빵집·서점 (지금 먼저)'),
@@ -391,7 +424,7 @@ def build_html():
 
 
 if __name__ == '__main__':
-    SHEETS.sort(key=lambda x: {'W3': -1, 'W2': 0, 'W1': 1, 'E4': 2, 'E3': 3, 'E2': 4}.get(x['key'], 2))  # 지금 받을 보충 시트를 맨 위에
+    SHEETS.sort(key=lambda x: {'S1': -4, 'S2': -3, 'S3': -2, 'W3': -1, 'W2': 0, 'W1': 1, 'E4': 2, 'E3': 3, 'E2': 4}.get(x['key'], 2))  # 지금 받을 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))

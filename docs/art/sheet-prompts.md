@@ -13,29 +13,165 @@
 - **해상도**: 모든 프롬프트는 "가능한 가장 큰 해상도(2K 이상)로 만들라"고 적는다. 프롬프트 문장으로는 픽셀 크기를 보장할 수 없다. 해상도는 도구 설정에서 고른다 (Google AI Studio에서 Nano Banana 계열의 이미지 크기 옵션을 확인하고, 앱에 옵션이 없으면 1K로 받는다). 칸 수를 줄이는 것이 화질에 더 큰 영향을 준다.
 
 ## 받는 순서 (권장)
-1. 시트 W3 — 고화질 — 예배당 뒷모습 다시 (지금 먼저)
-2. 시트 W2 — 고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)
-3. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
-4. 시트 E4 — 보충 — 간판 없는 빵집·서점 (지금 먼저)
-5. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
-6. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
-7. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
-8. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
-9. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
-10. 시트 E — 작은 건물
-11. 시트 F — 중간 건물
-12. 시트 G — 큰 건물
-13. 시트 H — 가장 큰 건물·입구
-14. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
-15. 시트 I — 길·계단·탈것
-16. 시트 N — 계절 장식
-17. 시트 M — 행사·사역 그림
+1. 시트 S1 — 소모임 운동 코트 7종 (지금 먼저)
+2. 시트 S2 — 소모임 취미 방 5종 앞·뒤 (지금 먼저)
+3. 시트 S3 — 소모임 음악 방 3종 앞·뒤 (지금 먼저)
+4. 시트 W3 — 고화질 — 예배당 뒷모습 다시 (지금 먼저)
+5. 시트 W2 — 고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)
+6. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
+7. 시트 E4 — 보충 — 간판 없는 빵집·서점 (지금 먼저)
+8. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
+9. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
+10. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
+11. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
+12. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
+13. 시트 E — 작은 건물
+14. 시트 F — 중간 건물
+15. 시트 G — 큰 건물
+16. 시트 H — 가장 큰 건물·입구
+17. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
+18. 시트 I — 길·계단·탈것
+19. 시트 N — 계절 장식
+20. 시트 M — 행사·사역 그림
 
 ## 그림으로 바꾸지 않는 것
 - **칸 건물(예배실 칸 등)**: 이웃 칸과 이어 붙는 벽·지붕 모양이 16가지가 넘어 시트로 맞추기 어렵다. 지금처럼 코드로 그리고 색만 팔레트에 맞춘다.
 - **층 쌓기(2층 이상)**: 1층·중간층·지붕을 따로 받아야 쌓을 수 있는데, Gemini 그림은 층마다 크기가 조금씩 달라 이음새가 어긋난다. 1층 그림 위에 코드로 층을 얹는 방식을 먼저 써 본다.
 - **날씨 효과(비·눈·번개·무지개)·그림자·선택 표시**: 움직이고 투명해야 해서 코드로 그린다.
 - **글자·숫자**: 모두 웹 글꼴.
+
+## 시트 S1 — 소모임 운동 코트 (3x3)
+
+- **쓰는 곳**: 탁구대(2x1)·야외 운동기구(2x1)·배드민턴장(3x2)·족구장(3x2)·게이트볼장(3x3)·농구장(3x3)·풋살장(5x3)
+- **메모**: 건축 › 소모임 › 운동의 야외 시설 7종. 지금 게임에서는 코드로 그린 코트를 쓴다. 바닥이 납작한 코트라 앞·뒤가 거의 같아 한 장씩만 받는다 (탁구대·운동기구·농구장은 정면이 오른쪽 아래).
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains seven small outdoor sports facilities for a church campus, one per cell, each drawn as a low flat court seen from the shared isometric camera.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 3 columns x 3 rows of equal square cells (9 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+- The bottom-right cell (row 3, column 3) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
+
+CONTENTS (left to right, top to bottom)
+Each court is a thin flat slab (about 0.05 W thick) with crisp white painted lines, plus its equipment standing on it. The court surface IS part of the object (draw it), but no grass around it.
+FOOTPRINTS matter: draw each court with exactly the given number of tiles; a 5x3 court is clearly longer than a 3x3 court. Keep the shared scale (one adult person is about 0.35 W tall), so the bigger courts fill more of their cell.
+Row 1: ping-pong table, 2x1: a light stone pad with a dark green table on four legs and a low white net across the middle, two paddles lying on the table; outdoor fitness equipment, 2x1: a sandy pad with a blue pull-up bar on two posts and a small red round waist-twister platform; badminton court, 3x2: dark green surface, white boundary lines, a high white net on two grey posts across the middle.
+Row 2: foot-volleyball court, 3x2: terracotta clay surface, white lines, a LOW net (knee height) on two short posts across the middle; gateball court, 3x3: light green grass-colored surface with white lines, three small white wire hoops and one short red center post; half basketball court, 3x3: red-brown surface, white key and three-point arc, one hoop on a dark pole with a white backboard and an orange rim at the far (upper) side.
+Row 3: small soccer (futsal) court, 5x3: green surface, white lines with a center circle, two small white goal frames with nets at the two short ends; (empty); (empty).
+```
+
+## 시트 S2 — 소모임 취미 방 앞·뒤 (4x3)
+
+- **쓰는 곳**: 보드게임실(2x2)·서예교실(2x2)·미술교실(2x2)·공방(2x2)·요리교실(3x2)
+- **메모**: 건축 › 소모임 › 취미의 실내 건물 5종을 앞·뒤 한 쌍씩. 지금 게임에서는 간판에 글자를 쓴 코드 그림을 쓴다. 간판에는 글자 대신 작은 그림 하나만.
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains five small Western-style hobby club houses for a church campus, each shown from the front and from the back.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 4 columns x 3 rows of equal square cells (12 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+- The bottom-right cell (row 3, column 4) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+ABSOLUTELY NO LETTERS: each building has one small sign panel that shows only one tiny simple picture (no words, no letters, no numbers).
+Each row holds two FRONT/BACK pairs (columns 1-2 and 3-4), except row 3.
+Row 1: board game room, 2x2, cream walls, a flat purple roof edge, big windows with a table and game pieces visible inside, a sign with a dice picture; calligraphy room, 2x2, white plaster walls, a dark grey hip roof, wooden door, a sign with a brush picture, a small potted bamboo by the door.
+Row 2: art room, 2x2, light walls with a pink flat roof edge, a skylight on the roof, big windows with an easel visible inside, a sign with a paint palette picture; craft workshop (knitting and woodwork), 2x2, warm wood-plank walls, a brown gable roof, a workbench under a small awning by the door, a sign with a yarn ball picture.
+Row 3: cooking class house, 3x2, cream walls with a mustard-yellow flat roof edge, a small chimney, a wide window showing a kitchen counter with pots, a sign with a cooking pot picture (columns 1-2); (empty); (empty).
+```
+
+## 시트 S3 — 소모임 음악 방 앞·뒤 (4x2)
+
+- **쓰는 곳**: 기타·우쿨렐레 교실(2x2)·밴드연습실(2x2)·합창실(3x2)
+- **메모**: 건축 › 소모임 › 음악의 실내 건물 3종을 앞·뒤 한 쌍씩. 간판에는 글자 대신 작은 그림 하나만.
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains three small Western-style music club houses for a church campus, each shown from the front and from the back.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 4 columns x 2 rows of equal square cells (8 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+- The bottom-right cell (row 2, column 4) must stay completely empty: only flat magenta, no object, no shadow, no text. (Gemini puts its watermark there.)
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+ABSOLUTELY NO LETTERS: each building has one small sign panel that shows only one tiny simple picture (no words, no letters, no numbers).
+Row 1: guitar and ukulele classroom, 2x2, light beige walls with an orange flat roof edge, a big window with guitars on a wall rack inside, a sign with a guitar picture (columns 1-2); band practice room, 2x2, dark charcoal walls with a red flat roof edge, small high windows, a sturdy door with soundproof padding, a sign with a drum picture (columns 3-4).
+Row 2: choir room, 3x2, cream walls, a slate-blue gable roof, tall arched windows, a wide double door, a sign with a music note picture (columns 1-2); (empty); (empty).
+```
 
 ## 시트 W3 — 고화질: 예배당 뒷모습 다시 (2x1) (2x1)
 
