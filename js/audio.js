@@ -5,7 +5,7 @@
    · 효과음: Web Audio로 겹쳐 낸다. 같은 소리가 너무 잦으면 건너뛴다(minGap). 벼락은 잡음으로 직접 만든다
    · 모바일은 사용자가 처음 화면을 눌러야 소리를 낼 수 있어서 첫 터치 때 켠다 (그 전엔 조용히 무시)
    · 설정(톱니바퀴)에서 음악·효과음을 따로 끈다. 선택은 이 기기에만 저장 */
-var SND={sfx:true,music:true,ctx:null,buf:{},unlocked:false,last:{},cur:'',el:{},amb:null,vol:.6,mvol:.3};
+var SND={sfx:true,music:true,ctx:null,buf:{},unlocked:false,last:{},cur:'',el:{},amb:null,vol:.6,mvol:.15};
 var SFX_LIST=['build','place','floor','coin','coins','bell','join','gate_open','gate_close','demolish','error','page','click'];
 var BGM_FILE={sun:'bgm_sun',rain:'bgm_rain',snow:'bgm_snow'},SND_KEY='church-tycoon-sound';
 (function(){try{var v=JSON.parse(localStorage.getItem(SND_KEY)||'{}');if(v.sfx===false)SND.sfx=false;if(v.music===false)SND.music=false;}catch(e){}})();

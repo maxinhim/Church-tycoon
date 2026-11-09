@@ -803,6 +803,9 @@ async function ministryChecks(browser, url) {
     return saved && SND.cur === '' ? 'ok' : 'toggle';
   });
   check(audio === 'ok', '소리: 첫 터치에 켜짐, 효과음 모두 불러옴, 맑음·비·눈마다 곡이 바뀜, 음악 끄기 저장 (' + audio + ')');
+  // 건축 분류 칩이 모두 패널 안에 보인다 (가로로 숨지 않음)
+  const chipsVisible = await page.evaluate(() => { UI.fold = false; UI.tab = 'build'; UI.tool = null; renderPanel(); const c = document.querySelector('#panel .chips'); if (!c) return false; const r = c.getBoundingClientRect(); const ok = [...c.children].length === CATS.length + 1 && [...c.children].every(x => { const q = x.getBoundingClientRect(); return q.width > 0 && q.left >= r.left - 1 && q.right <= r.right + 1; }); UI.fold = true; renderPanel(); return ok; });
+  check(chipsVisible, '건축 분류: 바닥·꾸미기·철거까지 모든 칩이 패널 안에 보임');
   check(sprites === 'ok', '그림 조각: 조경·꾸미기 그림을 모두 불러와 그리고, 없으면 벡터 그림으로 (' + sprites + ')');
   check(errs.length === 0, '목회 운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
