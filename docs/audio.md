@@ -1,11 +1,12 @@
 # 소리 출처 (모두 CC0)
 
 모든 음원은 OpenGameArt.org에서 **CC0**(퍼블릭 도메인)으로 공개된 것만 골랐다. 여러 라이선스가 함께 적힌 작품은 그중 CC0로 쓴다.
-게임에는 `assets/audio/`의 mp3만 넣는다 (모바일 Safari까지 재생되게 mp3, 음악 96kbps 스테레오, 효과음 80kbps 모노, 앞쪽 무음은 잘라 냄).
+게임에는 `assets/audio/`의 mp3만 넣는다 (모바일 Safari까지 재생되게 mp3, 효과음 80kbps 모노, 앞쪽 무음은 잘라 냄).
+배경 음악은 조용하고 고르게 들리도록 모두 같은 크기로 맞춘다: `ffmpeg -i 원본 -af loudnorm=I=-24:TP=-3:LRA=11 -ac 2 -b:a 80k bgm_이름.mp3` (게임 안 음량은 다시 15%).
 
 | 파일 | 쓰는 곳 | 원본 | 만든 사람 | 출처 |
 |---|---|---|---|---|
-| bgm_sun.mp3 | 맑은 날·흐림·바람·폭염 배경 음악 | cozy_puzzle_in-game_2_bpm90 | MintoDog | https://opengameart.org/content/cozy-puzzle-in-game-2 |
+| bgm_sun.mp3 | 맑은 날·흐림·바람·폭염 배경 음악 | first_light_particles (사용자가 후보 5곡 중 선택) | Yoiyami | https://opengameart.org/content/first-light-particles-%E2%80%93-cc0-atmospheric-pianoambient-track |
 | bgm_rain.mp3 | 비·폭우 배경 음악 | hush_hamlet_loop | Zane Little Music | https://opengameart.org/content/hush-hamlet |
 | bgm_snow.mp3 | 눈 오는 날 배경 음악 | musicbox2_cute_tune | Aureolus_Omicron | https://opengameart.org/content/4-music-box-tracks |
 | amb_rain.mp3 | 비 올 때 깔리는 빗소리 | amb_rain_loop_1 | Kresiek The Furry | https://opengameart.org/content/amb-rain-loop-1 |
