@@ -1,5 +1,5 @@
 'use strict';
-/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json, docs/art/sheets/sheet-E4.json, docs/art/sheets/sheet-W1.json)를 고친 뒤 다시 만들 것 */
+/* tools/slice_sheet.py가 만든 파일 — 손으로 고치지 말고 manifest(docs/art/sheets/decor-b.json, docs/art/sheets/decor-c.json, docs/art/sheets/sheet-D.json, docs/art/sheets/sheet-E.json, docs/art/sheets/sheet-F.json, docs/art/sheets/sheet-G.json, docs/art/sheets/sheet-H.json, docs/art/sheets/sheet-E2.json, docs/art/sheets/sheet-E3.json, docs/art/sheets/sheet-E4.json, docs/art/sheets/sheet-W1.json, docs/art/sheets/sheet-W2.json)를 고친 뒤 다시 만들 것 */
 var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"by":0.1,"sway":1},
 "fir":{"src":"assets/decor/fir.png","w":105,"h":150,"fw":0.58,"by":0.1,"sway":0.8},
 "cherry":{"src":"assets/decor/cherry.png","w":129,"h":144,"fw":0.82,"by":0.1,"sway":1},
@@ -119,10 +119,8 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "market_b":{"src":"assets/bld/market_b.png","w":142,"h":154,"fw":1.0,"by":0.95,"sway":0},
 "outdoor_b":{"src":"assets/bld/outdoor_b.png","w":150,"h":158,"fw":1.0,"by":0.95,"sway":0},
 "gym":{"src":"assets/bld/gym.png","w":320,"h":292,"fw":1.0,"by":0.95,"sway":0,"back":"gym_b"},
-"grand":{"src":"assets/bld/grand.png","w":323,"h":323,"fw":1.0,"by":0.95,"sway":0,"back":"grand_b","fl":1},
 "gate_c":{"src":"assets/bld/gate_c.png","w":265,"h":319,"fw":1.0,"by":0.3,"sway":0},
 "gym_b":{"src":"assets/bld/gym_b.png","w":317,"h":289,"fw":1.0,"by":0.95,"sway":0},
-"grand_b":{"src":"assets/bld/grand_b.png","w":299,"h":323,"fw":1.0,"by":0.95,"sway":0},
 "gate_o":{"src":"assets/bld/gate_o.png","w":271,"h":318,"fw":1.0,"by":0.3,"sway":0},
 "shop":{"src":"assets/bld/shop.png","w":120,"h":147,"fw":1.0,"by":0.95,"sway":0,"back":"shop_b","fl":1},
 "shop_b":{"src":"assets/bld/shop_b.png","w":118,"h":153,"fw":1.0,"by":0.95,"sway":0},
@@ -144,4 +142,6 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "bookstore_b":{"src":"assets/bld/bookstore_b.png","w":299,"h":314,"fw":1.05,"by":0.95,"sway":0},
 "room":{"src":"assets/bld/room.png","w":406,"h":478,"fw":1.0,"by":0.95,"sway":0,"back":"room_b","fl":1},
 "room_b":{"src":"assets/bld/room_b.png","w":418,"h":464,"fw":1.0,"by":0.95,"sway":0},
-"chapel":{"src":"assets/bld/chapel.png","w":442,"h":476,"fw":1.0,"by":0.95,"sway":0,"back":"chapel_b","fl":1}};
+"chapel":{"src":"assets/bld/chapel.png","w":289,"h":320,"fw":1.0,"by":0.95,"sway":0,"back":"chapel_b","fl":1},
+"grand":{"src":"assets/bld/grand.png","w":429,"h":638,"fw":1.0,"by":0.95,"sway":0,"back":"grand_b","fl":1},
+"grand_b":{"src":"assets/bld/grand_b.png","w":434,"h":640,"fw":1.0,"by":0.95,"sway":0}};

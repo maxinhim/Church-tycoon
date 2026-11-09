@@ -1,0 +1,50 @@
+{
+ "scale": 0.5,
+ "inset": 6,
+ "bgauto": true,
+ "sheet": "sheet-W2.png",
+ "grid": [
+  2,
+  2
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "0": {
+   "id": "chapel",
+   "back": "chapel_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "fl": 1,
+   "box": [
+    0,
+    0,
+    665,
+    665
+   ]
+  },
+  "1": {
+   "id": "grand",
+   "back": "grand_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "fl": 1,
+   "box": [
+    0,
+    668,
+    1000,
+    1999
+   ]
+  },
+  "2": {
+   "id": "grand_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "box": [
+    1003,
+    668,
+    1999,
+    1999
+   ]
+  }
+ }
+}

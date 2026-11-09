@@ -71,7 +71,51 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
   </section>
   <section class="box">
     <h2>받는 순서</h2>
-    <ol class="order"><li><a href="#sW2">시트 W2</a> <span>고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)</span></li><li><a href="#sW1">시트 W1</a> <span>고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)</span></li><li><a href="#sE4">시트 E4</a> <span>보충 — 간판 없는 빵집·서점 (지금 먼저)</span></li><li><a href="#sE3">시트 E3</a> <span>보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)</span></li><li><a href="#sE2">시트 E2</a> <span>보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자</span></li><li><a href="#sK">시트 K</a> <span>UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다</span></li><li><a href="#sL">시트 L</a> <span>UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다</span></li><li><a href="#sD">시트 D</a> <span>땅·바닥 질감 — 화면 면적이 가장 넓다</span></li><li><a href="#sE">시트 E</a> <span>작은 건물</span></li><li><a href="#sF">시트 F</a> <span>중간 건물</span></li><li><a href="#sG">시트 G</a> <span>큰 건물</span></li><li><a href="#sH">시트 H</a> <span>가장 큰 건물·입구</span></li><li><a href="#sJ">시트 J</a> <span>방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험</span></li><li><a href="#sI">시트 I</a> <span>길·계단·탈것</span></li><li><a href="#sN">시트 N</a> <span>계절 장식</span></li><li><a href="#sM">시트 M</a> <span>행사·사역 그림</span></li></ol>
+    <ol class="order"><li><a href="#sW3">시트 W3</a> <span>고화질 — 예배당 뒷모습 다시 (지금 먼저)</span></li><li><a href="#sW2">시트 W2</a> <span>고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)</span></li><li><a href="#sW1">시트 W1</a> <span>고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)</span></li><li><a href="#sE4">시트 E4</a> <span>보충 — 간판 없는 빵집·서점 (지금 먼저)</span></li><li><a href="#sE3">시트 E3</a> <span>보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)</span></li><li><a href="#sE2">시트 E2</a> <span>보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자</span></li><li><a href="#sK">시트 K</a> <span>UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다</span></li><li><a href="#sL">시트 L</a> <span>UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다</span></li><li><a href="#sD">시트 D</a> <span>땅·바닥 질감 — 화면 면적이 가장 넓다</span></li><li><a href="#sE">시트 E</a> <span>작은 건물</span></li><li><a href="#sF">시트 F</a> <span>중간 건물</span></li><li><a href="#sG">시트 G</a> <span>큰 건물</span></li><li><a href="#sH">시트 H</a> <span>가장 큰 건물·입구</span></li><li><a href="#sJ">시트 J</a> <span>방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험</span></li><li><a href="#sI">시트 I</a> <span>길·계단·탈것</span></li><li><a href="#sN">시트 N</a> <span>계절 장식</span></li><li><a href="#sM">시트 M</a> <span>행사·사역 그림</span></li></ol>
+  </section>
+  <section class="box" id="sW3" aria-labelledby="hW3">
+    <div class="head"><h2 id="hW3">시트 W3 · 고화질: 예배당 뒷모습 다시 (2x1)</h2><span class="tag">2x1</span></div>
+    <p class="note"><b>쓰는 곳</b> 예배당(3x2) 앞·뒤</p>
+    <p class="note">시트 W2에서 예배당 앞모습은 좋았지만 뒷모습 두 장이 모두 종탑 끝이 칸 위쪽에서 잘렸다. 가로로 두 칸만 쓰고, 건물을 칸 높이의 60% 이하로 작게 그리게 해 종탑 끝이 잘리지 않게 한다. 앞·뒤를 한 시트에서 함께 받아 한 쌍이 서로 맞게 한다 (앞모습은 W2의 것과 같은 건물).</p>
+    <pre tabindex="0">Create a single square image: a sprite sheet for an isometric church-building management game. It contains exactly TWO large, highly detailed drawings: the same main chapel from the front and from the back. Attach the previous sheet (the one with the red brick chapel and the cream grand sanctuary) as the style reference and match its pixel size, outline color, shading and level of detail exactly.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game&#x27;s graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 2 columns x 1 rows of equal square cells (2 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+GRID: exactly 2 columns x 1 row of equal cells (the image is wide). Each cell holds ONE building. IMPORTANT: draw each building at most 60% of the cell height and about 70% of the cell width, centered, with a wide empty magenta margin above the tower: the tip of the bell tower must be well inside the cell and NEVER touch or cross the cell edge or the image edge.
+Do NOT add any other objects, extra views, people, signs or text. Keep the lower-right corner of the image empty magenta (Gemini places its watermark there).
+ORIENTATION: the building&#x27;s roof ridge runs from the lower-left to the upper-right of the cell. The entrance is on the SHORT gable end that faces the lower-left; the long side wall faces the lower-right. The FRONT view shows the entrance gable. The BACK view is the same building turned 180 degrees: the entrance is hidden and we see the plain rear gable end on the left and the opposite long wall on the right.
+Column 1: FRONT view of the main chapel, footprint 3x2: red brick walls, a tall slate-blue gable roof, a white bell tower with a dark pointed roof and a small cross rising from the roof near the entrance, a small gabled entrance porch with an arched wooden double door and stone steps, a round window high on the gable, tall arched windows with white frames along the long wall, a stone base.
+Column 2: BACK view of exactly the same chapel (turned 180 degrees): the same red brick, slate roof, white bell tower and cross, arched windows with white frames on the long wall, stone base. The rear gable end has a round window and no door and no porch.</pre>
+    <button type="button" class="copy" data-copy>시트 W3 프롬프트 복사</button>
   </section>
   <section class="box" id="sW2" aria-labelledby="hW2">
     <div class="head"><h2 id="hW2">시트 W2 · 고화질: 예배당·대예배당 앞·뒤 (2x2)</h2><span class="tag">2x2</span></div>

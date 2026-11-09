@@ -13,28 +13,75 @@
 - **해상도**: 모든 프롬프트는 "가능한 가장 큰 해상도(2K 이상)로 만들라"고 적는다. 프롬프트 문장으로는 픽셀 크기를 보장할 수 없다. 해상도는 도구 설정에서 고른다 (Google AI Studio에서 Nano Banana 계열의 이미지 크기 옵션을 확인하고, 앱에 옵션이 없으면 1K로 받는다). 칸 수를 줄이는 것이 화질에 더 큰 영향을 준다.
 
 ## 받는 순서 (권장)
-1. 시트 W2 — 고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)
-2. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
-3. 시트 E4 — 보충 — 간판 없는 빵집·서점 (지금 먼저)
-4. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
-5. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
-6. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
-7. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
-8. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
-9. 시트 E — 작은 건물
-10. 시트 F — 중간 건물
-11. 시트 G — 큰 건물
-12. 시트 H — 가장 큰 건물·입구
-13. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
-14. 시트 I — 길·계단·탈것
-15. 시트 N — 계절 장식
-16. 시트 M — 행사·사역 그림
+1. 시트 W3 — 고화질 — 예배당 뒷모습 다시 (지금 먼저)
+2. 시트 W2 — 고화질 — 예배당·대예배당 앞·뒤 한 쌍씩 (지금 먼저)
+3. 시트 W1 — 고화질 시험 — 핵심 예배당을 2×2 큰 칸으로 (지금 먼저)
+4. 시트 E4 — 보충 — 간판 없는 빵집·서점 (지금 먼저)
+5. 시트 E3 — 보충 — 한옥처럼 나온 건물 4종을 서양식으로 (지금 먼저)
+6. 시트 E2 — 보충 — 글자 없는 매장·안내실·첨탑과 서양식 정자
+7. 시트 K — UI 아이콘 — 버튼·메뉴가 가장 먼저 눈에 띄고, 지금 SVG 선 아이콘과 화풍 차이가 가장 크다
+8. 시트 L — UI 틀·버튼 — 아이콘과 함께 화면 전체 인상을 정한다
+9. 시트 D — 땅·바닥 질감 — 화면 면적이 가장 넓다
+10. 시트 E — 작은 건물
+11. 시트 F — 중간 건물
+12. 시트 G — 큰 건물
+13. 시트 H — 가장 큰 건물·입구
+14. 시트 J — 방문자 — 움직이는 그림이라 같은 사람끼리 어긋나지 않는지 먼저 한 장 시험
+15. 시트 I — 길·계단·탈것
+16. 시트 N — 계절 장식
+17. 시트 M — 행사·사역 그림
 
 ## 그림으로 바꾸지 않는 것
 - **칸 건물(예배실 칸 등)**: 이웃 칸과 이어 붙는 벽·지붕 모양이 16가지가 넘어 시트로 맞추기 어렵다. 지금처럼 코드로 그리고 색만 팔레트에 맞춘다.
 - **층 쌓기(2층 이상)**: 1층·중간층·지붕을 따로 받아야 쌓을 수 있는데, Gemini 그림은 층마다 크기가 조금씩 달라 이음새가 어긋난다. 1층 그림 위에 코드로 층을 얹는 방식을 먼저 써 본다.
 - **날씨 효과(비·눈·번개·무지개)·그림자·선택 표시**: 움직이고 투명해야 해서 코드로 그린다.
 - **글자·숫자**: 모두 웹 글꼴.
+
+## 시트 W3 — 고화질: 예배당 뒷모습 다시 (2x1) (2x1)
+
+- **쓰는 곳**: 예배당(3x2) 앞·뒤
+- **메모**: 시트 W2에서 예배당 앞모습은 좋았지만 뒷모습 두 장이 모두 종탑 끝이 칸 위쪽에서 잘렸다. 가로로 두 칸만 쓰고, 건물을 칸 높이의 60% 이하로 작게 그리게 해 종탑 끝이 잘리지 않게 한다. 앞·뒤를 한 시트에서 함께 받아 한 쌍이 서로 맞게 한다 (앞모습은 W2의 것과 같은 건물).
+
+```
+Create a single square image: a sprite sheet for an isometric church-building management game. It contains exactly TWO large, highly detailed drawings: the same main chapel from the front and from the back. Attach the previous sheet (the one with the red brick chapel and the cream grand sanctuary) as the style reference and match its pixel size, outline color, shading and level of detail exactly.
+
+STYLE GUIDE (identical for every sheet of this game)
+- Theme: a warm, hopeful small neighborhood church campus on a sunny day. Cozy and wholesome, gentle charm, never gloomy, never silly.
+- Architecture: Western style ONLY, like a small European or North American town: gable roofs with wooden shingles or slate, red brick, cream plaster, timber trim, arched windows, white wooden porches. NO East Asian architecture at all: no curved or upturned roof eaves, no dark clay roof tiles, no hanok, no pagoda, no temple shapes.
+- Crisp late-1990s pixel art, like a cheerful classic park management simulation. Chunky visible pixels: each art pixel is about 3 to 4 image pixels.
+- Clean 1-pixel outlines in very dark warm brown (#2b2522), not pure black. 3 to 4 flat shades per material, light dithering only on large surfaces, hard pixel edges, no blur, no gradients, no anti-aliasing halo, no glow, no light rays, no sparkles.
+- Light always comes from the upper left: top faces brightest, left faces medium, right faces darkest.
+- Palette anchors: cream plaster #efe8da, warm wood #a07a52 and #8a6a46, slate-blue church roofs #4f6db0, red brick #b9694c, light stone #c9c2b6, grass #7fae63 and #5c8a48, water #5fa3d0, warm gold #d1a02e, soft red #d65a4a, friendly blue #2a56c6, outline brown #2b2522. Saturated but natural, never neon.
+- No text, letters, numbers, logos, brand marks or religious text anywhere. Every sign, screen, paper, book cover and banner is blank.
+- Do not copy any existing game's graphics or characters.
+- If a reference image is attached, match its pixel size, outline color, palette and lighting exactly.
+
+PROJECTION (all world objects on this sheet)
+- True 2:1 dimetric isometric projection: everything stands on ground tiles shaped like diamonds twice as wide as they are tall, seen by the same camera looking down from the south.
+- Proportions, measured against the width W of one ground-tile diamond: one building storey is about 0.45 W tall, an adult person about 0.35 W tall, a large tree about 1 W tall. Footprints are given in tiles (for example 2x1 means two tiles long and one tile deep).
+- Do NOT enlarge small objects to fill their cell; keep the shared scale.
+- Draw only the object: no ground tile, no grass under it, no floor, no cast shadow (the game draws shadows).
+
+LAYOUT
+- Render at the largest resolution the tool offers (2K or 4K if selectable). Never output a smaller image. Keep the pixel art crisp at this size, and draw each object with as many pixels as possible.
+- Exactly 2 columns x 1 rows of equal square cells (2 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground, no shadow, no glow on the background.
+- Each cell contains exactly ONE picture, horizontally centered, resting slightly below the middle of the cell. It must fit inside the middle 75% of the cell width and height: keep at least 12% empty magenta margin on every side. Nothing may touch or cross a grid line, nothing may be cropped.
+
+FRONT/BACK PAIRS
+Some objects take TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same object (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the side facing the camera changes).
+- FRONT VIEW: the front (entrance, door, seat side, display side) faces the lower-right, toward the camera.
+- BACK VIEW: the object is turned around, so its back faces the lower-right and the front is hidden.
+- Buildings and long furniture run with their long side from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+GRID: exactly 2 columns x 1 row of equal cells (the image is wide). Each cell holds ONE building. IMPORTANT: draw each building at most 60% of the cell height and about 70% of the cell width, centered, with a wide empty magenta margin above the tower: the tip of the bell tower must be well inside the cell and NEVER touch or cross the cell edge or the image edge.
+Do NOT add any other objects, extra views, people, signs or text. Keep the lower-right corner of the image empty magenta (Gemini places its watermark there).
+ORIENTATION: the building's roof ridge runs from the lower-left to the upper-right of the cell. The entrance is on the SHORT gable end that faces the lower-left; the long side wall faces the lower-right. The FRONT view shows the entrance gable. The BACK view is the same building turned 180 degrees: the entrance is hidden and we see the plain rear gable end on the left and the opposite long wall on the right.
+Column 1: FRONT view of the main chapel, footprint 3x2: red brick walls, a tall slate-blue gable roof, a white bell tower with a dark pointed roof and a small cross rising from the roof near the entrance, a small gabled entrance porch with an arched wooden double door and stone steps, a round window high on the gable, tall arched windows with white frames along the long wall, a stone base.
+Column 2: BACK view of exactly the same chapel (turned 180 degrees): the same red brick, slate roof, white bell tower and cross, arched windows with white frames on the long wall, stone base. The rear gable end has a round window and no door and no porch.
+```
 
 ## 시트 W2 — 고화질: 예배당·대예배당 앞·뒤 (2x2) (2x2)
 
