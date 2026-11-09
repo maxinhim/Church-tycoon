@@ -1,0 +1,142 @@
+<title>Gemini 그래픽 프롬프트</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* 레이아웃: 한 줄 폭 읽기 흐름. 위에서부터 방법 → 프롬프트 본문(복사 버튼이 화면 아래에 항상 붙음) → 확인할 것 */
+:root{
+  --bg:#f5f7f4;--card:#ffffff;--fg:#1d2a24;--muted:#5d6b63;--line:#d9e0da;
+  --accent:#1f7a4d;--accent-ink:#ffffff;--code-bg:#eef2ee;--code-fg:#22302a;--ok:#1f7a4d;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#121a16;--card:#1a2420;--fg:#e6eee9;--muted:#9fb0a6;--line:#2c3a33;
+  --accent:#4fc08a;--accent-ink:#0b1b13;--code-bg:#0f1713;--code-fg:#d4e2d9;--ok:#6fd7a4;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121a16;--card:#1a2420;--fg:#e6eee9;--muted:#9fb0a6;--line:#2c3a33;
+  --accent:#4fc08a;--accent-ink:#0b1b13;--code-bg:#0f1713;--code-fg:#d4e2d9;--ok:#6fd7a4;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.65 var(--f-body);
+  padding-block:20px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{margin:0;font-size:22px;line-height:1.3;text-wrap:balance}
+h2{margin:0 0 8px;font-size:16px;text-wrap:balance}
+p{margin:0}
+.lead{color:var(--muted)}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:8px;counter-reset:s}
+.steps li{counter-increment:s;display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:13px;display:grid;place-items:center;margin-top:1px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 16px}
+.head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.head h2{margin:0}
+.tag{font-size:12.5px;color:var(--muted)}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);border-radius:8px;padding:12px;font:12.5px/1.6 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-height:62vh;overflow:auto;-webkit-user-select:text;user-select:text}
+ul.chk{margin:0;padding-left:20px;display:grid;gap:4px}
+.note{font-size:13.5px;color:var(--muted)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--bg);border-top:1px solid var(--line);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bar .in{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:center}
+button{font:inherit;cursor:pointer}
+.copy{flex:1;min-height:50px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:600;font-size:16px;padding:0 16px}
+.copy:active{filter:brightness(.92)}
+.copy.done{background:var(--ok)}
+.sel{flex:none;min-height:50px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);padding:0 14px;font-size:14px}
+button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+#msg{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.mini{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.mini button{min-height:40px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--fg);padding:0 12px;font-size:13.5px}
+@media (prefers-reduced-motion:no-preference){.copy{transition:background .15s}}
+</style>
+
+<main>
+  <header>
+    <h1>Gemini 그래픽 프롬프트</h1>
+    <p class="lead">한 장에 여러 요소를 격자로 그려 받고, 칸마다 잘라 게임에 씁니다.</p>
+  </header>
+
+  <section class="box" aria-labelledby="h-how">
+    <h2 id="h-how">쓰는 방법</h2>
+    <ol class="steps">
+      <li><span>아래 화면 맨 밑의 <b>프롬프트 복사</b> 버튼을 누릅니다.</span></li>
+      <li><span>Gemini 앱에서 이미지 생성을 열고 붙여넣습니다. 해상도를 고를 수 있으면 <b>2K 이상</b>으로 합니다.</span></li>
+      <li><span>나온 이미지를 저장해 이 대화에 첨부해 주세요. 배경을 지우고 칸을 자르는 스크립트를 이어서 만듭니다.</span></li>
+    </ol>
+  </section>
+
+  <section class="box" aria-labelledby="h-a">
+    <div class="head"><h2 id="h-a">시트 A · 조경·꾸미기 1칸 요소 7×7</h2><span class="tag">시험용 · 영어 프롬프트</span></div>
+<pre id="prompt" tabindex="0">Create a single square sprite sheet image for an isometric church-garden management game.
+
+LAYOUT
+- Exactly 7 columns x 7 rows of equal square cells (49 cells total).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground tile, no floor, no cast shadow on the background.
+- Each cell contains exactly ONE object, horizontally centered, with its base resting in the lower third of the cell. Keep at least 10% empty magenta margin on every side. Nothing may touch or cross a grid line.
+
+STYLE
+- Crisp late-1990s isometric pixel art, like a cheerful classic park and garden management simulation.
+- True 2:1 dimetric isometric projection: every object stands on the same imaginary ground tile shaped like a diamond twice as wide as it is tall, viewed from the same camera angle (looking down from the south).
+- Light comes from the upper left. Clean 1-pixel dark outlines, saturated but natural palette, light dithering, hard pixel edges, no blur, no anti-aliasing halo, no magenta tint on the objects.
+- All objects share one consistent scale: a large tree is about 3 tiles tall, a street lamp about 2 tiles tall, a bench about half a tile tall.
+- No text, no letters, no numbers, no logos, no people, no animals except where listed, no UI.
+- Objects with a long side (fences, walls, benches, water channels, bridges) all run the same way: their long side goes from the lower-left to the upper-right of the cell.
+
+CONTENTS (left to right, top to bottom)
+Row 1: round leafy green deciduous tree; tall dark green fir tree; pink cherry blossom tree; red-orange autumn maple tree; bright yellow ginkgo tree; Korean red pine with a curved trunk; white birch tree.
+Row 2: round clipped boxwood ball; cone-shaped topiary; pink azalea bush; blue hydrangea bush; small square raised bed of red and yellow tulips; patch of sunflowers; clump of tall pampas grass.
+Row 3: terracotta pot with mixed flowers; long wooden flower box; hanging flower basket on a black iron post; grey stone urn planter with ivy; red rose bush; straight low green hedge segment; L-shaped low green hedge corner.
+Row 4: white wooden picket fence segment; low grey fieldstone wall segment; black wrought-iron railing segment; bamboo fence segment; low red brick wall segment with a cap; rustic two-rail wooden fence segment; white picket fence segment with a small open gate.
+Row 5: straight stone-edged water channel tile with blue water; L-shaped corner of the same water channel; small round lily pond with pink water lilies; stepping stones across shallow water; small arched grey stone footbridge; stone bird bath with a small bird; three-tier stone fountain with splashing water.
+Row 6: classic black Victorian street lamp, lit; double-headed black street lamp, lit; short garden bollard light; traditional Korean granite stone lantern; wooden pole with warm string lights; paper lantern hanging on a wooden post; small ground spotlight shining upward.
+Row 7: wooden park bench with a backrest; round picnic table with a striped parasol; green park trash bin; small wooden notice board with a little roof and blank paper sheets; metal bicycle rack; small bronze bell hanging in a wooden frame; white cross sculpture on a stone base.</pre>
+    <div class="mini">
+      <button type="button" id="selAll">전체 선택</button>
+    </div>
+  </section>
+
+  <section class="box" aria-labelledby="h-chk">
+    <h2 id="h-chk">결과를 받으면 확인할 것</h2>
+    <ul class="chk">
+      <li>칸이 정확히 7×7이고 검은 선이 곧은가</li>
+      <li>요소가 칸 선을 넘거나 서로 겹치지 않는가</li>
+      <li>모든 요소의 시점(2:1 마름모 바닥)과 크기 기준이 같은가</li>
+      <li>배경이 순수한 마젠타이고 가장자리에 분홍 번짐이 없는가</li>
+      <li>행·열 순서가 목록과 맞는가 (틀린 칸은 다음 시트에서 다시 받습니다)</li>
+    </ul>
+    <p class="note" style="margin-top:10px">7×7이 너무 어긋나면 6×6이나 5×5로 줄여 다시 받습니다. 큰 건물은 4×4가 알맞습니다.</p>
+  </section>
+</main>
+
+<div class="bar"><div class="in">
+  <button type="button" class="copy" id="copy">프롬프트 복사</button>
+</div></div>
+<div id="msg" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  var pre=document.getElementById('prompt'),btn=document.getElementById('copy'),msg=document.getElementById('msg'),t=0;
+  function selectAll(){
+    var r=document.createRange();r.selectNodeContents(pre);
+    var s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  }
+  function done(ok){
+    clearTimeout(t);
+    btn.classList.toggle('done',ok);
+    btn.textContent=ok?'복사했어요 · Gemini에 붙여넣으세요':'길게 눌러 직접 복사하세요 (전체 선택됨)';
+    msg.textContent=btn.textContent;
+    t=setTimeout(function(){btn.classList.remove('done');btn.textContent='프롬프트 복사';},3500);
+  }
+  btn.addEventListener('click',function(){
+    var text=pre.textContent;
+    function fallback(){
+      selectAll();
+      var ok=false;try{ok=document.execCommand('copy');}catch(e){}
+      done(ok);
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){done(true);},fallback);
+    }else fallback();
+  });
+  document.getElementById('selAll').addEventListener('click',function(){selectAll();pre.focus({preventScroll:true});});
+})();
+</script>
