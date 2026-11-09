@@ -17,7 +17,7 @@ function hud(force){
   $('#vMem').innerHTML=S.members+' <small>명</small>';
   $('#vRep').innerHTML=Math.round(S.rep)+' <small>/100</small>';
   var dt=debt();$('#sDebt').hidden=dt<1;if(dt>=1)$('#vDebt').textContent=fmt(dt);
-  syncClock();
+  syncClock();levelTick();
   $('#cname').textContent=S.name;
   var g=GOALS[S.goal];
   if(g){$('#goalTxt').textContent='목표 · '+g.n+' ('+g.d+')';$('#goalBar').style.width=clamp(g.p(S)*100,0,100)+'%';}

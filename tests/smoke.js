@@ -1135,6 +1135,12 @@ async function gripeChecks(browser, url) {
     const f1 = S.fresh; S.evtLeft = 2; weekEnd(); o.fresh = f1 === D.fountain.beauty && Math.abs(S.fresh - f1 * 0.85) < 1e-9;
     // 평판: 100에서 저절로 내려온다
     S.rep = 100; S.evtLeft = 2; weekEnd(); o.rep = S.rep < 97;
+    // 교회 Level: 점수 기준으로 오르고, 돈을 써도 내려가지 않으며, 최대 100
+    o.level = levelOf(0) === 1 && levelOf(lvNeed(2)) === 2 && levelOf(lvNeed(37)) === 37 && levelOf(1e12) === 100 && lvNeed(2) < lvNeed(3);
+    for (let L = 2; L < 100; L++) if (levelOf(lvNeed(L) - 1) !== L - 1) o.level = false;
+    S.lvl = 1; S.money = 1e6; levelTick(); const up = S.lvl, shown = !document.getElementById('lvup').hidden && document.getElementById('lvN').textContent === String(up);
+    S.money = 0; levelTick(); o.level = o.level && up > 5 && shown && S.lvl === up && document.getElementById('clvl').textContent === 'Lv ' + up;
+    document.getElementById('lvup').click(); o.level = o.level && document.getElementById('lvup').hidden;
     return o;
   });
   check(r.price, '가격: 초기 자금 20,000, 기능 건물·칸 위층·목표 보상·대출 2배, 꾸미기·바닥은 그대로');
@@ -1147,6 +1153,7 @@ async function gripeChecks(browser, url) {
   check(r.spirit, '영성: 성찬식 등 성례를 열면 오르고 시간이 지나면 줄어듦, 만족도 비중 합 1');
   check(r.expect && r.fresh, '만족도: 성도가 늘수록 기대치가 오르고, 새로 꾸민 효과는 주마다 익숙해짐');
   check(r.rep, '평판: 100에서 저절로 내려옴 (꾸준한 노력이 있어야 높게 유지)');
+  check(r.level, '교회 Level: 점수로 오르고(최대 100) 내려가지 않음, 오르면 큰 배지가 뜨고 이름 옆에 보임');
   check(r.ids, '건물 정의: id가 겹치지 않음');
   check(r.hall, '예배 공간: 없으면 문을 못 열고, 문이 열린 동안 마지막 예배 공간은 철거 못 함');
   check(r.lonely0 && r.lonely1 && r.food, '불편: 외로운 방문자는 소모임을, 배고픈 방문자는 먹을 곳을 찾아가고, 없으면 불편');

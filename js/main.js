@@ -1,14 +1,14 @@
 'use strict';
 function restart(dk){
   S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.lastBuilt=null;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
-  $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();syncTabs();renderPanel();homeView();hud(true);syncSpeed();save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
+  $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();S.lvl=null;levelTick(true);syncTabs();renderPanel();homeView();hud(true);syncSpeed();save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
 }
 /* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */
 var portraitMQ=window.matchMedia('(orientation: portrait)');
 function isPortrait(){return portraitMQ.matches;}
 function syncOrientation(){
   var p=isPortrait();
-  ['#stage','#ui','#place','#gatePop','#selCard','#rcpt','#over','#dlg','#cele'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
+  ['#stage','#ui','#place','#gatePop','#selCard','#rcpt','#over','#dlg','#cele','#lvup'].forEach(function(s){var e=$(s);if(e)e.inert=p;});
 }
 function lockLandscape(){
   try{var o=screen.orientation;if(o&&o.lock)o.lock('landscape').catch(function(){});}catch(e){}
@@ -45,7 +45,7 @@ function frame(ts){
 }
 function init(){
   cv=$('#cv');ctx=cv.getContext('2d');
-  S=load();if(!S.cands||!S.cands.length)refreshCands();rebuildOcc();recalc();
+  S=load();if(!S.cands||!S.cands.length)refreshCands();rebuildOcc();recalc();levelTick(true);
   // 속도 버튼만 (같은 줄 모양의 소리 버튼은 audio.js가 맡는다)
   document.querySelectorAll('.sp button[data-sp]').forEach(function(b){
     b.addEventListener('click',function(){
@@ -64,6 +64,8 @@ function init(){
   $('#over').addEventListener('click',function(e){if(e.target.closest('[data-act="restart"]'))restart();});
   $('#dlg').addEventListener('click',function(e){var b=e.target.closest('[data-act="dlg"]');if(!b)return;var why=chooseDlg(+b.dataset.v);if(why)toast(why,1600);showDlg();renderPanel();hud(true);});
   $('#cele').addEventListener('click',function(){$('#cele').hidden=true;});
+  $('#lvup').addEventListener('click',function(){$('#lvup').hidden=true;});
+  $('#clvl').addEventListener('click',levelInfo);
   $('#gpBtn').addEventListener('click',toggleGate);
   $('#clock').addEventListener('click',wxExplain);
   $('#clock').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();wxExplain();}});
