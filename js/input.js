@@ -143,13 +143,14 @@ function onPanel(e){
   else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
   else if(a==='demtile'){
-    var st=UI.selTile;
+    var st=UI.selTile,lr=st&&roomAt(st.x,st.y),lw0=lr&&lr.tiles.length===1&&(tileOf(lr,st.x,st.y).f||1)<=1?lastHallWhy(lr):'';
+    if(lw0){toast(lw0,2600);sfx('error',.4);return;}
     if(st&&removeTile(st.x,st.y,.5)){toast('칸 하나를 철거했어요',1400);sfx('demolish',.7);}
     UI.selTile=null;var rb=st&&roomAt(st.x,st.y);UI.sel=rb?rb.id:null;
     renderDetail();hud(true);
   }
   else if(a==='move'){startMove(bById(UI.sel));}
-  else if(a==='demolish'){var b=bById(UI.sel);if(b){var nm=defOf(b).name;demolish(UI.sel);sfx('demolish',.8);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
+  else if(a==='demolish'){var b=bById(UI.sel),lw1=lastHallWhy(b);if(lw1){toast(lw1,2600);sfx('error',.4);return;}if(b){var nm=defOf(b).name;demolish(UI.sel);sfx('demolish',.8);UI.sel=null;toast(nm+'을(를) 철거했어요',1600);}renderDetail();hud(true);}
   else if(a==='hire'){var hw=hireTeam(v);toast(hw||STAFF[v].name+' 단계 '+S.staff[v]+'로 올렸어요',1800);renderStaff();hud(true);}
   else if(a==='fire'){if(S.staff[v]>0){S.staff[v]--;recalc();save();}renderStaff();hud(true);}
   else if(a==='newgame'){if(v&&DIFF[v]){restart(v);}else{UI.confirmNew=!UI.confirmNew;renderMenu();}}

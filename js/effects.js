@@ -50,7 +50,9 @@ function warnings(){
   var w=[],c=S.cov||{};
   if(S.money<0)w.push('자금이 마이너스예요. -1,500 아래로 내려가면 문을 닫아요');
   else if(lastNet(S)<0)w.push('지난주 적자 '+fmt(lastNet(S)));
+  if(S.open&&!hallsReach())w.push('예배 공간에 닿는 길이 없어요. 길을 이어 주세요');
   if(c.seat<1)w.push('좌석이 부족해 성도가 떠나요');
+  if(c.spirit!=null&&c.spirit<0.6)w.push('영성이 낮아요 ('+Math.round(c.spirit*100)+'%). 성찬식·세례식을 열고 기도실·성경공부방·찬양실을 갖춰요');
   if(c.past<1)w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
   var idle=evIdleWeeks();if(idle>6)w.push('행사를 연 지 '+idle+'주 됐어요. 공동체가 침체돼요');
   var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');

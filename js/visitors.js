@@ -114,8 +114,8 @@ function goLeave(v){
 function depart(v){
   v.dead=true;gripeLeave(v);
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4-v.annoy*5;
-  if(v.member){S.rep=clamp(S.rep+(avg-58)*0.002,0,100);return;}
-  S.rep=clamp(S.rep+(avg-58)*0.006,0,100);
+  if(v.member){S.rep=clamp(S.rep+(avg-60)*0.001,0,100);return;}
+  S.rep=clamp(S.rep+(avg-60)*0.003,0,100);
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
   var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);

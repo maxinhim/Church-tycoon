@@ -126,17 +126,17 @@ function appoint(k){
 var EVENTS={
   smallgroup:{name:'소그룹 모임',cost:150,cd:2,dur:2,goal:0,desc:'2주간 만족 +6, 이탈 -30%',
     need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;}},
-  communion:{name:'성찬식',cost:200,cd:4,dur:2,goal:0,desc:'2주간 만족 +8',
-    need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=8;}},
-  baptism:{name:'세례식',cost:300,cd:6,dur:4,goal:0,desc:'평판 +4, 4주간 새 성도 정착(이탈 -25%, 만족 +3)',
+  communion:{name:'성찬식',cost:200,cd:4,dur:2,goal:0,desc:'영성(성례) 크게 ↑, 2주간 만족 +4',
+    need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=4;}},
+  baptism:{name:'세례식',cost:300,cd:6,dur:4,goal:0,desc:'영성(성례) ↑, 평판 +4, 4주간 새 성도 정착(이탈 -25%, 만족 +2)',
     need:function(){return S.newSinceBap>=3?'':'지난 세례 뒤 새 성도가 3명 이상 필요해요 (지금 '+S.newSinceBap+'명)';},
-    now:function(){S.rep=clamp(S.rep+4,0,100);S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=3;}},
+    now:function(){S.rep=clamp(S.rep+4,0,100);S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=2;}},
   street:{name:'노방전도',cost:250,cd:3,dur:2,goal:0,desc:'2주간 방문자 +40%',mods:function(m){m.vis*=1.4;}},
   bazaar:{name:'바자회',cost:300,cd:8,dur:0,goal:1,desc:'수익 600 + 성도×12, 평판 +2',
     now:function(){var g=600+S.members*12;S.money+=g;S.weekInc+=g;S.rep=clamp(S.rep+2,0,100);}},
   service:{name:'지역 봉사의 날',cost:400,cd:6,dur:0,goal:1,desc:'평판 +6 (선교팀 단계마다 +50%)',
     now:function(){S.rep=clamp(S.rep+6*(1+0.5*S.staff.mission),0,100);}},
-  retreat:{name:'수련회',cost:1500,cd:12,dur:3,goal:2,desc:'3주간 만족 +12, 이탈 -50% (비용 1,500 + 성도×15)',
+  retreat:{name:'수련회',cost:1500,cd:12,dur:3,goal:2,desc:'영성(성례) ↑, 3주간 만족 +12, 이탈 -50% (비용 1,500 + 성도×15)',
     costFn:function(){return 1500+S.members*15;},mods:function(m){m.mood+=12;m.loss*=0.5;}},
   revival:{name:'부흥회',cost:3000,cd:16,dur:1,goal:3,desc:'1주간 방문자 +120%, 정착률 +50%',
     need:function(){return A.seats>=80?'':'좌석이 80석 이상 필요해요';},mods:function(m){m.vis*=2.2;m.join*=1.5;}},
@@ -166,6 +166,8 @@ function runEvent(id){
   S.money-=evCost(e);
   if(e.now)e.now();
   st.left=e.dur;st.cd=e.cd;if(!e.hidden)S.lastEv=S.week;
+  // 영성(성례)은 언제 열었는지로 계산한다
+  S.evW=S.evW||{};S.evW[id]=S.week;
   addLog(e.name+'을(를) 열었어요');recalc();save();return '';
 }
 function evIdleWeeks(){return S.week<8?0:S.week-(S.lastEv||0);}

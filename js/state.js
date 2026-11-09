@@ -17,9 +17,9 @@ function newState(dk){
     buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:{},slp:{},
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
-    mood:70,cov:{seat:1,fel:1,care:1,comf:1,park:1,past:1},
+    mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
     hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
-    grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0};
+    grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{}};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
@@ -40,12 +40,16 @@ function agg(){
   S.paths.forEach(function(p){var pd=p.f&&D[p.f];if(pd)a.beauty+=pd.beauty||0;});
   return a;
 }
+// 만족도 비중 (합 1): 영성이 가장 크다
+var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07};
 function calcMood(){
   var m=Math.max(1,S.members);
   var cov=function(have,need){return Math.min(1,have/Math.max(1,need));};
   // past: 목양 — 담임·부교역자·직분자가 돌볼 수 있는 성도 수(MOD.cap) 대비
-  var seat=cov(A.seats,m),fel=cov(A.fcap+3,m*0.55),care=cov(A.kcap+2,m*0.3),comf=cov(A.ccap+3,m*0.25),park=cov(A.park+3,m*0.35),past=cov(MOD.cap,m);
-  var mood=100*(0.26*seat+0.16*fel+0.12*care+0.1*comf+0.14*park+0.22*past)+Math.min(8,A.beauty*0.8)+MOD.mood;
-  return {mood:clamp(mood,0,100),seat:seat,fel:fel,care:care,comf:comf,park:park,past:past};
+  // 성도가 늘수록 기대치가 올라 교제·돌봄·편의·주차 필요가 더 빨리 는다 (300명이면 1.6배)
+  var E=expectK(m),sp=spiritParts();
+  var seat=cov(A.seats,m),fel=cov(A.fcap+3,m*0.55*E),care=cov(A.kcap+2,m*0.3*E),comf=cov(A.ccap+3,m*0.25*E),park=cov(A.park+3,m*0.35*E),past=cov(MOD.cap,m);
+  var mood=100*(MW.seat*seat+MW.spirit*sp.v+MW.past*past+MW.fel*fel+MW.park*park+MW.care*care+MW.comf*comf)+beautyBonus()+MOD.mood;
+  return {mood:clamp(mood,0,100),seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
 }
 function recalc(){refreshNav();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;}

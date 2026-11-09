@@ -27,7 +27,7 @@ function paintFloor(x,y,id,pid){
   var sl=floorSlot(x,y,pid),prev=sl.get();
   if(id==='f_erase'){sl.set(null);S.money+=Math.floor(D[prev].cost*0.5);}
   // 깔린 바닥 위에 다른 바닥을 깔면 걷어낸 반값을 빼고 계산한다
-  else{var c=floorSwapCost(prev,id);if(S.money<c)return '자금이 부족해요';S.money-=c;sl.set(id);}
+  else{var c=floorSwapCost(prev,id);if(S.money<c)return '자금이 부족해요';S.money-=c;sl.set(id);addFresh(D[id].beauty);}
   if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:id==='f_erase'?0:floorSwapCost(prev,id)});
   recalc();save();return '';
 }

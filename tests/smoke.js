@@ -1045,6 +1045,15 @@ async function gripeChecks(browser, url) {
   const r = await page.evaluate(() => {
     window.__ct.init(); S.dlg = null; S.open = true;
     const o = {};
+    // 예배 공간: 문이 열린 동안 마지막 예배 공간은 철거 못 하고, 없으면 문을 못 연다
+    S.open = true; const hall = S.buildings.find(b => isHall(b)); UI.sel = hall.id;
+    o.hall = !!hall && lastHallWhy(hall) !== '' && gateWhy() === '';
+    { const bt = document.createElement('button'); bt.dataset.act = 'demolish'; document.body.appendChild(bt); onPanel({ target: bt }); bt.remove(); }
+    o.hall = o.hall && !!bById(hall.id);
+    S.open = false; o.hall = o.hall && gateWhy() === '' && lastHallWhy(hall) === '';
+    const keepB = S.buildings.slice(); S.buildings = S.buildings.filter(b => !isHall(b)); rebuildOcc(); recalc();
+    setGate(true); o.hall = o.hall && !S.open && /예배 공간/.test(gateWhy());
+    S.buildings = keepB; rebuildOcc(); recalc(); setGate(true); o.hall = o.hall && S.open; UI.sel = null;
     // 가격: 기능 건물 1.5배, 꾸미기는 그대로, 초기 자금 두 배
     o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.chapel.cost === 5600 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 1000 && GOALS[0].r === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
@@ -1112,8 +1121,20 @@ async function gripeChecks(browser, url) {
     const seat = document.querySelector('#panel ul.rwhy'); const st = seat ? seat.textContent : '';
     document.querySelector('#panel .covb[data-v="all"]').click();
     const al = (document.querySelector('#panel ul.rwhy') || {}).textContent || '';
-    o.mood = rows === 7 && /좌석 \d+ ÷ 필요/.test(st) && /비중 26%/.test(st) && /시설·목양 점수/.test(al) && /불편/.test(al);
-    ['past', 'fel', 'care', 'comf', 'park'].forEach(k => { o.mood = o.mood && moodWhy(k).indexOf('<li>') === 0; });
+    o.mood = rows === 8 && /좌석 \d+ ÷ 필요/.test(st) && /비중 20%/.test(st) && /항목 점수/.test(al) && /불편/.test(al) && /익숙해져요/.test(al);
+    ['past', 'fel', 'care', 'comf', 'park', 'spirit'].forEach(k => { o.mood = o.mood && moodWhy(k).indexOf('<li>') === 0; });
+    o.mood = o.mood && /성례/.test(moodWhy('spirit')) && /비중 25%/.test(moodWhy('spirit'));
+    // 영성: 성찬식을 열면 성례가 차고, 8주가 지나면 사라진다
+    S.evW = {}; const s0 = spiritParts().s; S.week = 20; S.evW.communion = 20; const s1 = spiritParts(); S.week = 28; const s2 = spiritParts();
+    o.spirit = s0 === 0 && s1.sac.communion === 1 && s1.s > 0.5 && s2.sac.communion === 0 && Math.abs(Object.values(MW).reduce((a, b) => a + b, 0) - 1) < 1e-9;
+    S.evW = {}; S.ev = {}; S.money = 99999; runEvent('communion'); o.spirit = o.spirit && S.evW.communion === S.week;
+    // 기대치: 300명이면 필요 1.6배
+    o.expect = Math.abs(expectK(300) - 1.6) < 1e-9 && expectK(0) === 1;
+    // 익숙해짐: 꾸밈을 새로 지으면 fresh가 쌓이고, 주마다 15%씩 줄어든다
+    S.fresh = 0; let fl = null; for (let y = 2; y < PZ - 2 && !fl; y++) for (let x = 2; x < COLS - 2 && !fl; x++) if (canPlace(D.fountain, x, y, 2)) { build('fountain', x, y, 2); fl = 1; }
+    const f1 = S.fresh; S.evtLeft = 2; weekEnd(); o.fresh = f1 === D.fountain.beauty && Math.abs(S.fresh - f1 * 0.85) < 1e-9;
+    // 평판: 100에서 저절로 내려온다
+    S.rep = 100; S.evtLeft = 2; weekEnd(); o.rep = S.rep < 97;
     return o;
   });
   check(r.price, '가격: 초기 자금 20,000, 기능 건물·칸 위층·목표 보상·대출 2배, 꾸미기·바닥은 그대로');
@@ -1122,8 +1143,12 @@ async function gripeChecks(browser, url) {
   check(r.noWc && r.goWc, '불편: 화장실이 급하면 찾아가고, 없으면 불편을 겪고 일찍 돌아감');
   check(r.trash && r.legs, '불편: 매장에서 산 뒤 쓰레기통이 없으면 불편, 오래 걸으면 쉴 자리·마실 것을 찾음');
   check(r.pen && r.warn, '불편: 지난주 불편 비율만큼 만족도가 내려가고, 챙길 일에 지을 것이 보임');
-  check(r.mood, '현황: 만족도 항목을 누르면 계산 방식이 펼쳐짐');
+  check(r.mood, '현황: 만족도 항목을 누르면 계산 방식이 펼쳐짐 (영성 포함 8줄)');
+  check(r.spirit, '영성: 성찬식 등 성례를 열면 오르고 시간이 지나면 줄어듦, 만족도 비중 합 1');
+  check(r.expect && r.fresh, '만족도: 성도가 늘수록 기대치가 오르고, 새로 꾸민 효과는 주마다 익숙해짐');
+  check(r.rep, '평판: 100에서 저절로 내려옴 (꾸준한 노력이 있어야 높게 유지)');
   check(r.ids, '건물 정의: id가 겹치지 않음');
+  check(r.hall, '예배 공간: 없으면 문을 못 열고, 문이 열린 동안 마지막 예배 공간은 철거 못 함');
   check(r.lonely0 && r.lonely1 && r.food, '불편: 외로운 방문자는 소모임을, 배고픈 방문자는 먹을 곳을 찾아가고, 없으면 불편');
   check(r.fixes, '불편: 건물 설명에 무엇을 풀어 주는지 보임 (외로움·배고픔·목마름)');
   check(r.club, '소모임: 운동·취미·음악 칩이 제목 줄에, 고른 묶음만 목록에 (체육관은 운동으로)');

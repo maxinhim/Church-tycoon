@@ -48,6 +48,8 @@ function repayLoan(i){
 var gatePopUntil=0;
 function setGate(open){
   if(open===!!S.open)return;
+  // 예배 공간이 없거나 닿지 않으면 열 수 없다
+  var gw=open?gateWhy():'';if(gw){toast(gw,2600);sfx('error',.4);return;}
   S.open=open;
   if(open){
     addLog('교회 문을 열었어요');sfx('gate_open',.8,0);toast('교회 문을 열었어요! 방문자가 찾아오기 시작해요',2400);
@@ -64,8 +66,9 @@ function openGatePop(){gatePopUntil=performance.now()+7000;renderGatePop();syncG
 function closeGatePop(){gatePopUntil=0;syncGate();}
 function renderGatePop(){
   $('#gpT').textContent=S.open?'교회 문이 열려 있어요':'교회 문이 닫혀 있어요';
-  $('#gpS').textContent=S.open?'닫으면 방문자가 오지 않고 주일 헌금이 크게 줄어요':'열어야 방문자가 들어오고 주일에 성도가 예배하러 와요';
-  var b=$('#gpBtn');b.textContent=S.open?'문 닫기':'문 열기';b.className='btn '+(S.open?'bad':'pri');
+  var gw=gateWhy();
+  $('#gpS').textContent=S.open?'닫으면 방문자가 오지 않고 주일 헌금이 크게 줄어요':(gw||'열어야 방문자가 들어오고 주일에 성도가 예배하러 와요');
+  var b=$('#gpBtn');b.textContent=S.open?'문 닫기':'문 열기';b.className='btn '+(S.open?'bad':'pri');b.disabled=!!gw;
 }
 // 화면의 (px,py)가 교회 입구 아치 위인지 (여유 10px)
 function gateHit(px,py){

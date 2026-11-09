@@ -73,12 +73,13 @@ function weekEnd(){
   var gain=mood>=60?Math.floor(m*0.02*(mood-60)/40/(1+m/300)+Math.random()*0.8):0;
   S.members=Math.max(0,m-lose+gain);
   if(lose>gain)msg+=' · 성도 '+(lose-gain)+'명이 떠났어요';
-  S.rep=clamp(S.rep+A.rep+MOD.rep+(mood-60)*0.015-(S.rep>50?(S.rep-50)*0.05:0),0,100);
+  // 평판: 40을 넘으면 넘은 만큼 빨리 식는다. 봉사·선교·행사·미디어로 꾸준히 채워야 80을 지킨다
+  S.rep=clamp(S.rep+A.rep+MOD.rep+(mood-70)*0.02-(S.rep>40?(S.rep-40)*0.08:0),0,100);
   S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(st.left>0)st.left--;if(st.cd>0)st.cd--;}
-  decayWeek();trafWeek();gripeWeek();
+  decayWeek();trafWeek();gripeWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;
   for(var k in OFFICE){var mx=officeMax(k);if(S.off[k]>mx){addLog('성도가 줄어 '+OFFICE[k].name+' '+(S.off[k]-mx)+'명이 직분을 내려놓았어요');S.off[k]=mx;}}
   if(S.week-S.candWeek>=6)refreshCands();
   var ev='';

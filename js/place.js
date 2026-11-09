@@ -270,7 +270,7 @@ function canUnbuild(u){var b=u&&bById(u.bid);return !!b&&(b.floors||1)<=1&&u.w==
 function unbuild(u){
   if(!canUnbuild(u))return false;
   var b=bById(u.bid);
-  var d=defOf(b);demolish(b.id);S.money+=u.cost-Math.floor(d.cost*0.5);save();
+  var d=defOf(b);demolish(b.id);S.money+=u.cost-Math.floor(d.cost*0.5);S.fresh=Math.max(0,(S.fresh||0)-(d.beauty||0));save();
   return true;
 }
 // 바닥 타일 깔기: 아래 띠 없이 지도 위 ✓·✕·화살표와 ✓ 옆 값 표시만 쓴다
