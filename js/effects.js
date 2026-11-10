@@ -48,13 +48,14 @@ function celebrate(g,lines){
 /* ---------- 현황 한눈 요약 ---------- */
 function warnings(){
   var w=[],c=S.cov||{};
+  if(S.wish)w.push(wishLine());
   if(S.money<0)w.push('자금이 마이너스예요. -1,500 아래로 내려가면 문을 닫아요');
   else if(lastNet(S)<0)w.push('지난주 적자 '+fmt(lastNet(S)));
   if(S.open&&!hallsReach())w.push('예배 공간에 닿는 길이 없어요. 길을 이어 주세요');
   if(S.members>A.seats)w.push('좌석이 부족해 성도가 떠나요');
   if(c.spirit!=null&&c.spirit<0.45)w.push('영성이 낮아요 ('+Math.round(c.spirit*100)+'%). 성찬식·세례식을 열고 기도실·성경공부방·찬양실을 갖춰요');
   if(S.members>MOD.cap)w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
-  var idle=evIdleWeeks();if(idle>6)w.push('행사를 연 지 '+idle+'주 됐어요. 공동체가 침체돼요');
+  if(staleWeeks()>0)w.push('매너리즘: 새로 한 일 없이 '+(S.week-(S.lastNew||0))+'주째예요. 새 건물·꾸미기나 다른 행사를 해 보세요');
   var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');
   var un=S.buildings.filter(function(b){return b.door&&!usable(b);}).length;if(un)w.push('이용할 수 없는 건물 '+un+'곳 (문·길 확인)');
   if(c.park<0.7)w.push('주차가 모자라 방문자가 줄어요');

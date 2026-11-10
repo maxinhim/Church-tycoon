@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /* 밸런스 시뮬레이터: 게임 코드를 그대로 불러(헤드리스 브라우저) 전략별 봇이 N주를 자동으로 플레이한다.
    쓰는 법:  node tools/sim.js [--weeks 52] [--diff normal] [--seed 7] [--only balanced,spirit] [--json out.json]
-   전략: idle(아무것도 안 함) · deco(꾸미기만) · shop(매장 중심) · spirit(영성·성례 중심) · balanced(모자란 것부터 고루)
+   전략: idle(아무것도 안 함) · deco(꾸미기만) · shop(매장 중심) · spirit(영성·성례 중심) · balanced(모자란 것부터 고루) · wish(balanced + 성도들의 바람을 먼저 들어줌)
    게임 동작은 바꾸지 않는다(검증·조사 전용). 같은 시드면 결과가 같다. */
 const http = require('http'), fs = require('fs'), path = require('path');
 const { chromium } = require('playwright');
 const ROOT = path.dirname(__dirname);
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const WEEKS = +arg('weeks', 52), DIFFK = arg('diff', 'normal'), SEED = +arg('seed', 7);
-const ALL = ['idle', 'deco', 'shop', 'spirit', 'balanced'];
+const ALL = ['idle', 'deco', 'shop', 'spirit', 'balanced', 'wish'];
 const ONLY = arg('only', '') ? arg('only', '').split(',') : ALL;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.mp3': 'audio/mpeg' };
 function serve() {
@@ -27,7 +27,7 @@ function serve() {
 function runBot(cfg) {
   /* global S,A,D,DEFS,V,MOD,PZ,COLS,ROWS,ENT,GOALS,EVENTS,STAFF,OFFICE,SPIRIT_B,HALLS */
   restart(cfg.diff); S.dlg = null; setGate(true);
-  const strat = cfg.strat, RES = 1500;
+  const wishFirst = cfg.strat === 'wish', strat = wishFirst ? 'balanced' : cfg.strat, RES = 1500;
   // 입구에서 가까운 자리부터
   const cells = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) cells.push([x, y, Math.abs(x - ENT) + Math.abs(y - (PZ - 4))]);
   cells.sort((a, b) => a[2] - b[2]);
@@ -42,7 +42,7 @@ function runBot(cfg) {
       // 바닥(걷는 길) 위에는 짓지 않는다
       let onFloor = false; for (let j = 0; j < dm.h; j++) for (let i = 0; i < dm.w; i++) if (S.floor[(c[0] + i) + ',' + (c[1] + j)]) onFloor = true;
       if (onFloor) continue;
-      if (++tries > 40) return false;
+      if (++tries > 200) return false;
       const m0 = S.money, n0 = okN(), f0 = S.fresh, fl0 = JSON.stringify(S.floor); if (!build(id, c[0], c[1], 2)) continue;
       const nb = S.buildings[S.buildings.length - 1];
       recalc(); if (nb.door && !usable(nb)) { linkDoor(nb); recalc(); }
@@ -84,6 +84,8 @@ function runBot(cfg) {
     seats();
     if (strat === 'shop') { const id = best(d => d.income, d => d.cat === 'shop'); if (id) put(id); return; }
     if (strat === 'spirit') { events(['communion', 'baptism', 'retreat', 'easter', 'thanks', 'christmas', 'revival']); staffUp(['praise', 'prayer', 'edu']); spiritBuild(); pastoral(); return; }
+    // wish: 성도들의 바람부터 들어준다
+    if (wishFirst && S.wish) { if (S.wish.t === 'event') { if (!evBlock(S.wish.id)) runEvent(S.wish.id); } else put(S.wish.id); }
     // balanced: 행사 → 목양 → 가장 모자란 항목 → 불편 → 꾸미기
     events(['communion', 'baptism', 'smallgroup', 'service', 'bazaar', 'retreat', 'street', 'easter', 'vbs', 'thanks', 'christmas', 'revival']);
     pastoral(); staffUp(['praise', 'care', 'prayer', 'evang', 'newcomer', 'edu', 'admin', 'media', 'mission']);
@@ -107,6 +109,7 @@ function runBot(cfg) {
       spirit: Math.round(c.spirit * 100), seat: Math.round(c.seat * 100), past: Math.round(c.past * 100), fel: Math.round(c.fel * 100), park: Math.round(c.park * 100), care: Math.round(c.care * 100), comf: Math.round(c.comf * 100),
       rep: Math.round(S.rep), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: S.goal, net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length });
   }
+  stat.wishOk = S.wishOk; stat.wishFail = S.wishFail;
   return { rows, over: !!S.over, stat };
 }
 

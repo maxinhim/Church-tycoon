@@ -168,6 +168,8 @@ function runEvent(id){
   st.left=e.dur;st.cd=e.cd;if(!e.hidden)S.lastEv=S.week;
   // 영성(성례)은 언제 열었는지로 계산한다
   S.evW=S.evW||{};S.evW[id]=S.week;
+  // 지난번과 다른 행사면 '새로 한 일', 바람으로 바라던 행사면 들어준 것
+  if(!e.hidden){if(S.lastEvId!==id)noteNew();S.lastEvId=id;if(S.wish&&S.wish.t==='event'&&S.wish.id===id)S.wishRan=id;}
   addLog(e.name+'을(를) 열었어요');recalc();save();return '';
 }
 function evIdleWeeks(){return S.week<8?0:S.week-(S.lastEv||0);}
@@ -204,7 +206,9 @@ function refreshMods(){
   var em=m.mood;activeEvents().forEach(function(id){if(EVENTS[id].mods)EVENTS[id].mods(m);});
   var ev=m.mood-em;m.mood=em;part('진행 중인 행사',ev);
   // 행사를 오래 열지 않으면 공동체가 침체된다
-  var idle=evIdleWeeks();if(idle>6)part('행사를 연 지 '+idle+'주 (침체)',-Math.min(15,(idle-6)*1.5));
+  // 매너리즘: 새로 하는 일이 없으면 조금씩 내려간다
+  var stale=stalePen();if(stale>0)part('매너리즘 (새로 한 일 없이 '+(S.week-(S.lastNew||0))+'주)',-stale);
+  if(S.wishLeft>0&&S.wishMood)part(S.wishMood>0?'성도들의 바람을 들어줌':'성도들의 바람을 놓침',S.wishMood);
   // 많이 낡은 건물이 늘수록 성도 만족이 떨어진다
   var worn=S.buildings.filter(function(b){return wearStage(b)>=3;}).length;part('검은 연기 나는 낡은 건물 '+worn+'곳',-Math.min(12,worn*1.2));
   part('최근 일 (고민 선택·행사 여운)',S.tempMood);

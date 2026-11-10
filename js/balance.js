@@ -66,5 +66,10 @@ var DECAY_BASE=0.8,DECAY_USE=0.008;   // 한 주에 낡는 양: 기본 + 이용 
 var REPAIR_K=0.1;        // 수리비 = 건물 값 × REPAIR_K × 낡은 정도
 var WEAR_EFF=[1,.9,.75,.55];          // 노후 단계별 효율 (멀쩡 · 거미줄 · 하얀 연기 · 검은 연기)
 
+/* 성도들의 바람: WISH_GAP주(최소~최대)마다 하나, 기한 WISH_DUE주. 들어주면 WISH_FX_WEEKS주간 만족 WISH_GOOD과 평판 WISH_REP, 놓치면 WISH_BAD */
+var WISH_FIRST=2,WISH_GAP=[2,3],WISH_DUE=5,WISH_GOOD=6,WISH_BAD=-5,WISH_FX_WEEKS=3,WISH_REP=2;
+/* 매너리즘: 새 건물·다른 행사가 STALE_AFTER주 넘게 없으면 넘은 주마다 STALE_STEP씩, 최대 STALE_MAX까지 만족도가 내려간다 */
+var STALE_AFTER=4,STALE_STEP=1.5,STALE_MAX=9;
+
 /* 교회 Level: L이 되려면 점수 ≥ LV_BASE + LV_K × (L−1)^LV_P */
 var LV_MAX=100,LV_BASE=10000,LV_K=800,LV_P=1.55;

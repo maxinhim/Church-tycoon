@@ -1151,6 +1151,20 @@ async function gripeChecks(browser, url) {
     o.rep = o.rep && lowGain === 6 && hiGain < 1.5 && hiGain > 0 && S.rep === 47 && REP_MOOD0 === 50;
     S.tempMood = 40; recalc(); o.bonusCap = S.cov.bonus === BONUS_MAX && S.cov.bonusRaw > BONUS_MAX && Math.abs(S.mood - Math.min(100, MOOD_ITEMS * S.cov.items + BONUS_MAX + S.cov.malus)) < 1e-6;
     S.tempMood = -10; recalc(); o.bonusCap = o.bonusCap && S.cov.malus <= -10; S.tempMood = 0; recalc();
+    // 성도들의 바람: 생기면 챙길 일 맨 위에 뜨고, 들어주면 보상·놓치면 벌점
+    S.money = 99999; S.wish = null; S.wishNext = S.week; S.wishOk = S.wishFail = 0; S.wishLeft = 0; S.wishMood = 0; S.evtLeft = 2; wishWeek();
+    const w1 = S.wish; o.wish = !!w1 && warnings()[0].indexOf('성도들의 바람') === 0 && w1.due === S.week + WISH_DUE;
+    if (w1) { const rp0 = S.rep; if (w1.t === 'event') { S.ev[w1.id] = { cd: 0, left: 0 }; S.newSinceBap = 9; runEvent(w1.id); }
+      else { let done = false; for (let y = 1; y < ROWS && !done; y++) for (let x = 1; x < COLS - 5 && !done; x++) if (canPlace(D[w1.id], x, y, 2)) done = build(w1.id, x, y, 2); }
+      wishTick(); o.wish = o.wish && !S.wish && S.wishOk === 1 && S.wishMood === WISH_GOOD && S.wishLeft === WISH_FX_WEEKS && MOD.parts.some(p => /바람을 들어줌/.test(p[0]) && p[1] === WISH_GOOD) && S.wishNext > S.week; }
+    S.wishNext = S.week; wishWeek(); const w2 = S.wish; if (w2) { S.week = w2.due + 1; wishWeek(); }
+    o.wish = o.wish && !!w2 && S.wishFail === 1 && S.wishMood === WISH_BAD && MOD.parts.some(p => /바람을 놓침/.test(p[0])); S.wish = null; S.wishLeft = 0; S.wishMood = 0;
+    // 매너리즘: 새로 한 일이 없으면 내려가고, 새로 지으면 풀린다
+    S.lastNew = S.week - (STALE_AFTER + 3); recalc(); const st1 = stalePen(), stPart = MOD.parts.some(p => /매너리즘/.test(p[0]) && p[1] === -st1);
+    S.lastNew = S.week - 99; const stMax = stalePen();
+    { let done = false; for (let y = 1; y < PZ - 2 && !done; y++) for (let x = 1; x < COLS - 2 && !done; x++) if (canPlace(D.flower, x, y, 2)) done = build('flower', x, y, 2); }
+    o.stale = st1 === 3 * STALE_STEP && stPart && stMax === STALE_MAX && stalePen() === 0 && S.lastNew === S.week;
+    S.buildings.forEach(b => { b.bw = -1; });   // 뒤의 검사가 '이번 주에 지은 건물'에 흔들리지 않게
     // 교회 Level: 점수 기준으로 오르고, 돈을 써도 내려가지 않으며, 최대 100
     o.level = levelOf(0) === 1 && levelOf(lvNeed(2)) === 2 && levelOf(lvNeed(37)) === 37 && levelOf(1e12) === 100 && lvNeed(2) < lvNeed(3);
     for (let L = 2; L < 100; L++) if (levelOf(lvNeed(L) - 1) !== L - 1) o.level = false;
@@ -1181,6 +1195,8 @@ async function gripeChecks(browser, url) {
   check(r.expect && r.fresh, '만족도: 성도 수·교회 Level만큼 기대치가 오르고, 항목은 85까지(나머지는 보너스), 새로 꾸민 효과는 익숙해짐');
   check(r.rep, '평판: 100에서 저절로 내려오고, 높을수록 덜 오름');
   check(r.bonusCap, '만족도: 좋은 보너스는 합쳐서 +15까지만, 나쁜 것은 그대로 깎음');
+  check(r.wish, '성도들의 바람: 챙길 일 맨 위에 뜨고, 들어주면 만족·평판 보상, 기한을 넘기면 벌점');
+  check(r.stale, '매너리즘: 새로 한 일이 없으면 만족도가 내려가고, 새로 지으면 풀림');
   check(r.leak, '새는 길: 대출·짓고 되돌리기로 Level이 오르지 않고, 바닥 되돌리기는 꾸밈 효과도 되돌림, 마지막 예배 공간은 되돌리기로도 못 없앰');
   check(r.level, '교회 Level: 점수로 오르고(최대 100) 내려가지 않음, 오르면 큰 배지가 뜨고 이름 옆에 보임');
   check(r.ids, '건물 정의: id가 겹치지 않음');

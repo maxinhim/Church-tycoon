@@ -87,7 +87,7 @@ function placeTile(x,y,def){
   def=def||'mroom';
   var p=tilePlan(x,y,def);
   if(!p.ok||S.money<p.cost)return false;
-  S.money-=p.cost;
+  S.money-=p.cost;noteNew();
   if(p.kind==='floor'){tileOf(p.room,x,y).f++;roomsChanged();return true;}
   var nb=[];
   // 같은 높이에 선 이웃 칸끼리만 하나로 합친다
