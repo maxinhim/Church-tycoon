@@ -56,8 +56,9 @@ const RULES = [
     await page.evaluate(() => { if (isPlacing()) endPlace(); });
     if (await page.evaluate(() => UI.tab !== 'build' || UI.fold)) await tap('[data-fab="build"]');
     await closeRcpt();
+    if (await page.evaluate(() => UI.tab !== 'build' || UI.fold)) { stat.rcptJump = (stat.rcptJump || 0) + 1; await tap('[data-fab="build"]'); }
     await page.waitForTimeout(120);
-    if (!(await tap(`#panel [data-act="cat"][data-v="${cat}"]`))) { note(`분류 칩(${cat})을 못 찾음`); stat.fails++; return false; }
+    if (!(await tap(`#panel [data-act="cat"][data-v="${cat}"]`))) { const dbg = await page.evaluate(() => 'tab=' + UI.tab + ' fold=' + UI.fold + ' dock=' + !document.getElementById('dock').hidden + ' dlg=' + !document.getElementById('dlg').hidden + ' over=' + S.over + ' chips=' + document.querySelectorAll('#panel [data-act="cat"]').length); note(`분류 칩(${cat})을 못 찾음 · ${dbg}`); stat.fails++; return false; }
     await page.waitForTimeout(120);
     // 카드: 바라는 것부터, 없으면 그 분류에서 살 수 있는 가장 싼 것 (목록 맨 앞)
     const pick = await page.evaluate(({ ids }) => {
@@ -89,8 +90,7 @@ const RULES = [
     const need = await page.evaluate(id => { const b = bById(id); return !!(b && b.door && !usable(b)); }, built);
     let linked = '';
     if (need) {
-      const q = await page.evaluate(id => { const b = bById(id), d = bDims(b), p = rotPt(b.x + d.w / 2, b.y + d.h / 2), s = toScreen(p[0], p[1], 0); UI.sel = null; return { x: s[0], y: s[1] }; }, built);
-      await page.mouse.click(q.x, q.y - 6); stat.taps++; await page.waitForTimeout(80);
+      await pickB(built);
       if (await tap('#selCard [data-act="link"]')) { if (await tap('#selCard [data-act="linkf"]:not([disabled])')) { stat.links++; linked = ' + 길 잇기'; } else { linked = ' (길 이을 돈이 모자람)'; await seeToast('길 잇기'); } }
       else { linked = ' (길 잇기 버튼을 못 찾음)'; stat.fails++; }
       const ok = await page.evaluate(id => { const b = bById(id); UI.sel = null; renderDetail(); return usable(b); }, built);
@@ -112,6 +112,12 @@ const RULES = [
     const ok = await tap('#panel [data-act="appoint"]:not([disabled])') || await tap('#panel [data-act="hire"]:not([disabled])');
     note(ok ? '직분자·사역팀을 세움' : '세울 수 있는 직분자·사역팀이 없음'); if (!ok) stat.fails++; await tap('#dock [data-act="close"]'); return ok;
   }
+  const pickB = async (id) => {
+    for (const dy of [0, -8, 6, -14]) { const q = await page.evaluate(id => { const b = bById(id), d = bDims(b), p = rotPt(b.x + d.w / 2, b.y + d.h / 2), s = toScreen(p[0], p[1], b.z || 0); UI.sel = null; UI.selFloor = null; UI.selPiece = null; renderDetail(); return { x: s[0], y: s[1] }; }, id);
+      await page.mouse.click(q.x, q.y + dy); stat.taps++; await page.waitForTimeout(90);
+      if (await page.evaluate(id => UI.sel === id, id)) return true; stat.mispick = (stat.mispick || 0) + 1; }
+    return false;
+  };
   const state = () => page.evaluate(() => ({ week: S.week, money: Math.round(S.money), mem: S.members, mood: Math.round(S.mood), rep: Math.round(S.rep), lvl: S.lvl, goal: S.goal, step: S.step, open: S.open, bld: S.buildings.length,
     line: document.getElementById('goalTxt').textContent, warn: warnings().slice(0, 6), wish: S.wish ? S.wish.label : '', net: (S.rcpt || {}).net || 0 }));
   const advance = async (days) => { await page.evaluate(n => { const k = Math.round(WEEK * 10 / 7 * n); for (let i = 0; i < k; i++)update(0.1); hud(true); }, days); await closeOverlays(); };
@@ -146,14 +152,14 @@ const RULES = [
           else if (target) did = await build(target.cat, [target.id]);
           else { const r = (RULES.find(r => r[0].test(w)) || [])[1];
             if (!r) note(`무엇을 해야 할지 알 수 없는 문구: "${w}"`);
-            else if (r.repair) { await tap('[data-fab="status"]'); did = await tap('#panel [data-act="repairAll"]:not([disabled])'); note(did ? '모두 수리' : '수리 버튼을 못 누름'); await tap('#dock [data-act="close"]'); }
+            else if (r.repair) { await tap('[data-fab="status"]'); did = await tap('#panel [data-act="repairAll"]:not([disabled])'); if (!did) { const dbg = await page.evaluate(() => 'tab=' + UI.tab + ' sub=' + (UI.sub || '') + ' 버튼=' + document.querySelectorAll('#panel [data-act="repairAll"]').length + ' 꺼짐=' + document.querySelectorAll('#panel [data-act="repairAll"][disabled]').length + ' 낡은=' + needRepair().length + ' 패널글=' + document.getElementById('panel').innerText.replace(/\n/g, '/').slice(0, 80)); note('수리 버튼을 못 누름 · ' + dbg); } else note('모두 수리'); await tap('#dock [data-act="close"]'); }
             else if (r.appoint) did = await appoint();
             else if (r.link) {
               // 빨간 ? 건물을 찾아 눌러 길 잇기를 시도한다
               const bad = await page.evaluate(() => S.buildings.filter(b => b.door && !usable(b)).map(b => { const d = bDims(b), p = rotPt(b.x + d.w / 2, b.y + d.h / 2), q = toScreen(p[0], p[1], 0); return { id: b.id, name: defOf(b).name, x: q[0], y: q[1] }; }));
-              for (const b of bad.slice(0, 2)) { await page.evaluate(() => { UI.sel = null; renderDetail(); }); await page.mouse.click(b.x, b.y - 6); stat.taps++; await page.waitForTimeout(90);
+              for (const b of bad.slice(0, 2)) { await pickB(b.id);
                 if (await tap('#selCard [data-act="link"]') && await tap('#selCard [data-act="linkf"]:not([disabled])')) { stat.links++; did = true; note(`${b.name}: 눌러서 길 잇기`); }
-                else { const why = await page.evaluate(id => { const b = bById(id), lp = linkPlan(b); return lp && lp.tiles ? '길 ' + lp.tiles.length + '칸' : '길 잇기 버튼이 없음 (이을 길을 못 찾음)'; }, b.id).catch(() => '?'); note(`${b.name}: 이용 불가인데 카드에서 풀 방법이 안 보임 · ${why}`); stat.fails++; }
+                else { const why = await page.evaluate(id => { const b = bById(id), lp = linkPlan(b), c = document.getElementById('selCard'); return (lp && lp.tiles ? '길 ' + lp.tiles.length + '칸 필요' : '게임 판단: ' + (lp.why || '?')) + ' · 누른 뒤 고른 것: ' + (UI.sel === id ? '그 건물' : UI.sel ? defOf(bById(UI.sel)).name : UI.selFloor ? '빈 땅' : '없음') + ' · 카드: ' + (c.hidden ? '안 뜸' : c.innerText.replace(/\n/g, ' / ').slice(0, 90)); }, b.id).catch(e => '?' + e.message); note(`${b.name}: 이용 불가인데 카드에서 풀 방법이 안 보임 · ${why}`); stat.fails++; }
                 const still = await page.evaluate(id => { const b = bById(id); UI.sel = null; renderDetail(); return b && !usable(b); }, b.id); if (still) note(`${b.name}: 길을 이어도 아직 이용 불가`); } }
             else if (r.ev && (did = await runEvent(r.ev))) { }
             else if (r.cat) did = await build(r.cat, r.ids || []); }
