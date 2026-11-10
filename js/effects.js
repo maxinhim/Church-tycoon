@@ -57,8 +57,8 @@ function warnings(){
   if(S.members>MOD.cap)w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
   if(staleWeeks()>0)w.push('매너리즘: 새로 한 일 없이 '+(S.week-(S.lastNew||0))+'주째예요. 새 건물·꾸미기나 다른 행사를 해 보세요');
   var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');
-  var un=S.buildings.filter(function(b){return b.door&&!usable(b);}).length;if(un)w.push('이용할 수 없는 건물 '+un+'곳 (문·길 확인)');
-  if(c.park<0.7)w.push('주차가 모자라 방문자가 줄어요');
+  var un=S.buildings.filter(function(b){return b.door&&!usable(b);});if(un.length)w.push('이용할 수 없는 건물: '+defOf(un[0]).name+(un.length>1?' 외 '+(un.length-1)+'곳':'')+' · 건물을 눌러 길을 이어 주세요');
+  if(c.park<0.7&&!isLocked('lot'))w.push('주차가 모자라 방문자가 줄어요');
   // 방문자가 실제로 겪은 불편 (무엇을 지으면 되는지까지)
   gripeList().slice(0,5).forEach(function(g){w.push(g.t);});
   if(S.gripPen>=0.5)w.push('지난주 불편 때문에 성도 만족도 −'+S.gripPen);

@@ -104,6 +104,7 @@ function onPanel(e){
     startPlace(v);
   }
   else if(a==='cancel'){endPlace();}
+  else if(a==='fixdoor'){var fw=applyDoorFix(bById(UI.sel));if(fw)toast(fw,2600);renderDetail();}
   else if(a==='link'){UI.linkPick=UI.linkPick===UI.sel?null:UI.sel;renderDetail();}
   else if(a==='linkf'){var lbd=bById(UI.sel),lw=linkDoor(lbd,v);UI.linkPick=null;if(lw){toast(lw,1600);sfx('error',.4);}else{toast('입구까지 '+D[v].name+'을(를) 깔았어요',1600);sfx('floor',.5);}renderDetail();hud(true);}
   else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}

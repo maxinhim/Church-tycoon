@@ -96,10 +96,25 @@ function linkPlan(b){
     var o=doorOut(s);
     if(o.y>=PZ)continue;
     if(o.x<0||o.y<0||o.x>=COLS||groundPort(o.x,o.y,OPP[s.d])!==bLevel(b))return {why:'문 앞 땅 높이가 달라요. 경사로나 계단으로 이어 주세요'};
-    var r=walkSearch(o.x,o.y,add);if(!r)return {why:'이을 수 있는 자리가 없어요. 문 위치를 바꿔 보세요'};
+    var r=walkSearch(o.x,o.y,add);if(!r)return {why:'문 앞이 막혀 길을 이을 수 없어요'};
     r.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});
   }
   return {tiles:tiles,cost:tiles.length*D[LINK_FLOOR].cost};
+}
+// 지금 문으로는 길을 이을 수 없을 때: 이을 수 있는 다른 문 자리(1층, 길이 가장 짧은 곳)를 찾는다. 없으면 null
+function doorFix(b){
+  if(!b||!b.door)return null;
+  var keep=b.door,best=null,bn=1e9;
+  doorSpots(b).forEach(function(s){
+    if(s.l!==0)return;
+    b.door={ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};
+    var lp=linkPlan(b);if(!lp.why&&lp.tiles.length<bn){bn=lp.tiles.length;best=s;}
+  });
+  b.door=keep;return best;
+}
+function applyDoorFix(b){
+  var s=doorFix(b);if(!s)return '문을 옮겨도 길을 이을 자리가 없어요. 둘레를 막은 것을 치우거나 건물을 옮겨 주세요';
+  b.door={ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};recalc();save();return '';
 }
 function walkSearch(sx,sy,add){
   var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x];};

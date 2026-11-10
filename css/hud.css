@@ -53,6 +53,7 @@
 /* 주일 정산 영수증 */
 #rcpt{position:fixed;right:8px;top:84px;z-index:4;width:230px;padding:8px 12px;cursor:pointer;font-size:12px}
 #rcpt[hidden]{display:none}
+#rcpt.side{right:auto;top:auto;left:74px;bottom:58px}
 #rcpt .rk,.rk{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:4px}
 #rcpt ul,.rcpt ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 #rcpt li,.rcpt li{display:flex;justify-content:space-between;gap:10px}

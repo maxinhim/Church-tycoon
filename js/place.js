@@ -67,7 +67,9 @@ function startPlace(id){
     UI.pc=null;placeGhost(groundTile(c[0],c[1]));
     // 화면 가운데가 막혀 있으면 가장 가까운 빈자리에서 시작
     var d=D[id];
-    if(!isRoomDef(id)&&!isFloorDef(id)&&!isTerDef(id)&&!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)){var nf=plNear(d,UI.ghost.x,UI.ghost.y,8);if(nf){UI.ghost.x=nf.x;UI.ghost.y=nf.y;}}
+    // 사람이 다니는 바닥 위도 피한다 (그대로 ✓를 누르면 길이 끊기므로). 끌어서 바닥 위에 놓는 것은 막지 않는다
+    if(!isRoomDef(id)&&!isFloorDef(id)&&!isTerDef(id)&&(!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)||onFloorAt(d,UI.ghost.x,UI.ghost.y,UI.face))){
+      var nf=plNear(d,UI.ghost.x,UI.ghost.y,10,true)||plNear(d,UI.ghost.x,UI.ghost.y,8);if(nf){UI.ghost.x=nf.x;UI.ghost.y=nf.y;}}
   }
   renderPanel();
 }
@@ -193,13 +195,16 @@ function plStep(d){
   return DIRS[side[0]];
 }
 // (x,y) 둘레를 한 바퀴씩 넓혀 가며 가장 가까운 빈자리
-function plNear(d,x,y,R){
+// 그 자리에 놓으면 바닥 타일(사람이 다니는 길)을 덮는지
+function onFloorAt(d,x,y,face){var dm=faceDims(d,face);for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)if(S.floor[(x+i)+','+(y+j)])return true;return false;}
+// offFloor: 바닥 타일을 덮지 않는 자리만
+function plNear(d,x,y,R,offFloor){
   var best=null,bd=1e9;
   for(var r=1;r<=R;r++){
     for(var j=-r;j<=r;j++)for(var k=-r;k<=r;k++){
       if(Math.max(Math.abs(j),Math.abs(k))!==r)continue;
       var dd=j*j+k*k;
-      if(dd<bd&&canPlace(d,x+j,y+k,UI.face)){bd=dd;best={x:x+j,y:y+k};}
+      if(dd<bd&&canPlace(d,x+j,y+k,UI.face)&&!(offFloor&&onFloorAt(d,x+j,y+k,UI.face))){bd=dd;best={x:x+j,y:y+k};}
     }
     if(best)return best;
   }

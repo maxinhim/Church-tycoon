@@ -146,6 +146,8 @@ function showReceipt(){
   var el=$('#rcpt');if(!el||!S.rcpt)return;
   // 주일 종소리와 동전 소리
   sfx('bell',.75,0);setTimeout(function(){sfx('coins',.6,0);},450);
-  el.innerHTML=rcptHtml(S.rcpt,false);el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  el.innerHTML=rcptHtml(S.rcpt,false);el.hidden=false;
+  // 건축·행사 패널이 열려 있으면 패널을 덮지 않게 왼쪽 아래로 (이때는 눌러도 닫히기만 한다)
+  el.classList.toggle('side',!$('#dock').hidden);el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   clearTimeout(rcptTimer);rcptTimer=setTimeout(function(){el.hidden=true;},5000);
 }

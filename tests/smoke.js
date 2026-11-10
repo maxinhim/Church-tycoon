@@ -1247,8 +1247,32 @@ async function earlyChecks(browser, url) {
     S.money = m1; S.lvl = 40; const raw = JSON.parse(JSON.stringify(S)); delete raw.lvc; delete raw.step; raw.week = 9;
     localStorage.setItem(SAVE_KEY, JSON.stringify(raw)); const L2 = load();
     o.old = L2.lvl === null && L2.lvc === 2 && L2.step === STEPS.length;
+    // 미리보기 첫 자리: 화면 가운데가 길이어도 바닥 타일 위에 놓이지 않는다
+    S.money = 50000; homeView(); startPlace('wc'); o.offPath = !!UI.ghost && !onFloorAt(D.wc, UI.ghost.x, UI.ghost.y, UI.face) && canPlace(D.wc, UI.ghost.x, UI.ghost.y, UI.face); endPlace();
+    // 문 앞이 막힌 건물: 카드에 이유와 '문 옮기기'가 보이고, 누르면 길을 이을 수 있게 됨
+    { let spot = null; for (let y = 3; y < PZ - 6 && !spot; y++)for (let x = 3; x < COLS - 6 && !spot; x++) { let ok = true; for (let j = -2; j <= 3 && ok; j++)for (let i = -2; i <= 3 && ok; i++)if (occ[y + j][x + i] || S.floor[(x + i) + ',' + (y + j)]) ok = false; if (ok) spot = { x, y }; }
+      build('wc', spot.x, spot.y, 2); const wc = S.buildings[S.buildings.length - 1]; recalc();
+      const out = doorOut(wc.door.ent); build('tree', out.x, out.y, 2); recalc();
+      const blocked = !!linkPlan(wc).why; UI.sel = wc.id; UI.fold = true; renderSelCard();
+      const btn = document.querySelector('#selCard [data-act="fixdoor"]'), why = (document.querySelector('#selCard .scw') || {}).textContent || '';
+      if (btn) btn.click();
+      o.fixdoor = blocked && !!btn && /막혀/.test(why) && !linkPlan(wc).why;
+      // 새로 지을 때는 처음부터 막히지 않은 쪽으로 문이 난다
+      const t2 = { x: spot.x + 3, y: spot.y }; const f = doorOut({ x: t2.x, y: t2.y, d: 2, l: 0 }); build('tree', f.x, f.y, 2); recalc(); build('wc', t2.x, t2.y, 2); const wc2 = S.buildings[S.buildings.length - 1]; recalc();
+      o.fixdoor = o.fixdoor && !linkPlan(wc2).why; UI.sel = null; }
+    // 영수증: 패널이 열려 있으면 옆으로 비켜 뜨고, 눌러도 탭이 바뀌지 않음
+    S.rcpt = S.rcpt || { net: 0, inc: 0, exp: 0 }; openGroup('build'); const tab0 = UI.tab; showReceipt(); const rc = document.getElementById('rcpt');
+    const side = rc.classList.contains('side'), dk = document.getElementById('dock').getBoundingClientRect(), rr = rc.getBoundingClientRect(); rc.click();
+    o.rcpt = side && rr.right <= dk.left + 1 && UI.tab === tab0 && rc.hidden; closeDock(); showReceipt(); o.rcpt = o.rcpt && !rc.classList.contains('side'); rc.hidden = true;
+    // 주차 경고는 주차장이 열린 뒤부터, 바람 문구의 조사
+    S.goal = 0; S.cov.park = 0.2; const w0 = warnings().join('|'); S.goal = GOALS.length; const w1 = warnings().join('|');
+    o.small = !/주차가 모자라/.test(w0) && /주차가 모자라/.test(w1) && iga('예배 자리') === '예배 자리가' && iga('돌봄 공간') === '돌봄 공간이' && /건물을 눌러/.test(w1 + (S.buildings.some(b => b.door && !usable(b)) ? '' : '건물을 눌러'));
     return o;
   });
+  check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
+  check(r.fixdoor, '문 앞이 막힌 건물: 카드에 이유와 문 옮기기 버튼, 새 건물은 막히지 않은 쪽으로 문이 남');
+  check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 눌러도 재정 탭으로 넘어가지 않음');
+  check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');
   check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');
   check(r.curve, 'Level 곡선: 시작은 Lv 1, Lv 2는 약 2만, Lv 9는 약 8만, 100까지');
   check(r.lock && r.gift, 'Level 보상: 비싼 꾸미기는 Level로 열리고, 오를 때 축하금(건너뛴 단계 몫까지)');

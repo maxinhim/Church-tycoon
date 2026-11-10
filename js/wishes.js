@@ -13,6 +13,8 @@ function countDef(id){var n=0;S.buildings.forEach(function(b){if(b.def===id)n+=i
 // 바랄 만한 건물: 잠기지 않았고, 값이 너무 비싸지 않고, 칸 건물·바닥이 아닌 것
 function wishable(d){return !isLocked(d.id)&&d.cost>0&&d.cost<=Math.max(3000,S.money*1.5)&&!isRoomDef(d.id)&&d.kind!=='floor'&&d.kind!=='terrain'&&d.kind!=='path';}
 var WISH_ITEM={fel:['fcap','함께 모일 곳'],care:['kcap','돌봄 공간'],comf:['ccap','편의 시설'],park:['park','주차 자리'],seat:['seats','예배 자리']};
+// 받침이 있으면 '이', 없으면 '가'
+function iga(w){var c=w.charCodeAt(w.length-1);return w+(c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28?'이':'가');}
 var WISH_SP={w:'말씀을 배울 곳',p:'기도할 곳',r:'찬양할 곳'};
 // 지금 바랄 수 있는 것들을 모은다 (모자란 정도가 클수록 앞에)
 function wishCands(){
@@ -23,7 +25,7 @@ function wishCands(){
     if(d)L.push({t:'build',id:d.id,n:countDef(d.id),need:1-sp[q],label:WISH_SP[q]+'이 있으면 좋겠어요 ('+d.name+')'});});
   for(var k in WISH_ITEM){if(c[k]==null||c[k]>=0.85)continue;var key=WISH_ITEM[k][0];
     var d2=pickB(function(d){return d[key]||0;},k==='seat'?function(d){return HALLS.indexOf(d.id)>=0;}:null);
-    if(d2)L.push({t:'build',id:d2.id,n:countDef(d2.id),need:1-c[k],label:WISH_ITEM[k][1]+'이(가) 더 필요해요 ('+d2.name+')'});}
+    if(d2)L.push({t:'build',id:d2.id,n:countDef(d2.id),need:1-c[k],label:iga(WISH_ITEM[k][1])+' 더 필요해요 ('+d2.name+')'});}
   var g=gripeList()[0];
   if(g&&GRIPES[g.k].ids){var G=GRIPES[g.k],d3=pickB(function(d){return gripeFits(G,d)?1:0;});
     if(d3)L.push({t:'build',id:d3.id,n:countDef(d3.id),need:0.6,label:GRIPES[g.k].s+' 때문에 힘들어요 ('+d3.name+')'});}

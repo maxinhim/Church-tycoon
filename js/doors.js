@@ -50,6 +50,11 @@ function defaultDoors(b){
   var free=front.filter(function(s){return doorNode(s,b)>=0;});
   if(!free.length)free=sp.filter(function(s){return doorNode(s,b)>=0;});
   if(free.length)front=free;
+  else{
+    // 닿는 길이 아직 없어도, 문 앞 칸이 비어 있어야 나중에 길을 이을 수 있다
+    var open=function(s){var o=doorOut(s);return o.x>=0&&o.y>=0&&o.x<COLS&&o.y<ROWS&&!(occ[o.y]&&occ[o.y][o.x]);};
+    var of=front.filter(open);if(!of.length)of=sp.filter(open);if(of.length)front=of;
+  }
   var s=front[Math.floor((front.length-1)/2)];
   return {ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};
 }

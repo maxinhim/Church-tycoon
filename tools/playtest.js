@@ -35,7 +35,7 @@ const RULES = [
   const tap = async (sel) => { const el = await page.$(sel); if (!el || !(await el.isVisible())) return false; await el.scrollIntoViewIfNeeded().catch(() => { }); try { await el.click({ timeout: 1500 }); } catch (e) { note(`눌러지지 않는 버튼: ${sel} (다른 것에 가려짐)`); stat.fails++; return false; } stat.taps++; await page.waitForTimeout(90); return true; };
   const toastTxt = () => page.evaluate(() => { const t = document.getElementById('toast'); return t.hidden ? '' : t.textContent; });
   const seeToast = async (why) => { const t = await toastTxt(); if (t && /없어요|못 |부족|먼저|후 |안 돼|막혀/.test(t)) { stat.toasts[t] = (stat.toasts[t] || 0) + 1; note(`막힘(${why}): "${t}"`); return t; } return ''; };
-  const closeRcpt = async () => { const up = await page.evaluate(() => { const r = document.getElementById('rcpt'), d = document.getElementById('dock'); return !r.hidden && !d.hidden; }); if (up) { stat.rcpt = (stat.rcpt || 0) + 1; await page.evaluate(() => document.getElementById('rcpt').click()); stat.taps++; await page.waitForTimeout(60); await page.evaluate(() => { document.getElementById('rcpt').hidden = true; }); } };
+  const closeRcpt = async () => { const up = await page.evaluate(() => { const r = document.getElementById('rcpt'), d = document.getElementById('dock'); if (r.hidden || d.hidden) return false; const a = r.getBoundingClientRect(), b = d.getBoundingClientRect(); return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top; }); if (up) { stat.rcpt = (stat.rcpt || 0) + 1; await page.evaluate(() => document.getElementById('rcpt').click()); stat.taps++; await page.waitForTimeout(60); await page.evaluate(() => { document.getElementById('rcpt').hidden = true; }); } };
   const closeOverlays = async () => {
     for (let i = 0; i < 3; i++) { if (!(await tap('#dlg [data-act="dlg"]:not([disabled])'))) break; note('목회 고민거리 카드에서 첫 선택지를 고름'); }
     await page.evaluate(() => { ['cele', 'lvup'].forEach(id => { const e = document.getElementById(id); if (e && !e.hidden) e.click(); }); });
@@ -91,6 +91,7 @@ const RULES = [
     let linked = '';
     if (need) {
       await pickB(built);
+      if (await tap('#selCard [data-act="fixdoor"]')) { stat.fixdoor = (stat.fixdoor || 0) + 1; }
       if (await tap('#selCard [data-act="link"]')) { if (await tap('#selCard [data-act="linkf"]:not([disabled])')) { stat.links++; linked = ' + 길 잇기'; } else { linked = ' (길 이을 돈이 모자람)'; await seeToast('길 잇기'); } }
       else { linked = ' (길 잇기 버튼을 못 찾음)'; stat.fails++; }
       const ok = await page.evaluate(id => { const b = bById(id); UI.sel = null; renderDetail(); return usable(b); }, built);
@@ -157,7 +158,7 @@ const RULES = [
             else if (r.link) {
               // 빨간 ? 건물을 찾아 눌러 길 잇기를 시도한다
               const bad = await page.evaluate(() => S.buildings.filter(b => b.door && !usable(b)).map(b => { const d = bDims(b), p = rotPt(b.x + d.w / 2, b.y + d.h / 2), q = toScreen(p[0], p[1], 0); return { id: b.id, name: defOf(b).name, x: q[0], y: q[1] }; }));
-              for (const b of bad.slice(0, 2)) { await pickB(b.id);
+              for (const b of bad.slice(0, 2)) { await pickB(b.id); if (await tap('#selCard [data-act="fixdoor"]')) { stat.fixdoor = (stat.fixdoor || 0) + 1; note(`${b.name}: 문 옮기기를 누름`); }
                 if (await tap('#selCard [data-act="link"]') && await tap('#selCard [data-act="linkf"]:not([disabled])')) { stat.links++; did = true; note(`${b.name}: 눌러서 길 잇기`); }
                 else { const why = await page.evaluate(id => { const b = bById(id), lp = linkPlan(b), c = document.getElementById('selCard'); return (lp && lp.tiles ? '길 ' + lp.tiles.length + '칸 필요' : '게임 판단: ' + (lp.why || '?')) + ' · 누른 뒤 고른 것: ' + (UI.sel === id ? '그 건물' : UI.sel ? defOf(bById(UI.sel)).name : UI.selFloor ? '빈 땅' : '없음') + ' · 카드: ' + (c.hidden ? '안 뜸' : c.innerText.replace(/\n/g, ' / ').slice(0, 90)); }, b.id).catch(e => '?' + e.message); note(`${b.name}: 이용 불가인데 카드에서 풀 방법이 안 보임 · ${why}`); stat.fails++; }
                 const still = await page.evaluate(id => { const b = bById(id); UI.sel = null; renderDetail(); return b && !usable(b); }, b.id); if (still) note(`${b.name}: 길을 이어도 아직 이용 불가`); } }
@@ -180,7 +181,7 @@ const RULES = [
   await shot('w' + WEEKS + '-end');
   const out = { seed: SEED, weeks: WEEKS, stat, stepAt, lvAt, goalAt, rows, log, errs };
   fs.writeFileSync(path.join(OUT, `run-${CAREFUL ? 'careful' : 'naive'}-seed${SEED}.json`), JSON.stringify(out, null, 1));
-  console.log(`${CAREFUL ? '조심' : '그대로'} seed ${SEED}: 미리보기가 길 위에 놓인 횟수 ${stat.onPath || 0} · 영수증이 패널을 덮은 횟수 ${stat.rcpt || 0} · 누름 ${stat.taps} · 지음 ${stat.builds} · 길 잇기 ${stat.links} · 실패 ${stat.fails} · 돈 모자람 ${stat.poor} · 한 일 없는 주 ${stat.idle} · 오류 ${errs.length}`);
+  console.log(`${CAREFUL ? '조심' : '그대로'} seed ${SEED}: 미리보기가 길 위에 놓인 횟수 ${stat.onPath || 0} · 영수증이 패널을 덮은 횟수 ${stat.rcpt || 0} · 문 옮기기 ${stat.fixdoor || 0} · 누름 ${stat.taps} · 지음 ${stat.builds} · 길 잇기 ${stat.links} · 실패 ${stat.fails} · 돈 모자람 ${stat.poor} · 한 일 없는 주 ${stat.idle} · 오류 ${errs.length}`);
   console.log('첫 걸음 완료 주:', JSON.stringify(stepAt), '| Level 도착 주:', JSON.stringify(lvAt), '| 목표 달성 주:', JSON.stringify(goalAt));
   console.log('| 주 | 자금 | 성도 | 만족 | 평판 | Lv | 목표 | 순익 | 한 일 | 맨 위 안내 |\n|---|---|---|---|---|---|---|---|---|---|');
   rows.filter(r => [1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 25, 30, 37].indexOf(r.w) >= 0).forEach(r => console.log(`| ${r.w} | ${r.money} | ${r.mem} | ${r.mood} | ${r.rep} | ${r.lvl} | ${r.goal} | ${r.net} | ${r.acts} | ${r.top.slice(0, 40)} |`));

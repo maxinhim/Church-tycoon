@@ -45,6 +45,8 @@ function renderSelCard(){
     h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
+    // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
+    if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');if(doorFix(b))row+=scBtn('fixdoor','문 옮기기','pri',null,'길을 이을 수 있는 쪽으로 문 옮기기');}
     if(lk)row+=scBtn('link',UI.linkPick===b.id?'길 잇기 ⌄':'길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
     var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
     if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));
