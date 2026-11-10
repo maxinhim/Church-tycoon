@@ -1,0 +1,59 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-G.png",
+ "grid": [
+  6,
+  6
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "9": {
+   "id": "dining_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "3": {
+   "id": "dining",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "dining_b",
+   "fl": 1
+  },
+  "18": {
+   "id": "foodbank_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "12": {
+   "id": "foodbank",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "foodbank_b"
+  },
+  "19": {
+   "id": "market_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "13": {
+   "id": "market",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "market_b"
+  },
+  "21": {
+   "id": "outdoor_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "15": {
+   "id": "outdoor",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "outdoor_b"
+  }
+ }
+}

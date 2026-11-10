@@ -1,0 +1,19 @@
+/* 낮은 가로 화면(휴대폰): 버튼과 패널을 조금 작게 */
+@media (max-height:480px){
+  #ui{--fabh:66px;--toph:40px}
+  .fab .fc{width:48px;height:48px}
+  .fab svg{width:21px;height:21px}
+}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+
+/* 가로 전용: 세로 화면에서는 안내 화면으로 가리고 게임은 멈춘다 */
+#rotate{display:none;position:fixed;inset:0;z-index:10;background:var(--bg);color:var(--ink);place-items:center;padding:24px;text-align:center}
+#rotate .box{max-width:320px;display:flex;flex-direction:column;align-items:center;gap:10px}
+#rotate svg{width:72px;height:72px;color:var(--accent)}
+#rotate h2{margin:0;font-family:var(--f-display);font-size:20px}
+#rotate p{margin:0;color:var(--muted)}
+@media (orientation:portrait){#rotate{display:grid}}
+@media (orientation:portrait) and (prefers-reduced-motion:no-preference){
+  #rotate svg{animation:tilt 2.4s ease-in-out infinite}
+}
+@keyframes tilt{0%,25%{transform:rotate(0)}65%,100%{transform:rotate(-90deg)}}

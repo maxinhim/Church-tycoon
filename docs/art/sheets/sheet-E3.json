@@ -1,0 +1,71 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-E3.png",
+ "grid": [
+  3,
+  3
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "0": {
+   "id": "elder",
+   "back": "elder_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "3": {
+   "id": "elder_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "1": {
+   "id": "cell",
+   "back": "cell_b",
+   "fw": 1.1,
+   "by": 0.95
+  },
+  "4": {
+   "id": "cell_b",
+   "fw": 1.1,
+   "by": 0.95
+  },
+  "2": {
+   "id": "mission",
+   "back": "mission_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "fl": 1
+  },
+  "5": {
+   "id": "mission_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "6": {
+   "id": "hall",
+   "back": "hall_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "box": [
+    4,
+    686,
+    418,
+    1020
+   ]
+  },
+  "7": {
+   "id": "hall_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "box": [
+    424,
+    686,
+    850,
+    1020
+   ]
+  }
+ }
+}

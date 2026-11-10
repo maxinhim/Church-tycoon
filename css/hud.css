@@ -1,0 +1,187 @@
+/* Layout: 전체화면 아이소메트릭 지도 위에 떠 있는 HUD.
+   위: 상단바(교회 이름·목표·속도·메뉴) / 가운데: 지도와 왼쪽 지도 도구 / 아래: 왼쪽 상태바, 오른쪽 동그란 기능 버튼 3개.
+   기능 버튼을 누르면 오른쪽 아래에 패널이 떠서 필요한 만큼만 지도를 가린다. */
+#stage{position:fixed;inset:0;background:#132a37}
+#cv{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#ui{position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto;column-gap:12px;row-gap:8px;padding-block:8px;pointer-events:none;--fabh:74px;--toph:44px}
+.glass{background:var(--glass);border:1px solid var(--glass-line);border-radius:14px;box-shadow:var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:auto}
+#top{grid-column:1;grid-row:1;width:auto;max-width:min(300px,100%);justify-self:start;align-self:start}
+#tr{grid-column:2;grid-row:1;display:flex;gap:8px;align-items:flex-start;justify-self:end}
+#gear{position:relative;pointer-events:auto}
+/* 오른쪽 위 시계: 몇 년 몇 주, 요일, 주일 정산까지 남은 날 */
+#clock{padding:5px 10px 6px;border-radius:12px;display:flex;flex-direction:column;gap:3px;min-width:150px}
+.ck1{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.ck1 b{font-size:13.5px;font-variant-numeric:tabular-nums;font-family:var(--f-display)}
+.ck1 span{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.days i{font-style:normal;font-size:10px;text-align:center;border-radius:5px;line-height:15px;color:var(--muted);background:var(--chip)}
+.days i.past{opacity:.45}
+.days i.now{background:var(--accent);color:var(--accent-ink);font-weight:700}
+.days i.sun{color:#c0392b;font-weight:700}
+.days i.sun.now{background:#c0392b;color:#fff}
+.ckw{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px}
+.ckw span{display:flex;align-items:center;gap:3px;white-space:nowrap}
+#wxNow{font-weight:700}
+#wxNext{color:var(--muted)}
+.wxi{width:15px;height:15px;flex:none}
+.wx-sun,.wx-heat{color:#e0a020}.wx-cloud{color:#7a8a99}.wx-rain{color:#3f7fc0}.wx-storm{color:#5a4fc0}.wx-wind{color:#3d9b7a}.wx-snow{color:#5fa3d0}
+#clock{cursor:pointer}
+.rw{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin:-2px 0 4px}
+.ckbar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.ckbar i{display:block;height:100%;background:var(--accent);width:0}
+/* 교회 입구를 누르면 뜨는 문 열기·닫기 카드 */
+#gatePop{position:fixed;left:0;top:0;z-index:4;display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;max-width:min(300px,calc(100vw - 24px))}
+#gatePop[hidden]{display:none}
+#gatePop::after{content:'';position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:var(--glass);transform:translateX(-50%) rotate(45deg);border-right:1px solid var(--glass-line);border-bottom:1px solid var(--glass-line)}
+.gpt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.gpt b{font-size:13px}
+.gpt span{font-size:11px;color:var(--muted)}
+#gatePop .btn{flex:none}
+/* 지은 것을 눌렀을 때 뜨는 작은 카드 */
+#selCard{position:fixed;left:0;top:0;z-index:4;display:flex;flex-direction:column;gap:5px;padding:7px 8px;max-width:min(300px,calc(100vw - 16px));font-size:12px}
+#selCard[hidden]{display:none}
+#selCard::after{content:'';position:absolute;left:var(--ax,50%);bottom:-6px;width:12px;height:12px;background:var(--glass);transform:translateX(-50%) rotate(45deg);border-right:1px solid var(--glass-line);border-bottom:1px solid var(--glass-line)}
+#selCard.below::after{bottom:auto;top:-6px;border:0;border-left:1px solid var(--glass-line);border-top:1px solid var(--glass-line)}
+.sct{display:flex;align-items:baseline;gap:8px;padding:0 2px}
+.sct b{font-size:13px;white-space:nowrap}
+.sct span{color:var(--muted);font-size:11px;white-space:nowrap}
+.scw{color:var(--bad);font-size:11px;padding:0 2px}
+.sce{color:var(--muted);font-size:11px;padding:0 2px}
+.scb,.scd{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.scd span{font-size:11px;color:var(--muted);margin-left:2px}
+#selCard .btn.sm{height:28px;font-size:12px;padding:0 9px}
+/* 주일 정산 영수증 */
+#rcpt{position:fixed;right:8px;top:84px;z-index:4;width:230px;padding:8px 12px;cursor:pointer;font-size:12px}
+#rcpt[hidden]{display:none}
+#rcpt .rk,.rk{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin-bottom:4px}
+#rcpt ul,.rcpt ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+#rcpt li,.rcpt li{display:flex;justify-content:space-between;gap:10px}
+#rcpt li span,.rcpt li span{color:var(--muted)}
+#rcpt b,.rcpt b{font-variant-numeric:tabular-nums}
+#rcpt .pos,.rcpt .pos{color:var(--good)} #rcpt .neg,.rcpt .neg{color:var(--bad)}
+#rcpt li.tot,.rcpt li.tot{border-top:1px solid var(--line);margin-top:3px;padding-top:3px;font-weight:700}
+#rcpt li.tot span,.rcpt li.tot span{color:var(--ink)}
+.rn{margin:4px 0 0;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.rh{margin:5px 0 0;font-size:10.5px;color:var(--muted);text-align:right}
+@media (prefers-reduced-motion:no-preference){#rcpt.on{animation:rcIn .35s ease-out}}
+@keyframes rcIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+#mid{grid-column:1/3;grid-row:2}
+#status{grid-column:1;grid-row:3;width:auto;max-width:100%;justify-self:start;align-self:end}
+#fab{grid-column:2;grid-row:3;display:flex;gap:12px;align-items:flex-end;pointer-events:none}
+
+/* 왼쪽 위 작은 이름표: 교회 이름과 목표만 */
+#top{display:flex;flex-direction:column;gap:2px;padding:5px 12px 6px;border-radius:12px;min-width:0}
+/* 교회 이름 옆 레벨 배지 */
+.tname{display:flex;align-items:center;gap:6px;min-width:0}
+.lvp{flex:none;border:0;cursor:pointer;font:800 10.5px/1 var(--f-ui,'IBM Plex Sans KR'),sans-serif;letter-spacing:.02em;color:#5a3d00;background:linear-gradient(180deg,#ffe07a,#f2b632);border-radius:999px;padding:3px 7px;box-shadow:0 1px 0 rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
+.lvp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.goal{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);min-width:0}
+.goal span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:28px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
+.goal .bar{flex:0 0 40px;height:5px}
+/* 오른쪽 위 톱니바퀴: 누르면 게임 속도와 메뉴가 나온다 */
+.gbtn{position:relative;width:42px;height:42px;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:grid;place-items:center;padding:0;color:var(--ink)}
+.gbtn svg{width:21px;height:21px}
+.gbtn[aria-expanded="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#spBadge{position:absolute;right:-4px;bottom:-4px;min-width:20px;height:18px;padding:0 4px;border-radius:9px;background:var(--bad);color:#fff;font-size:10.5px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+#gearMenu{position:absolute;right:0;top:50px;z-index:4;display:flex;flex-direction:column;gap:8px;padding:10px;width:max-content;max-width:calc(100vw - 32px)}
+#gearMenu .glbl{font-size:11px;color:var(--muted);letter-spacing:.04em}
+#gearMenu .btn{text-align:left}
+.sp{display:flex;background:var(--chip);border-radius:10px;padding:2px;gap:2px;flex:none}
+.sp button{border:0;background:transparent;min-width:34px;height:32px;border-radius:8px;font-weight:600;font-size:13px;color:var(--muted)}
+.sp button.on{background:var(--accent);color:var(--accent-ink)}
+
+#mid{min-height:0;position:relative}
+.tools{position:absolute;left:0;top:4px;display:flex;flex-direction:column;gap:8px}
+.tools button{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;padding:0;border:1px solid var(--glass-line)}
+.tools svg{width:20px;height:20px}
+#toast{position:absolute;left:54px;top:4px;width:max-content;max-width:calc(100% - 54px);background:rgba(12,22,30,.9);color:#fff;padding:7px 12px;border-radius:10px;font-size:12.5px;text-align:center;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+
+/* 아래 작은 상태줄 */
+#status{display:grid;grid-auto-flow:column;grid-auto-columns:auto;gap:2px 16px;padding:4px 12px;border-radius:12px}
+.stat{min-width:0}
+.stat .k{display:block;font-size:9.5px;color:var(--muted);letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{display:block;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b.neg{color:var(--bad)}
+.stat small{font-weight:400;color:var(--muted);font-size:10px}
+
+/* 동그란 기능 버튼 */
+.fab{border:0;background:transparent;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:auto;color:var(--ink)}
+.fab .fc{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .15s}
+.fab svg{width:24px;height:24px}
+.fab .fl{font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--glass);box-shadow:0 1px 4px rgba(8,18,28,.18)}
+.fab.on .fc{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.fab.on .fl{background:var(--accent);color:var(--accent-ink)}
+.fab:active .fc{transform:scale(.94)}
+.ibtn{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--glass-line);background:var(--chip);display:grid;place-items:center;padding:0;color:var(--ink)}
+.ibtn svg{width:19px;height:19px}
+.ibtn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+/* 현황 요약 (현황 패널 위쪽) */
+.qnums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 10px;margin-bottom:6px}
+.qnums span{display:block;font-size:10.5px;color:var(--muted)}
+.qnums b{font-size:14px;font-variant-numeric:tabular-nums}
+.qnums .neg{color:var(--bad)} .qnums .pos{color:var(--good)}
+.qok{margin:6px 0 0;color:var(--good);font-size:12px}
+
+/* 목표 달성 축하 */
+#cele{position:fixed;inset:0;z-index:7;display:grid;place-items:center;padding:20px;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(255,214,90,.35),rgba(10,20,30,.45) 70%)}
+#cele .cbox{pointer-events:auto;cursor:pointer;background:var(--glass);border:2px solid #f2c94c;border-radius:18px;padding:20px 26px;max-width:360px;text-align:center;box-shadow:0 0 0 6px rgba(242,201,76,.25),0 18px 50px rgba(0,0,0,.35)}
+#cele h2{margin:4px 0 8px;font-family:var(--f-display);font-size:26px;text-wrap:balance}
+#cele ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+#cele li{font-weight:600}
+.ckick{display:inline-block;font-size:11.5px;letter-spacing:.12em;font-weight:700;color:#7a5600;background:#f2c94c;border-radius:999px;padding:3px 10px}
+.chint{margin:10px 0 0;font-size:11px;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  #cele.on{animation:celeBg .5s ease-out}
+  #cele.on .cbox{animation:celePop .7s cubic-bezier(.2,1.4,.4,1)}
+  #cele.on .ckick{animation:celeGlow 1.2s ease-in-out 3}
+}
+@keyframes celeBg{from{opacity:0}to{opacity:1}}
+/* 레벨 업: 화면 가운데 큰 배지 + 도는 빛줄기 + 금빛 퍼짐. 2.5초 뒤 저절로 사라지고 게임은 멈추지 않는다 */
+#lvup{position:fixed;inset:0;z-index:8;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle at 50% 45%,rgba(255,220,110,.5),rgba(255,200,60,.12) 38%,rgba(0,0,0,0) 62%)}
+#lvup[hidden]{display:none}
+#lvup .lvray{position:absolute;left:50%;top:45%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;background:repeating-conic-gradient(from 0deg,rgba(255,236,150,.28) 0deg 7deg,rgba(255,236,150,0) 7deg 20deg);-webkit-mask:radial-gradient(circle,#000 0,#000 18%,transparent 55%);mask:radial-gradient(circle,#000 0,#000 18%,transparent 55%)}
+#lvup .lvb{pointer-events:auto;cursor:pointer;position:relative;text-align:center;padding:16px 34px 14px;border-radius:22px;background:linear-gradient(180deg,#fff8dc,#ffe9a3);border:3px solid #f2b632;box-shadow:0 0 0 6px rgba(242,182,50,.35),0 0 60px 18px rgba(255,210,80,.55),0 18px 40px rgba(0,0,0,.35);color:#5a3d00}
+#lvup .lvk{font:900 34px/1 var(--f-display);letter-spacing:.08em;background:linear-gradient(180deg,#ff9f1c,#d9480f);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 2px 0 rgba(255,255,255,.6)}
+#lvup .lvl2{margin-top:6px;font:700 15px/1.2 var(--f-display)}
+#lvup .lvl2 b{display:inline-block;font-size:30px;margin-left:4px;color:#d9480f;vertical-align:-3px}
+#lvup #lvS{display:block;margin-top:4px;font-size:12px;color:#7a5600;font-weight:600}
+@media (prefers-reduced-motion:no-preference){
+  #lvup.on{animation:lvBg 2.6s ease-out forwards}
+  #lvup.on .lvray{animation:lvSpin 2.6s linear}
+  #lvup.on .lvb{animation:lvPop 2.6s cubic-bezier(.2,1.4,.4,1) forwards}
+  #lvup.on .lvl2 b{animation:lvNum .9s ease-out .25s both}
+  .lvp.pop{animation:lvPill 1.2s ease-out}
+}
+@keyframes lvBg{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes lvSpin{from{transform:rotate(0) scale(.6)}to{transform:rotate(60deg) scale(1.1)}}
+@keyframes lvPop{0%{transform:scale(.2) rotate(-8deg);opacity:0}14%{transform:scale(1.15) rotate(2deg);opacity:1}22%{transform:scale(1) rotate(0)}82%{transform:scale(1);opacity:1}100%{transform:scale(.9);opacity:0}}
+@keyframes lvNum{0%{transform:scale(2.4);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:scale(1)}}
+@keyframes lvPill{0%{transform:scale(1)}20%{transform:scale(1.5);box-shadow:0 0 14px 5px rgba(255,210,80,.9)}100%{transform:scale(1)}}
+@keyframes celePop{0%{transform:scale(.4) rotate(-6deg);opacity:0}60%{transform:scale(1.08) rotate(1deg);opacity:1}100%{transform:scale(1) rotate(0)}}
+@keyframes celeGlow{50%{box-shadow:0 0 18px 6px rgba(242,201,76,.9)}}
+
+/* 목회 고민 카드 */
+#dlg{position:fixed;inset:0;z-index:6;display:grid;place-items:center;padding:20px;background:rgba(8,16,22,.6);pointer-events:auto}
+#dlg .box{background:var(--glass);border-radius:16px;padding:18px 20px;max-width:380px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+#dlg h2{margin:0;font-family:var(--f-display);font-size:20px}
+#dlg p{margin:0;color:var(--muted);font-size:13px}
+.dopts{display:flex;flex-direction:column;gap:6px}
+#dlg .ckick{align-self:flex-start}
+@media (prefers-reduced-motion:reduce){.fab .fc{transition:none}}
+/* 재정: 항목을 누르면 그 아래에 계산 방식이 펼쳐진다 */
+.rcpt li.rx{display:block}
+.rcpt .rxb{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:10px;width:100%;cursor:pointer;padding:3px 4px;border-radius:6px}
+.rcpt .rxb:hover,.rcpt li.open .rxb{background:var(--chip)}
+.rcpt .rxb:focus-visible{outline:2px solid var(--accent)}
+.rcpt .rxb span::after{content:' ›';opacity:.5}
+.rcpt li.open .rxb span::after{content:' ⌄'}
+.rcpt ul.rwhy{margin:3px 0 6px 6px;padding:6px 8px;border-left:3px solid var(--accent);background:var(--chip);border-radius:0 6px 6px 0;gap:3px;font-size:12px;line-height:1.45}
+.rcpt ul.rwhy li{display:list-item;list-style:'· ' inside;color:var(--ink)}
+.rcpt .rk small{color:var(--muted);font-weight:400}
+/* 바닥 카드: 종류 고르기 (색 점 + 이름 + 바꾸는 값) */
+#selCard .fsr{flex-wrap:wrap;max-width:300px}
+#selCard .fsw{display:inline-flex;align-items:center;gap:4px}
+#selCard .fsw i{width:10px;height:10px;border-radius:3px;background:var(--fc);border:1px solid rgba(0,0,0,.25);flex:none}

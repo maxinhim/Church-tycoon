@@ -1,0 +1,48 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-E2.png",
+ "grid": [
+  6,
+  6
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "0": {
+   "id": "shop",
+   "back": "shop_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "fl": 1
+  },
+  "1": {
+   "id": "shop_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "2": {
+   "id": "cafe",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "18": {
+   "id": "praise",
+   "back": "praise_b",
+   "fw": 1.0,
+   "by": 0.95,
+   "fl": 1
+  },
+  "19": {
+   "id": "praise_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "32": {
+   "id": "gazebo",
+   "fw": 1.0,
+   "by": 0.95
+  }
+ }
+}

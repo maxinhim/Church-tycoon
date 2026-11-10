@@ -1,0 +1,36 @@
+{
+ "scale": 0.5,
+ "inset": 6,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-E4.png",
+ "grid": [
+  3,
+  3
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "0": {
+   "id": "bakery",
+   "back": "bakery_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "1": {
+   "id": "bakery_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "3": {
+   "id": "bookstore",
+   "back": "bookstore_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "4": {
+   "id": "bookstore_b",
+   "fw": 1.05,
+   "by": 0.95
+  }
+ }
+}

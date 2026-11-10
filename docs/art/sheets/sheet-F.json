@@ -1,0 +1,86 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "bgauto": true,
+ "sheet": "sheet-F.png",
+ "grid": [
+  6,
+  6
+ ],
+ "out": "assets/bld",
+ "cells": {
+  "8": {
+   "id": "youth_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "2": {
+   "id": "youth",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "youth_b"
+  },
+  "11": {
+   "id": "kids_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "5": {
+   "id": "kids",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "kids_b"
+  },
+  "18": {
+   "id": "study_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "12": {
+   "id": "study",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "study_b"
+  },
+  "20": {
+   "id": "books_b",
+   "fw": 1.05,
+   "by": 0.95
+  },
+  "14": {
+   "id": "books",
+   "fw": 1.05,
+   "by": 0.95,
+   "back": "books_b"
+  },
+  "21": {
+   "id": "parktower_b",
+   "fw": 1.0,
+   "by": 0.95
+  },
+  "15": {
+   "id": "parktower",
+   "fw": 1.0,
+   "by": 0.95,
+   "back": "parktower_b",
+   "fl": 1
+  },
+  "23": {
+   "id": "playground_b",
+   "fw": 1.05,
+   "by": 0.9
+  },
+  "17": {
+   "id": "playground",
+   "fw": 1.05,
+   "by": 0.9,
+   "back": "playground_b"
+  },
+  "30": {
+   "id": "pond",
+   "fw": 1.0,
+   "by": 0.85
+  }
+ }
+}
