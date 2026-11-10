@@ -266,7 +266,8 @@ function plMoveDone(){
 }
 function plBuzz(){try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}}
 // 방금 지은 건물을 전액 돌려받고 없앤다. 같은 주 안에서만, 층을 올렸거나 이미 없으면 못 한다
-function canUnbuild(u){var b=u&&bById(u.bid);return !!b&&(b.floors||1)<=1&&u.w===S.week;}
+// 문이 열린 동안 마지막 예배 공간은 되돌리기로도 없앨 수 없다
+function canUnbuild(u){var b=u&&bById(u.bid);return !!b&&(b.floors||1)<=1&&u.w===S.week&&!lastHallWhy(b);}
 function unbuild(u){
   if(!canUnbuild(u))return false;
   var b=bById(u.bid);

@@ -1157,6 +1157,16 @@ async function gripeChecks(browser, url) {
     S.lvl = 1; S.money = 1e6; levelTick(); const up = S.lvl, shown = !document.getElementById('lvup').hidden && document.getElementById('lvN').textContent === String(up);
     S.money = 0; levelTick(); o.level = o.level && up > 5 && shown && S.lvl === up && document.getElementById('clvl').textContent === 'Lv ' + up;
     document.getElementById('lvup').click(); o.level = o.level && document.getElementById('lvup').hidden;
+    // 새는 길 막기: 대출·'짓고 되돌리기'로는 점수가 오르지 않고, 바닥을 깔고 되돌리면 꾸밈 효과도 되돌아간다
+    S.money = 30000; S.loans = []; const sc0 = scoreParts(); S.goal = GOALS.length; S.rep = 90; S.members = 200; borrow('small'); const sc1 = scoreParts();
+    o.leak = S.loans.length === 1 && Math.abs(sc1.money - sc0.money) < 1e-6; S.loans = [];
+    const av0 = assetValue(); let nb2 = null; for (let y = 2; y < PZ - 3 && !nb2; y++) for (let x = 2; x < COLS - 3 && !nb2; x++) if (canPlace(D.cafe, x, y, 2)) { build('cafe', x, y, 2); nb2 = S.buildings[S.buildings.length - 1]; }
+    o.leak = o.leak && assetValue() === av0; S.week++; o.leak = o.leak && assetValue() === av0 + D.cafe.cost; S.week--; demolish(nb2.id);
+    let fc = null; for (let y = 2; y < PZ - 3 && !fc; y++) for (let x = 2; x < COLS - 3 && !fc; x++) if (!floorWhy(x, y, 'f_clover')) fc = [x, y];
+    UI.undo = []; const fr0 = S.fresh, mo0 = S.money; paintFloor(fc[0], fc[1], 'f_clover'); const frUp = S.fresh > fr0; floorUndo();
+    o.leak = o.leak && frUp && Math.abs(S.fresh - fr0) < 1e-9 && S.money === mo0 && levelOf(NaN) === 1;
+    // 문이 열린 동안 마지막 예배 공간은 되돌리기로도 못 없앤다
+    { const hs = S.buildings.filter(isHall); S.open = true; o.leak = o.leak && (hs.length !== 1 || !canUnbuild({ bid: hs[0].id, w: S.week, cost: 0 })); }
     return o;
   });
   check(r.start50, '새 교회: 만족도 항목이 50% 안팎에서 시작, 건물 효과는 60%만, 이탈 45·소개 50 기준 (' + r.start50d + ')');
@@ -1171,6 +1181,7 @@ async function gripeChecks(browser, url) {
   check(r.expect && r.fresh, '만족도: 성도 수·교회 Level만큼 기대치가 오르고, 항목은 85까지(나머지는 보너스), 새로 꾸민 효과는 익숙해짐');
   check(r.rep, '평판: 100에서 저절로 내려오고, 높을수록 덜 오름');
   check(r.bonusCap, '만족도: 좋은 보너스는 합쳐서 +15까지만, 나쁜 것은 그대로 깎음');
+  check(r.leak, '새는 길: 대출·짓고 되돌리기로 Level이 오르지 않고, 바닥 되돌리기는 꾸밈 효과도 되돌림, 마지막 예배 공간은 되돌리기로도 못 없앰');
   check(r.level, '교회 Level: 점수로 오르고(최대 100) 내려가지 않음, 오르면 큰 배지가 뜨고 이름 옆에 보임');
   check(r.ids, '건물 정의: id가 겹치지 않음');
   check(r.hall, '예배 공간: 없으면 문을 못 열고, 문이 열린 동안 마지막 예배 공간은 철거 못 함');

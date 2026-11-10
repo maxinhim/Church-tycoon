@@ -28,14 +28,15 @@ function paintFloor(x,y,id,pid){
   if(id==='f_erase'){sl.set(null);S.money+=Math.floor(D[prev].cost*0.5);}
   // 깔린 바닥 위에 다른 바닥을 깔면 걷어낸 반값을 빼고 계산한다
   else{var c=floorSwapCost(prev,id);if(S.money<c)return '자금이 부족해요';S.money-=c;sl.set(id);addFresh(D[id].beauty);}
-  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:id==='f_erase'?0:floorSwapCost(prev,id)});
+  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:id==='f_erase'?0:floorSwapCost(prev,id),fr:id==='f_erase'?0:(D[id].beauty||0)});
   recalc();save();return '';
 }
 function floorUndo(){
   var u=UI.undo.pop();if(!u)return false;
   var sl=floorSlot(u.x,u.y,u.pid);if(!sl)return false;
   if(u.id==='f_erase'){sl.set(u.prev);S.money-=Math.floor(D[u.prev].cost*0.5);}
-  else{sl.set(u.prev);S.money+=u.c!=null?u.c:D[u.id].cost;}
+  // 되돌리면 값과 함께 '새로 꾸민 효과'도 되돌린다 (깔고 되돌리기로 꾸밈 보너스를 공짜로 쌓지 못하게)
+  else{sl.set(u.prev);S.money+=u.c!=null?u.c:D[u.id].cost;S.fresh=Math.max(0,(S.fresh||0)-(u.fr||0));}
   recalc();save();return true;
 }
 /* 깔린 바닥을 다른 종류로 바꾸기: 걷어낼 때 돌려받는 반값을 새 바닥 값에서 빼고 계산한다.
@@ -49,7 +50,7 @@ function floorSwap(x,y,id,pid){
   if(id==='f_erase'&&!prev)return '걷어낼 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
   var c=floorSwapCost(prev,id);if(c>0&&S.money<c)return '자금이 '+fmt(c-S.money)+' 모자라요';
-  S.money-=c;sl.set(id==='f_erase'?null:id);recalc();save();return '';
+  S.money-=c;sl.set(id==='f_erase'?null:id);if(id!=='f_erase')addFresh(D[id].beauty);recalc();save();return '';
 }
 function floorLine(c,ax,ay,bx,by){var a=rotPt(ax,ay),b=rotPt(bx,by),p=P(a[0],a[1],.006),q=P(b[0],b[1],.006);c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);}
 var FLOOR_TEX={f_block:'t_block',f_brick:'t_brick',f_gravel:'t_gravel',f_wood:'t_wood',f_step:'t_step',f_clover:'t_clover'};

@@ -1,16 +1,18 @@
 'use strict';
 /* ---------- 교회 Level ----------
-   점수 = 시설 가치(지은 건물·층·칸·바닥·길·땅 높이의 값) + 자금 × 0.2 + 만족도 × 20 + 성도 × 50 + 평판 × 20
+   점수 = 시설 가치(지은 건물·층·칸·바닥·길·땅 높이의 값, 이번 주에 지은 건물은 다음 주부터) + (자금 − 빚) × 0.2 + 만족도 × 20 + 성도 × 50 + 평판 × 20
    Level L이 되려면 점수가 10,000 + 800 × (L−1)^1.55 이상 (Level 2는 10,800, 5는 약 1만 7천, 10은 약 3만 4천, 50은 약 34만, 100은 약 100만).
    한 번 오른 Level은 내려가지 않는다(가장 높았던 점수 기준). 오르면 화면 가운데 큰 배지와 폭죽이 2.5초쯤 떴다가 사라진다 */
 var LV_MAX=100,LV_BASE=10000,LV_K=800,LV_P=1.55;
 function lvNeed(L){return L<=1?0:LV_BASE+LV_K*Math.pow(L-1,LV_P);}
-function levelOf(sc){if(sc<LV_BASE)return 1;return Math.min(LV_MAX,1+Math.floor(Math.pow((sc-LV_BASE)/LV_K,1/LV_P)+1e-9));}
+function levelOf(sc){if(!(sc>=LV_BASE))return 1;return Math.min(LV_MAX,1+Math.floor(Math.pow((sc-LV_BASE)/LV_K,1/LV_P)+1e-9));}
 // 시설 가치: 지금 서 있는 것들의 값 (건물·층·칸 건물의 칸과 위층·바닥 타일·길 조각·땅 높이·경사로)
 function assetValue(){
   var t=0;
   S.buildings.forEach(function(b){
     var d=defOf(b);if(!d)return;
+    // 이번 주에 지은 것은 아직 전액 되돌릴 수 있으므로 다음 주부터 친다 (짓고 되돌리기로 Level만 올리지 못하게)
+    if(b.bw===S.week)return;
     if(isRoom(b)){b.tiles.forEach(function(q){t+=D[b.def].cost+((q.f||1)-1)*MROOM.floorCost;});return;}
     t+=d.cost+((b.floors||1)-1)*floorCostOf(b);
   });
@@ -21,7 +23,8 @@ function assetValue(){
   return t;
 }
 function scoreParts(){
-  var a=assetValue(),m=Math.max(0,S.money)*0.2,md=S.mood*20,mb=S.members*50,rp=S.rep*20;
+  // 자금은 빚을 뺀 만큼만 (대출로 Level을 올리지 못하게)
+  var a=assetValue(),m=Math.max(0,S.money-debt())*0.2,md=S.mood*20,mb=S.members*50,rp=S.rep*20;
   return {asset:a,money:m,mood:md,mem:mb,rep:rp,total:Math.round(a+m+md+mb+rp)};
 }
 function churchScore(){return scoreParts().total;}
