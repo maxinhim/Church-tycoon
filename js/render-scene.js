@@ -110,7 +110,11 @@ function draw(){
     ensureDoors(gb);
     atZ(gz,function(){c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;drawDoorPads(gb);});
   }
-  if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.55;drawPiece(spc,'#ffd23f');c.globalAlpha=1;}}
+  // 고른 길 조각·바닥 칸: 건물을 고를 때처럼 노란 반투명 + 점선 테두리 (지금 무엇을 고치는지 보이게)
+  if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.6;drawPiece(spc,'#ffd23f');c.globalAlpha=1;
+    atZ((spc.l+(spc.s?.5:0))*LV+.02,function(){footprint(spc.x,spc.y,1,1,'rgba(255,210,63,.3)','#ffd23f',[6,4]);});}}
+  if(UI.selFloor&&!UI.sel&&!UI.selPiece&&selCardOn()){var sf=UI.selFloor,sp=sf.pid&&pieceById(sf.pid);
+    atZ(sp?(sp.l+(sp.s?.5:0))*LV+.02:groundZ(sf.x+.5,sf.y+.5)+.02,function(){footprint(sf.x,sf.y,1,1,'rgba(255,210,63,.38)','#ffd23f',[6,4]);});}
   if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);});
   drawFx(c);
 }

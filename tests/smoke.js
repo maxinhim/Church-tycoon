@@ -1272,8 +1272,17 @@ async function earlyChecks(browser, url) {
     // 길과 지형은 한 분류, 지형을 지을 때 안내 글 띠가 없음
     { const pb = document.getElementById('pbar'); UI.tab = 'build'; UI.fold = false; startPlace('ter_ramp'); renderPbar(); const rampHid = pb.hidden; startPlace('ter_set'); renderPbar();
       o.land = !CATS.some(c => c[0] === 'land') && CATS.some(c => c[0] === 'path' && c[1] === '길·지형') && D.ter_ramp.cat === 'path' && D.ter_set.cat === 'path' && rampHid && !pb.hidden && !!pb.querySelector('[data-act="tlv"]') && !pb.querySelector('.ptx') && pb.getBoundingClientRect().height <= 44; endPlace(); }
+    // 고른 바닥 칸·길 조각에 노란 표시: 고르기 전후로 그 칸 둘레 화면이 달라진다
+    { const cv = document.getElementById('cv'), g = cv.getContext('2d'); const k = Object.keys(S.floor)[3].split(',').map(Number);
+      const grab = () => { draw(); const r = rotPt(k[0] + .5, k[1] + .5), q = toScreen(r[0], r[1], 0), d = window.devicePixelRatio || 1; return Array.from(g.getImageData(Math.round(q[0] * d) - 6, Math.round(q[1] * d) - 3, 12, 6).data).join(','); };
+      UI.sel = null; UI.selPiece = null; UI.selFloor = null; UI.fold = true; const a = grab(); UI.selFloor = { x: k[0], y: k[1] }; const b = grab();
+      S.paths.push({ id: 9999, x: k[0] + 8, y: k[1], l: 0, s: 0, d: 2, k: 'wood' }); recalc(); UI.selFloor = null;
+      const grabP = () => { draw(); const r = rotPt(k[0] + 8.5, k[1] + .5), q = toScreen(r[0], r[1], 0), d = window.devicePixelRatio || 1; return Array.from(g.getImageData(Math.round(q[0] * d) - 6, Math.round(q[1] * d) - 3, 12, 6).data).join(','); };
+      const c0 = grabP(); UI.selPiece = 9999; const c1 = grabP(); UI.selPiece = null; S.paths = S.paths.filter(p => p.id !== 9999); recalc();
+      o.selHi = a !== b && c0 !== c1; }
     return o;
   });
+  check(r.selHi, '고른 바닥 칸·길 조각: 지도에 노란 반투명 표시가 그려짐');
   check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 안내 글 띠 없이 높이 버튼만 (경사로는 띠 없음)');
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
   check(r.fixdoor, '문 앞이 막힌 건물: 카드에 이유와 문 옮기기 버튼, 새 건물은 막히지 않은 쪽으로 문이 남');
