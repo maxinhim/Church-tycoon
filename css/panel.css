@@ -121,6 +121,9 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 .parr.on{background:#ffd23f;border-color:#b8901a;color:#3a2d00}
 #pbar{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:max-content;max-width:min(560px,calc(100% - 110px));display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;padding:6px 8px 6px 12px;font-size:11.5px;color:var(--muted);z-index:1}
 #pbar[hidden]{display:none}
+#pbar.mini{padding:4px;gap:4px;border-radius:999px}
+#pbar .ppill{border-radius:999px;font-weight:500}
+#pbar .ppill b{color:var(--ink)}
 #pbar.wide{max-width:min(620px,calc(100% - 64px))}
 #pbar .ptx{flex:1 1 220px;min-width:0;line-height:1.35}
 #pbar .ptx b{color:var(--ink);font-size:12.5px}

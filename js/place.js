@@ -58,7 +58,7 @@ function placeWhy(d,x,y,face){
   return '';
 }
 function startPlace(id){
-  UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  UI.pbarOpen=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
@@ -213,7 +213,7 @@ function plNear(d,x,y,R,offFloor){
 function plOk(){
   var k=placeKind(),now=performance.now();
   if(now<plLock)return;
-  if(k==='path'){var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
+  if(k==='path'){UI.pbarOpen=false;var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
   // 바닥: 이 칸을 칠하고 화살표 방향으로 한 칸 나아간다
   if(k==='floor'){
     var ter=isTerDef(UI.tool),g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':(ter?terApply(g0.x,g0.y,UI.tool,UI.tlv,UI.fdir):paintFloor(g0.x,g0.y,UI.tool,g0.pid));
@@ -291,13 +291,14 @@ function renderPbar(){
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
   }else if(k==='path'){
     var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sky=c.k==='sky',sl=sky?0:c.slope;
-    // 안내 문장 없이 이름·값·높이만. 못 짓는 칸이면 ✓가 흐려지고, 누르면 이유를 짧게 알려 준다
-    var info=p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span> · 높이 '+c.l+(sl?'→'+(c.l+sl):''):'';
-    h=(info?'<div class="ptx">'+info+'</div>':'')+'<div class="prow">'+
+    // 화면을 가리지 않게 평소엔 작은 알약 하나(이름·값·경사·높이)만. 누르면 고르는 줄이 펼쳐지고, 고르면 다시 접힌다
+    var lv=c.l?c.l+1+'층':'땅';
+    if(!UI.pbarOpen)h='<button class="btn ppill" data-act="pbar" aria-expanded="false" aria-label="길 종류·경사·높이 고르기">'+(p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span>':'<b>길</b>')+(sky?'':' · '+(sl>0?'오르막':sl<0?'내리막':'평지'))+' · '+lv+' ⌄</button>';
+    else h='<div class="prow">'+
       segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크'],['sky','연결 다리']])+
       segBtns('pslope',sl,[[-1,'내리막'],[0,'평지'],[1,'오르막']],sky)+
-      '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=0?' disabled':'')+'>▼</button><span class="lvl">'+(c.l?c.l+1+'층':'땅')+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
-      (c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+'<button class="btn pri" data-act="cancel">완료</button></div>';
+      '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=0?' disabled':'')+'>▼</button><span class="lvl">'+lv+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
+      (c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+'<button class="btn" data-act="pbar" aria-label="접기">⌃</button></div>';
   }else if(k==='room'){
     var rp=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y,UI.tool):null,line;
     if(!rp)line='빈 땅을 누르면 칸이 생겨요. 이어 붙이면 하나의 '+d.rname+', 지은 칸을 다시 누르면 위층(최대 '+MROOM.maxF+'층)';
@@ -306,12 +307,9 @@ function renderPbar(){
     else line=(rp.kind==='floor'?'누르면 위층을 올려요 · ':'누르면 칸을 지어요 · ')+fmt(rp.cost);
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · 위층 '+fmt(MROOM.floorCost)+'<br><span class="pt">'+line+'</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else if(isTerDef(UI.tool)){
-    var tg=UI.ghost,tp=tg?terPlan(tg.x,tg.y,UI.tool,UI.tlv,UI.fdir):null,tw=tg?cellWhy(tg.x,tg.y,UI.tool):'지도를 눌러 칸을 고르세요';
-    var ramp=UI.tool==='ter_ramp';
-    h='<div class="ptx"><b>'+d.name+'</b>'+(tp&&!tp.why?' <span class="pc">'+fmt(tp.cost)+'</span>':'')+(tw?' · '+bad(tw):'')+'<br><span class="pt">'+
-      (ramp?'칸을 누르고 화살표로 오를 방향을 고른 뒤 ✓. 화살표 쪽 땅이 낮으면 한 층 높여 줘요(값 포함). 이어 누르면 더 높이 올라가요':'칸을 누르고 높이를 고른 뒤 ✓로 한 칸씩. 화살표 쪽으로 이어 가요')+'</span></div><div class="prow">'+
-      (ramp?'':'<div class="seg"><button class="btn" data-act="tlv" data-v="-1" aria-label="한 층 낮게"'+(UI.tlv<=0?' disabled':'')+'>▼</button><span class="lvl">'+(UI.tlv?'높이 '+UI.tlv:'땅')+'</span><button class="btn" data-act="tlv" data-v="1" aria-label="한 층 높게"'+(UI.tlv>=MAXH-1?' disabled':'')+'>▲</button></div>')+
-      undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    // 안내 글 없이: 땅 높이는 높이 고르는 버튼만, 흙 경사로는 띠 없이 화살표와 ✓만 (못 짓는 칸은 ✓를 누르면 이유)
+    h=UI.tool==='ter_ramp'?'':'<div class="seg"><button class="btn" data-act="tlv" data-v="-1" aria-label="한 층 낮게"'+(UI.tlv<=0?' disabled':'')+'>▼</button><span class="lvl">'+(UI.tlv?'높이 '+UI.tlv:'땅')+'</span><button class="btn" data-act="tlv" data-v="1" aria-label="한 층 높게"'+(UI.tlv>=MAXH-1?' disabled':'')+'>▲</button></div>';
+    if(!h){el.hidden=true;plHtml='';syncPlace();return;}
   }else{
     var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool,UI.ghost.pid):'';
     var fsl=UI.ghost&&floorSlot(UI.ghost.x,UI.ghost.y,UI.ghost.pid),fpv=fsl&&fsl.get(),fnc=fpv&&fpv!==UI.tool&&d.cost?floorSwapCost(fpv,UI.tool):null;
@@ -319,7 +317,7 @@ function renderPbar(){
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)
   if(h!==plHtml){el.innerHTML=h;plHtml=h;}
-  el.className='glass'+(k==='path'||isTerDef(UI.tool)?' wide':'');
+  el.className='glass'+(k==='path'&&UI.pbarOpen?' wide':'')+(k==='path'&&!UI.pbarOpen||isTerDef(UI.tool)?' mini':'');
   syncPlace();
 }
 function setupPlace(){
