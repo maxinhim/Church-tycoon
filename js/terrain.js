@@ -133,6 +133,7 @@ function ghostZ(){var g=UI.ghost;if(!g)return 0;var p=g.pid&&pieceById(g.pid);re
 // 지금 고른 칸에 ✓를 누를 수 있는지 (바닥·지형 공용)
 function cellWhy(x,y,id){
   if(!isTerDef(id))return floorWhy(x,y,id,UI.ghost&&UI.ghost.pid);
+  if(UI.ext){var e=extPlan(x,y);return e.why||(S.money<e.cost?'자금이 부족해요':'');}
   var p=terPlan(x,y,id,UI.tlv,UI.fdir);return p.why||(S.money<p.cost?'자금이 부족해요':'');
 }
 // 바닥·지형 미리보기: 고른 칸 표시, 땅 높이는 목표 높이까지 반투명 기둥, 경사로는 오르는 쪽 화살표

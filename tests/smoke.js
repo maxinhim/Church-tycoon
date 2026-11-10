@@ -673,7 +673,8 @@ async function ministryChecks(browser, url) {
     const fl = document.getElementById('pbar').hidden && !pr.hidden && /\d/.test(pr.textContent);
     startPlace('path'); renderPbar(); const t = document.getElementById('pbar').innerText;
     const pill = document.querySelector('#pbar [data-act="pbar"]'), small = document.getElementById('pbar').getBoundingClientRect(); const closed = !!pill && !document.querySelector('#pbar [data-act="pkind"]') && small.height <= 44 && small.width <= 260; if (pill) pill.click();
-    const opened = !!document.querySelector('#pbar [data-act="pkind"]'); const sl = document.querySelector('#pbar [data-act="pslope"][data-v="1"]'); if (sl) sl.click(); const reclosed = !document.querySelector('#pbar [data-act="pkind"]') && UI.pc.slope === 1; UI.pc.slope = 0;
+    const opened = !!document.querySelector('#pbar [data-act="pkind"]'); const kd = document.querySelector('#pbar [data-act="pkind"][data-v="wood"]'); if (kd) kd.click(); let reclosed = !document.querySelector('#pbar [data-act="pkind"]') && UI.pc.k === 'wood'; UI.pc.k = 'stone';
+    syncPlace(); const upB = document.querySelector('#place [data-pl="up"]'); upB.click(); reclosed = reclosed && !upB.hidden && UI.pc.slope === 1; upB.click(); reclosed = reclosed && UI.pc.slope === 0;
     const pa = !document.getElementById('pbar').hidden && !/지도를 눌러|✓로/.test(t) && closed && opened && reclosed;
     startPlace(keep.tool); UI.ghost = keep.ghost; renderDetail(); return fl && pa; });
   const m0 = await page.evaluate(() => S.money);
@@ -1266,12 +1267,44 @@ async function earlyChecks(browser, url) {
     S.rcpt = S.rcpt || { net: 0, inc: 0, exp: 0 }; openGroup('build'); const tab0 = UI.tab; showReceipt(); const rc = document.getElementById('rcpt');
     const side = rc.classList.contains('side'), dk = document.getElementById('dock').getBoundingClientRect(), rr = rc.getBoundingClientRect(); rc.click();
     o.rcpt = side && rr.right <= dk.left + 1 && UI.tab === tab0 && rc.hidden; closeDock(); showReceipt(); o.rcpt = o.rcpt && !rc.classList.contains('side'); openGroup('build'); o.rcpt = o.rcpt && rc.classList.contains('side'); closeDock(); rc.hidden = true;
+    // 영수증은 어디를 눌러도(패널이 닫혀 있어도) 그냥 사라지고, 재정 탭을 열지 않는다
+    closeDock(); showReceipt(); { const tb = UI.tab, fd = UI.fold; document.getElementById('rcpt').click(); o.rcpt = o.rcpt && document.getElementById('rcpt').hidden && UI.tab === tb && UI.fold === fd; }
     // 주차 경고는 주차장이 열린 뒤부터, 바람 문구의 조사
     S.goal = 0; S.cov.park = 0.2; const w0 = warnings().join('|'); S.goal = GOALS.length; const w1 = warnings().join('|');
     o.small = !/주차가 모자라/.test(w0) && /주차가 모자라/.test(w1) && iga('예배 자리') === '예배 자리가' && iga('돌봄 공간') === '돌봄 공간이' && /건물을 눌러/.test(w1 + (S.buildings.some(b => b.door && !usable(b)) ? '' : '건물을 눌러'));
     // 길과 지형은 한 분류, 지형을 지을 때 안내 글 띠가 없음
     { const pb = document.getElementById('pbar'); UI.tab = 'build'; UI.fold = false; startPlace('ter_ramp'); renderPbar(); const rampHid = pb.hidden; startPlace('ter_set'); renderPbar();
-      o.land = !CATS.some(c => c[0] === 'land') && CATS.some(c => c[0] === 'path' && c[1] === '길·지형') && D.ter_ramp.cat === 'path' && D.ter_set.cat === 'path' && rampHid && !pb.hidden && !!pb.querySelector('[data-act="tlv"]') && !pb.querySelector('.ptx') && pb.getBoundingClientRect().height <= 44; endPlace(); }
+      o.land = !CATS.some(c => c[0] === 'land') && CATS.some(c => c[0] === 'path' && c[1] === '길·지형') && D.ter_ramp.cat === 'path' && D.ter_set.cat === 'path' && rampHid && pb.hidden; syncPlace(); const t0 = UI.tlv; document.querySelector('#place [data-pl="up"]').click(); o.land = o.land && UI.tlv === t0 + 1 && /높이/.test(document.querySelector('#place .ppr').textContent); endPlace(); }
+    // 고른 칸에서 이어 짓기: 화살표·▲▼가 뜨고, 옆 화살표 → ✓로 같은 높이·같은 바닥이 이어짐, 건물 칸·더 높은 칸은 막음, 되돌리기는 한 묶음
+    { let sp = null; for (let y = 4; y < PZ - 8 && !sp; y++)for (let x = 4; x < COLS - 8 && !sp; x++) { let ok = true; for (let j = -1; j <= 5 && ok; j++)for (let i = -1; i <= 5 && ok; i++)if (occ[y + j][x + i] || S.floor[(x + i) + ',' + (y + j)] || th(x + i, y + j)) ok = false; if (ok) sp = { x, y }; }
+      S.money = 50000; UI.undo = []; terApply(sp.x, sp.y, 'ter_set', 2); paintFloor(sp.x, sp.y, 'f_gravel', 0); UI.undo = [];
+      UI.tool = null; UI.fold = true; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: sp.x, y: sp.y }; renderDetail(); syncPlace();
+      const root = document.getElementById('place'), vis = q => [...root.querySelectorAll(q)].filter(e => !e.hidden).length;
+      const shown = !root.hidden && vis('.parr:not(.pv)') === 4 && vis('.pv') === 2 && vis('[data-pl="ok"]') === 0;
+      // ▲: 이 칸을 바로 한 층 높임
+      root.querySelector('[data-pl="up"]').click(); const raised = th(sp.x, sp.y) === 3 && S.floor[sp.x + ',' + sp.y] === 'f_gravel';
+      // 옆 화살표(방향 0) → 미리보기 → ✓ 두 번
+      root.querySelector('.parr[data-v="0"]').click(); syncPlace();
+      const nx = sp.x + DIRS[0][0], ny = sp.y + DIRS[0][1], n2x = nx + DIRS[0][0], n2y = ny + DIRS[0][1];
+      const started = isPlacing() && UI.tool === 'ter_set' && UI.ghost.x === nx && UI.ghost.y === ny && UI.tlv === 3 && /높이 3/.test(root.querySelector('.ppr').textContent);
+      const m0 = S.money; plLock = 0; plOk(); const cost1 = m0 - S.money; plLock = 0; plOk();
+      const ext = th(nx, ny) === 3 && S.floor[nx + ',' + ny] === 'f_gravel' && th(n2x, n2y) === 3 && S.floor[n2x + ',' + n2y] === 'f_gravel' && cost1 === 3 * TER_UP + D.f_gravel.cost;
+      // 되돌리기 한 번에 마지막 칸의 높이와 바닥이 함께 돌아옴
+      terUndoLast(); const undone = th(n2x, n2y) === 0 && !S.floor[n2x + ',' + n2y] && th(nx, ny) === 3;
+      // 건물 칸과 더 높은 칸은 막음
+      const g = UI.ghost; build('tree', g.x, g.y, 2); recalc(); const blockB = /건물/.test(cellWhy(g.x, g.y, 'ter_set'));
+      const hx = sp.x, hy = sp.y + 3; UI.ext = false; const keepU = UI.undo; UI.undo = []; terApply(hx, hy, 'ter_set', 6); UI.undo = keepU; UI.ext = true; const blockH = /더 높아요/.test(cellWhy(hx, hy, 'ter_set'));
+      endPlace();
+      // 경사로: 고르면 경사면에 맞는 표시가 그려지고, 오르는 쪽 화살표 → ✓로 한 층 위 경사로가 이어짐
+      const rx = sp.x + 2, ry = sp.y + 5; UI.undo = []; const rw = terApply(rx, ry, 'ter_ramp', 0, 0); UI.undo = [];
+      UI.tool = null; UI.fold = true; UI.selFloor = { x: rx, y: ry }; renderDetail(); syncPlace(); draw();
+      root.querySelector('.parr[data-v="0"]').click(); const rnx = rx + DIRS[0][0], rny = ry + DIRS[0][1];
+      const rstart = UI.tool === 'ter_ramp' && UI.rdir === 0 && UI.tlv === 1 && UI.ghost.x === rnx; plLock = 0; plOk();
+      const ramp = !rw && rstart && tslope(rnx, rny) === 0 && th(rnx, rny) === 1 && UI.tlv === 2; endPlace();
+      // 길 조각: 화살표로 같은 종류를 이어 짓기 시작, ▲로 오르막
+      S.paths.push({ id: 9998, x: sp.x + 5, y: sp.y + 8, l: 0, s: 0, d: 0, k: 'wood' }); recalc(); UI.tool = null; UI.fold = true; UI.selFloor = null; UI.selPiece = 9998; renderDetail(); syncPlace();
+      root.querySelector('[data-pl="up"]').click(); const pth = UI.tool === 'path' && UI.pc.k === 'wood' && UI.pc.slope === 1 && UI.pc.x === sp.x + 5 + DIRS[0][0]; endPlace(); UI.selPiece = null; S.paths = S.paths.filter(q => q.id !== 9998); recalc();
+      o.ext = shown && raised && started && ext && undone && blockB && blockH && ramp && pth; o.extd = JSON.stringify({ shown, raised, started, ext, undone, blockB, blockH, ramp, pth, cost1, rw }); }
     // 고른 바닥 칸·길 조각에 노란 표시: 고르기 전후로 그 칸 둘레 화면이 달라진다
     { const cv = document.getElementById('cv'), g = cv.getContext('2d'); const k = Object.keys(S.floor)[3].split(',').map(Number);
       const grab = () => { draw(); const r = rotPt(k[0] + .5, k[1] + .5), q = toScreen(r[0], r[1], 0), d = window.devicePixelRatio || 1; return Array.from(g.getImageData(Math.round(q[0] * d) - 6, Math.round(q[1] * d) - 3, 12, 6).data).join(','); };
@@ -1282,11 +1315,12 @@ async function earlyChecks(browser, url) {
       o.selHi = a !== b && c0 !== c1; }
     return o;
   });
+  check(r.ext, '이어 짓기: 고른 칸 둘레 화살표·▲▼, 옆 화살표 → ✓로 같은 높이·바닥·경사로·길이 이어지고, 건물 칸·더 높은 칸은 막음 (' + r.extd + ')');
   check(r.selHi, '고른 바닥 칸·길 조각: 지도에 노란 반투명 표시가 그려짐');
-  check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 안내 글 띠 없이 높이 버튼만 (경사로는 띠 없음)');
+  check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 띠 없이 지도 위 ▲▼와 ✓ 옆 높이 글씨만');
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
   check(r.fixdoor, '문 앞이 막힌 건물: 카드에 이유와 문 옮기기 버튼, 새 건물은 막히지 않은 쪽으로 문이 남');
-  check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 눌러도 재정 탭으로 넘어가지 않음');
+  check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
   check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');
   check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');
   check(r.curve, 'Level 곡선: 시작은 Lv 1, Lv 2는 약 2만, Lv 9는 약 8만, 100까지');

@@ -140,7 +140,7 @@ function rcptHtml(r,full){
     if(!full)return '<li>'+row+'</li>';
     var open=UI.fexp===l[2];
     return '<li class="rx'+(open?' open':'')+'"><button class="rxb" data-act="fexp" data-v="'+l[2]+'" aria-expanded="'+open+'">'+row+'</button>'+(open?'<ul class="rwhy">'+rcptWhy(r,l[2])+'</ul>':'')+'</li>';}).join('')+
-    '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+settleNote(r)+(full?'':'<p class="rh">눌러서 재정 보기</p>');
+    '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+settleNote(r)+(full?'':'<p class="rh">눌러서 닫기 · 내역은 현황 › 재정에서</p>');
 }
 // 영수증이 떠 있을 때 패널이 열리면 왼쪽 아래로 비킨다 (패널을 그릴 때마다 맞춘다)
 function rcptSide(){var el=$('#rcpt');if(el&&!el.hidden)el.classList.toggle('side',!$('#dock').hidden);}

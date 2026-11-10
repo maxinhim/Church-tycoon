@@ -6,6 +6,15 @@ function footprint(x,y,w,h,fill,stroke,dash){
   if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}
   c.setLineDash([]);
 }
+// 경사진 칸(흙 경사로·계단) 표시: (x,y) 칸이 z0에서 dir 쪽으로 rise만큼 오른다. 어느 방향에서 봐도 면에 붙는다
+function slopeFoot(x,y,z0,dir,rise,fill,stroke,dash){
+  var c=PJ.c,pts=[[x,y],[x+1,y],[x+1,y+1],[x,y+1]].map(function(p){
+    var t=[p[0]-x,x+1-p[0],p[1]-y,y+1-p[1]][dir],r=rotPt(p[0],p[1]);return [r[0],r[1],z0+t*rise+.02];});
+  if(dash)c.setLineDash(dash);
+  quad(pts,fill,null);
+  if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}
+  c.setLineDash([]);
+}
 function sortEnt(E){
   var n=E.length,adj=[],i,j,k;
   for(i=0;i<n;i++)adj.push([]);
@@ -112,9 +121,11 @@ function draw(){
   }
   // 고른 길 조각·바닥 칸: 건물을 고를 때처럼 노란 반투명 + 점선 테두리 (지금 무엇을 고치는지 보이게)
   if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.6;drawPiece(spc,'#ffd23f');c.globalAlpha=1;
-    atZ((spc.l+(spc.s?.5:0))*LV+.02,function(){footprint(spc.x,spc.y,1,1,'rgba(255,210,63,.3)','#ffd23f',[6,4]);});}}
+    if(spc.s)slopeFoot(spc.x,spc.y,spc.l*LV,spc.d,LV,'rgba(255,210,63,.3)','#ffd23f',[6,4]);
+    else atZ(spc.l*LV+.02,function(){footprint(spc.x,spc.y,1,1,'rgba(255,210,63,.3)','#ffd23f',[6,4]);});}}
   if(UI.selFloor&&!UI.sel&&!UI.selPiece&&selCardOn()){var sf=UI.selFloor,sp=sf.pid&&pieceById(sf.pid);
-    atZ(sp?(sp.l+(sp.s?.5:0))*LV+.02:groundZ(sf.x+.5,sf.y+.5)+.02,function(){footprint(sf.x,sf.y,1,1,'rgba(255,210,63,.38)','#ffd23f',[6,4]);});}
+    if(!sp&&isRamp(sf.x,sf.y))slopeFoot(sf.x,sf.y,th(sf.x,sf.y)*LV,tslope(sf.x,sf.y),LV,'rgba(255,210,63,.38)','#ffd23f',[6,4]);
+    else atZ(sp?sp.l*LV+.02:th(sf.x,sf.y)*LV+.02,function(){footprint(sf.x,sf.y,1,1,'rgba(255,210,63,.38)','#ffd23f',[6,4]);});}
   if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);});
   drawFx(c);
 }

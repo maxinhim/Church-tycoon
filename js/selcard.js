@@ -92,10 +92,21 @@ function syncSelCard(){
   if(UI.sel){var b=bById(UI.sel),dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2);top=toScreen(m[0],m[1],bLevel(b)*LV+bHeight(b)+.3);var bot=toScreen(m[0],m[1],bLevel(b)*LV);}
   else if(UI.selPiece){var p=pieceById(UI.selPiece),mp=rotPt(p.x+.5,p.y+.5);top=toScreen(mp[0],mp[1],p.l*LV+.5);bot=toScreen(mp[0],mp[1],p.l*LV);}
   else{var sf=UI.selFloor,mf=rotPt(sf.x+.5,sf.y+.5),fz=groundZ(sf.x+.5,sf.y+.5);top=toScreen(mf[0],mf[1],fz+.3);bot=toScreen(mf[0],mf[1],fz);}
+  // 칸을 고르면 둘레에 화살표가 뜨므로, 카드는 화살표 무리 전체의 위(자리가 없으면 아래)에 붙인다
+  var side=null;
+  if(selTarget()){var pb=plBox();if(pb){var ay0=1e9,ay1=-1e9,ax0=1e9,ax1=-1e9;pb.arr.forEach(function(a){ay0=Math.min(ay0,a.y);ay1=Math.max(ay1,a.y);ax0=Math.min(ax0,a.x);ax1=Math.max(ax1,a.x);});top=[top[0],ay0-18];bot=[bot[0],ay1+18];side=[ax0-24,ax1+24];}}
   var vw=window.innerWidth,vh=window.innerHeight,w=el.offsetWidth,h=el.offsetHeight,tb=$('#top').getBoundingClientRect().bottom+8,below=top[1]-h-10<tb;
   x=clamp(top[0],w/2+8,vw-w/2-8);
   y=below?clamp(bot[1]+16,tb,vh-h-8):clamp(top[1]-h-10,tb,vh-h-8);
-  el.classList.toggle('below',below);
+  // 위·아래 어디에도 화살표를 가리지 않고 들어갈 자리가 없으면 화살표 무리 옆에 붙인다 (▲▼는 좌우 어느 쪽에 있을 수 있어 더 넓게 비운다)
+  var fitsUp=top[1]-h-10>=tb,fitsDn=bot[1]+16+h<=vh-8,beside=false;
+  if(side&&!fitsUp&&!fitsDn){
+    var rx=side[1]+44,lx=side[0]-44;
+    if(rx+w<=vw-8){x=rx+w/2;beside=true;}else if(lx-w>=8){x=lx-w/2;beside=true;}
+    if(beside)y=clamp(top[1]-6,tb,vh-h-8);
+  }
+  el.classList.toggle('below',below&&!beside);
+  el.classList.toggle('beside',beside);
   el.style.setProperty('--ax',Math.round(clamp(top[0]-(x-w/2),14,w-14))+'px');
   el.style.transform='translate('+Math.round(x-w/2)+'px,'+Math.round(y)+'px)';
 }

@@ -116,7 +116,7 @@ function onPanel(e){
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
   else if(a==='dempiece'){var pc2=pieceById(UI.selPiece),dw=pieceDemWhy(pc2);if(pc2&&dw){toast(dw,1800);sfx('error',.4);return;}if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);sfx('demolish',.7);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
   else if(a==='undo'){
-    var ok2=isTerDef(UI.tool)?(function(){var u=UI.undo.pop();if(!u)return false;terUndo(u);return true;})():isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
+    var ok2=isTerDef(UI.tool)?terUndoLast():isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
     if(ok2)toast('되돌렸어요',1200);renderDetail();hud(true);
   }
   else if(a==='floorup'){UI.lastBuilt=null;var fw2=addFloor(bById(UI.sel));toast(fw2||'한 층 올렸어요',1400);sfx(fw2?'error':'build',fw2?.4:.8);renderDetail();hud(true);}
