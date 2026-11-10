@@ -62,7 +62,7 @@ const RULES = [
     await page.waitForTimeout(120);
     // 카드: 바라는 것부터, 없으면 그 분류에서 살 수 있는 가장 싼 것 (목록 맨 앞)
     const pick = await page.evaluate(({ ids }) => {
-      const cs = [...document.querySelectorAll('#cards .card')], ok = c => !c.classList.contains('poor') && !c.classList.contains('lock');
+      const cs = [...document.querySelectorAll('#cards .card')].filter(c => !isRoomDef(c.dataset.v)), ok = c => !c.classList.contains('poor') && !c.classList.contains('lock');   // 칸 건물은 누를 때마다 지어져서 이 봇은 다루지 않는다
       let c = null; (ids || []).some(id => (c = cs.find(x => x.dataset.v === id && ok(x))));
       const locked = (ids || []).filter(id => { const x = cs.find(y => y.dataset.v === id); return x && x.classList.contains('lock'); });
       const poor = (ids || []).filter(id => { const x = cs.find(y => y.dataset.v === id); return x && x.classList.contains('poor') && !x.classList.contains('lock'); });
@@ -153,7 +153,7 @@ const RULES = [
           else if (target) did = await build(target.cat, [target.id]);
           else { const r = (RULES.find(r => r[0].test(w)) || [])[1];
             if (!r) note(`무엇을 해야 할지 알 수 없는 문구: "${w}"`);
-            else if (r.repair) { await tap('[data-fab="status"]'); did = await tap('#panel [data-act="repairAll"]:not([disabled])'); if (!did) { const dbg = await page.evaluate(() => 'tab=' + UI.tab + ' sub=' + (UI.sub || '') + ' 버튼=' + document.querySelectorAll('#panel [data-act="repairAll"]').length + ' 꺼짐=' + document.querySelectorAll('#panel [data-act="repairAll"][disabled]').length + ' 낡은=' + needRepair().length + ' 패널글=' + document.getElementById('panel').innerText.replace(/\n/g, '/').slice(0, 80)); note('수리 버튼을 못 누름 · ' + dbg); } else note('모두 수리'); await tap('#dock [data-act="close"]'); }
+            else if (r.repair) { await tap('[data-fab="status"]'); await tap('#subtabs [data-v="status"]'); did = await tap('#panel [data-act="repairAll"]:not([disabled])'); if (!did) { const dbg = await page.evaluate(() => 'tab=' + UI.tab + ' sub=' + (UI.sub || '') + ' 버튼=' + document.querySelectorAll('#panel [data-act="repairAll"]').length + ' 꺼짐=' + document.querySelectorAll('#panel [data-act="repairAll"][disabled]').length + ' 낡은=' + needRepair().length + ' 패널글=' + document.getElementById('panel').innerText.replace(/\n/g, '/').slice(0, 80)); note('수리 버튼을 못 누름 · ' + dbg); } else note('모두 수리'); await tap('#dock [data-act="close"]'); }
             else if (r.appoint) did = await appoint();
             else if (r.link) {
               // 빨간 ? 건물을 찾아 눌러 길 잇기를 시도한다

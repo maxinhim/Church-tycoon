@@ -60,7 +60,7 @@ function renderPanel(){
   panel=$('#panel');
   var dock=$('#dock');
   // 지도에서 짓는 동안은 패널을 닫고 아래 작은 띠만 보인다
-  dock.hidden=UI.fold||isPlacing();syncTabs();renderPbar();renderSelCard();
+  dock.hidden=UI.fold||isPlacing();rcptSide();syncTabs();renderPbar();renderSelCard();
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   $('#dtitle').textContent=GROUP_TITLE[g];

@@ -142,12 +142,14 @@ function rcptHtml(r,full){
     return '<li class="rx'+(open?' open':'')+'"><button class="rxb" data-act="fexp" data-v="'+l[2]+'" aria-expanded="'+open+'">'+row+'</button>'+(open?'<ul class="rwhy">'+rcptWhy(r,l[2])+'</ul>':'')+'</li>';}).join('')+
     '<li class="tot"><span>합계</span><b class="'+(r.net<0?'neg':'pos')+'">'+(r.net<0?'−':'+')+fmt(Math.abs(r.net))+'</b></li></ul>'+settleNote(r)+(full?'':'<p class="rh">눌러서 재정 보기</p>');
 }
+// 영수증이 떠 있을 때 패널이 열리면 왼쪽 아래로 비킨다 (패널을 그릴 때마다 맞춘다)
+function rcptSide(){var el=$('#rcpt');if(el&&!el.hidden)el.classList.toggle('side',!$('#dock').hidden);}
 function showReceipt(){
   var el=$('#rcpt');if(!el||!S.rcpt)return;
   // 주일 종소리와 동전 소리
   sfx('bell',.75,0);setTimeout(function(){sfx('coins',.6,0);},450);
   el.innerHTML=rcptHtml(S.rcpt,false);el.hidden=false;
   // 건축·행사 패널이 열려 있으면 패널을 덮지 않게 왼쪽 아래로 (이때는 눌러도 닫히기만 한다)
-  el.classList.toggle('side',!$('#dock').hidden);el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  rcptSide();el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   clearTimeout(rcptTimer);rcptTimer=setTimeout(function(){el.hidden=true;},5000);
 }

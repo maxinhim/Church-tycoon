@@ -1263,7 +1263,7 @@ async function earlyChecks(browser, url) {
     // 영수증: 패널이 열려 있으면 옆으로 비켜 뜨고, 눌러도 탭이 바뀌지 않음
     S.rcpt = S.rcpt || { net: 0, inc: 0, exp: 0 }; openGroup('build'); const tab0 = UI.tab; showReceipt(); const rc = document.getElementById('rcpt');
     const side = rc.classList.contains('side'), dk = document.getElementById('dock').getBoundingClientRect(), rr = rc.getBoundingClientRect(); rc.click();
-    o.rcpt = side && rr.right <= dk.left + 1 && UI.tab === tab0 && rc.hidden; closeDock(); showReceipt(); o.rcpt = o.rcpt && !rc.classList.contains('side'); rc.hidden = true;
+    o.rcpt = side && rr.right <= dk.left + 1 && UI.tab === tab0 && rc.hidden; closeDock(); showReceipt(); o.rcpt = o.rcpt && !rc.classList.contains('side'); openGroup('build'); o.rcpt = o.rcpt && rc.classList.contains('side'); closeDock(); rc.hidden = true;
     // 주차 경고는 주차장이 열린 뒤부터, 바람 문구의 조사
     S.goal = 0; S.cov.park = 0.2; const w0 = warnings().join('|'); S.goal = GOALS.length; const w1 = warnings().join('|');
     o.small = !/주차가 모자라/.test(w0) && /주차가 모자라/.test(w1) && iga('예배 자리') === '예배 자리가' && iga('돌봄 공간') === '돌봄 공간이' && /건물을 눌러/.test(w1 + (S.buildings.some(b => b.door && !usable(b)) ? '' : '건물을 눌러'));
