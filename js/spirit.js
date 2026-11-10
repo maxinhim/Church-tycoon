@@ -22,7 +22,7 @@ function lastHallWhy(b){
   return S.buildings.some(function(o){return o!==b&&isHall(o);})?'':'교회 문이 열려 있는 동안 마지막 예배 공간은 철거할 수 없어요. 다른 예배 공간을 먼저 지어 주세요';
 }
 // 건물마다 말씀(w)·기도(p)·찬양(r) 자리
-// 기대치: 성도 300명이면 +0.6, 교회 Level 30이면 +0.435 (Level 하나에 +0.015)
+// 기대치: 성도 300명이면 +0.6, 교회 Level 10이면 +0.27 (Level 하나에 +EXP_LV)
 function expectK(m){return 1+m/500+Math.max(0,(S.lvl||1)-1)*EXP_LV;}
 // 그 행사를 연 지 몇 주 지났는지에 따라 1 → 0
 function recent(id,span){var w=(S.evW||{})[id];if(w==null)return 0;return Math.max(0,1-(S.week-w)/span);}

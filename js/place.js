@@ -53,7 +53,7 @@ function placeWhy(d,x,y,face){
   var zw=zoneWhy(d,x,y,face)||levelWhy(d,x,y,face);if(zw)return zw;
   if(!canPlace(d,x,y,face))return '다른 건물이나 길과 겹쳐요. 끌어서 옮겨 보세요';
   if(movingId())return '';
-  if(isLocked(d.id))return lockText(lockGoal(d.id))+' 지을 수 있어요';
+  if(isLocked(d.id))return lockLabel(d.id)+' 지을 수 있어요';
   if(S.money<d.cost)return '자금이 '+fmt(d.cost-S.money)+' 모자라요';
   return '';
 }

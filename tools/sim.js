@@ -107,7 +107,7 @@ function runBot(cfg) {
     const c = S.cov, r = S.rcpt || {}, g = S.gripL || {}; let gt = 0; for (const k in g) gt += g[k];
     rows.push({ w: S.week, money: Math.round(S.money), mem: S.members, mood: Math.round(S.mood), items: Math.round((c.items || 0) * 100), bonus: Math.round(S.mood - 85 * (c.items || 0)),
       spirit: Math.round(c.spirit * 100), seat: Math.round(c.seat * 100), past: Math.round(c.past * 100), fel: Math.round(c.fel * 100), park: Math.round(c.park * 100), care: Math.round(c.care * 100), comf: Math.round(c.comf * 100),
-      rep: Math.round(S.rep), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: S.goal, net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length });
+      rep: Math.round(S.rep), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: S.goal, net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length, sc: scoreParts() });
   }
   stat.wishOk = S.wishOk; stat.wishFail = S.wishFail;
   return { rows, over: !!S.over, stat };

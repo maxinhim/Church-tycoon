@@ -100,7 +100,7 @@ function onPanel(e){
   else if(a==='dem'){UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderPanel();}
   else if(a==='pick'){
     // 고르면 패널을 닫고 지도에서 바로 짓는다
-    if(isLocked(v)){toast(D[v].name+'은(는) '+lockText(lockGoal(v))+' 지을 수 있어요',1800);return;}
+    if(isLocked(v)){toast(D[v].name+'은(는) '+lockLabel(v)+' 지을 수 있어요',1800);return;}
     startPlace(v);
   }
   else if(a==='cancel'){endPlace();}

@@ -25,15 +25,32 @@ var GOALS=[
 function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 // 목표를 n개 이루면 열리는 것들 (건물 id, 'sky'=연결 다리)
 var UNLOCK={
-  chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,mfel:1,mcomf:1,lamp:1,picnic:1,planter:1,
-  dining:2,youth:2,elder:2,counsel:2,pantry:2,lounge:2,nurse:2,fountain:2,spire:2,mcare:2,study:2,gazebo:2,playground:2,shop:2,sky:2,
+  chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,mfel:1,mcomf:1,picnic:1,
+  dining:2,youth:2,elder:2,counsel:2,pantry:2,lounge:2,nurse:2,spire:2,mcare:2,study:2,gazebo:2,playground:2,shop:2,sky:2,
   badminton:1,jokgu:1,gateball:1,calli:1,art:1,
   hoops:2,craft:2,cook:2,band:2,choir:2,
-  futsal:3,grand:3,clinic:3,dawn:3,rosearch:3,mission:3,gym:3,foodbank:3,parktower:3,pond:3,statue:3,outdoor:3
+  futsal:3,grand:3,clinic:3,dawn:3,mission:3,gym:3,foodbank:3,parktower:3,outdoor:3
+};
+/* 교회 Level이 오르면 열리는 꾸미기: 목표는 기능 건물을, Level은 아름다움이 큰 꾸미기를 연다.
+   값싼 기본 꾸미기(화단·나무·울타리 등)는 처음부터 열려 있다 */
+var LV_UNLOCK={
+  cherry:2,maple:2,lantern:2,stringlight:2,
+  ginkgo:3,lamp2:3,birdbath:3,
+  lilypond:4,rosearch:4,bridge_w:4,
+  stonelamp:5,bridge_a:5,
+  fountain:6,bell:7,pond:8,statue:10
 };
 function lockGoal(id){return UNLOCK[id]||0;}
-function isLocked(id){return lockGoal(id)>S.goal;}
+function lockLv(id){return LV_UNLOCK[id]||0;}
+function isLocked(id){return lockGoal(id)>S.goal||lockLv(id)>(S.lvl||1);}
 function lockText(n){return '목표 '+n+'개 달성 후';}
+// 건물 잠금 문구: 목표가 먼저, 아니면 Level (short: 카드 가격 자리에 넣는 짧은 꼴)
+function lockLabel(id,short){
+  if(lockGoal(id)>S.goal)return short?'목표 '+lockGoal(id)+'개 후':lockText(lockGoal(id));
+  return 'Lv '+lockLv(id)+(short?' 후':' 달성 후');
+}
+// Level L이 되면 새로 열리는 꾸미기 이름
+function lvUnlockNames(L){var o=[];for(var id in LV_UNLOCK)if(LV_UNLOCK[id]===L&&D[id])o.push(D[id].name);return o;}
 // 목표 n개째를 이뤘을 때 새로 열리는 것들의 이름
 function unlockNames(n){
   var out=[];

@@ -30,7 +30,7 @@ var MOOD_ITEMS=85,BONUS_MAX=15;
 var BLD_SAT=0.6;         // 건물 자리가 만족도 항목에 쳐지는 비율
 // 항목 = (기본 b + 건물 자리 × BLD_SAT) ÷ max(최소 f, 성도 × r × 기대치). e=1이면 기대치를 곱한다
 var SAT={seat:{f:29,r:1.0,b:0,e:0},fel:{f:20,r:.9,b:10,e:1},care:{f:12,r:.5,b:6,e:1},comf:{f:12,r:.4,b:6,e:1},park:{f:14,r:.55,b:7,e:1},past:{f:50,r:1.2,b:0,e:0}};
-var EXP_LV=0.015;        // 기대치 = 1 + 성도/500 + (교회 Lv−1) × EXP_LV
+var EXP_LV=0.03;         // 기대치 = 1 + 성도/500 + (교회 Lv−1) × EXP_LV
 
 /* 영성 = 말씀 w · 기도 p · 찬양 r · 성례 s */
 var SPIRIT_W={w:.3,p:.2,r:.2,s:.3};
@@ -71,5 +71,11 @@ var WISH_FIRST=2,WISH_GAP=[2,3],WISH_DUE=5,WISH_GOOD=6,WISH_BAD=-5,WISH_FX_WEEKS
 /* 매너리즘: 새 건물·다른 행사가 STALE_AFTER주 넘게 없으면 넘은 주마다 STALE_STEP씩, 최대 STALE_MAX까지 만족도가 내려간다 */
 var STALE_AFTER=4,STALE_STEP=1.5,STALE_MAX=9;
 
-/* 교회 Level: L이 되려면 점수 ≥ LV_BASE + LV_K × (L−1)^LV_P */
-var LV_MAX=100,LV_BASE=10000,LV_K=800,LV_P=1.55;
+/* 교회 Level: L이 되려면 점수 ≥ LV_BASE + LV_K × (L−1)^LV_P
+   Lv 2는 약 2만(골고루 지으면 4~6주, 3~5분), Lv 9는 약 8만(30분쯤), Lv 100은 약 170만.
+   처음 짓는 건물로 몇 단계씩 한꺼번에 뛰지 않도록 Lv 2를 시작 점수(약 1만)보다 넉넉히 높게 둔다 */
+var LV_MAX=100,LV_BASE=15700,LV_K=4300,LV_P=1.3;
+// Level이 오를 때 축하금 = LV_GIFT0 + LV_GIFT_K × 새 Level (Lv 2는 250, Lv 10은 650)
+var LV_GIFT0=150,LV_GIFT_K=50;
+// 첫 걸음(처음 할 일 안내) 하나를 이룰 때마다 받는 돈
+var STEP_GIFT=250;
