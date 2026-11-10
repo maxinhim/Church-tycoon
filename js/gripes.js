@@ -30,9 +30,7 @@ function gripeFixes(d){var o=[];for(var k in GRIPES){var g=GRIPES[k];if(g.s&&gri
 // 사 들고 다니다 쓰레기가 생기는 매장
 var TRASHY=['cafe','bakery','vending','coffeecart','shop'];
 // 불편마다 무게: 쓰레기·붐빔은 가볍게. 방문자가 적을 때(20명 미만)는 20명으로 나눠 몇 명에 크게 흔들리지 않게
-var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};
 // 민감도: 만족도는 최대 8까지, 비율 × 11, 방문자가 적어도 14명으로 나눔(초반에도 느끼게). 챙길 일에는 방문자 10% 이상(최소 3명)이 겪은 불편만
-var GRIPE_MAX=8,GRIPE_K=11,GRIPE_N0=14,GRIPE_SHOW=0.1;
 /* 장식 목록: 둘러본 곳이 삭막한지, 쓰레기통이 가까운지 볼 때 쓴다 (recalc 때마다 다시 만든다) */
 var DECOR=[],BINS=[];
 function rebuildDecor(){

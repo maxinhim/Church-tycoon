@@ -16,7 +16,6 @@ function spawnV(member){
   gripeInit(V[V.length-1]);
 }
 // 한 주가 48초라 한 주에 오는 방문자가 예전(240초)보다 적어, 한 번 방문의 정착 확률을 올려 한 주 합계를 맞춘다
-var JOIN_P=0.09;
 /* 발자국: 노드마다 지나간 사람 수 (저장하지 않음, 주마다 절반으로 줄어든다).
    둘러보는 방문자는 발길이 덜 닿은 곳(새로 깐 길·데크)을 골라 간다 */
 var TRAF={};
@@ -82,9 +81,7 @@ function arrive(v){
   else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=WAIT_T;}}
 }
 // 한 주 48초에 맞춰 건물 안에 머무는 시간을 짧게
-var STAY=0.8;
 // 꽉 찬 건물 앞에서 기다리는 시간. 넘으면 크게 불만(평판·정착 손해, 불편 '붐빔')
-var WAIT_T=3.5,CROWD_ANNOY=1.5;
 function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*STAY*(0.8+Math.random()*0.4);}
 function finishVisit(v){
   var b=bById(v.inside);
@@ -124,7 +121,6 @@ function depart(v){
   if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:ENT+0.5,y:PZ-0.6,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 // 욕구가 이만큼 차면 그 욕구는 됐다고 보고, 평균이 이만큼이면 돌아간다 (높을수록 건물을 더 많이 들른다)
-var NEED_OK=88,NEED_DRAIN=0.4;
 function decide(v){
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;
   if(v.life<=0||avg>=NEED_OK){goLeave(v);return;}

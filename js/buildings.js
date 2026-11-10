@@ -141,7 +141,6 @@ mk('ter_set','땅 높이','land',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'
 mk('ter_ramp','흙 경사로','land',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
 /* 꾸미기에 마음 쓰도록: 기능 건물(예배·교제·매장·돌봄·편의·주차)은 2배 값.
    정원·장식·바닥·길·지형·편의 소품은 그대로. 초기 자금·목표 보상·대출·신용 한도도 같은 비율로 올렸다 */
-var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 // 편의로 옮긴 작은 소품(prop: 벤치·쓰레기통·식수대 등)은 꾸미기 때 값 그대로
 DEFS.forEach(function(d){if(PRICY_CATS.indexOf(d.cat)>=0&&!d.prop)d.cost=Math.round(d.cost*BUILD_K/10)*10;});
 // 소모임 코트의 그림 높이 (가려짐·눌러 고르기용)

@@ -55,7 +55,7 @@
 ## 7. 코드 구조 주의
 - `js/` 파일은 전역을 공유하고 로드 순서가 있음(`index.html`). 새 파일은 알맞은 자리에 추가하고 `'use strict'`로 시작.
 - 건물 id 중복 금지(테스트가 검사). 새 분류 '소모임'(`club`)은 하위 묶음(운동·취미·음악)을 `d.sub`로 가진다.
-- 밸런스 상수가 `sim.js`, `state.js`, `spirit.js`, `gripes.js`, `visitors.js`, `ministry.js`, `level.js`, `buildings.js`에 흩어져 있다(작업 3이 이를 모으는 일).
+- 밸런스 값은 `js/balance.js` 한 곳에 있고, 계산식 설명은 `docs/balance.md`. 바꾼 뒤에는 `node tools/sim.js`(52주 자동 플레이)와 `node tools/fuzz.js`(무작위 조작)로 확인한다.
 - 그림: 새 소모임 건물은 코드로 그린 임시 그림. Gemini 시트 S1~S3 프롬프트는 `docs/art/sheet-prompts.md`.
 
 ## 8. 아직 안 한 것

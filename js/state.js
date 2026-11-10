@@ -41,12 +41,9 @@ function agg(){
   return a;
 }
 // 만족도 비중 (합 1): 영성이 가장 크다
-var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07},MOOD_ITEMS=85,BONUS_MAX=15;
 /* 만족도 항목 = (기본 + 건물 자리 × 0.6) ÷ 필요.  필요 = 바닥(f)과 성도 × 비율(r) × 기대치 중 큰 쪽.
    기본은 바닥의 절반이라 처음엔 항목마다 50% 안팎에서 시작하고, 건물로 채우려면 꽤 많이 지어야 한다.
    좌석(기본 없음, 기대치 없음)은 예배 출석과 따로, 만족도에만 이렇게 계산한다. 목양은 사람(담임·부교역자·직분자)이 채운다 */
-var BLD_SAT=0.6;
-var SAT={seat:{f:29,r:1.0,b:0,e:0},fel:{f:20,r:.9,b:10,e:1},care:{f:12,r:.5,b:6,e:1},comf:{f:12,r:.4,b:6,e:1},park:{f:14,r:.55,b:7,e:1},past:{f:50,r:1.2,b:0,e:0}};
 function satHave(k){return k==='past'?MOD.cap:({seat:A.seats,fel:A.fcap,care:A.kcap,comf:A.ccap,park:A.park}[k])*BLD_SAT;}
 function satInfo(k){
   var s=SAT[k],m=Math.max(1,S.members),E=s.e?expectK(m):1,need=Math.max(s.f,m*s.r*E),have=satHave(k);

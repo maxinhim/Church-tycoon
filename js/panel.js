@@ -186,19 +186,19 @@ function moodWhy(k){
   var w=MW[k],E=c.E||1,ek=E>1.005?' × 기대치 '+E.toFixed(2)+' (성도 수·교회 Lv)':'';
   if(k==='all'){
     var it=c.items!=null?c.items:0;
-    L.push('항목 점수 '+Math.round(MOOD_ITEMS*it)+' / '+MOOD_ITEMS+' = 영성 25% · 좌석 20% · 목양 17% · 교제 12% · 주차 10% · 돌봄 9% · 편의 7%를 섞은 값('+Math.round(it*100)+'%) × '+MOOD_ITEMS);
+    L.push('항목 점수 '+Math.round(MOOD_ITEMS*it)+' / '+MOOD_ITEMS+' = '+MOOD_ROWS.filter(function(r){return MW[r[0]];}).map(function(r){return r[1]+' '+Math.round(MW[r[0]]*100)+'%';}).join(' · ')+'를 섞은 값('+Math.round(it*100)+'%) × '+MOOD_ITEMS);
     L.push('항목만으로는 '+MOOD_ITEMS+'까지예요. 나머지는 꾸밈·사역팀·행사 보너스로 채우는데, 좋은 보너스는 합쳐서 +'+BONUS_MAX+'까지만 쳐요 (지금 '+sgn(c.bonusRaw||0)+' → '+sgn(c.bonus||0)+')');
     L.push('꾸밈 '+sgn(beautyBonus())+' = 아름다움 '+(Math.round(A.beauty*10)/10)+' × '+BEAUTY_K+' + 새로 꾸민 것 '+(Math.round((S.fresh||0)*10)/10)+' × '+FRESH_K+' (최대 +8)');
-    L.push('새로 꾸민 효과는 한 주에 15%씩 익숙해져요. 정원·장식·바닥을 계속 더하거나 바꾸면 유지돼요');
+    L.push('새로 꾸민 효과는 한 주에 '+Math.round((1-FRESH_DECAY)*100)+'%씩 익숙해져요. 정원·장식·바닥을 계속 더하거나 바꾸면 유지돼요');
     (MOD.parts||[]).forEach(function(p){L.push(p[0]+' '+sgn(p[1]));});
     L.push('0~100 사이로 잘라요. '+MOOD_LEAVE+' 아래면 떠나는 성도가 늘고, '+MOOD_GAIN+' 위면 소개로 새 성도가 와요');
   }else if(k==='spirit'){
     var sp=spiritParts(),nm={w:'말씀',p:'기도',r:'찬양'},pc=function(v){return Math.round(v*100)+'%';};
-    L.push('말씀 30% · 기도 20% · 찬양 20% · 성례 30%를 섞은 값');
+    var sw=SPIRIT_W;L.push('말씀 '+pc(sw.w)+' · 기도 '+pc(sw.p)+' · 찬양 '+pc(sw.r)+' · 성례 '+pc(sw.s)+'를 섞은 값');
     ['w','p','r'].forEach(function(q){L.push(nm[q]+' '+pc(sp[q])+' = 자리 '+Math.round(sp.cap[q])+' (기본 포함, 건물은 '+Math.round(BLD_SAT*100)+'%만) ÷ 필요 '+Math.round(sp.need[q]));});
     L.push('성례 '+pc(sp.s)+' = 성찬식 '+pc(sp.sac.communion)+' · 세례식 '+pc(sp.sac.baptism)+' · 수련회 '+pc(sp.sac.retreat)+' · 절기 예배 '+pc(sp.sac.fest)+' (연 지 오래될수록 줄어요)');
     L.push('말씀: 성경공부방·선교관·소그룹실·북카페·교육팀 / 기도: 기도실·새벽기도실·중보기도팀·권사 / 찬양: 찬양실·야외 예배터·합창실·찬양팀');
-    L.push('필요는 성도 '+m+'명에 맞춰'+ek+' 늘어요 (말씀 × 0.4, 기도 × 0.25, 찬양 × 0.3, 최소 12·8·10)');
+    L.push('필요는 성도 '+m+'명에 맞춰'+ek+' 늘어요 (말씀 × '+SPIRIT_NEED.w.r+', 기도 × '+SPIRIT_NEED.p.r+', 찬양 × '+SPIRIT_NEED.r.r+', 최소 '+SPIRIT_NEED.w.f+'·'+SPIRIT_NEED.p.f+'·'+SPIRIT_NEED.r.f+')');
   }else if(k==='seat'){cap('seat','좌석');L.push('좌석이 많은 곳: '+topCap('seats'));L.push('모자라면 남는 성도만큼 매주 떠나요. 예배당·예배실 칸·층 올리기로 늘려요');}
   else if(k==='fel'){cap('fel','교제 수용');L.push('교제 수용이 큰 곳: '+topCap('fcap'));L.push('교제실·소그룹실·카페·식당으로 늘려요');}
   else if(k==='care'){cap('care','돌봄 수용');L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('돌봄실·어린이부실·유아방·경로 쉼터로 늘려요');}

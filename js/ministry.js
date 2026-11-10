@@ -262,10 +262,9 @@ function condOf(b){return b.cond==null?100:b.cond;}
 /* 노후 단계: 지도에 보이는 표시와 효율이 함께 바뀐다
    80% 이하 거미줄·효율 90% → 70% 이하 하얀 연기·75% → 60% 이하 검은 연기·55% */
 function wearStage(b){if(!maintainable(b))return 0;var c=condOf(b);return c<=60?3:(c<=70?2:(c<=80?1:0));}
-var WEAR_EFF=[1,.9,.75,.55],WEAR_NAME=['','거미줄','하얀 연기','검은 연기'];
+var WEAR_NAME=['','거미줄','하얀 연기','검은 연기'];
 function condFactor(b){return WEAR_EFF[wearStage(b)];}
 // 노후·수리: 한 주에 기본 0.8 + 이용 한 번에 0.008씩 낡고(관리팀·행정 부교역자가 줄여 줌), 수리비는 낡은 만큼 건물 값의 10%까지
-var DECAY_BASE=0.8,DECAY_USE=0.008,REPAIR_K=0.1;
 function repairCost(b){return Math.round(defOf(b).cost*REPAIR_K*(100-condOf(b))/100);}
 function repair(b){
   var c=repairCost(b);if(c<=0)return '고칠 곳이 없어요';
