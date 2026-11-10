@@ -46,7 +46,7 @@ function unlockNames(n){
 function checkGoal(){
   var g=GOALS[S.goal];
   if(!g||!g.t(S))return;
-  S.money+=g.r;S.rep=clamp(S.rep+g.rep,0,100);S.goal++;
+  S.money+=g.r;gainRep(g.rep);S.goal++;
   var opened=unlockNames(S.goal);
   var lines=['후원금 +'+fmt(g.r),'평판 +'+g.rep];
   if(opened.length)lines.push('새로 열림 · '+opened.join(', '));
@@ -130,12 +130,12 @@ var EVENTS={
     need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=4;}},
   baptism:{name:'세례식',cost:300,cd:6,dur:4,goal:0,desc:'영성(성례) ↑, 평판 +4, 4주간 새 성도 정착(이탈 -25%, 만족 +2)',
     need:function(){return S.newSinceBap>=3?'':'지난 세례 뒤 새 성도가 3명 이상 필요해요 (지금 '+S.newSinceBap+'명)';},
-    now:function(){S.rep=clamp(S.rep+4,0,100);S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=2;}},
+    now:function(){gainRep(4);S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=2;}},
   street:{name:'노방전도',cost:250,cd:3,dur:2,goal:0,desc:'2주간 방문자 +40%',mods:function(m){m.vis*=1.4;}},
   bazaar:{name:'바자회',cost:300,cd:8,dur:0,goal:1,desc:'수익 600 + 성도×12, 평판 +2',
-    now:function(){var g=600+S.members*12;S.money+=g;S.weekInc+=g;S.rep=clamp(S.rep+2,0,100);}},
+    now:function(){var g=600+S.members*12;S.money+=g;S.weekInc+=g;gainRep(2);}},
   service:{name:'지역 봉사의 날',cost:400,cd:6,dur:0,goal:1,desc:'평판 +6 (선교팀 단계마다 +50%)',
-    now:function(){S.rep=clamp(S.rep+6*(1+0.5*S.staff.mission),0,100);}},
+    now:function(){gainRep(6*(1+0.5*S.staff.mission));}},
   retreat:{name:'수련회',cost:1500,cd:12,dur:3,goal:2,desc:'영성(성례) ↑, 3주간 만족 +12, 이탈 -50% (비용 1,500 + 성도×15)',
     costFn:function(){return 1500+S.members*15;},mods:function(m){m.mood+=12;m.loss*=0.5;}},
   revival:{name:'부흥회',cost:3000,cd:16,dur:1,goal:3,desc:'1주간 방문자 +120%, 정착률 +50%',

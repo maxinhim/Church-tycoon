@@ -16,7 +16,7 @@ function spawnV(member){
   gripeInit(V[V.length-1]);
 }
 // 한 주가 48초라 한 주에 오는 방문자가 예전(240초)보다 적어, 한 번 방문의 정착 확률을 올려 한 주 합계를 맞춘다
-var JOIN_P=0.14;
+var JOIN_P=0.09;
 /* 발자국: 노드마다 지나간 사람 수 (저장하지 않음, 주마다 절반으로 줄어든다).
    둘러보는 방문자는 발길이 덜 닿은 곳(새로 깐 길·데크)을 골라 간다 */
 var TRAF={};
@@ -116,8 +116,8 @@ function goLeave(v){
 function depart(v){
   v.dead=true;gripeLeave(v);
   var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4-v.annoy*5;
-  if(v.member){S.rep=clamp(S.rep+(avg-60)*0.001,0,100);return;}
-  S.rep=clamp(S.rep+(avg-60)*0.003,0,100);
+  if(v.member){gainRep((avg-REP_MOOD0)*0.001);return;}
+  gainRep((avg-REP_MOOD0)*0.003);
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
   var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);

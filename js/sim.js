@@ -26,6 +26,9 @@ function update(dt){
 // 한 주 48초 기준. 자금 걱정보다 짓고 꾸미는 재미에 집중하도록 수입을 넉넉하게:
 // 매장은 한 번 살 때 8배(SHOP_K), 재료비는 판매액의 25%. 헌금은 출석 한 명당 30, 방문자 한 명당 3, 개척 후원은 600에서 주마다 6씩 줄어든다
 var MOOD_LEAVE=45,MOOD_GAIN=50;
+// 평판: 만족도·방문자 만족이 50일 때 제자리. 40을 넘으면 넘은 만큼 × REP_DECAY씩 식고, 행사로 얻는 평판은 높을수록 덜 오른다
+var REP_MOOD0=50,REP_DECAY=0.1;
+function gainRep(v){S.rep=clamp(S.rep+(v>0?v*clamp((100-S.rep)/60,0.15,1):v),0,100);}
 var VIS_RATE=0.6,SHOP_COST=0.25,SHOP_K=8,OFFER_PER=30,VIS_GIVE=3,SPONSOR0=600,SPONSOR_DROP=6;
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
@@ -72,11 +75,12 @@ function weekEnd(){
   if(m>A.seats)churn+=(m-A.seats)*0.3;
   if(m>MOD.cap)churn+=(m-MOD.cap)*0.1;
   var lose=Math.floor(churn+Math.random());
-  var gain=mood>=MOOD_GAIN?Math.floor(m*0.02*(mood-MOOD_GAIN)/(100-MOOD_GAIN)/(1+m/300)+Math.random()*0.8):0;
+  var gain=mood>=MOOD_GAIN?Math.floor(m*0.02*(mood-MOOD_GAIN)/(100-MOOD_GAIN)/(1+m/300)+Math.random()):0;
   S.members=Math.max(0,m-lose+gain);
   if(lose>gain)msg+=' · 성도 '+(lose-gain)+'명이 떠났어요';
   // 평판: 40을 넘으면 넘은 만큼 빨리 식는다. 봉사·선교·행사·미디어로 꾸준히 채워야 80을 지킨다
-  S.rep=clamp(S.rep+A.rep+MOD.rep+(mood-60)*0.02-(S.rep>40?(S.rep-40)*0.08:0),0,100);
+  gainRep(A.rep+MOD.rep+(mood-REP_MOOD0)*0.02);
+  if(S.rep>40)S.rep=clamp(S.rep-(S.rep-40)*REP_DECAY,0,100);
   S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;

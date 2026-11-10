@@ -1140,12 +1140,17 @@ async function gripeChecks(browser, url) {
     const lv0 = S.lvl; S.lvl = 1; o.expect = Math.abs(expectK(300) - 1.6) < 1e-9 && expectK(0) === 1;
     S.lvl = 31; o.expect = o.expect && Math.abs(expectK(0) - 1.45) < 1e-9; S.lvl = lv0;
     // 보너스 넘침 막기: 항목이 모두 100%여도 항목 점수는 85, 나머지는 보너스로
-    recalc(); o.expect = o.expect && MOOD_ITEMS === 85 && S.cov.items <= 1 && Math.abs(S.mood - Math.min(100, Math.max(0, MOOD_ITEMS * S.cov.items + beautyBonus() + MOD.mood))) < 1e-6;
+    recalc(); o.expect = o.expect && MOOD_ITEMS === 85 && S.cov.items <= 1 && Math.abs(S.mood - Math.min(100, Math.max(0, MOOD_ITEMS * S.cov.items + S.cov.bonus + S.cov.malus))) < 1e-6;
     // 익숙해짐: 꾸밈을 새로 지으면 fresh가 쌓이고, 주마다 15%씩 줄어든다
     S.fresh = 0; let fl = null; for (let y = 2; y < PZ - 2 && !fl; y++) for (let x = 2; x < COLS - 2 && !fl; x++) if (canPlace(D.fountain, x, y, 2)) { build('fountain', x, y, 2); fl = 1; }
     const f1 = S.fresh; S.evtLeft = 2; weekEnd(); o.fresh = f1 === D.fountain.beauty && Math.abs(S.fresh - f1 * 0.85) < 1e-9;
     // 평판: 100에서 저절로 내려온다
     S.rep = 100; S.evtLeft = 2; weekEnd(); o.rep = S.rep < 97;
+    // 평판은 높을수록 덜 오르고(행사·주간 효과 모두), 좋은 보너스는 합쳐서 +15까지만
+    S.rep = 20; gainRep(6); const lowGain = S.rep - 20; S.rep = 90; gainRep(6); const hiGain = S.rep - 90; S.rep = 50; gainRep(-3);
+    o.rep = o.rep && lowGain === 6 && hiGain < 1.5 && hiGain > 0 && S.rep === 47 && REP_MOOD0 === 50;
+    S.tempMood = 40; recalc(); o.bonusCap = S.cov.bonus === BONUS_MAX && S.cov.bonusRaw > BONUS_MAX && Math.abs(S.mood - Math.min(100, MOOD_ITEMS * S.cov.items + BONUS_MAX + S.cov.malus)) < 1e-6;
+    S.tempMood = -10; recalc(); o.bonusCap = o.bonusCap && S.cov.malus <= -10; S.tempMood = 0; recalc();
     // 교회 Level: 점수 기준으로 오르고, 돈을 써도 내려가지 않으며, 최대 100
     o.level = levelOf(0) === 1 && levelOf(lvNeed(2)) === 2 && levelOf(lvNeed(37)) === 37 && levelOf(1e12) === 100 && lvNeed(2) < lvNeed(3);
     for (let L = 2; L < 100; L++) if (levelOf(lvNeed(L) - 1) !== L - 1) o.level = false;
@@ -1164,7 +1169,8 @@ async function gripeChecks(browser, url) {
   check(r.mood, '현황: 만족도 항목을 누르면 계산 방식이 펼쳐짐 (영성 포함 8줄)');
   check(r.spirit, '영성: 성찬식 등 성례를 열면 오르고 시간이 지나면 줄어듦, 만족도 비중 합 1');
   check(r.expect && r.fresh, '만족도: 성도 수·교회 Level만큼 기대치가 오르고, 항목은 85까지(나머지는 보너스), 새로 꾸민 효과는 익숙해짐');
-  check(r.rep, '평판: 100에서 저절로 내려옴 (꾸준한 노력이 있어야 높게 유지)');
+  check(r.rep, '평판: 100에서 저절로 내려오고, 높을수록 덜 오름');
+  check(r.bonusCap, '만족도: 좋은 보너스는 합쳐서 +15까지만, 나쁜 것은 그대로 깎음');
   check(r.level, '교회 Level: 점수로 오르고(최대 100) 내려가지 않음, 오르면 큰 배지가 뜨고 이름 옆에 보임');
   check(r.ids, '건물 정의: id가 겹치지 않음');
   check(r.hall, '예배 공간: 없으면 문을 못 열고, 문이 열린 동안 마지막 예배 공간은 철거 못 함');

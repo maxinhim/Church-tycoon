@@ -187,7 +187,7 @@ function moodWhy(k){
   if(k==='all'){
     var it=c.items!=null?c.items:0;
     L.push('항목 점수 '+Math.round(MOOD_ITEMS*it)+' / '+MOOD_ITEMS+' = 영성 25% · 좌석 20% · 목양 17% · 교제 12% · 주차 10% · 돌봄 9% · 편의 7%를 섞은 값('+Math.round(it*100)+'%) × '+MOOD_ITEMS);
-    L.push('항목만으로는 '+MOOD_ITEMS+'까지예요. 나머지는 꾸밈·사역팀·행사 보너스로 채워요');
+    L.push('항목만으로는 '+MOOD_ITEMS+'까지예요. 나머지는 꾸밈·사역팀·행사 보너스로 채우는데, 좋은 보너스는 합쳐서 +'+BONUS_MAX+'까지만 쳐요 (지금 '+sgn(c.bonusRaw||0)+' → '+sgn(c.bonus||0)+')');
     L.push('꾸밈 '+sgn(beautyBonus())+' = 아름다움 '+(Math.round(A.beauty*10)/10)+' × '+BEAUTY_K+' + 새로 꾸민 것 '+(Math.round((S.fresh||0)*10)/10)+' × '+FRESH_K+' (최대 +8)');
     L.push('새로 꾸민 효과는 한 주에 15%씩 익숙해져요. 정원·장식·바닥을 계속 더하거나 바꾸면 유지돼요');
     (MOD.parts||[]).forEach(function(p){L.push(p[0]+' '+sgn(p[1]));});

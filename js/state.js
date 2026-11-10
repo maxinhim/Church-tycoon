@@ -41,7 +41,7 @@ function agg(){
   return a;
 }
 // 만족도 비중 (합 1): 영성이 가장 크다
-var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07},MOOD_ITEMS=85;
+var MW={seat:.2,spirit:.25,past:.17,fel:.12,park:.1,care:.09,comf:.07},MOOD_ITEMS=85,BONUS_MAX=15;
 /* 만족도 항목 = (기본 + 건물 자리 × 0.6) ÷ 필요.  필요 = 바닥(f)과 성도 × 비율(r) × 기대치 중 큰 쪽.
    기본은 바닥의 절반이라 처음엔 항목마다 50% 안팎에서 시작하고, 건물로 채우려면 꽤 많이 지어야 한다.
    좌석(기본 없음, 기대치 없음)은 예배 출석과 따로, 만족도에만 이렇게 계산한다. 목양은 사람(담임·부교역자·직분자)이 채운다 */
@@ -59,7 +59,9 @@ function calcMood(){
   var seat=q('seat'),fel=q('fel'),care=q('care'),comf=q('comf'),park=q('park'),past=q('past');
   // 항목 점수는 최대 85까지만. 나머지 15는 꾸밈·사역팀·행사 같은 보너스로만 채운다 (모자란 항목을 보너스로 덮지 못하게)
   var items=MW.seat*seat+MW.spirit*sp.v+MW.past*past+MW.fel*fel+MW.park*park+MW.care*care+MW.comf*comf;
-  var mood=MOOD_ITEMS*items+beautyBonus()+MOD.mood;
-  return {mood:clamp(mood,0,100),items:items,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
+  // 좋은 보너스(꾸밈·사역팀·권사·행사)는 합쳐서 BONUS_MAX까지만. 나쁜 것(침체·낡음·불편)은 그대로 깎는다
+  var pos=beautyBonus(),neg=0;(MOD.parts||[]).forEach(function(p){if(p[1]>0)pos+=p[1];else neg+=p[1];});
+  var mood=MOOD_ITEMS*items+Math.min(BONUS_MAX,pos)+neg;
+  return {mood:clamp(mood,0,100),items:items,bonus:Math.min(BONUS_MAX,pos),bonusRaw:pos,malus:neg,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
 }
 function recalc(){refreshNav();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;}
