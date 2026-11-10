@@ -1,8 +1,10 @@
 'use strict';
 /* ---------- 교회 Level ----------
    점수 = 시설 가치(지은 건물·층·칸·바닥·길·땅 높이의 값, 이번 주에 지은 건물은 다음 주부터) + (자금 − 빚) × 0.2 + 만족도 × 20 + 성도 × 50 + 평판 × 20
-   Level L이 되려면 점수가 10,000 + 800 × (L−1)^1.55 이상 (Level 2는 10,800, 5는 약 1만 7천, 10은 약 3만 4천, 50은 약 34만, 100은 약 100만).
-   한 번 오른 Level은 내려가지 않는다(가장 높았던 점수 기준). 오르면 화면 가운데 큰 배지와 폭죽이 2.5초쯤 떴다가 사라진다 */
+   Level L이 되려면 점수가 LV_BASE + LV_K × (L−1)^LV_P 이상 (값과 예시는 balance.js).
+   한 번 오른 Level은 내려가지 않는다(가장 높았던 점수 기준). 오르면 화면 가운데 큰 배지와 폭죽이 2.5초쯤 떴다가 사라진다.
+   보상: 오를 때마다 축하금(lvGift), 정해진 Level에는 새 꾸미기가 열린다(ministry.js LV_UNLOCK) */
+function lvGift(L){return LV_GIFT0+LV_GIFT_K*L;}
 function lvNeed(L){return L<=1?0:LV_BASE+LV_K*Math.pow(L-1,LV_P);}
 function levelOf(sc){if(!(sc>=LV_BASE))return 1;return Math.min(LV_MAX,1+Math.floor(Math.pow((sc-LV_BASE)/LV_K,1/LV_P)+1e-9));}
 // 시설 가치: 지금 서 있는 것들의 값 (건물·층·칸 건물의 칸과 위층·바닥 타일·길 조각·땅 높이·경사로)
@@ -31,7 +33,13 @@ function churchScore(){return scoreParts().total;}
 function levelTick(quiet){
   var L=levelOf(churchScore());
   if(S.lvl==null||quiet){S.lvl=Math.max(S.lvl||1,L);syncLevel();return;}
-  if(L>S.lvl){var from=S.lvl;S.lvl=L;syncLevel(true);showLevelUp(L,from);save();}
+  if(L>S.lvl){
+    var from=S.lvl,gift=0,opened=[];
+    for(var k=from+1;k<=L;k++){gift+=lvGift(k);opened=opened.concat(lvUnlockNames(k));}
+    S.lvl=L;S.money+=gift;
+    addLog('교회 Lv '+L+' · 축하금 +'+fmt(gift)+(opened.length?' · 새 꾸미기 '+opened.join(', '):''));
+    syncLevel(true);showLevelUp(L,from,gift,opened);save();
+  }
   else syncLevel();
 }
 function syncLevel(pop){
@@ -43,14 +51,15 @@ function syncLevel(pop){
 // 레벨 배지를 누르면: 지금 점수와 다음 레벨까지
 function levelInfo(){
   var p=scoreParts(),L=S.lvl||1,nx=L<LV_MAX?Math.max(0,Math.ceil(lvNeed(L+1)-p.total)):0;
-  toast('교회 Lv '+L+' · 점수 '+fmt(p.total)+' (시설 '+fmt(Math.round(p.asset))+' · 자금 '+fmt(Math.round(p.money))+' · 만족·성도·평판 '+fmt(Math.round(p.mood+p.mem+p.rep))+')'+(L<LV_MAX?' · 다음 레벨까지 '+fmt(nx):' · 최고 레벨'),4200);
+  var nu='';for(var k=L+1;k<=LV_MAX&&!nu;k++){var n=lvUnlockNames(k);if(n.length)nu=' · Lv '+k+'에 '+n.join(', ')+' 열림';}
+  toast('교회 Lv '+L+' · 점수 '+fmt(p.total)+' (시설 '+fmt(Math.round(p.asset))+' · 자금 '+fmt(Math.round(p.money))+' · 만족·성도·평판 '+fmt(Math.round(p.mood+p.mem+p.rep))+')'+(L<LV_MAX?' · 다음 레벨까지 '+fmt(nx)+nu:' · 최고 레벨'),4200);
 }
 /* ---------- 레벨 업 축하: 큰 배지 + 빛 + 폭죽 (게임은 멈추지 않고, 누르면 바로 닫힌다) ---------- */
 var lvTimer=0;
-function showLevelUp(L,from){
+function showLevelUp(L,from,gift,opened){
   var el=$('#lvup');if(!el)return;
   $('#lvN').textContent=L;
-  $('#lvS').textContent=S.name+(L-from>1?' · '+(L-from)+'단계 올랐어요':'')+(L>=LV_MAX?' · 최고 레벨!':'');
+  $('#lvS').textContent='축하금 +'+fmt(gift||0)+(opened&&opened.length?' · 새 꾸미기 '+opened.join(', '):'')+(L-from>1?' · '+(L-from)+'단계 올랐어요':'')+(L>=LV_MAX?' · 최고 레벨!':'');
   el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   sfx('bell',.9,0);setTimeout(function(){sfx('join',.8,0);},250);setTimeout(function(){sfx('coins',.6,0);},520);
   clearTimeout(lvTimer);lvTimer=setTimeout(function(){el.hidden=true;},2600);

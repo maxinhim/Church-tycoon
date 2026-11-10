@@ -20,7 +20,7 @@ function newState(dk){
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
     hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
     grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{communion:-2},lvl:null,
-    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null};
+    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:2,step:0,stepW:0};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){

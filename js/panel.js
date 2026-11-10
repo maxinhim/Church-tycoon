@@ -94,7 +94,7 @@ function renderBuild(){
       var lk=isLocked(d.id);if(lk)el.classList.add('lock');
       var tg=effTags(d);
       el.setAttribute('aria-label',d.name+', '+(lk?'잠김':fmt(d.cost))+'. '+effText(d));
-      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?'목표 '+lockGoal(d.id)+'개 후':fmt(d.cost)+(d.up?'<small> · 주 '+d.up+'</small>':''))+'</span>'+
+      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?lockLabel(d.id,true):fmt(d.cost)+(d.up?'<small> · 주 '+d.up+'</small>':''))+'</span>'+
         '<span class="ef">'+(tg.length?tg.map(function(x){return '<i>'+x+'</i>';}).join(''):'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });

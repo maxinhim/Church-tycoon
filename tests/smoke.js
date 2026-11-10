@@ -16,6 +16,7 @@ catch (e) {
 const ROOT = path.resolve(__dirname, '..');
 let failures = 0;
 function check(cond, msg) { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!cond) failures++; }
+async function skipSteps(page) { await page.evaluate(() => { if (typeof STEPS !== "undefined" && typeof S !== "undefined" && S) S.step = STEPS.length; }); }
 
 /* ---------- 정적 검사 ---------- */
 function staticChecks() {
@@ -92,7 +93,7 @@ async function playChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
   const page = await ctx.newPage();
   const errs = watchErrors(page);
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   await page.waitForTimeout(800);
   const state = () => page.evaluate(() => JSON.stringify(S));
   const overlay = () => page.evaluate(() => getComputedStyle(document.getElementById('rotate')).display !== 'none');
@@ -153,7 +154,7 @@ async function seededRun(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const out = await page.evaluate(() => {
     const c = window.__ct; c.init();
     let built = 0;
@@ -179,9 +180,9 @@ async function modularChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 99999; S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.step = STEPS.length; S.money = 99999; levelTick(true); S.goal = GOALS.length; S.dlg = null;
     const rooms = () => S.buildings.filter(b => b.def === 'mroom');
     // 왼쪽부터 5칸이 비어 있는 줄을 찾는다
     let X = -1, Y = -1;
@@ -247,9 +248,9 @@ async function pathChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 99999; S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.step = STEPS.length; S.money = 99999; levelTick(true); S.goal = GOALS.length; S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     const starter = S.buildings.find(b => b.def === 'room');
@@ -339,9 +340,9 @@ async function stackChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999; S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.step = STEPS.length; S.money = 999999; levelTick(true); S.goal = GOALS.length; S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     // 완성품 건물 층 올리기
@@ -435,9 +436,9 @@ async function rulesChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.goal = GOALS.length; S.dlg = null;
+    window.__ct.init(); S.step = STEPS.length; S.goal = GOALS.length; S.dlg = null;
     const o = {};
     // 구역: 주차장은 주차 구역에만, 주차 구역엔 주차장만, 입구 보도는 비움
     o.zones = canPlace(D.lot, 1, PZ, 2) && !canPlace(D.lot, 1, 5, 2) && !canPlace(D.wc, 1, PZ, 2) && !canPlace(D.lots, ENT - 1, PZ, 2) &&
@@ -485,7 +486,7 @@ async function rulesChecks(browser, url) {
     S.t = WEEK - 0.05; update(0.1);
     o.repayWeekly = S.loans[0].bal < bal0 && S.rcpt && S.rcpt.loan === S.loans[0].pay;
     o.receipt = !!S.rcpt && !document.getElementById('rcpt').hidden && /주일 정산/.test(document.getElementById('rcpt').textContent);
-    S.money = 99999; o.repayAll = repayLoan(0) === '' && S.loans.length === 0;
+    S.money = 99999; levelTick(true); o.repayAll = repayLoan(0) === '' && S.loans.length === 0;
     // 문을 닫은 주일은 온라인 헌금만
     S.open = false; S.t = WEEK - 0.05; update(0.1);
     o.closedSunday = S.rcpt.closed && S.rcpt.offering === 0 && S.rcpt.online > 0;
@@ -569,9 +570,9 @@ async function ministryChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init();
+    window.__ct.init(); S.step = STEPS.length;
     const o = {};
     o.normalStart = S.diff === 'normal' && S.money === DIFF.normal.money;
     o.locked = isLocked('chapel') && hireTeam('admin') !== '' && appoint('deacon') !== '';
@@ -581,7 +582,7 @@ async function ministryChecks(browser, url) {
     o.goalMid = S.goal === 1 && S.week === wk0;
     o.goal = S.goal === 1 && S.money === m0 + GOALS[0].r && S.rep >= r0 + GOALS[0].rep - 0.001 && !isLocked('chapel') && !document.getElementById('cele').hidden && CF.length > 0;
     // 부지: 산 땅 밖에는 못 짓고, 사면 넓어진다
-    S.money = 99999;
+    S.money = 99999; levelTick(true);
     // 부지 사기는 없앴다: 지도 어디에나(도로 줄 제외) 지을 수 있다
     o.anywhere = canPlace(D.room, 2, 2, 2) && !canPlace(D.room, 2, ROWS - 2, 2) && typeof buyLand === 'undefined';
     o.noStamina = S.stam === undefined && typeof restWeek === 'undefined';
@@ -642,7 +643,7 @@ async function ministryChecks(browser, url) {
   check(r.passive, '균형: 손대지 않으면 30주 동안 저절로 커지지 않고 초반 파산도 없음');
   check(r.lawn, '지도 밖: 빈 공간이 잔디색으로 채워짐');
   // 화면 조작: 동그란 기능 버튼으로 패널 열고 닫기, 건물을 지으면 수치 글씨
-  await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; UI.cat = 'worship'; closeDock(); });
+  await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; levelTick(true); UI.cat = 'worship'; closeDock(); });
   const closedAtStart = await page.evaluate(() => document.getElementById('dock').hidden);
   await page.click('#fab [data-fab="status"]');
   const quick = await page.evaluate(() => !document.getElementById('dock').hidden && /만족도/.test(document.getElementById('panel').textContent) && /챙길 일/.test(document.getElementById('panel').textContent) && document.querySelector('#fab [data-fab="status"]').classList.contains('on'));
@@ -850,9 +851,9 @@ async function terrainChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999; S.goal = GOALS.length; S.dlg = null; S.open = true;
+    window.__ct.init(); S.step = STEPS.length; S.money = 999999; levelTick(true); S.goal = GOALS.length; S.dlg = null; S.open = true;
     S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
     const o = {};
     // (18..21, 8..11) 높이 2 고원, 앞쪽(+y)에서 흙 경사로 두 칸으로 오른다: (19,13) 0→1, (19,12) 1→2
@@ -949,9 +950,9 @@ async function deckChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999; S.goal = GOALS.length; S.dlg = null; S.open = true;
+    window.__ct.init(); S.step = STEPS.length; S.money = 999999; levelTick(true); S.goal = GOALS.length; S.dlg = null; S.open = true;
     S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
     const o = {};
     // 높이 1 데크 4x3 (x 20..23, y 6..8), 앞쪽(+y)에서 철골 계단으로 오른다
@@ -1005,7 +1006,7 @@ async function deckChecks(browser, url) {
     // 건축 목록: 지금 지을 수 있는 것부터 싼 순서
     S.money = 1000; const ord = buildOrder('worship'), can = d => !isLocked(d.id) && S.money >= d.cost;
     const k = ord.findIndex(d => !can(d)); o.order = ord.slice(0, k < 0 ? ord.length : k).every((d, i, a) => !i || a[i - 1].cost <= d.cost) && (k < 0 || ord.slice(k).every(d => !can(d)));
-    S.money = 999999;
+    S.money = 999999; levelTick(true);
     // 방문자: 새 건물에 끌리고, 발길이 적은 바닥을 골라 둘러본다
     o.novel = novelty(cafe) > novelty(Object.assign({}, cafe, { bw: S.week - 20, uses: 50 }));
     recalc(); const W = NAV.walk; W.forEach(n => { TRAF[n] = 50; }); const fresh = W[W.length - 1]; delete TRAF[fresh];
@@ -1041,9 +1042,9 @@ async function gripeChecks(browser, url) {
     window.__CT_TEST = true;
     window.requestAnimationFrame = () => 0;
   });
-  await page.goto(url);
+  await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.dlg = null; S.open = true;
+    window.__ct.init(); S.step = STEPS.length; S.dlg = null; S.open = true;
     const o = {};
     // 예배 공간: 문이 열린 동안 마지막 예배 공간은 철거 못 하고, 없으면 문을 못 연다
     S.open = true; const hall = S.buildings.find(b => isHall(b)); UI.sel = hall.id;
@@ -1061,7 +1062,7 @@ async function gripeChecks(browser, url) {
     o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.chapel.cost === 5600 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 15 && MROOM.floorCost === 1000 && GOALS[0].r === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
     o.props = ['bench', 'picnic', 'parasol', 'swing', 'sunbed', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
-    S.money = 999999; S.goal = GOALS.length; recalc();
+    S.money = 999999; levelTick(true); S.goal = GOALS.length; recalc();
     const put = id => { for (let y = PZ - 3; y > 0; y--) for (let x = 2; x < COLS - 3; x++) if (canPlace(D[id], x, y, 2)) { build(id, x, y, 2); const nb = S.buildings[S.buildings.length - 1]; recalc(); return nb; } return null; };
     // 길 잇기: 고른 바닥으로 깔고 값은 칸 수 × 그 바닥 값
     const cafe = put('cafe'); const lp = linkPlan(cafe), m0 = S.money;
@@ -1135,10 +1136,10 @@ async function gripeChecks(browser, url) {
     // 영성: 성찬식을 열면 성례가 차고, 8주가 지나면 사라진다
     S.evW = {}; const s0 = spiritParts().s; S.week = 20; S.evW.communion = 20; const s1 = spiritParts(); S.week = 28; const s2 = spiritParts();
     o.spirit = s0 === 0 && s1.sac.communion === 1 && s1.s > 0.5 && s2.sac.communion === 0 && Math.abs(Object.values(MW).reduce((a, b) => a + b, 0) - 1) < 1e-9;
-    S.evW = {}; S.ev = {}; S.money = 99999; runEvent('communion'); o.spirit = o.spirit && S.evW.communion === S.week;
+    S.evW = {}; S.ev = {}; S.money = 99999; levelTick(true); runEvent('communion'); o.spirit = o.spirit && S.evW.communion === S.week;
     // 기대치: 300명이면 필요 1.6배
     const lv0 = S.lvl; S.lvl = 1; o.expect = Math.abs(expectK(300) - 1.6) < 1e-9 && expectK(0) === 1;
-    S.lvl = 31; o.expect = o.expect && Math.abs(expectK(0) - 1.45) < 1e-9; S.lvl = lv0;
+    S.lvl = 31; o.expect = o.expect && Math.abs(expectK(0) - (1 + 30 * EXP_LV)) < 1e-9; S.lvl = lv0;
     // 보너스 넘침 막기: 항목이 모두 100%여도 항목 점수는 85, 나머지는 보너스로
     recalc(); o.expect = o.expect && MOOD_ITEMS === 85 && S.cov.items <= 1 && Math.abs(S.mood - Math.min(100, Math.max(0, MOOD_ITEMS * S.cov.items + S.cov.bonus + S.cov.malus))) < 1e-6;
     // 익숙해짐: 꾸밈을 새로 지으면 fresh가 쌓이고, 주마다 15%씩 줄어든다
@@ -1152,7 +1153,7 @@ async function gripeChecks(browser, url) {
     S.tempMood = 40; recalc(); o.bonusCap = S.cov.bonus === BONUS_MAX && S.cov.bonusRaw > BONUS_MAX && Math.abs(S.mood - Math.min(100, MOOD_ITEMS * S.cov.items + BONUS_MAX + S.cov.malus)) < 1e-6;
     S.tempMood = -10; recalc(); o.bonusCap = o.bonusCap && S.cov.malus <= -10; S.tempMood = 0; recalc();
     // 성도들의 바람: 생기면 챙길 일 맨 위에 뜨고, 들어주면 보상·놓치면 벌점
-    S.money = 99999; S.wish = null; S.wishNext = S.week; S.wishOk = S.wishFail = 0; S.wishLeft = 0; S.wishMood = 0; S.evtLeft = 2; wishWeek();
+    S.money = 99999; levelTick(true); S.wish = null; S.wishNext = S.week; S.wishOk = S.wishFail = 0; S.wishLeft = 0; S.wishMood = 0; S.evtLeft = 2; wishWeek();
     const w1 = S.wish; o.wish = !!w1 && warnings()[0].indexOf('성도들의 바람') === 0 && w1.due === S.week + WISH_DUE;
     if (w1) { const rp0 = S.rep; if (w1.t === 'event') { S.ev[w1.id] = { cd: 0, left: 0 }; S.newSinceBap = 9; runEvent(w1.id); }
       else { let done = false; for (let y = 1; y < ROWS && !done; y++) for (let x = 1; x < COLS - 5 && !done; x++) if (canPlace(D[w1.id], x, y, 2)) done = build(w1.id, x, y, 2); }
@@ -1209,6 +1210,53 @@ async function gripeChecks(browser, url) {
   await ctx.close();
 }
 
+// 첫 걸음 안내 · Level 보상(축하금·꾸미기 해금) · 새 Level 곡선
+async function earlyChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 7;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.dlg = null;
+    const o = {};
+    // 첫 걸음: 새 교회는 0단계, 목표 줄에 할 일이 보이고, 이루면 보상 후 다음 단계
+    hud(true);
+    o.line = S.step === 0 && /첫 걸음 1\//.test(document.getElementById('goalTxt').textContent);
+    const m0 = S.money; setGate(true); hud(true);
+    o.open = S.step === 1 && S.money === m0 + STEP_GIFT && S.stepW === S.week;
+    hud(true); o.once = S.step === 1;
+    S.week++; hud(true); o.sunday = S.step === 2;
+    // 다 마치면 원래 목표 줄로
+    S.step = STEPS.length; hud(true); o.back = /목표 · /.test(document.getElementById('goalTxt').textContent);
+    // Level 곡선: 시작 점수로는 Lv 1, Lv 2는 약 2만, Lv 9는 약 8만
+    S.lvl = 1; o.curve = levelOf(churchScore()) === 1 && Math.abs(lvNeed(2) - 20000) < 500 && Math.abs(lvNeed(9) - 80000) < 3000 && levelOf(lvNeed(100)) === 100;
+    // Level 잠금: 벚나무는 Lv 2, 분수는 Lv 6 전에는 못 지음, 이유에 Lv가 보임
+    S.goal = GOALS.length;
+    o.lock = isLocked('cherry') && isLocked('fountain') && /Lv 2/.test(lockLabel('cherry')) && !isLocked('tree') && !isLocked('planter');
+    // Level이 오르면 축하금(건너뛴 단계 몫까지)과 새 꾸미기
+    const m1 = S.money; S.lvl = 1; S.money += lvNeed(6) * 5 + 50000; const m2 = S.money; levelTick();
+    const L = S.lvl; let gift = 0; for (let k = 2; k <= L; k++) gift += lvGift(k);
+    o.gift = L >= 6 && S.money === m2 + gift && !isLocked('cherry') && !isLocked('fountain') && /축하금/.test(document.getElementById('lvS').textContent);
+    // 옛 저장: 곡선 표시가 없으면 Level을 새 곡선으로 다시 맞추고, 한 주 넘긴 교회는 첫 걸음을 건너뜀
+    S.money = m1; S.lvl = 40; const raw = JSON.parse(JSON.stringify(S)); delete raw.lvc; delete raw.step; raw.week = 9;
+    localStorage.setItem(SAVE_KEY, JSON.stringify(raw)); const L2 = load();
+    o.old = L2.lvl === null && L2.lvc === 2 && L2.step === STEPS.length;
+    return o;
+  });
+  check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');
+  check(r.curve, 'Level 곡선: 시작은 Lv 1, Lv 2는 약 2만, Lv 9는 약 8만, 100까지');
+  check(r.lock && r.gift, 'Level 보상: 비싼 꾸미기는 Level로 열리고, 오를 때 축하금(건너뛴 단계 몫까지)');
+  check(r.old, '옛 저장: Level을 새 곡선으로 다시 맞추고 첫 걸음은 건너뜀');
+  check(errs.length === 0, '첫 걸음: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 (async () => {
   const srcs = staticChecks();
   const srv = await serve();
@@ -1224,6 +1272,7 @@ async function gripeChecks(browser, url) {
     await terrainChecks(browser, url);
     await deckChecks(browser, url);
     await gripeChecks(browser, url);
+    await earlyChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);
