@@ -126,7 +126,7 @@ function terChanged(cells){
   cells.forEach(function(c){hit[gid(c.x,c.y)]=1;piecesAt(c.x,c.y).forEach(function(p){hit[PN+p.id]=1;});});
   waterFix();rebuildOcc();recalc();
   V.forEach(function(v){
-    if(v.state==='inside'||v.state==='xfer')return;
+    if(v.state==='inside'||v.state==='xfer'||v.state==='goin')return;
     var on=!!hit[v.node],via=v.path&&v.path.some(function(q){return hit[q.n];});
     if(!on&&!via)return;
     if(nodeOk(v.node))placeAt(v,v.node);

@@ -150,12 +150,12 @@ mk('q_wood','나무 울타리 대기줄','path',1,1,20,0,'floor','#c9b48f','#7a5
 mk('q_chain','쇠사슬 대기줄','path',1,1,20,0,'floor','#bfc3c6','#59626b',{queue:true,qs:'chain',pat:'grid',beauty:0.02,short:'입구 앞부터',desc:'쇠기둥과 사슬로 가른 대기줄'});
 mk('q_hedge','화단 대기줄','path',1,1,30,0,'floor','#d6cdb9','#4f8a4a',{queue:true,qs:'hedge',pat:'',beauty:0.06,short:'입구 앞부터',desc:'꽃이 핀 낮은 화단으로 가른 대기줄'});
 mk('q_paint','바닥 선 대기줄','path',1,1,12,0,'floor','#b9b3a7','#f2c230',{queue:true,qs:'paint',pat:'',beauty:0.01,short:'입구 앞부터',desc:'바닥에 노란 선만 그은 가장 싼 대기줄'});
-var GATE_DESIGNS=[['arch','아치'],['wood','나무 문'],['glass','유리문'],['stone','돌기둥'],['flower','꽃 문']];
+var GATE_DESIGNS=[['arch','벽돌 현관'],['wood','나무 현관'],['glass','유리 현관'],['stone','돌 현관'],['flower','꽃 현관']];
 // 입구·출구 건물 (gates.js): 이용 효과가 있는 건물은 둘 다 붙여 지어야 운영된다. 한 칸, 모양만 다르다
 GATE_DESIGNS.forEach(function(g,i){
   var cost=[120,80,150,140,110][i];
-  mk('g_'+g[0],g[1]+' 입구','gate',1,1,cost,0,'gate','#3f9d5a','#3f9d5a',{role:'ent',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 지어요. 방문자가 여기로 들어가요'});
-  mk('x_'+g[0],g[1]+' 출구','gate',1,1,cost,0,'gate','#e08a2c','#e08a2c',{role:'ext',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 지어요. 방문자가 여기로 나와요'});
+  mk('g_'+g[0],g[1]+' 입구','gate',1,1,cost,0,'gate','#3f9d5a','#3f9d5a',{role:'ent',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 짓는 작은 현관 건물. 방문자가 이 문으로 들어가요'});
+  mk('x_'+g[0],g[1]+' 출구','gate',1,1,cost,0,'gate','#e08a2c','#e08a2c',{role:'ext',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 짓는 작은 현관 건물. 방문자가 이 문으로 나와요'});
 });
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});

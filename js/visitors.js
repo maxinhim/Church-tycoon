@@ -85,7 +85,25 @@ function arrive(v){
 }
 // 한 주 48초에 맞춰 건물 안에 머무는 시간을 짧게
 // 꽉 찬 건물 앞에서 기다리는 시간. 넘으면 크게 불만(평판·정착 손해, 불편 '붐빔')
-function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=rotTime(b)*(0.8+Math.random()*0.4);v.uk=useK(b);}
+/* 입구·출구 건물이 있으면 그 건물의 문으로 드나드는 모습을 보인다:
+   들어갈 때는 입구 건물 문까지 걸어가 사라지고(goin), 나올 때는 출구 건물 문에서 나타나 바깥 칸으로 걸어 나온다(goout).
+   자리는 걷기 시작할 때 이미 잡아 둔다 (그사이 다른 사람이 채우지 못하게) */
+function gateDoorPt(b,which){
+  var s=b&&b.door&&b.door[which];if(!s||!needsGates(b))return null;
+  return {x:s.x+.5+DIRS[s.d][0]*.42,y:s.y+.5+DIRS[s.d][1]*.42,z:(bLevel(b)+s.l)*LV};
+}
+function enter(v,b){
+  b.inUse++;v.inside=b.id;v.t=rotTime(b)*(0.8+Math.random()*0.4);v.uk=useK(b);
+  var dp=gateDoorPt(b,'ent');
+  if(dp&&Math.hypot(dp.x-v.x,dp.y-v.y)<2.5){v.state='goin';v.gp=dp;return;}
+  v.state='inside';
+}
+// 문까지(또는 문에서 바깥 칸까지) 걷기. 다 왔으면 true
+function gateWalk(v,dt){
+  var p=v.gp,dx=p.x-v.x,dy=p.y-v.y,d=Math.hypot(dx,dy),st=v.speed*.7*dt;
+  if(d<=st){v.x=p.x;v.y=p.y;v.z=p.z;return true;}
+  v.x+=dx/d*st;v.y+=dy/d*st;v.z+=(p.z-v.z)*st/d;return false;
+}
 function finishVisit(v){
   var b=bById(v.inside);
   if(b){
@@ -106,7 +124,10 @@ function finishVisit(v){
       if(pay>0){var sup=Math.round(pay*SHOP_COST);v.wallet-=pay;S.money+=pay-sup;S.weekInc+=pay;S.weekShop+=pay;S.weekSup=(S.weekSup||0)+sup;gripeBought(v,b);sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
     gripeUsed(v,b);
-    placeAt(v,exitNodeFor(b));
+    var en=exitNodeFor(b),xp=gateDoorPt(b,'ext');
+    placeAt(v,en);
+    // 출구 건물 문에서 나와 바깥 칸으로 걸어간다
+    if(xp&&en===doorNode(b.door.ext,b)){var to=nodePos(en);v.x=xp.x;v.y=xp.y;v.z=xp.z;v.gp=to;v.inside=0;v.target=0;v.state='goout';v.idleN=0;return;}
   }
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
 }
@@ -184,6 +205,10 @@ function stepV(v,dt){
     var to=bById(v.target),r2=moveAlong(v,dt);
     if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}
     if(r2===true){v.state='inside';v.inside=to.id;v.t=rotTime(to)*(0.8+Math.random()*0.4);v.uk=useK(to);}
+  }else if(v.state==='goin'){
+    if(gateWalk(v,dt))v.state='inside';
+  }else if(v.state==='goout'){
+    if(gateWalk(v,dt)){v.state='idle';v.t=0.3;}
   }else if(v.state==='queue'){
     queueStep(v,dt);
   }else if(v.state==='inside'){

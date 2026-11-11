@@ -162,7 +162,7 @@ function drawEntity(b,cars){
 }
 function drawVisitor(v){
   var c=PJ.c,s=PJ.s,p=rotPt(v.x,v.y),q=P(p[0],p[1],v.z||0);
-  var walking=v.state==='walk'||v.state==='leave';
+  var walking=v.state==='walk'||v.state==='leave'||v.state==='goin'||v.state==='goout';
   var bob=walking?Math.abs(Math.sin(S.clock*11+v.ph))*1.2*s:0;
   var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);
   c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(q[0],q[1],bw*.9,bw*.38,0,0,6.283);c.fill();

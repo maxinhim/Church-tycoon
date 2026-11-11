@@ -1060,7 +1060,7 @@ async function queueChecks(browser, url) {
     const pat0 = QUEUE_PATIENCE; QUEUE_PATIENCE = 8;
     let maxQ = 0, offLine = false, left = false, order = true;
     for (let i = 0; i < 700; i++) {
-      vs.forEach(v => { const st = v.state; if (st === 'walk' || st === 'queue' || st === 'inside' || st === 'wait') stepV(v, .1); if (st === 'queue' && v.state !== 'queue' && v.state !== 'inside') left = true; });
+      vs.forEach(v => { const st = v.state; if (['walk', 'queue', 'inside', 'wait', 'goin', 'goout'].indexOf(st) >= 0) stepV(v, .1); if (st === 'queue' && ['queue', 'inside', 'goin'].indexOf(v.state) < 0) left = true; });
       const ql = QL[b.id] || []; maxQ = Math.max(maxQ, ql.length);
       ql.forEach((v, k) => { if (v.qt > 3 && !isQueueCell(Math.floor(v.x), Math.floor(v.y))) offLine = true; if (k > 0 && v.qt > 6 && ql[k - 1].qt > 6 && v.y < ql[k - 1].y - .01) order = false; });
       if (b.inUse > D.pray.cap) offLine = true;
@@ -1136,6 +1136,13 @@ async function gateChecks(browser, url) {
     o.facing = occ[ge.y - DIRS[ge.face][1]][ge.x - DIRS[ge.face][0]] === pr.id && pr.door.ent.x === ge.x && doorOut(pr.door.ent).x === ge.x + DIRS[ge.face][0];
     // 길을 이으면 운영된다
     o.link = linkDoor(pr) === '' && usable(pr);
+    // 방문자는 입구 건물 문까지 걸어가 들어가고, 나올 때는 출구 건물 문에서 나와 바깥 칸으로 걸어간다
+    { V.length = 0; spawnV(false); const v = V[0]; placeAt(v, doorNode(pr.door.ent, pr)); v.target = pr.id; v.path = []; v.state = 'walk'; arrive(v);
+      const goin = v.state === 'goin' && pr.inUse === 1; let seen = goin; for (let i = 0; i < 40 && v.state === 'goin'; i++) stepV(v, .1);
+      const dp = gateDoorPt(pr, 'ent'); const inDoor = v.state === 'inside' && Math.hypot(v.x - dp.x, v.y - dp.y) < .01;
+      v.t = 0; stepV(v, .1); const xp = gateDoorPt(pr, 'ext'); const out0 = v.state === 'goout' && Math.hypot(v.x - xp.x, v.y - xp.y) < .01 && pr.inUse === 0;
+      for (let i = 0; i < 40 && v.state === 'goout'; i++) stepV(v, .1); const op = nodePos(doorNode(pr.door.ext, pr));
+      o.walkIn = seen && inDoor && out0 && v.state === 'idle' && Math.hypot(v.x - op.x, v.y - op.y) < .01; V.length = 0; }
     // 건물을 옮기면 입구·출구도 같이 옮겨지고, 회전하면 떨어져 나가 값을 돌려받는다
     const before = [ge.x, ge.y]; let mv = null; for (let dx = 4; dx < 20 && !mv; dx += 2) if (canPlace(D.pray, pr.x + dx, pr.y, 2) && [ge, gx].every(g => !occ[g.y][g.x + dx])) mv = dx;
     startMove(pr); UI.ghost = { x: pr.x + mv, y: pr.y }; plMoveDone();
@@ -1170,6 +1177,7 @@ async function gateChecks(browser, url) {
   check(r.small, '소품: 벤치·쓰레기통·가로등·나무 등은 한 칸, 그림 높이도 작게');
   check(r.flowEnt && r.flowExt && r.flowDone, '입구·출구: 건물을 지으면 곧바로 입구 → 출구 놓기, 모양을 골라 ✓, 끝나면 건물 카드');
   check(r.facing && r.link, '입구·출구: 건물 반대쪽을 보고 바깥 칸에서 드나들며, 길을 이으면 운영');
+  check(r.walkIn, '입구·출구: 방문자가 입구 건물 문으로 걸어 들어가고, 출구 건물 문에서 걸어 나옴');
   if (!(r.moveWith && r.rotDrop && r.card && r.demolish)) console.log('DBGM', JSON.stringify([r.mvd, r.moveWith, r.rotDrop, r.card, r.demolish]));
   check(r.moveWith && r.rotDrop && r.card, '입구·출구: 건물을 옮기면 같이 옮겨지고, 못 붙는 쪽은 떨어져 값을 돌려받고 카드에 다시 지으라고 뜸');
   check(r.demolish && r.ter, '입구·출구: 건물과 함께 철거되고, 땅을 바꾸면 함께 움직임');

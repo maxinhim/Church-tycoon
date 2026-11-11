@@ -110,23 +110,39 @@ function demolishGatesOf(b,full){
   S.buildings=S.buildings.filter(function(g){if(isGate(g)&&g.of===b.id){if(!g.free)S.money+=full?D[g.def].cost:Math.floor(D[g.def].cost*.5);return false;}return true;});
 }
 
-/* ---------- 그리기: 한 칸짜리 문틀. 지나가는 방향(face 축)과 직각으로 선다. 입구는 초록, 출구는 주황 간판 ---------- */
+/* ---------- 그리기: 한 칸짜리 작은 현관 건물 (벽·지붕·바깥쪽 문·간판). 그림은 나중에 생성 이미지로 바꾼다 ---------- */
+var GATE_LOOK={
+  arch:{wall:'#b5654a',roof:'#6b3b2e',kind:'hip',door:'#3d2a20',arch:1},
+  wood:{wall:'#a97a4a',roof:'#5f4126',kind:'gable',door:'#4a3220'},
+  glass:{wall:'#c9dce8',roof:'#59626b',kind:'flat',door:'#6f9fc4',glass:1},
+  stone:{wall:'#cfc6b4',roof:'#9c9483',kind:'flat',door:'#4a4038'},
+  flower:{wall:'#f3ece0',roof:'#d6604f',kind:'gable',door:'#7a5530',flower:1}
+};
 function drawGateEnt(b){
-  var d=D[b.def],f=b.face==null?2:b.face,x=b.x,y=b.y,ax=f<2,c=PJ.c,s=PJ.s;
-  // 문틀 가로 방향 (지나가는 방향과 직각)
-  var post=function(u,z1,col,w){w=w||.09;var px=ax?x+.5:x+u,py=ax?y+u:y+.5;box(rrect(px-w,py-w,px+w,py+w),0,z1,col);};
-  var beam=function(z0,z1,col,u0,u1){u0=u0==null?.08:u0;u1=u1==null?.92:u1;box(ax?rrect(x+.42,y+u0,x+.58,y+u1):rrect(x+u0,y+.42,x+u1,y+.58),z0,z1,col);};
-  var sign=d.role==='ent'?'#3f9d5a':'#e08a2c',ds=d.design;
-  if(ds==='arch'){post(.14,.75,'#b5654a',.1);post(.86,.75,'#b5654a',.1);
-    var n=8;for(var i=0;i<n;i++){var u0=.08+.84*i/n,u1=.08+.84*(i+1)/n,zz=.75+.18*Math.sin(Math.PI*(i+.5)/n);beam(zz-.08,zz,'#a85a42',u0,u1);}}
-  else if(ds==='wood'){post(.12,.85,'#7a5530');post(.88,.85,'#7a5530');beam(.82,.92,'#8d6339',.04,.96);beam(.92,.96,'#5f4126',.0,1);}
-  else if(ds==='glass'){post(.1,.8,'#59626b',.06);post(.9,.8,'#59626b',.06);beam(.78,.86,'#59626b');
-    c.globalAlpha=.45;box(ax?rrect(x+.48,y+.16,x+.52,y+.84):rrect(x+.16,y+.48,x+.84,y+.52),.04,.76,'#9cc3e3');c.globalAlpha=1;}
-  else if(ds==='stone'){post(.13,.9,'#cfc6b4',.12);post(.87,.9,'#cfc6b4',.12);beam(.86,.98,'#bdb3a0',.0,1);}
-  else{post(.12,.8,'#e8e2d4',.06);post(.88,.8,'#e8e2d4',.06);beam(.78,.84,'#e8e2d4');
-    var cols=['#e57aa5','#f2c230','#ffffff','#d6604f'];for(var k=0;k<7;k++){var u=.1+.8*k/6,pp=rotPt(ax?x+.5:x+u,ax?y+u:y+.5),q=P(pp[0],pp[1],.86+.05*Math.sin(k*1.7));c.fillStyle=cols[k%4];c.beginPath();c.arc(q[0],q[1],2.2*s,0,6.283);c.fill();}}
-  // 간판: 문틀 위 가운데, 바깥쪽에
-  var m=rotPt(x+.5+DIRS[f][0]*.12,y+.5+DIRS[f][1]*.12),q2=P(m[0],m[1],1.02);
-  c.fillStyle=sign;c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(q2[0],q2[1],5.5*Math.max(.8,s),0,6.283);c.fill();c.stroke();
-  c.fillStyle='#fff';c.font='800 '+(7*Math.max(.8,s))+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(d.role==='ent'?'입':'출',q2[0],q2[1]+.5);
+  var d=D[b.def],L=GATE_LOOK[d.design]||GATE_LOOK.arch,f=b.face==null?2:b.face,x=b.x,y=b.y,c=PJ.c,s=PJ.s;
+  var r=rrect(x+.1,y+.1,x+.9,y+.9),H=.62;
+  box(r,0,H,L.wall);
+  if(L.glass){c.globalAlpha=.35;box(rrect(x+.14,y+.14,x+.86,y+.86),.08,H-.06,'#ffffff');c.globalAlpha=1;}
+  // 지붕
+  var top;
+  if(L.kind==='hip')top=hip(r,H,.34,L.roof);
+  else if(L.kind==='gable')top=gable(r,H,.32,L.roof,L.wall,f<2?false:true);
+  else{box(rrect(x+.06,y+.06,x+.94,y+.94),H,H+.08,L.roof);top=null;}
+  // 바깥쪽 벽의 문: 화면 앞쪽을 향한 벽일 때만 보인다
+  var cx=x+.5,cy=y+.5,ox=DIRS[f][0],oy=DIRS[f][1],a=rotPt(cx,cy),q=rotPt(cx+ox,cy+oy);
+  var front=Math.round(q[0]-a[0])===1||Math.round(q[1]-a[1])===1;
+  if(front){
+    var wx=cx+ox*.405,wy=cy+oy*.405,tx=-oy,ty=ox,hw=.15,z1=.44;
+    var p1=rotPt(wx-tx*hw,wy-ty*hw),p2=rotPt(wx+tx*hw,wy+ty*hw);
+    quad([[p1[0],p1[1],.02],[p2[0],p2[1],.02],[p2[0],p2[1],z1],[p1[0],p1[1],z1]],L.door,EDGE);
+    if(L.arch){var pm=rotPt(wx,wy);quad([[p1[0],p1[1],z1],[p2[0],p2[1],z1],[pm[0],pm[1],z1+.08]],L.door,null);}
+    // 문 앞 디딤돌
+    var s1=rotPt(wx-tx*.2+ox*.02,wy-ty*.2+oy*.02),s2=rotPt(wx+tx*.2+ox*.02,wy+ty*.2+oy*.02),s3=rotPt(wx+tx*.2+ox*.12,wy+ty*.2+oy*.12),s4=rotPt(wx-tx*.2+ox*.12,wy-ty*.2+oy*.12);
+    quad([[s1[0],s1[1],.02],[s2[0],s2[1],.02],[s3[0],s3[1],.02],[s4[0],s4[1],.02]],'#d8d2c6',EDGE);
+  }
+  if(L.flower){var cols=['#e57aa5','#f2c230','#ffffff','#d6604f'];for(var k=0;k<6;k++){var u=.14+.72*k/5,pp=rotPt(f<2?x+.5-ox*.42:x+u,f<2?y+u:y+.5-oy*.42),pq=P(pp[0],pp[1],.05);c.fillStyle=cols[k%4];c.beginPath();c.arc(pq[0],pq[1],2*s,0,6.283);c.fill();}}
+  // 간판: 문 위(문이 뒤쪽이면 지붕 위)
+  var sm=front?rotPt(cx+ox*.42,cy+oy*.42):rotPt(cx,cy),sq=P(sm[0],sm[1],front?H+.02:H+.45);
+  c.fillStyle=d.role==='ent'?'#3f9d5a':'#e08a2c';c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(sq[0],sq[1],5.5*Math.max(.8,s),0,6.283);c.fill();c.stroke();
+  c.fillStyle='#fff';c.font='800 '+(7*Math.max(.8,s))+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(d.role==='ent'?'입':'출',sq[0],sq[1]+.5);
 }
