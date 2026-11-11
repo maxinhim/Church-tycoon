@@ -29,9 +29,10 @@ function runBot(cfg) {
   restart(cfg.diff); S.dlg = null; setGate(true);
   const wishFirst = cfg.strat === 'wish', strat = wishFirst ? 'balanced' : cfg.strat, RES = 1500;
   // 입구에서 가까운 자리부터
-  const cells = []; for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) cells.push([x, y, Math.abs(x - ENT) + Math.abs(y - (PZ - 4))]);
+  const cells = []; for (let y = 0; y < ROWS; y += 2) for (let x = 0; x < COLS; x += 2) cells.push([x, y, Math.abs(x - ENT) + Math.abs(y - (PZ - 4))]);
   cells.sort((a, b) => a[2] - b[2]);
-  const stat = { built: {}, events: 0, staff: 0 };
+  const stat = { built: {}, events: 0, staff: 0, fail: {} };
+  const failed = (id, why) => { const k = id + ':' + why; stat.fail[k] = (stat.fail[k] || 0) + 1; };
   function put(id) {
     const d = D[id]; if (!d || isLocked(id) || S.money < d.cost + (strat === 'deco' ? 0 : 0)) return false;
     if (isRoomDef(id)) return false;
@@ -40,17 +41,18 @@ function runBot(cfg) {
     for (const c of cells) {
       if (!canPlace(d, c[0], c[1], 2)) continue;
       // 바닥(걷는 길) 위에는 짓지 않는다
-      let onFloor = false; for (let j = 0; j < dm.h; j++) for (let i = 0; i < dm.w; i++) if (S.floor[(c[0] + i) + ',' + (c[1] + j)]) onFloor = true;
+      // 바닥 바로 옆 한 칸도 비워 둔다 (길 둘레를 건물로 에워싸 새 길을 못 잇게 되는 일을 막는다)
+      let onFloor = false; for (let j = -1; j <= dm.h; j++) for (let i = -1; i <= dm.w; i++) if (S.floor[(c[0] + i) + ',' + (c[1] + j)]) onFloor = true;
       if (onFloor) continue;
-      if (++tries > 200) return false;
+      if (++tries > 300) { failed(id, '300번 시도'); return false; }
       const m0 = S.money, n0 = okN(), f0 = S.fresh, fl0 = JSON.stringify(S.floor); if (!build(id, c[0], c[1], 2)) continue;
       const nb = S.buildings[S.buildings.length - 1];
-      recalc(); if (nb.door && !usable(nb)) { linkDoor(nb); recalc(); }
+      recalc(); let lw = ''; if (nb.door && !usable(nb)) { lw = linkDoor(nb); recalc(); }
       // 문에 닿지 못하거나, 다른 건물의 길을 막았으면 되돌린다
-      if ((nb.door && !usable(nb)) || okN() < n0 + (nb.door ? 1 : 0)) { demolish(nb.id); S.floor = JSON.parse(fl0); S.money = m0; S.fresh = f0; recalc(); continue; }
+      if ((nb.door && !usable(nb)) || okN() < n0 + (nb.door ? 1 : 0)) { failed(id, nb.door && !usable(nb) ? '길 못 이음(' + (lw || JSON.stringify(nb.acc)) + ')' : '다른 건물 막음'); demolish(nb.id); S.floor = JSON.parse(fl0); S.money = m0; S.fresh = f0; recalc(); continue; }
       stat.built[id] = (stat.built[id] || 0) + 1; return true;
     }
-    return false;
+    failed(id, '자리 없음'); return false;
   }
   // 조건에 맞는 건물 가운데 값 대비 효과가 가장 큰 것
   function best(val, filter) {
