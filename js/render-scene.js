@@ -76,11 +76,12 @@ function draw(){
     if(isRoom(b)){
       var map=roomMap(b);
       var rz=bLevel(b)*LV,ft=frontTile(b);
-      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);if(t===ft)drawWear(b);});};if(rz<0){var f0=rt.f;rt.f=function(){pitClip(rt,f0);};}E.push(rt);});
+      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;if(b.z==null&&piecesAt(t.x,t.y).some(function(p){return p.l>bLevel(b);}))rt.zt=rz+roomTop(t.f)-.02;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);if(t===ft)drawWear(b);});};if(rz<0){var f0=rt.f;rt.f=function(){pitClip(rt,f0);};}E.push(rt);});
       return;
     }
     var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bZ(b);
-    r.zb=bz;r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);drawWear(b);});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
+    r.zb=bz;if(b.z==null&&ceilOver(b)<99)r.zt=Math.min(bz+bHeight(b),ceilOver(b)*LV-.15);
+    r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);drawWear(b);});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
   });
   S.paths.forEach(function(p){
     var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;

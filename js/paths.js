@@ -6,7 +6,9 @@
    계단은 아래가 빈 철골 계단이라 계단 밑과 다리 아래 땅을 그대로 걸을 수 있다.
    연결 다리(k='sky')는 같은 역할 건물의 위층끼리 잇는 실내 통로로, 바깥 길찾기에는 들어가지 않는다. */
 var LV=.9,MAXL=10;
-var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:40},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:60},
+var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:40,sn:'돌계단',sc:'#8f8676',side:'#b3a283'},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:60,sn:'나무 계단',sc:'#7a5530',side:'#8d6339'},
+  brick:{name:'벽돌길',col:'#b9694e',edge:'#7c3f2c',cost:55,sn:'벽돌 계단',sc:'#8a4a36',side:'#9a5540'},marble:{name:'대리석 길',col:'#efece4',edge:'#a9a59b',cost:80,sn:'대리석 계단',sc:'#bdb8ad',side:'#d2cec4',beauty:.3},
+  steel:{name:'철판 길',col:'#aeb7bf',edge:'#58626d',cost:50,sn:'철골 계단',sc:'#58626d',side:'#7d8791'},
   arch:{name:'아치 다리',col:'#e6dccb',edge:'#8f7b5e',cost:90,beauty:.6},
   sky:{name:'연결 다리',col:'#c9d6df',edge:'#5f7a8f',cost:120}};
 var SCREEN_DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 화면 기준 ↘ ↙ ↖ ↗ (회전된 좌표)
@@ -18,7 +20,7 @@ function pieceTop(p){return p.l+p.s;}
 function portLevel(p,d){if(!p.s)return p.l;if(d===p.d)return p.l+1;if(d===OPP[p.d])return p.l;return NOPORT;}
 function pieceUp(p){return p.y<ROWS&&p.x<COLS&&p.l>th(p.x,p.y);}
 function pieceCost(p){return p.s?90+(pieceUp(p)?30:0):PATHK[p.k].cost+(pieceUp(p)?30:0);}
-function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?'철골 계단':PATHK[p.k].name+(pieceUp(p)&&p.k!=='arch'?' 다리':''));}
+function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?(PATHK[p.k].sn||'철골 계단'):PATHK[p.k].name+(pieceUp(p)&&p.k!=='arch'?' 다리':''));}
 // p 위치의 표면 높이(층 단위가 아니라 z)
 function pieceH(p,wx,wy){
   if(!p.s)return p.l*LV;
@@ -135,7 +137,7 @@ function drawPiece(p,tint){
   var side=function(sel,shadeK){
     var e=C.filter(sel);if(e.length!==2)return;
     if(p.l===g&&!p.s)return;
-    quad([[e[0].rx,e[0].ry,bottom(e[0].h)],[e[1].rx,e[1].ry,bottom(e[1].h)],[e[1].rx,e[1].ry,e[1].h],[e[0].rx,e[0].ry,e[0].h]],shade(tint||(p.k==='wood'?'#8d6339':p.k==='arch'?'#cdbfa8':'#b3a283'),shadeK),EDGE);
+    quad([[e[0].rx,e[0].ry,bottom(e[0].h)],[e[1].rx,e[1].ry,bottom(e[1].h)],[e[1].rx,e[1].ry,e[1].h],[e[0].rx,e[0].ry,e[0].h]],shade(tint||(p.k==='arch'?'#cdbfa8':K.side||'#b3a283'),shadeK),EDGE);
   };
   side(function(q){return Math.abs(q.ry-R.y1)<1e-6;},.93);
   side(function(q){return Math.abs(q.rx-R.x1)<1e-6;},.74);
@@ -199,13 +201,13 @@ function drawPathGhost(){
 
 // 철골 계단: 옆 보(스트링거)와 디딤판만 있고 아래는 비어 있다
 function drawStair(p,tint){
-  var K=PATHK[p.k],steel=tint||'#58626d',tread=tint||K.col,c=PJ.c;
+  var K=PATHK[p.k],steel=tint||K.sc||'#58626d',tread=tint||K.col,c=PJ.c;
   var ax=DIRS[p.d][0],ay=DIRS[p.d][1],px=-ay,py=ax,cx=p.x+.5,cy=p.y+.5,z0=p.l*LV,z1=(p.l+1)*LV;
   var rs=function(wx,wy){return rotPt(wx,wy);};
   // 화면에서 앞쪽에 오는 옆면 판별
   var a=rs(cx+px*.42,cy+py*.42),b=rs(cx-px*.42,cy-py*.42),front=(a[0]+a[1]>b[0]+b[1])?1:-1;
   var gz=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y)*LV:0;
-  var post=function(wx,wy,zt){if(zt>gz+.12)box(rrect(wx-.035,wy-.035,wx+.035,wy+.035),gz,zt,shade(steel,.95));};
+  var post=function(wx,wy,zt){if(zt>gz+.12)box(rrect(wx-.035,wy-.035,wx+.035,wy+.035),gz,zt,steel);};
   var stringer=function(sg){
     var lx=cx-ax*.5+px*.43*sg,ly=cy-ay*.5+py*.43*sg,hx=cx+ax*.5+px*.43*sg,hy=cy+ay*.5+py*.43*sg,r1=rs(lx,ly),r2=rs(hx,hy);
     quad([[r1[0],r1[1],z0-.09],[r2[0],r2[1],z1-.09],[r2[0],r2[1],z1+.02],[r1[0],r1[1],z0+.02]],steel,'rgba(20,25,30,.55)');

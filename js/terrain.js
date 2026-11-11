@@ -49,6 +49,7 @@ function terPlan(x,y,id,lvl,dir){
     cells=bTiles(b).map(function(t){return {x:t.x,y:t.y};});
     if(b.z!=null)return {why:'데크 위 건물 밑의 땅은 바꿀 수 없어요'};
     if(lvl+bTopFloors(b)>MAXH)return {why:'땅 높이와 건물 층수를 합쳐 '+MAXH+'층을 넘을 수 없어요'};
+    if(lvl+bLevelsTall(b)>ceilOver(b))return {why:'위의 다리·계단에 건물이 닿아요'};
   }
   var cost=0,moves=[],why='',changed=false;
   cells.forEach(function(c){

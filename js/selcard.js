@@ -7,7 +7,7 @@
    지도 빈 곳을 누르거나 Esc를 누르면 닫힌다. 버튼 동작은 패널과 같은 onPanel로 처리한다. */
 var scHtml='',scKey='',scMore=false,scArm=0;
 // 땅 카드: 교회 부지 안의 빈 땅(바닥이 깔렸든 아니든) 한 칸
-function selFloorOk(){var f=UI.selFloor;if(!f||f.x<0||f.y<0||f.x>=COLS||f.y>=PZ)return false;var sl=floorSlot(f.x,f.y,f.pid);return !!sl&&!sl.busy&&!piecesAt(f.x,f.y).length;}
+function selFloorOk(){var f=UI.selFloor;if(!f||f.x<0||f.y<0||f.x>=COLS||f.y>=PZ)return false;var sl=floorSlot(f.x,f.y,f.pid);return !!sl&&!sl.busy&&!piecesAt(f.x,f.y).some(function(p){return !p.s&&p.l===th(f.x,f.y);});}
 function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI.sel))||(UI.selPiece&&pieceById(UI.selPiece))||selFloorOk());}
 // 바닥 바꾸기 줄: 지금 바닥을 뺀 종류마다 (걷어낸 반값을 뺀) 바꾸는 값
 function floorRow(prev,pid,x,y){

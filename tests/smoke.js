@@ -913,6 +913,26 @@ async function waterChecks(browser, url) {
     // 되돌리기로 땅이 올라오면 물도 사라진다
     terApply(25, 5, 'ter_set', -1); fillWater(25, 5); S.hgt = Object.assign({}, S.hgt); delete S.hgt['25,5']; terChanged([{ x: 25, y: 5 }]);
     o.fix = !isWater(25, 5);
+    // 다리·계단 밑
+    UI.plLow = false;
+    addPiece({ x: 4, y: 12, l: 0, s: 1, d: 0, k: 'brick' }); addPiece({ x: 5, y: 12, l: 1, s: 1, d: 0, k: 'brick' });
+    addPiece({ x: 6, y: 12, l: 2, s: 0, d: 0, k: 'marble' }); addPiece({ x: 7, y: 12, l: 2, s: 0, d: 0, k: 'steel' });
+    o.kinds = pieceName(pieceById(S.paths[S.paths.length - 4].id)) === '벽돌 계단' && /대리석/.test(pieceName(S.paths[S.paths.length - 2]));
+    o.underTile = paintFloor(4, 12, 'f_block') === '' && paintFloor(6, 12, 'f_brick') === '';
+    o.underFirst = /바닥 타일만/.test(placeLevel(D.bench, 4, 12, 2).why || '');
+    o.underLow = /낮아서/.test(placeLevel(D.tree, 5, 12, 2).why || '') && !placeLevel(D.bench, 5, 12, 2).why;
+    UI.plLow = true;
+    const pl6 = placeLevel(D.bench, 6, 12, 2);
+    o.underPick = pl6.l === 0 && !pl6.deck && build('bench', 6, 12, 2);
+    const ub = S.buildings.find(b => b.def === 'bench' && b.x === 6 && b.y === 12);
+    UI.plLow = false;
+    const pl7 = placeLevel(D.bench, 7, 12, 2);
+    o.deckPick = pl7.l === 2 && pl7.deck === true;
+    o.underState = !!ub && ub.z == null && nodeOk(PN + S.paths[S.paths.length - 2].id) && !groundOk(6, 12);
+    o.underTer = /닿아요|밑이라/.test(terPlan(6, 12, 'ter_set', 2).why || '');
+    build('pray', 12, 12, 2); 
+    o.noStackUnder = (() => { build('wc', 7, 12, 2); return true; })();
+    for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
     // 옆면(벽) 타일
     S.wall = {}; UI.undo = [];
     terApply(26, 10, 'ter_set', 2); const wm0 = S.money;
@@ -953,6 +973,11 @@ async function waterChecks(browser, url) {
   check(r.pick && r.pickFlat, '지하: 파인 칸과 평지를 눌러 고를 수 있음');
   check(r.card && r.drain, '물 카드: 다리 놓기·물 빼기, 빼면 타일이 다시 보임');
   check(r.fix, '물: 땅이 0층 이상이 되면 사라짐');
+  check(r.kinds, '길 종류: 벽돌·대리석·철 길과 종류별 계단 이름');
+  check(r.underTile && r.underFirst, '계단 밑: 땅에서 시작하는 계단 밑은 바닥 타일만');
+  check(r.underLow, '다리 밑: 빈 높이에 들어가는 것만 놓임');
+  check(r.underPick && r.deckPick && r.underState, '다리 밑: 밑을 고르면 땅에, 아니면 데크 위에 놓이고 다리는 계속 걸을 수 있음');
+  check(r.underTer, '다리 밑: 건물이 다리에 닿게 땅을 높일 수 없음');
   check(r.wallSet && r.wallErase, '벽 타일: 벽이 있는 칸에 붙이고 떼기(반값 환불)');
   check(r.wallCard, '벽 타일: 땅 카드에서 윗면·옆면을 바꿔 고름');
   check(r.extCost && r.extWall && r.extUndo, '벽 타일: 이어 지으면 높이·윗면·옆면이 함께 이어지고 한 번에 되돌려짐');

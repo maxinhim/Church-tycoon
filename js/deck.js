@@ -28,24 +28,44 @@ function cellLevels(x,y){
   if(!ps.length)return isRamp(x,y)?[]:[{l:th(x,y),deck:false}];
   var out=[];
   ps.forEach(function(p){if(isDeckPiece(p)&&!ps.some(function(q){return q!==p&&q.l>=p.l;}))out.push({l:p.l,deck:true});});
+  // 다리·계단 밑의 땅: 머리 위 빈 높이(room, 층)만큼만 들어간다. 땅에서 시작하는 계단 밑은 0이라 바닥 타일만 깔 수 있다
+  var g=th(x,y),room=underRoom(x,y);
+  if(room>0&&!isRamp(x,y)&&!isWater(x,y))out.push({l:g,deck:false,room:room});
   return out;
+}
+// 그 칸의 땅 위로 비어 있는 높이(층). 길이 없으면 99, 땅에 깔린 길이 있으면 0
+function underRoom(x,y){
+  var g=th(x,y),r=99;
+  piecesAt(x,y).forEach(function(p){r=Math.min(r,Math.max(0,p.l-g));});
+  return r;
+}
+// 지으려는 것의 키(층). 다리 밑에 들어가는지 볼 때 쓴다
+function defLevels(d){return d&&d.id&&D[d.id]?Math.max(1,Math.ceil((heightOf(d.id)-.06)/LV)):1;}
+function bLevelsTall(b){return Math.max(1,Math.ceil((bHeight(b)-.06)/LV));}
+// 건물 위(그 칸들)에 걸린 다리·계단 가운데 가장 낮은 바닥 높이(층). 없으면 99
+function ceilOver(b){
+  var c=99,k=bLevel(b);
+  bTiles(b).forEach(function(t){piecesAt(t.x,t.y).forEach(function(p){if(p.l>k)c=Math.min(c,p.l);});});
+  return c;
 }
 /* 이 자리에 지을 때의 바닥 높이 {l, deck} 또는 {why}. 모든 칸이 같은 높이여야 하고, 가장 높은 공통 높이를 고른다 */
 function placeLevel(d,x,y,face){
-  var dm=faceDims(d,face),common=null,src={};
+  var dm=faceDims(d,face),common=null,src={},need=defLevels(d),low=false,tile=false;
   for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){
     var tx=x+i,ty=y+j;if(tx<0||ty<0||tx>=COLS||ty>=ROWS)return {why:'부지 밖이에요'};
     var wt=isWater(tx,ty)&&!piecesAt(tx,ty).length;
     if(wt&&!d.water)return {why:'물 위에는 다리와 물 분수만 놓을 수 있어요'};
     if(!wt&&d.water)return {why:'물이 찬 칸에만 놓을 수 있어요'};
-    var lv=cellLevels(tx,ty);
-    if(!lv.length)return {why:isRamp(tx,ty)?'흙 경사로 위에는 지을 수 없어요':'길·계단과 겹쳐요. 평평한 땅이나 데크에 지어 주세요'};
+    var lv=cellLevels(tx,ty).filter(function(o){if(o.room==null||o.room>=need)return true;low=true;return false;});
+    if(!lv.length&&!isRamp(tx,ty)&&piecesAt(tx,ty).some(function(p){return p.s&&p.l===th(tx,ty);}))tile=true;
+    if(!lv.length)return {why:isRamp(tx,ty)?'흙 경사로 위에는 지을 수 없어요':tile?'땅에서 시작하는 계단 밑은 좁아서 바닥 타일만 깔 수 있어요':low?'다리·계단 밑이 낮아서 들어가지 않아요':'길·계단과 겹쳐요. 평평한 땅이나 데크에 지어 주세요'};
     lv.forEach(function(o){if(o.deck)src[o.l]=1;});
     var ls=lv.map(function(o){return o.l;});
     common=common==null?ls:common.filter(function(l){return ls.indexOf(l)>=0;});
   }
   if(!common||!common.length)return {why:'높이가 다른 칸에 걸쳐 지을 수 없어요'};
-  var L=Math.max.apply(null,common);
+  // 보통은 가장 높은 곳(데크 위). 다리 밑 땅을 눌러 골랐으면(UI.plLow) 가장 낮은 곳
+  var L=(UI.plLow?Math.min:Math.max).apply(null,common);
   if(L+1>MAXH)return {why:'이 높이에는 지을 수 없어요'};
   return {l:L,deck:!!src[L]};
 }

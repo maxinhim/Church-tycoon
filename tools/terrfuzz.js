@@ -26,7 +26,9 @@ const r=await p.evaluate(()=>{restart('easy');S.goal=GOALS.length;S.step=STEPS.l
   for(const k in S.slp){const a=k.split(',').map(Number);if(occ[a[1]][a[0]])bad.push(op+': 경사로 위 건물 '+k);if(th(a[0],a[1])+1>MAXH-1)bad.push(op+': 경사로 높이 '+k);}
   S.buildings.forEach(b=>{const top=bLevel(b)+bTopFloors(b);if(top>MAXH)bad.push(op+': 한도 넘은 건물 '+b.def+' '+top);
    if(!isRoom(b)&&b.z==null){const dm=bDims(b),h0=th(b.x,b.y);for(let j=0;j<dm.h;j++)for(let i=0;i<dm.w;i++)if(th(b.x+i,b.y+j)!==h0)bad.push(op+': 기운 건물 '+b.def);}
-   if(isWaterDef(D[b.def])&&!isWater(b.x,b.y))bad.push(op+': 물 없는 물 분수');});
+   if(isWaterDef(D[b.def])&&!isWater(b.x,b.y))bad.push(op+': 물 없는 물 분수');
+   if(b.z==null&&ceilOver(b)<99&&bLevel(b)+bLevelsTall(b)>ceilOver(b))bad.push(op+': 다리에 박힌 건물 '+b.def);
+   if(b.z==null)bTiles(b).forEach(t=>{if(piecesAt(t.x,t.y).some(q=>q.l<=bLevel(b)&&pieceTop(q)>=bLevel(b)&&q.k!=='sky'&&!(q.l<bLevel(b)&&pieceTop(q)<=bLevel(b))))bad.push(op+': 길과 겹친 건물 '+b.def+' '+t.x+','+t.y);});});
   S.paths.forEach(q=>{if(q.k!=='sky'&&q.l<th(q.x,q.y))bad.push(op+': 땅에 묻힌 길 '+q.x+','+q.y);if(pieceTop(q)>MAXL)bad.push(op+': 길 높이');});
   V.forEach(v=>{if(!Number.isFinite(v.x+v.y+(v.z||0)))bad.push(op+': 방문자 좌표');});
   nwater=Math.max(nwater,Object.keys(S.water).length);};
@@ -36,9 +38,9 @@ const r=await p.evaluate(()=>{restart('easy');S.goal=GOALS.length;S.step=STEPS.l
   else if(o===4){op='ramp';terApply(rx(),ry(),'ter_ramp',0,ri(4));}
   else if(o===5){op='fill';const x=rx(),y=ry();if(th(x,y)<0&&!fillWater(x,y))nfill++;}
   else if(o===6){op='drain';const ks=Object.keys(S.water);if(ks.length&&R()<.4){const a=ks[ri(ks.length)].split(',').map(Number);if(!drainWater(a[0],a[1]))ndrain++;}}
-  else if(o===7||o===8){const id=R()<.2?'wfount':ids[ri(ids.length)];op='build '+id;build(id,rx(),ry(),ri(4));}
+  else if(o===7||o===8){const id=R()<.2?'wfount':ids[ri(ids.length)];op='build '+id;UI.plLow=R()<.5;build(id,rx(),ry(),ri(4));UI.plLow=false;}
   else if(o===9&&S.buildings.length){const bb=S.buildings[ri(S.buildings.length)];op='dem '+bb.def;if(!lastHallWhy(bb))demolish(bb.id);}
-  else if(o===10){op='piece';addPiece({x:rx(),y:ry(),l:ri(6)-3,s:ri(2),d:ri(4),k:['stone','wood','arch','sky'][ri(4)]});}
+  else if(o===10){op='piece';addPiece({x:rx(),y:ry(),l:ri(6)-3,s:ri(2),d:ri(4),k:['stone','wood','arch','sky','brick','marble','steel'][ri(7)]});}
   else if(o===11&&S.paths.length){op='rmpiece';const pc=S.paths[ri(S.paths.length)];if(!pieceDemWhy(pc))removePiece(pc.id,.5);}
   else if(o===12){op='floor';paintFloor(rx(),ry(),FLOOR_IDS[ri(FLOOR_IDS.length)]);UI.undo=[];wallSwap(rx(),ry(),R()<.2?'f_erase':FLOOR_IDS[ri(FLOOR_IDS.length)]);UI.undo=[];}
   else if(o===13){op='undo';UI.undo=[];const x=rx(),y=ry();if(!terApply(x,y,'ter_set',ri(7)-4)){const u=UI.undo.pop();if(u&&u.ter)terUndo(u);}UI.undo=[];}

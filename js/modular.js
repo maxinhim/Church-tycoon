@@ -76,6 +76,7 @@ function tilePlan(x,y,def){
     if(r.def!==def)return {ok:false,why:'역할이 다른 칸 위에는 쌓을 수 없어요'};
     if(tileOf(r,x,y).f>=MROOM.maxF-Math.min(0,bLevel(r)))return {ok:false,why:(MROOM.maxF-Math.min(0,bLevel(r)))+'층까지만 올릴 수 있어요'};
     if(bLevel(r)+tileOf(r,x,y).f+1>MAXH)return {ok:false,why:'땅 높이와 합쳐 '+MAXH+'층을 넘을 수 없어요'};
+    if(piecesAt(x,y).some(function(p){return p.l>bLevel(r);}))return {ok:false,why:'위에 다리·계단이 있어 층을 올릴 수 없어요'};
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
   if(occ[y][x])return {ok:false,why:'다른 건물이 있어요'};

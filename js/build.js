@@ -61,6 +61,7 @@ function addFloor(b){
   if(!b||!canStack(b))return '층을 올릴 수 없는 건물이에요';
   var f=b.floors||1;if(f>=maxFloors(b))return maxFloors(b)+'층까지만 올릴 수 있어요';
   if(bLevel(b)+f+1>MAXH)return '땅 높이와 합쳐 '+MAXH+'층을 넘을 수 없어요';
+  if(ceilOver(b)<99)return '위에 다리·계단이 있어 층을 올릴 수 없어요';
   var c=floorCostOf(b);if(S.money<c)return '자금이 부족해요';
   S.money-=c;b.floors=f+1;structureChanged();return '';
 }

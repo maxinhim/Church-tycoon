@@ -13,6 +13,8 @@ function pickBuilding(px,py){
   return null;
 }
 function placeGhost(t){
+  // 다리 밑 땅을 눌렀으면 밑에, 데크를 눌렀으면 데크 위에 놓는다
+  UI.plLow=!t.pid&&t.x>=0&&t.y>=0&&t.x<COLS&&t.y<ROWS&&piecesAt(t.x,t.y).length>0;
   var d=faceDims(D[UI.tool],UI.face);
   UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-1-d.h)};
 }

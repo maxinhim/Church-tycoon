@@ -58,7 +58,7 @@ function placeWhy(d,x,y,face){
   return '';
 }
 function startPlace(id){
-  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
@@ -413,7 +413,7 @@ function renderPbar(){
     var lv=c.l>0?c.l+1+'층':(c.l<0?'지하 '+(-c.l)+'층':'땅');
     if(!UI.pbarOpen)h='<button class="btn ppill" data-act="pbar" aria-expanded="false" aria-label="길 종류·경사·높이 고르기">'+(p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span>':'<b>길</b>')+(sky?'':' · '+(sl>0?'오르막':sl<0?'내리막':'평지'))+' · '+lv+' ⌄</button>';
     else h='<div class="prow">'+
-      segBtns('pkind',c.k,[['stone','돌길'],['wood','나무 데크'],['arch','아치 다리'],['sky','연결 다리']])+
+      segBtns('pkind',c.k,[['stone','돌'],['wood','나무'],['brick','벽돌'],['marble','대리석'],['steel','철'],['arch','아치 다리'],['sky','연결 다리']])+
       '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=MINH?' disabled':'')+'>▼</button><span class="lvl">'+lv+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
       (c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+'<button class="btn" data-act="pbar" aria-label="접기">⌃</button></div>';
   }else if(k==='room'){
