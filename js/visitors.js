@@ -71,18 +71,21 @@ function exitNodeFor(b){
   if(b.door)cand.push(b.door.ent);
   mates.forEach(function(o){cand.push(o.door.ent);});
   for(var i=0;i<cand.length;i++){var n=doorNode(cand[i]);if(n>=0&&NAV.reach[n])return n;}
+  if(b.q&&b.q.entry>=0&&NAV.reach[b.q.entry])return b.q.entry;
   return gateNode();
 }
 function arrive(v){
   if(!v.target){v.state='idle';v.t=0.8+Math.random();return;}
   var b=bById(v.target);
   if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
+  // 대기줄이 있으면 줄에 선다. 줄이 꽉 찼으면 잠깐 기다려 본다
+  if(qLen(b)){if(!queueJoin(v,b)){v.state='wait';v.wait=WAIT_T;}return;}
   if(b.inUse<defOf(b).cap)enter(v,b);
   else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=WAIT_T;}}
 }
 // 한 주 48초에 맞춰 건물 안에 머무는 시간을 짧게
 // 꽉 찬 건물 앞에서 기다리는 시간. 넘으면 크게 불만(평판·정착 손해, 불편 '붐빔')
-function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=defOf(b).dur*STAY*(0.8+Math.random()*0.4);}
+function enter(v,b){b.inUse++;v.state='inside';v.inside=b.id;v.t=rotTime(b)*(0.8+Math.random()*0.4);v.uk=useK(b);}
 function finishVisit(v){
   var b=bById(v.inside);
   if(b){
@@ -91,12 +94,15 @@ function finishVisit(v){
       var amt=d.fill[n];
       if(n==='care')amt*=MOD.care;
       if(n==='word')amt*=MOD.word;
-      amt*=wxFill(d);
-      v.needs[n]=Math.min(100,v.needs[n]+amt);
+      amt*=wxFill(d)*(v.uk||1);
+      var nv=v.needs[n]+amt;
+      // 줄을 서서 오래 머문 방문: 넘친 몫의 일부가 가장 모자란 다른 필요로 간다
+      if(nv>100&&(v.uk||1)>1){var lo=null;for(var oi=0;oi<NEEDS.length;oi++){var on=NEEDS[oi];if(on!==n&&(lo==null||v.needs[on]<v.needs[lo]))lo=on;}if(lo)v.needs[lo]=Math.min(100,v.needs[lo]+(nv-100)*QUEUE_SPILL);}
+      v.needs[n]=Math.min(100,nv);
     }
     // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
     if(d.income&&v.wallet>0){
-      var pay=Math.min(v.wallet,Math.round(d.income*SHOP_K*wxSale(d)*(0.7+Math.random()*0.6)));
+      var pay=Math.min(v.wallet,Math.round(d.income*SHOP_K*wxSale(d)*(v.uk||1)*(0.7+Math.random()*0.6)));
       if(pay>0){var sup=Math.round(pay*SHOP_COST);v.wallet-=pay;S.money+=pay-sup;S.weekInc+=pay;S.weekShop+=pay;S.weekSup=(S.weekSup||0)+sup;gripeBought(v,b);sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
     gripeUsed(v,b);
@@ -141,7 +147,7 @@ function decide(v){
     var cost=function(b){var d=defOf(b),cp=Math.max(1,d.cap);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5+b.inUse/cp*4-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
-      var b=cands[ci],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});
+      var b=cands[ci],tn=entNode(b),p=navPath(v.node,function(m){return m===tn;});
       if(p){v.path=p;v.pi=0;v.target=b.id;v.want=n;v.state='walk';if(!p.length)arrive(v);return;}
     }
   }
@@ -170,13 +176,16 @@ function stepV(v,dt){
   }else if(v.state==='wait'){
     var b=bById(v.target);
     if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
-    if(b.inUse<defOf(b).cap)enter(v,b);
-    else if(linkWithSpace(b)&&startXfer(v,b,linkWithSpace(b))){}
+    if(qLen(b)){if(queueJoin(v,b))return;}
+    else if(b.inUse<defOf(b).cap){enter(v,b);return;}
+    if(!qLen(b)&&linkWithSpace(b)&&startXfer(v,b,linkWithSpace(b))){}
     else{v.wait-=dt;if(v.wait<=0){v.annoy+=CROWD_ANNOY;addGripe('crowd',defOf(b).name);v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
   }else if(v.state==='xfer'){
     var to=bById(v.target),r2=moveAlong(v,dt);
     if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}
-    if(r2===true){v.state='inside';v.inside=to.id;v.t=defOf(to).dur*STAY*(0.8+Math.random()*0.4);}
+    if(r2===true){v.state='inside';v.inside=to.id;v.t=rotTime(to)*(0.8+Math.random()*0.4);v.uk=useK(to);}
+  }else if(v.state==='queue'){
+    queueStep(v,dt);
   }else if(v.state==='inside'){
     v.t-=dt;if(v.t<=0)finishVisit(v);
   }else if(v.state==='idle'){

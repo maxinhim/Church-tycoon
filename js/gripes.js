@@ -20,9 +20,10 @@ var GRIPES={
   seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','sunbed','parasol','elder'],near:18*G},
   bin:{n:'쓰레기 버릴 곳이 없던',fix:'매장 둘레에 쓰레기통'},
   bare:{n:'볼거리 없이 삭막하다고 느낀',fix:'다니는 길 둘레에 나무·화단·장식'},
-  crowd:{n:'건물이 붐벼 그냥 돌아선',fix:'자리를 늘리세요 (층 올리기·하나 더)'}
+  crowd:{n:'건물이 붐벼 그냥 돌아선',fix:'자리를 늘리세요 (층 올리기·하나 더)'},
+  queue:{n:'줄에서 너무 오래 기다린',fix:'같은 건물을 하나 더 짓거나 층을 올리세요'}
 };
-var GRIPE_ORDER=['wc','food','drink','lonely','seat','bin','bare','crowd'];
+var GRIPE_ORDER=['wc','food','drink','lonely','seat','bin','bare','crowd','queue'];
 // 이 건물이 그 불편을 풀어 주는지
 function gripeFits(g,d){return !!g.ids&&(g.ids.indexOf(d.id)>=0||(!!g.cat&&d.cat===g.cat));}
 // 건물 설명용: 이 건물이 풀어 주는 불편 이름들
@@ -76,7 +77,7 @@ function urgeGo(v){
   var open=all.filter(function(b){return wxOpen(defOf(b))&&!(v.blocked[b.id]>S.clock);});
   open.sort(function(a,b){return Math.abs(a.x-v.x)+Math.abs(a.y-v.y)-Math.abs(b.x-v.x)-Math.abs(b.y-v.y);});
   for(var i=0;i<Math.min(3,open.length);i++){
-    var b=open[i],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});
+    var b=open[i],tn=entNode(b),p=navPath(v.node,function(m){return m===tn;});
     if(p&&(!g.near||p.length<=g.near)){v.path=p;v.pi=0;v.target=b.id;v.want=k==='lonely'?'fel':'comf';v.state='walk';if(!p.length)arrive(v);return true;}
   }
   // 비·눈으로 야외 자리만 닫혀 있으면 탓하지 않는다

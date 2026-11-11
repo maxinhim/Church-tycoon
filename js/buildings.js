@@ -142,6 +142,12 @@ mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',
 mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.05,desc:'결이 보이는 나무 바닥'});
 mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.08,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
 mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
+// 대기줄 타일: 건물 입구 앞 칸부터 이어 깔면 그 건물의 대기줄이 된다 (queue.js). 모양만 다르고 기능은 같다
+mk('q_rope','로프 대기줄','path',1,1,24,0,'floor','#cfc7b8','#b5332e',{queue:true,qs:'rope',pat:'grid',beauty:0.03,short:'입구 앞부터',desc:'금색 기둥과 붉은 로프. 건물 입구 앞 칸부터 이어 깔면 대기줄이 돼요'});
+mk('q_wood','나무 울타리 대기줄','path',1,1,20,0,'floor','#c9b48f','#7a5530',{queue:true,qs:'wood',pat:'plank',beauty:0.03,short:'입구 앞부터',desc:'낮은 나무 울타리로 가른 대기줄'});
+mk('q_chain','쇠사슬 대기줄','path',1,1,20,0,'floor','#bfc3c6','#59626b',{queue:true,qs:'chain',pat:'grid',beauty:0.02,short:'입구 앞부터',desc:'쇠기둥과 사슬로 가른 대기줄'});
+mk('q_hedge','화단 대기줄','path',1,1,30,0,'floor','#d6cdb9','#4f8a4a',{queue:true,qs:'hedge',pat:'',beauty:0.06,short:'입구 앞부터',desc:'꽃이 핀 낮은 화단으로 가른 대기줄'});
+mk('q_paint','바닥 선 대기줄','path',1,1,12,0,'floor','#b9b3a7','#f2c230',{queue:true,qs:'paint',pat:'',beauty:0.01,short:'입구 앞부터',desc:'바닥에 노란 선만 그은 가장 싼 대기줄'});
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});

@@ -47,9 +47,10 @@ function renderSelCard(){
     var b=bById(UI.sel),bd=defOf(b),fl=b.floors||1,st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
     var sub=[];
     if(bd.cap)sub.push('이용 '+b.inUse+'/'+bd.cap+'명');
+    if(b.door&&bd.cap)sub.push('회전 '+rotTime(b).toFixed(1)+'초'+(qLen(b)?' · 줄 '+queueCount(b)+'/'+qLen(b):''));
     if(maintainable(b))sub.push('상태 '+Math.round(condOf(b))+'%'+(wearStage(b)?' · 효율 '+Math.round(condFactor(b)*100)+'%':''));
     var warn='';
-    if(b.door&&!usable(b))warn=!b.acc||!b.acc.ent?'입구까지 길이 없어 이용 못 해요':'출구에서 나갈 길이 없어요';
+    if(b.door&&!usable(b))warn=b.q&&b.q.entry<0?'대기줄 끝이 길에 닿지 않아요':(!b.acc||!b.acc.ent?'입구까지 길이 없어 이용 못 해요':'출구에서 나갈 길이 없어요');
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');

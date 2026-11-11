@@ -273,12 +273,14 @@ function drawTerCell(x,y,tint){
       c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);
     }
     c.stroke();
+    if(fl&&!tint&&isQueueId(fl))drawQueueRails(x,y);
   }else{
     var h=th(x,y);
     atZ(h*LV,function(){
       quad(top.map(function(q){return [q[0],q[1],0];}),tint||texPattern('t_grass',2)||'#86b86f','rgba(40,80,30,.18)');
       if(fl&&D[fl]&&!tint)drawFloorTile(fl,x,y);
     });
+    if(fl&&!tint&&isQueueId(fl))drawQueueRails(x,y);
   }
   if(!tint&&S.wx&&S.wx.snow>.05){c.globalAlpha=Math.min(.85,S.wx.snow);quad(top,'#f4f7fb',null);c.globalAlpha=1;}
   // 파인 칸은 깊을수록 그늘져 보인다 (주변 잔디와 구분되게)

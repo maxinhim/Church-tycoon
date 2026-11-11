@@ -23,7 +23,7 @@ function canPlace(d,x,y,face){
 function bump(){
   // 서 있던 칸이 막히거나 길이 사라진 방문자는 입구 아치로 돌려보낸다
   V.forEach(function(v){
-    if(v.state==='inside')return;
+    if(v.state==='inside'||v.state==='queue')return;
     if(!nodeOk(v.node)){placeAt(v,gateNode());v.state='idle';v.t=0.2;v.target=0;}
   });
 }

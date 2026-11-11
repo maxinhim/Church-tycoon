@@ -80,7 +80,7 @@ function drawFloorTile(id,x,y){
   }
 }
 function drawFloors(){
-  for(var k in S.floor){var p=k.split(','),id=S.floor[k],fx=+p[0],fy=+p[1];if(D[id]&&!th(fx,fy)&&!isRamp(fx,fy))drawFloorTile(id,fx,fy);}
+  for(var k in S.floor){var p=k.split(','),id=S.floor[k],fx=+p[0],fy=+p[1];if(D[id]&&!th(fx,fy)&&!isRamp(fx,fy)){drawFloorTile(id,fx,fy);if(D[id].queue)drawQueueRails(fx,fy);}}
 }
 
 /* ---------- 입구까지 길 잇기 ----------
@@ -96,6 +96,16 @@ function linkPlan(b){
     if(s.l>0){var dn0=doorNode(s);if(dn0>=0&&NAV.reach[dn0])continue;return {why:'위층 문은 계단·다리로 이어 주세요'};}
     var o=doorOut(s);
     if(o.y>=PZ)continue;
+    // 대기줄이 있는 입구: 줄 끝에서부터 길을 잇는다
+    if(i===0&&b.q){
+      if(b.q.entry>=0&&NAV.reach[b.q.entry])continue;
+      if(b.q.entry>=0){var ep=nodePos(b.q.entry),er=walkSearch(Math.floor(ep.x),Math.floor(ep.y),add);if(!er)return {why:'대기줄 끝에서 길을 이을 수 없어요'};er.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});continue;}
+      var last=b.q.all[b.q.all.length-1],bestR=null;
+      for(var qd=0;qd<4;qd++){var qx=last.x+DIRS[qd][0],qy=last.y+DIRS[qd][1],qg=groundPort(last.x,last.y,qd);if(qg===NOPORT||qx<0||qy<0||qx>=COLS||qy>=PZ||groundPort(qx,qy,OPP[qd])!==qg)continue;var qr=walkSearch(qx,qy,add);if(qr&&(!bestR||qr.length<bestR.length))bestR=qr;}
+      if(!bestR)return {why:'대기줄 끝이 막혀 길을 이을 수 없어요'};
+      bestR.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});continue;
+    }
+    if(b.q&&sameSpot(s,b.door.ent))continue;
     if(o.x<0||o.y<0||o.x>=COLS||groundPort(o.x,o.y,OPP[s.d])!==bLevel(b))return {why:'문 앞 땅 높이가 달라요. 경사로나 계단으로 이어 주세요'};
     var r=walkSearch(o.x,o.y,add);if(!r)return {why:'문 앞이 막혀 길을 이을 수 없어요'};
     r.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});
@@ -118,7 +128,7 @@ function applyDoorFix(b){
   b.door={ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};recalc();save();return '';
 }
 function walkSearch(sx,sy,add){
-  var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x];};
+  var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x]&&!isQueueCell(x,y);};
   var walk=function(x,y){return groundOk(x,y)||!!add[x+','+y];};
   var goal=function(x,y){return (walk(x,y)&&!!NAV.reach[gid(x,y)])||(isEnt(x)&&y===PZ-1);};
   if(!free(sx,sy))return null;

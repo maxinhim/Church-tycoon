@@ -28,6 +28,8 @@ function computeWalk(){
   // 흙 경사로는 그 자체로 걸을 수 있는 길
   for(var k2 in S.slp||{}){var q=k2.split(','),sx=+q[0],sy=+q[1];if(sy>=0&&sy<PZ&&sx>=0&&sx<COLS)WALK[sy][sx]=true;}
   S.paths.forEach(function(p){if(onGroundPiece(p))WALK[p.y][p.x]=true;});
+  // 대기줄 타일은 길이 아니다 (줄 끝으로만 들어간다)
+  for(var kq in S.floor){if(isQueueId(S.floor[kq])){var wq=kq.split(',');if(WALK[+wq[1]])WALK[+wq[1]][+wq[0]]=false;}}
   // 물이 찬 칸은 걸을 수 없다 (다리로 건넌다)
   for(var k3 in S.water||{}){var w3=k3.split(',');if(WALK[+w3[1]])WALK[+w3[1]][+w3[0]]=false;}
 }
@@ -116,6 +118,7 @@ function doorNode(s,b){
 function refreshNav(){
   computeWalk();
   S.buildings.forEach(ensureDoors);
+  queueRebuild();
   refreshLinks();
   // 이용 가능 여부는 문이 열려 있다고 보고 계산한다 (닫아 둔 동안 '?' 표시가 온 지도에 뜨지 않게)
   NAV.all=true;NAV.reach=navReach(gateNode());NAV.all=false;
@@ -123,7 +126,9 @@ function refreshNav(){
   NAV.walk=Object.keys(NAV.reach).map(Number).filter(function(n){return isPieceNode(n)||((n/COLS)|0)<PZ;});
   S.buildings.forEach(function(b){
     if(!b.door){b.acc=null;return;}
-    var en=doorNode(b.door.ent),ex=doorNode(b.door.ext);
+    var en=entNode(b),ex=doorNode(b.door.ext);
+    // 줄이 입구 앞을 차지해 출구를 함께 쓸 수 없으면, 나올 때는 줄 끝 옆 길로 나온다
+    if(ex<0&&b.q&&sameSpot(b.door.ent,b.door.ext))ex=b.q.entry;
     b.acc={ent:en>=0&&!!NAV.reach[en],ext:ex>=0&&!!NAV.reach[ex]};
     b.acc.ok=b.acc.ent&&b.acc.ext;
   });

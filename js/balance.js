@@ -48,7 +48,7 @@ var SACRAMENT={communion:{span:8,w:.6},baptism:{span:12,w:.35},retreat:{span:16,
 var BEAUTY_K=0.15,FRESH_K=1,FRESH_DECAY=0.85;
 
 /* 방문자 불편 */
-var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};   // 불편마다 무게
+var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2,queue:1};   // 불편마다 무게
 var GRIPE_MAX=8;         // 만족도를 깎는 최대치
 var GRIPE_K=11;          // 불편 비율 × 이 값만큼 깎는다
 var GRIPE_N0=14;         // 방문자가 이보다 적으면 이 수로 나눈다 (초반에 몇 명에 크게 흔들리지 않게)
@@ -56,6 +56,17 @@ var GRIPE_SHOW=0.1;      // 챙길 일에는 방문자의 이 비율(최소 3명
 
 /* 방문자 행동 */
 var STAY=0.8;            // 건물 안에 머무는 시간 배율
+/* 회전 시간과 대기줄
+   회전 시간 = 건물의 dur × STAY × 성격(ROT_CAT) × 수용 인원 보정(capK) × 줄 보정.
+   · 줄 없음: 시간 ×QUEUE_NONE_T, 효과 ×QUEUE_NONE_E (짧게 머물고 조금 얻는다)
+   · 줄 n칸: 시간 ×(1+QUEUE_T·f), 효과 ×(1+QUEUE_E·f), f = min(1, n/QUEUE_FULL)
+     → 줄이 꽉 길면 머무는 1초당 효과가 약 19% 좋고(줄 없는 건물은 6%), 꽉 찬 동안 사람을 놓치지 않는다.
+       넘친 효과는 QUEUE_SPILL만큼 다른 필요로 가서, 한 건물에서 오래 머문 사람은 들를 곳이 줄어든다.
+       대신 기다리는 동안은 아무것도 채우지 못하고, QUEUE_PATIENCE초를 넘기면 불편 '줄'이 생긴다 */
+var ROT_CAT={worship:1.15,fellow:1.05,club:1.05,care:1,shop:.8,comfort:.75};
+var QUEUE_NONE_T=.8,QUEUE_NONE_E=.85,QUEUE_T=.35,QUEUE_E=.6,QUEUE_FULL=10;
+var QUEUE_SPILL=.3;      // 줄 있는 건물에서 한 필요가 100을 넘겨 채워지면, 넘친 몫의 이만큼이 가장 모자란 다른 필요로 간다 (오래 머문 만큼 두루 채워진다)
+var QUEUE_PATIENCE=14,QUEUE_ANNOY=1.2;   // 줄에서 이만큼(초) 넘게 기다리면 불만
 var WAIT_T=3.5;          // 꽉 찬 건물 앞에서 기다리는 시간(초)
 var CROWD_ANNOY=1.5;     // 기다리다 돌아설 때의 불만
 var NEED_OK=88;          // 욕구가 이만큼 차면 됐다고 본다 (높을수록 건물을 더 많이 들른다)

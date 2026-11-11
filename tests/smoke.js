@@ -1015,6 +1015,80 @@ async function startTerrainChecks(browser, url) {
   await ctx.close();
 }
 
+async function queueChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 99;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true; window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.step = STEPS.length; S.money = 999999; levelTick(true); S.goal = GOALS.length; S.dlg = null; S.open = true;
+    S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
+    const o = {};
+    // 기도실(수용 2명)을 (20,20)에 정면 +y로. 입구 앞 (x,22)부터 아래로 대기줄 6칸, 그 끝에서 입구 길까지 보도블록
+    build('pray', 20, 20, 2); const b = S.buildings[S.buildings.length - 1];
+    const t0 = rotTime(b), k0 = useK(b);
+    const ex = b.door.ent.x; b.door.ext = { x: b.x + 1, y: b.y, d: 0, l: 0 }; // 출구는 옆으로 따로
+    for (let i = 0; i < 6; i++) paintFloor(ex, 22 + i, 'q_rope');
+    paintFloor(ex, 28, 'f_block'); recalc(); linkDoor(b); recalc();
+    o.built = !!b.q && b.q.cells.length === 6 && b.q.entry >= 0 && Math.abs(nodePos(b.q.entry).x - ex - .5) + Math.abs(nodePos(b.q.entry).y - 27.5) === 1 && usable(b) && b.q.cells[0].y === 22;
+    o.dbg = [JSON.stringify(b.q), gid(ex, 28), usable(b), JSON.stringify(b.door), JSON.stringify(b.acc), !groundOk(ex, 24), groundOk(ex, 28)];
+    o.noWalk = !groundOk(ex, 24) && groundOk(ex, 28) && navReach(gateNode())[gid(ex, 24)] === undefined;
+    o.rot = t0 === D.pray.dur * STAY * ROT_CAT.worship * capK(D.pray) * QUEUE_NONE_T && k0 === QUEUE_NONE_E && rotTime(b) > t0 * 1.3 && useK(b) > 1.3 && useK(b) / (rotTime(b) / t0 * QUEUE_NONE_T) > k0 / QUEUE_NONE_T;
+    // 방문자 7명을 보낸다: 2명은 들어가고 나머지는 줄에 선다
+    V.length = 0; const vs = [];
+    for (let i = 0; i < 8; i++) { spawnV(false); const v = V[V.length - 1]; v.life = 999; v.wcT = v.foodT = v.lonT = 1e9; NEEDS.forEach(n => { v.needs[n] = 5; }); v.target = b.id; v.want = 'word'; v.path = navPath(v.node, n => n === entNode(b)); v.pi = 0; v.state = 'walk'; v.speed = 4 + i * .1; vs.push(v); }
+    const pat0 = QUEUE_PATIENCE; QUEUE_PATIENCE = 8;
+    let maxQ = 0, offLine = false, left = false, order = true;
+    for (let i = 0; i < 700; i++) {
+      vs.forEach(v => { const st = v.state; if (st === 'walk' || st === 'queue' || st === 'inside' || st === 'wait') stepV(v, .1); if (st === 'queue' && v.state !== 'queue' && v.state !== 'inside') left = true; });
+      const ql = QL[b.id] || []; maxQ = Math.max(maxQ, ql.length);
+      ql.forEach((v, k) => { if (v.qt > 3 && !isQueueCell(Math.floor(v.x), Math.floor(v.y))) offLine = true; if (k > 0 && v.qt > 6 && ql[k - 1].qt > 6 && v.y < ql[k - 1].y - .01) order = false; });
+      if (b.inUse > D.pray.cap) offLine = true;
+    }
+    QUEUE_PATIENCE = pat0;
+    o.lined = maxQ >= 4 && !offLine && !left && order;
+    o.served = (b.uses || 0) >= 5;
+    // 오래 기다리면 불편 '줄'
+    o.gripe = (S.grip.queue || 0) >= 1 && GRIPE_W.queue > 0 && /줄/.test(GRIPES.queue.n);
+    // 줄이 꽉 차면 줄 끝에서 잠깐 기다리다 돌아선다
+    V.length = 0; QL[b.id] = []; b.inUse = D.pray.cap; S.grip = {};
+    const mk = () => { spawnV(false); const v = V[V.length - 1]; v.life = 999; v.target = b.id; placeAt(v, b.q.entry); v.path = []; v.pi = 0; v.state = 'walk'; return v; };
+    for (let i = 0; i < 6; i++) arrive(mk());
+    const extra = mk(); arrive(extra);
+    o.full = queueCount(b) === 6 && extra.state === 'wait';
+    for (let i = 0; i < 60; i++) stepV(extra, .1);
+    o.full = o.full && extra.state !== 'queue' && (S.grip.crowd || 0) === 1;
+    // 줄 타일을 걷어내면 넘치는 사람은 풀려난다
+    floorSwap(ex, 25, 'f_erase'); recalc();
+    o.shrink = b.q.cells.length === 0 || b.q.entry < 0 || queueCount(b) <= b.q.cells.length;
+    paintFloor(ex, 25, 'q_wood'); recalc(); o.mixed = b.q.cells.length === 6;
+    // 경사로 위에도 깔린다
+    terApply(40, 20, 'ter_ramp', 0, 0); o.ramp = paintFloor(40, 20, 'q_chain') === '' && isQueueCell(40, 20);
+    ['q_hedge', 'q_paint'].forEach((id, i) => paintFloor(44 + i, 20, id));
+    for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
+    // 카드에 회전 시간과 줄
+    UI.fold = true; UI.tool = null; UI.sel = b.id; renderSelCard();
+    o.card = /회전 [\d.]+초/.test(document.getElementById('selCard').textContent) && /줄 \d+\/6/.test(document.getElementById('selCard').textContent);
+    o.defs = ['q_rope', 'q_wood', 'q_chain', 'q_hedge', 'q_paint'].every(id => D[id] && D[id].queue && D[id].cat === 'path') && FLOOR_IDS.every(id => !D[id].queue);
+    return o;
+  });
+  check(r.built && r.noWalk, '대기줄: 입구 앞부터 이어 깔면 그 건물의 줄이 되고, 줄 타일은 지나다닐 수 없음');
+  if (!(r.built && r.noWalk)) console.log('DBG', r.dbg.join(' | '));
+  check(r.rot, '회전 시간: 성격·수용 인원·줄 길이로 정해지고, 줄이 길수록 길어지며 1초당 효과는 더 좋음');
+  check(r.lined && r.served, '대기줄: 방문자가 줄 끝으로 들어와 차례대로 서고, 중간에 떠나지 않고 들어감');
+  check(r.gripe, '대기줄: 오래 기다리면 불편이 생김');
+  check(r.full, '대기줄: 줄이 꽉 차면 끝에서 잠깐 기다리다 돌아섬');
+  check(r.shrink && r.mixed && r.ramp, '대기줄: 타일을 걷으면 줄이 줄고, 모양을 섞어도 이어지며, 경사로에도 깔림');
+  check(r.card && r.defs, '대기줄: 모양 5가지가 길·지형에 있고, 건물 카드에 회전 시간과 줄 인원이 보임');
+  check(errs.length === 0, '대기줄: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 async function terrainChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
   const page = await ctx.newPage();
@@ -1528,6 +1602,7 @@ async function earlyChecks(browser, url) {
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
     await waterChecks(browser, url);
+    await queueChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);
     await gripeChecks(browser, url);
