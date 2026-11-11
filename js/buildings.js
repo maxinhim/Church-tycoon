@@ -73,6 +73,7 @@ mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe
 mk('bench','벤치','comfort',1,1,160,0,'bench','#8a6a46','#8a6a46',{prop:1,dir:'face',ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
+mk('wfount','물 분수','garden',1,1,500,2,'wfount','#c9c2b6','#7fb7d9',{beauty:2.5,water:true,desc:'호수·강 위에 띄우는 분수. 물이 찬 칸에만 놓아요'});
 mk('lamp','가로등','deco',1,1,120,1,'lamp','#3d4650','#f5e6a8',{beauty:0.5,desc:'저녁에도 길을 밝혀요'});
 mk('hedge','생울타리','deco',1,1,90,0,'hedge','#3f7d3c','#5a9a4f',{beauty:0.6,desc:'잘 다듬은 낮은 나무 울타리'});
 mk('rosearch','꽃 아치','garden',1,1,260,0,'arch','#f1ece2','#d9567a',{spr:'pergola',dir:'axis',beauty:1.2,desc:'장미가 감긴 정원 아치'});
@@ -151,6 +152,6 @@ function heightOf(id){
   var d=D[id];
   if(d.hgt!=null)return d.hgt;
   if(d.kind==='bld')return Math.max(d.H+(d.rh||0.05),d.towerH?d.towerH+0.75:0);
-  return {market:.95,canal:.1,birdbath:.7,topiary:.7,fence:.62,lamp2:1.8,bollard:.5,stonelamp:1.2,bin:.5,board:1.1,bell:1.6,bikerack:.4,parasol:1.3,lot:.12,tree:1.4,flower:.25,bench:.45,spire:2.7,fountain:.9,lamp:1.7,hedge:.55,arch:1.45,floor:.02,stage:.7,playground:1.2,pond:.15,picnic:.5,statue:1.7,planter:.6,gazebo:1.4,busstop:1.1}[d.kind]||1;
+  return {market:.95,canal:.1,birdbath:.7,topiary:.7,fence:.62,lamp2:1.8,bollard:.5,stonelamp:1.2,bin:.5,board:1.1,bell:1.6,bikerack:.4,parasol:1.3,lot:.12,tree:1.4,flower:.25,bench:.45,spire:2.7,wfount:1.1,fountain:.9,lamp:1.7,hedge:.55,arch:1.45,floor:.02,stage:.7,playground:1.2,pond:.15,picnic:.5,statue:1.7,planter:.6,gazebo:1.4,busstop:1.1}[d.kind]||1;
 }
 

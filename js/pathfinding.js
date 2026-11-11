@@ -28,6 +28,8 @@ function computeWalk(){
   // 흙 경사로는 그 자체로 걸을 수 있는 길
   for(var k2 in S.slp||{}){var q=k2.split(','),sx=+q[0],sy=+q[1];if(sy>=0&&sy<PZ&&sx>=0&&sx<COLS)WALK[sy][sx]=true;}
   S.paths.forEach(function(p){if(onGroundPiece(p))WALK[p.y][p.x]=true;});
+  // 물이 찬 칸은 걸을 수 없다 (다리로 건넌다)
+  for(var k3 in S.water||{}){var w3=k3.split(',');if(WALK[+w3[1]])WALK[+w3[1]][+w3[0]]=false;}
 }
 // 데크 위 건물 밑의 땅은 막히지 않는다
 function groundOk(x,y){if(!WALK)computeWalk();return x>=0&&y>=0&&x<COLS&&y<ROWS&&(!occ[y][x]||(DECK.up&&DECK.up[y][x]===1))&&WALK[y][x];}
@@ -60,7 +62,7 @@ function navNext(n,cb){
       var nx=x+DIRS[d][0],ny=y+DIRS[d][1];
       if(!crossOk(x,y,ny))continue;
       // 땅끼리는 맞닿은 면의 높이가 같아야 (절벽은 못 지나간다)
-      var gp=groundPort(x,y,d);if(gp<0)continue;
+      var gp=groundPort(x,y,d);if(gp===NOPORT)continue;
       if(groundOk(nx,ny)&&groundPort(nx,ny,OPP[d])===gp)cb(gid(nx,ny),gp*LV);
       var pn=pieceNodeAt(nx,ny,OPP[d],gp);if(pn>=0)cb(pn,gp*LV);
     }
@@ -68,7 +70,7 @@ function navNext(n,cb){
   }
   var p=nodePiece(n);if(!p)return;
   for(d=0;d<4;d++){
-    var pl=portLevel(p,d);if(pl<0)continue;
+    var pl=portLevel(p,d);if(pl===NOPORT)continue;
     var mx=p.x+DIRS[d][0],my=p.y+DIRS[d][1];
     if(groundOk(mx,my)&&crossOk(mx,p.y,my)&&groundPort(mx,my,OPP[d])===pl)cb(gid(mx,my),pl*LV);
     var qn=pieceNodeAt(mx,my,OPP[d],pl);if(qn>=0)cb(qn,pl*LV);

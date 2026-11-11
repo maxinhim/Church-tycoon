@@ -57,7 +57,7 @@ function renderSelCard(){
     if(b.door)more+='<div class="scd"><span>입구</span>'+scBtn('door','◀','','ent:-1','입구를 이전 자리로')+scBtn('door','▶','','ent:1','입구를 다음 자리로')+
       '<span>출구</span>'+scBtn('door','◀','','ext:-1','출구를 이전 자리로')+scBtn('door','▶','','ext:1','출구를 다음 자리로')+'</div>';
     var mb='';
-    if(canStack(b)){if(fl<MAXF)mb+=scBtn('floorup','층 올리기 '+fmt(floorCostOf(b)));if(fl>1)mb+=scBtn('floordown','위층 철거 +'+fmt(floorCostOf(b)*0.5));}
+    if(canStack(b)){if(fl<maxFloors(b))mb+=scBtn('floorup','층 올리기 '+fmt(floorCostOf(b)));if(fl>1)mb+=scBtn('floordown','위층 철거 +'+fmt(floorCostOf(b)*0.5));}
     if(st)mb+=scBtn('demtile',(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5));
     mb+=scDem(isRoom(b)?'전체 철거':'철거',bd.cost*0.5);
     more+='<div class="scb">'+mb+'</div>';
@@ -68,14 +68,20 @@ function renderSelCard(){
     if(dk)h+=floorRow(p.f||null,p.id,p.x,p.y);
     if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmt(Math.floor(D[p.f].cost*.5)),'','f_erase');
     row+=scDem('철거',pieceCost(p)*0.5);
+  }else if(isWater(UI.selFloor.x,UI.selFloor.y)){
+    // 물: 다리 놓기·물 분수·물 빼기
+    var wf=UI.selFloor,wn=poolCells(wf.x,wf.y).filter(function(q){return isWater(q.x,q.y);}).length;
+    h='<div class="sct"><b>물</b><span>'+wn+'칸 · 다리로 건너요</span></div>';
+    row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기')+scBtn('wfount','물 분수 '+fmt(D.wfount.cost),'',null,'이 칸에 물 분수 놓기')+scBtn('wdrain','물 빼기','',null,'이 웅덩이의 물을 모두 빼기');
   }else{
     // 빈 땅·바닥 칸: 바닥 깔기·바꾸기, 땅 높이기·낮추기, 경사로를 바로 고른다
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
-    h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?'높이 '+gh+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'눌러서 바로 깔아요')+'</span></div>'+floorRow(cur,0,sf.x,sf.y);
-    var up=terPlan(sf.x,sf.y,'ter_set',gh+1),dn=gh>0||isRamp(sf.x,sf.y)?terPlan(sf.x,sf.y,'ter_set',isRamp(sf.x,sf.y)?gh:gh-1):null;
+    h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?lvName(gh)+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'눌러서 바로 깔아요')+'</span></div>'+floorRow(cur,0,sf.x,sf.y);
+    var up=terPlan(sf.x,sf.y,'ter_set',gh+1),dn=gh>MINH||isRamp(sf.x,sf.y)?terPlan(sf.x,sf.y,'ter_set',isRamp(sf.x,sf.y)?gh:gh-1):null;
     if(!up.why)row+=scBtn('gter','땅 높이기 '+fmt(up.cost),'',gh+1,'땅을 한 층 높이기 '+fmt(up.cost));
     if(dn&&!dn.why)row+=scBtn('gter',(isRamp(sf.x,sf.y)?'평평하게 ':'땅 낮추기 ')+fmt(dn.cost),'',isRamp(sf.x,sf.y)?gh:gh-1);
     row+=scBtn('gramp','경사로…','',null,'이 칸에서 흙 경사로 짓기 (방향을 고른 뒤 ✓)');
+    if(gh<0){var wp=waterPlan(sf.x,sf.y);row+=scBtn('wfill','물 채우기'+(wp.why?'':' '+fmt(wp.cost)),'',null,'이어진 지하 칸 전체에 물 채우기');}
     if(cur)row+=scDem('철거',Math.floor(D[cur].cost*.5));
   }
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
@@ -89,7 +95,7 @@ function syncSelCard(){
   if(el.hidden)return;
   if(scArm&&performance.now()>=scArm){scArm=0;renderSelCard();}
   var x,y,top;
-  if(UI.sel){var b=bById(UI.sel),dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2);top=toScreen(m[0],m[1],bLevel(b)*LV+bHeight(b)+.3);var bot=toScreen(m[0],m[1],bLevel(b)*LV);}
+  if(UI.sel){var b=bById(UI.sel),dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2);top=toScreen(m[0],m[1],bZ(b)+bHeight(b)+.3);var bot=toScreen(m[0],m[1],bZ(b));}
   else if(UI.selPiece){var p=pieceById(UI.selPiece),mp=rotPt(p.x+.5,p.y+.5);top=toScreen(mp[0],mp[1],p.l*LV+.5);bot=toScreen(mp[0],mp[1],p.l*LV);}
   else{var sf=UI.selFloor,mf=rotPt(sf.x+.5,sf.y+.5),fz=groundZ(sf.x+.5,sf.y+.5);top=toScreen(mf[0],mf[1],fz+.3);bot=toScreen(mf[0],mf[1],fz);}
   // 칸을 고르면 둘레에 화살표가 뜨므로, 카드는 화살표 무리 전체의 위(자리가 없으면 아래)에 붙인다

@@ -44,7 +44,7 @@ function rollWx(cur){
 }
 function wxNow(){return ensureWx().cur;}
 function isWet(){var c=wxNow();return c==='rain'||c==='storm';}
-function hasWater(){return S.buildings.some(function(b){var k=defOf(b).kind;return k==='fountain'||k==='pond'||k==='canal'||k==='birdbath';});}
+function hasWater(){if(S.water)for(var wk in S.water)return true;return S.buildings.some(function(b){var k=defOf(b).kind;return k==='fountain'||k==='pond'||k==='canal'||k==='birdbath';});}
 // 날씨에 따라 쓸 수 없는 야외 자리
 function wxOpen(d){
   var c=wxNow();

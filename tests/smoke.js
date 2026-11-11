@@ -392,7 +392,7 @@ async function stackChecks(browser, url) {
     o.floorBlocked = paintFloor(cell.x, cell.y, 'f_brick') !== '';
     paintFloor(fx, fy, 'f_wood');
     // 새로 넣은 건물·요소를 모두 지어 본다
-    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor');
+    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor' && !d.water);
     const missing = [];
     want.forEach(d => {
       if (S.buildings.some(b => b.def === d.id)) return;
@@ -844,6 +844,96 @@ async function ministryChecks(browser, url) {
 }
 
 /* ---------- 지형: 땅 높이·흙 경사로 ---------- */
+
+async function waterChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 4242;
+    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true;
+    window.requestAnimationFrame = () => 0;
+  });
+  await page.goto(url); await skipSteps(page);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.step = STEPS.length; S.money = 9999999; levelTick(true); S.goal = GOALS.length; S.dlg = null; S.open = true;
+    S.buildings = S.buildings.filter(b => b.def !== 'tree'); S.hgt = {}; S.slp = {}; S.water = {}; rebuildOcc(); recalc();
+    const o = {};
+    // 깊이 한계
+    o.dig = terApply(5, 5, 'ter_set', -1) === '' && th(5, 5) === -1;
+    o.deep = terApply(5, 5, 'ter_set', -10) === '' && th(5, 5) === -10 && !!terPlan(5, 5, 'ter_set', -11).why;
+    // 지하 10층의 건물은 20층까지, 그 땅을 높이려면 먼저 층을 줄여야
+    [[2, 2], [3, 2], [2, 3], [3, 3]].forEach(c => terApply(c[0], c[1], 'ter_set', -10));
+    o.pitBuild = build('room', 2, 2, 2);
+    const pb = S.buildings.find(b => b.def === 'room' && b.x === 2 && b.y === 2);
+    let n = 0; while (pb && addFloor(pb) === '' && n < 40) n++;
+    o.floors20 = !!pb && pb.floors === 20;
+    o.raiseBlocked = /넘을/.test(terPlan(2, 2, 'ter_set', -9).why || '');
+    removeFloor(pb, 1);
+    o.raiseAfter = !terPlan(2, 2, 'ter_set', -9).why;
+    // 물: 웅덩이 전체, 바닥 타일 유지, 못 걷는 칸
+    [[10, 5], [11, 5], [11, 6]].forEach(c => terApply(c[0], c[1], 'ter_set', -2));
+    paintFloor(10, 5, 'f_brick'); paintFloor(9, 5, 'f_block'); paintFloor(12, 5, 'f_block');
+    const m0 = S.money;
+    o.fill = fillWater(10, 5) === '' && isWater(10, 5) && isWater(11, 5) && isWater(11, 6) && m0 - S.money === 3 * WATER_COST;
+    o.keepFloor = S.floor['10,5'] === 'f_brick';
+    o.noWalk = !groundOk(10, 5);
+    o.noBuild = !canPlace(D.bench, 10, 5, 2) && !canPlace(D.wfount, 9, 6, 2);
+    o.noTer = /물/.test(terPlan(10, 5, 'ter_set', 0).why || '') && /물/.test(floorWhy(11, 5, 'f_wood') || '');
+    o.noPathIn = /물/.test(pieceFits({ x: 11, y: 6, l: -2, s: 0, d: 0, k: 'stone' }));
+    o.fount = build('wfount', 11, 6, 2);
+    o.drainBlocked = /분수/.test(drainWater(10, 5));
+    // 다리로 건너기
+    o.bridge = addPiece({ x: 10, y: 5, l: 0, s: 0, d: 0, k: 'arch' }) === '' && addPiece({ x: 11, y: 5, l: 0, s: 0, d: 0, k: 'arch' }) === '';
+    NAV.all = true; const reach = navReach(gid(9, 5)); NAV.all = false;
+    o.cross = !!reach[gid(12, 5)] && !reach[gid(10, 5)];
+    // 물 옆을 파면 물이 이어진다. 건물·길이 있는 칸은 못 판다
+    o.spread = terApply(10, 6, 'ter_set', -1) === '' && isWater(10, 6);
+    build('bench', 10, 7, 2);
+    o.digThing = /물 옆/.test(terPlan(10, 7, 'ter_set', -1).why || '');
+    // 0층 아래에 요소가 있으면 못 채운다
+    terApply(20, 5, 'ter_set', -1); terApply(21, 5, 'ter_set', -1); build('bench', 21, 5, 2);
+    o.fillBlocked = /먼저 치워/.test(fillWater(20, 5));
+    // 네 방향에서 그려 본다 + 파인 칸 누르기
+    for (let k = 0; k < 4; k++) { ROT = k; draw(); }
+    ROT = 0;
+    const m = rotPt(20.08, 5.08), q = toScreen(m[0], m[1], -LV), st = surfaceTile(q[0], q[1]);
+    const mw = rotPt(20.5, 5.5), qw = toScreen(mw[0], mw[1], 0), sw = surfaceTile(qw[0], qw[1]);
+    o.pick = st.x === 20 && st.y === 5 && sw.x === 20 && sw.y === 5;
+    const m2 = rotPt(22.5, 6.5), q2 = toScreen(m2[0], m2[1], 0), st2 = surfaceTile(q2[0], q2[1]);
+    o.pickFlat = st2.x === 22 && st2.y === 6;
+    // 물 카드
+    UI.fold = true; UI.tool = null; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: 11, y: 6 };
+    S.buildings = S.buildings.filter(b => b.def !== 'wfount'); rebuildOcc(); UI.selFloor = { x: 10, y: 6 }; renderSelCard();
+    const card = document.getElementById('selCard');
+    o.card = !card.hidden && !!card.querySelector('[data-act="wdrain"]') && !!card.querySelector('[data-act="wbridge"]') && !selTarget();
+    card.querySelector('[data-act="wdrain"]').click();
+    o.drain = !isWater(10, 5) && !isWater(10, 6) && S.floor['10,5'] === 'f_brick';
+    // 되돌리기로 땅이 올라오면 물도 사라진다
+    terApply(25, 5, 'ter_set', -1); fillWater(25, 5); S.hgt = Object.assign({}, S.hgt); delete S.hgt['25,5']; terChanged([{ x: 25, y: 5 }]);
+    o.fix = !isWater(25, 5);
+    for (let k = 0; k < 4; k++) { ROT = k; draw(); }
+    ROT = 0;
+    o.json = JSON.stringify(S).length > 0;
+    return o;
+  });
+  check(r.dig && r.deep, '지하: 땅을 지하 10층까지 내릴 수 있고 그 아래는 막힘');
+  check(r.pitBuild && r.floors20, '지하: 지하 10층 땅의 건물은 20층까지 올라감');
+  check(r.raiseBlocked && r.raiseAfter, '지하: 건물이 한도에 닿으면 땅을 못 높이고, 층을 줄이면 높일 수 있음');
+  check(r.fill && r.keepFloor, '물: 이어진 지하 칸 전체에 차고 바닥 타일은 남음');
+  check(r.noWalk && r.noBuild && r.noTer && r.noPathIn, '물: 걷기·건물·바닥·지형·물속 길 금지');
+  check(r.fount && r.drainBlocked, '물 분수: 물 위에만 놓이고, 있으면 물을 못 뺌');
+  check(r.bridge && r.cross, '아치 다리: 물 위에 놓으면 방문자가 건넘');
+  check(r.spread && r.digThing, '물: 옆 칸을 파면 이어지고, 건물이 있는 칸은 못 팜');
+  check(r.fillBlocked, '물: 0층 아래에 요소가 있으면 못 채움');
+  check(r.pick && r.pickFlat, '지하: 파인 칸과 평지를 눌러 고를 수 있음');
+  check(r.card && r.drain, '물 카드: 다리 놓기·물 빼기, 빼면 타일이 다시 보임');
+  check(r.fix, '물: 땅이 0층 이상이 되면 사라짐');
+  check(errs.length === 0, '지하·물: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
 async function terrainChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
   const page = await ctx.newPage();
@@ -1343,6 +1433,7 @@ async function earlyChecks(browser, url) {
     await ministryChecks(browser, url);
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
+    await waterChecks(browser, url);
     await deckChecks(browser, url);
     await gripeChecks(browser, url);
     await earlyChecks(browser, url);

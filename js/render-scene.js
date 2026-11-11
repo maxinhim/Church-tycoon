@@ -54,6 +54,8 @@ function draw(){
   drawFloors();
   drawPuddles();
   drawCloudShadows();
+  // 파인 칸의 입구: 먼저 어두운 흙으로 메워 두고, 그 안쪽은 칸마다 그린다
+  pitBuild();if(PIT.path){c.fillStyle='#4f3d2b';c.fill(PIT.path);}
   drawOutTrees(true);
   var sb=UI.sel?bById(UI.sel):null;
   var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)&&!isTerDef(UI.tool)?D[UI.tool]:null,gok=false;
@@ -64,28 +66,33 @@ function draw(){
     if(t.x<0||t.y<0||t.x>=COLS||t.y>=ROWS)return;
     var cm=rotPt(t.x+.5,t.y+.5),cq=P(cm[0],cm[1],th(t.x,t.y)*LV),pad=80*PJ.s;
     if(cq[0]<-pad||cq[0]>VW+pad||cq[1]<-pad||cq[1]>VH+pad+MAXH*LV*ZH*PJ.s)return;
-    var rt=rrect(t.x,t.y,t.x+1,t.y+1),h=th(t.x,t.y);rt.zb=0;rt.zt=h*LV;rt.f=function(){drawTerCell(t.x,t.y);};E.push(rt);
+    var rt=rrect(t.x,t.y,t.x+1,t.y+1),h=th(t.x,t.y);rt.zb=h<0?-99:0;rt.zt=h*LV;
+    // 0층 아래로 내려가는 흙벽·바닥은 파인 칸의 입구 안에서만 보인다
+    var low=h<0||[0,1,2,3].some(function(d){return th(t.x+DIRS[d][0],t.y+DIRS[d][1])<0;});
+    rt.f=low?function(){pitClip(rt,function(){drawTerCell(t.x,t.y);});}:function(){drawTerCell(t.x,t.y);};E.push(rt);
   });
   S.buildings.forEach(function(b){
     if(b.id===mvId)return;
     if(isRoom(b)){
       var map=roomMap(b);
       var rz=bLevel(b)*LV,ft=frontTile(b);
-      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);if(t===ft)drawWear(b);});};E.push(rt);});
+      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);if(t===ft)drawWear(b);});};if(rz<0){var f0=rt.f;rt.f=function(){pitClip(rt,f0);};}E.push(rt);});
       return;
     }
-    var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bLevel(b)*LV;
-    r.zb=bz;r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);drawWear(b);});};E.push(r);
+    var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bZ(b);
+    r.zb=bz;r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);drawWear(b);});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
   });
   S.paths.forEach(function(p){
     var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;
     var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>pg?p.l*LV-.14:pg*LV;rp.zt=p.k==='sky'?p.l*LV+.72:((p.l===pg&&!p.s)?pg*LV:pieceTop(p)*LV);
-    rp.f=function(){drawPiece(p);};E.push(rp);
+    rp.f=pg<0||p.l<0?function(){pitClip(rp,function(){drawPiece(p);});}:function(){drawPiece(p);};E.push(rp);
   });
   V.forEach(function(v){
     if(v.state==='inside')return;
     var p=rotPt(v.x,v.y),z=v.z||0;
-    E.push({x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,zb:z,zt:z+.7,on:v.node>=PN?v.node-PN:0,f:function(){drawVisitor(v);}});
+    var ve={x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,zb:z,zt:z+.7,on:v.node>=PN?v.node-PN:0,f:function(){drawVisitor(v);}};
+    if(z<-.01)ve.f=function(){var u=unrot(p[0],p[1]),cx=Math.floor(u[0]),cy=Math.floor(u[1]);pitClip(rrect(cx,cy,cx+1,cy+1),function(){drawVisitor(v);});};
+    E.push(ve);
   });
   for(var k=0;k<2;k++){
     var span=COLS+2*BAND,wx=k===0?((S.clock*1.6+3)%span)-BAND:COLS+BAND-((S.clock*1.25+9)%span),ly=k===0?ROWS-1+.58:ROWS-1+.14;
@@ -101,7 +108,7 @@ function draw(){
   snowmen().forEach(function(t){var r=rrect(t.x+.25,t.y+.25,t.x+.75,t.y+.75);r.f=function(){drawSnowman(t);};E.push(r);});
   sortEnt(E).forEach(function(e){e.f();});
   // 고른 건물·미리보기 바닥 표시는 그림 위에 얹는다 (높인 땅 위에서도 보이게)
-  if(sb)atZ(bLevel(sb)*LV,function(){
+  if(sb)atZ(bZ(sb),function(){
     if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
     else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
   });

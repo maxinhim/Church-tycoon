@@ -14,6 +14,7 @@ function floorSlot(x,y,pid){
 function floorWhy(x,y,id,pid){
   if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
   if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';
+  if(!pid&&isWater(x,y))return '물이 차 있어요. 먼저 물을 빼 주세요';
   var sl=floorSlot(x,y,pid);if(!sl)return '데크가 없어요';
   if(sl.busy)return '건물이 있어요';
   var prev=sl.get();
@@ -131,7 +132,7 @@ function walkSearch(sx,sy,add){
     }
     for(var d=0;d<4;d++){
       var nx=c[0]+DIRS[d][0],ny=c[1]+DIRS[d][1];if(!free(nx,ny))continue;
-      var gp=groundPort(c[0],c[1],d);if(gp<0||groundPort(nx,ny,OPP[d])!==gp)continue;
+      var gp=groundPort(c[0],c[1],d);if(gp===NOPORT||groundPort(nx,ny,OPP[d])!==gp)continue;
       var w=walk(nx,ny)?0:1,nk=nx+','+ny,nd=dist[ck]+w;
       if(dist[nk]==null||nd<dist[nk]){dist[nk]=nd;prev[nk]=ck;if(w)dq.push([nx,ny]);else dq.unshift([nx,ny]);}
     }

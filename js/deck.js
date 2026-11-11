@@ -35,6 +35,9 @@ function placeLevel(d,x,y,face){
   var dm=faceDims(d,face),common=null,src={};
   for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++){
     var tx=x+i,ty=y+j;if(tx<0||ty<0||tx>=COLS||ty>=ROWS)return {why:'부지 밖이에요'};
+    var wt=isWater(tx,ty)&&!piecesAt(tx,ty).length;
+    if(wt&&!d.water)return {why:'물 위에는 다리와 물 분수만 놓을 수 있어요'};
+    if(!wt&&d.water)return {why:'물이 찬 칸에만 놓을 수 있어요'};
     var lv=cellLevels(tx,ty);
     if(!lv.length)return {why:isRamp(tx,ty)?'흙 경사로 위에는 지을 수 없어요':'길·계단과 겹쳐요. 평평한 땅이나 데크에 지어 주세요'};
     lv.forEach(function(o){if(o.deck)src[o.l]=1;});
@@ -46,7 +49,7 @@ function placeLevel(d,x,y,face){
   if(L+1>MAXH)return {why:'이 높이에는 지을 수 없어요'};
   return {l:L,deck:!!src[L]};
 }
-function plLevelZ(d,x,y,face){var p=placeLevel(d,x,y,face);return (p.why?th(clamp(x,0,COLS-1),clamp(y,0,ROWS-1)):p.l)*LV;}
+function plLevelZ(d,x,y,face){var p=placeLevel(d,x,y,face);if(d.water&&!p.why)return waterZ();return (p.why?th(clamp(x,0,COLS-1),clamp(y,0,ROWS-1)):p.l)*LV;}
 // 건물을 이 자리의 높이에 세운다 (데크면 b.z, 땅이면 b.z 없음)
 function setPlaceLevel(b,d,x,y,face){var p=placeLevel(d,x,y,face);if(!p.why&&p.deck)b.z=p.l;else delete b.z;}
 // 데크 조각을 치울 수 없는 까닭
@@ -57,12 +60,19 @@ function pieceDemWhy(p){
 }
 // 화면에서 가장 위에 보이는 바닥면(높인 땅 윗면 또는 데크). 데크면 pid도 준다
 function surfaceTile(px,py){
-  for(var z=MAXH*LV+.05;z>0;z-=.05){
+  var air=null;
+  for(var z=MAXH*LV+.05;z>MINH*LV-.06;z-=.05){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
     var dp=piecesAt(tx,ty).filter(function(p){return isDeckPiece(p)&&Math.abs(p.l*LV-z)<.055;})[0];
     if(dp)return {x:tx,y:ty,pid:dp.id};
-    if(Math.abs(groundZ(w[0],w[1])-z)<.055&&(th(tx,ty)||isRamp(tx,ty)))return {x:tx,y:ty};
+    var gz=groundZ(w[0],w[1]);
+    if(Math.abs(gz-z)<.055&&(th(tx,ty)||isRamp(tx,ty)))return {x:tx,y:ty};
+    // 지면 아래로 내려간 시선은 처음 만나는 땅에서 멈춘다 (앞쪽 땅 너머의 파인 칸이 눌리지 않게)
+    if(z<=0&&isWater(tx,ty)&&z<=waterZ())return {x:tx,y:ty};
+    // 파인 칸 안에서 뒤쪽 흙벽에 닿으면, 벽이 아니라 지금 들여다보는 파인 칸을 고른다
+    if(z<=0&&gz>=z-.055)return gz>z+.055&&air?air:{x:tx,y:ty};
+    air={x:tx,y:ty};
   }
   var w0=toWorld(px,py,0);return {x:Math.floor(w0[0]),y:Math.floor(w0[1])};
 }

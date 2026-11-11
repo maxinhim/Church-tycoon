@@ -74,7 +74,7 @@ function tilePlan(x,y,def){
   var r=roomAt(x,y);
   if(r){
     if(r.def!==def)return {ok:false,why:'역할이 다른 칸 위에는 쌓을 수 없어요'};
-    if(tileOf(r,x,y).f>=MROOM.maxF)return {ok:false,why:MROOM.maxF+'층까지만 올릴 수 있어요'};
+    if(tileOf(r,x,y).f>=MROOM.maxF-Math.min(0,bLevel(r)))return {ok:false,why:(MROOM.maxF-Math.min(0,bLevel(r)))+'층까지만 올릴 수 있어요'};
     if(bLevel(r)+tileOf(r,x,y).f+1>MAXH)return {ok:false,why:'땅 높이와 합쳐 '+MAXH+'층을 넘을 수 없어요'};
     return {ok:true,kind:'floor',room:r,cost:MROOM.floorCost};
   }
@@ -146,9 +146,10 @@ function splitRoom(b){
 }
 /* 화면 좌표에서 가장 위에 보이는 칸(쌓인 칸 포함) 또는 땅 칸 */
 function pickTile(px,py){
-  for(var z=MAXH*LV+roomTop(MROOM.maxF)+.1;z>=0;z-=0.05){
+  for(var z=MAXH*LV+roomTop(MROOM.maxF)+.1;z>=MINH*LV;z-=0.05){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     var b=roomAt(tx,ty),bz=b?bLevel(b)*LV:0;
+    if(z<0&&!b&&tx>=0&&ty>=0&&tx<COLS&&ty<ROWS&&groundZ(w[0],w[1])>=z+.06)break;
     if(b&&z>=bz&&z<=bz+bHeightAt(b,tx,ty)+.001)return {x:tx,y:ty};
   }
   return groundTile(px,py);

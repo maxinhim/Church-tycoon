@@ -6,13 +6,13 @@
    · 땅을 높이거나 낮추면 그 위의 것(바닥 타일·건물·땅에 놓인 길)이 함께 움직인다.
      여러 칸짜리 건물은 모든 칸을 함께 맞춘다
    · 땅 높이와 그 위 건물 층수를 합쳐 MAXH(10)층을 넘지 않는다 */
-var MAXH=10,TER_UP=60,TER_DOWN=30,TER_RAMP=80;
+var MAXH=10,MINH=-10,NOPORT=-99,TER_UP=60,TER_DOWN=30,TER_RAMP=80;
 function th(x,y){var v=S.hgt&&S.hgt[x+','+y];return v||0;}
 function tslope(x,y){var v=S.slp&&S.slp[x+','+y];return v==null?-1:v;}
 function isRamp(x,y){return tslope(x,y)>=0;}
 function isTerDef(id){return !!D[id]&&D[id].kind==='terrain';}
 // (x,y) 칸의 d 방향 면이 열린 높이(층). 경사로의 옆면은 -1
-function groundPort(x,y,d){var h=th(x,y),s=tslope(x,y);if(s<0)return h;if(d===s)return h+1;if(d===OPP[s])return h;return -1;}
+function groundPort(x,y,d){var h=th(x,y),s=tslope(x,y);if(s<0)return h;if(d===s)return h+1;if(d===OPP[s])return h;return NOPORT;}
 // 땅 위 한 점의 표면 높이(z)
 function groundZ(wx,wy){
   var x=Math.floor(wx),y=Math.floor(wy);if(x<0||y<0||x>=COLS||y>=ROWS)return 0;
@@ -42,7 +42,8 @@ function terZoneWhy(x,y){
 function terPlan(x,y,id,lvl,dir){
   var zw=terZoneWhy(x,y);if(zw)return {why:zw};
   if(id==='ter_ramp')return rampPlan(x,y,dir);
-  if(lvl<0||lvl>MAXH-1)return {why:'땅은 '+(MAXH-1)+'층 높이까지 올릴 수 있어요'};
+  if(lvl>MAXH-1)return {why:'땅은 '+(MAXH-1)+'층 높이까지 올릴 수 있어요'};
+  if(lvl<MINH)return {why:'땅은 지하 '+(-MINH)+'층까지 내릴 수 있어요'};
   var cells=[{x:x,y:y}],bid=occ[y][x],b=bid?bById(bid):null;
   if(b){
     cells=bTiles(b).map(function(t){return {x:t.x,y:t.y};});
@@ -55,6 +56,8 @@ function terPlan(x,y,id,lvl,dir){
     var zw2=terZoneWhy(c.x,c.y);if(zw2){why=b?'건물의 다른 칸이 '+zw2.replace('이에요','이라 바꿀 수 없어요'):zw2;return;}
     var h=th(c.x,c.y),dl=lvl-h,ramp=isRamp(c.x,c.y);
     if(!dl&&!ramp)return;
+    if(isWater(c.x,c.y)){why='물이 차 있어요. 먼저 물을 빼 주세요';return;}
+    var ww=waterDigWhy(c.x,c.y,lvl,!!b||piecesAt(c.x,c.y).some(function(p){return p.l===h;}));if(ww){why=ww;return;}
     changed=true;
     cost+=dl>0?dl*TER_UP:(dl<0?-dl*TER_DOWN:TER_DOWN);
     // 땅에 놓인 길·계단은 함께 움직이고, 그 위의 다리는 그대로 둔다 (땅에 묻히면 안 됨)
@@ -72,6 +75,7 @@ function terPlan(x,y,id,lvl,dir){
   return {cells:cells.map(function(c){return {x:c.x,y:c.y,h:lvl,s:null};}),lvl:lvl,cost:cost,moves:moves,b:b};
 }
 function rampPlan(x,y,dir){
+  if(isWater(x,y))return {why:'물이 차 있어요. 먼저 물을 빼 주세요'};
   if(occ[y][x])return {why:'건물이 있는 칸은 경사로로 만들 수 없어요'};
   if(piecesAt(x,y).length)return {why:'길이 있는 칸은 경사로로 만들 수 없어요'};
   var h=th(x,y),nx=x+DIRS[dir][0],ny=y+DIRS[dir][1];
@@ -116,7 +120,7 @@ function terUndo(u){
 function terChanged(cells){
   var hit={};
   cells.forEach(function(c){hit[gid(c.x,c.y)]=1;piecesAt(c.x,c.y).forEach(function(p){hit[PN+p.id]=1;});});
-  rebuildOcc();recalc();
+  waterFix();rebuildOcc();recalc();
   V.forEach(function(v){
     if(v.state==='inside'||v.state==='xfer')return;
     var on=!!hit[v.node],via=v.path&&v.path.some(function(q){return hit[q.n];});
@@ -179,8 +183,20 @@ function drawTerCell(x,y,tint){
   for(var d=0;d<4;d++){
     var e=TER_EDGE[d],a=[x+e[0][0],y+e[0][1]],b=[x+e[1][0],y+e[1][1]],ra=rotPt(a[0],a[1]),rb=rotPt(b[0],b[1]);
     var front=Math.abs(ra[1]-r.y1)<1e-6&&Math.abs(rb[1]-r.y1)<1e-6?.93:(Math.abs(ra[0]-r.x1)<1e-6&&Math.abs(rb[0]-r.x1)<1e-6?.74:0);
-    if(!front)continue;
     var nx=x+DIRS[d][0],ny=y+DIRS[d][1];
+    if(!front){
+      // 뒤쪽 면: 파인 칸에서는 뒤 이웃(평지)의 흙벽이 안쪽으로 보인다. 이웃이 높인 칸이면 그 칸이 제 앞면으로 그린다
+      var nin=nx>=0&&ny>=0&&nx<COLS&&ny<ROWS;
+      if(nin&&(th(nx,ny)||isRamp(nx,ny)))continue;
+      var oa=cornerZ(x,y,a[0],a[1]),ob=cornerZ(x,y,b[0],b[1]);
+      if(oa>-.01&&ob>-.01)continue;
+      var bk=Math.abs(ra[1]-r.y0)<1e-6&&Math.abs(rb[1]-r.y0)<1e-6?.93:.74;
+      quad([[ra[0],ra[1],Math.min(0,oa)*LV],[rb[0],rb[1],Math.min(0,ob)*LV],[rb[0],rb[1],0],[ra[0],ra[1],0]],shade(tint||TER_SIDE,bk),EDGE);
+      c.strokeStyle='rgba(60,40,20,.18)';c.lineWidth=Math.max(.5,.8*PJ.s);c.beginPath();
+      for(var l2=Math.ceil(Math.min(oa,ob)+.01);l2<0;l2++){var ya=Math.max(l2,oa),yb=Math.max(l2,ob),p3=P(ra[0],ra[1],ya*LV),p4=P(rb[0],rb[1],yb*LV);c.moveTo(p3[0],p3[1]);c.lineTo(p4[0],p4[1]);}
+      c.stroke();
+      continue;
+    }
     var ta=cornerZ(x,y,a[0],a[1]),tb=cornerZ(x,y,b[0],b[1]),ba=Math.min(ta,cornerZ(nx,ny,a[0],a[1])),bb=Math.min(tb,cornerZ(nx,ny,b[0],b[1]));
     if(ta-ba<.01&&tb-bb<.01)continue;
     quad([[ra[0],ra[1],ba*LV],[rb[0],rb[1],bb*LV],[rb[0],rb[1],tb*LV],[ra[0],ra[1],ta*LV]],shade(tint||TER_SIDE,front),EDGE);
@@ -217,6 +233,9 @@ function drawTerCell(x,y,tint){
     });
   }
   if(!tint&&S.wx&&S.wx.snow>.05){c.globalAlpha=Math.min(.85,S.wx.snow);quad(top,'#f4f7fb',null);c.globalAlpha=1;}
+  // 파인 칸은 깊을수록 그늘져 보인다 (주변 잔디와 구분되게)
+  if(!tint){var lo=Math.min(top[0][2],top[1][2],top[2][2],top[3][2])/LV;if(lo<-.01)quad(top,'rgba(24,30,40,'+Math.min(.5,.16+.05*-lo).toFixed(2)+')',null);}
+  if(!tint&&isWater(x,y))drawWaterCell(x,y);
 }
 // 짓기 목록 그림: 작은 흙 덩어리
 function drawTerIcon(b){

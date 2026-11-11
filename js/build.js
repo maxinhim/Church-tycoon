@@ -52,12 +52,14 @@ function releaseVisitors(id){
 
 /* ---------- 완성품 건물 층 올리기 (같은 건물을 위로, 최대 10층) ---------- */
 var MAXF=10,STACK_CATS=['worship','fellow','club','care','comfort','park'];
+// 지하로 내린 땅 위의 건물은 내려간 만큼 더 올릴 수 있다 (지하 10층이면 20층까지)
+function maxFloors(b){return MAXF-Math.min(0,bLevel(b));}
 function canStack(b){var d=D[b.def];return !!d&&d.kind==='bld'&&STACK_CATS.indexOf(d.cat)>=0;}
 function floorCostOf(b){return Math.round(D[b.def].cost*0.75/10)*10;}
 function structureChanged(){rebuildOcc();bump();recalc();save();}
 function addFloor(b){
   if(!b||!canStack(b))return '층을 올릴 수 없는 건물이에요';
-  var f=b.floors||1;if(f>=MAXF)return MAXF+'층까지만 올릴 수 있어요';
+  var f=b.floors||1;if(f>=maxFloors(b))return maxFloors(b)+'층까지만 올릴 수 있어요';
   if(bLevel(b)+f+1>MAXH)return '땅 높이와 합쳐 '+MAXH+'층을 넘을 수 없어요';
   var c=floorCostOf(b);if(S.money<c)return '자금이 부족해요';
   S.money-=c;b.floors=f+1;structureChanged();return '';

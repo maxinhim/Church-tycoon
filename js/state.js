@@ -14,7 +14,7 @@ function newState(dk){
   START_TREES.forEach(function(t,i){bs.push({id:i+2,def:'tree',x:t[0],y:t[1],inUse:0,uses:0});});
   START_FLOOR.forEach(function(t){fl[t[0]+','+t[1]]='f_block';});
   return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,open:false,loans:[],wx:{cur:'sun',next:'cloud',day:0,clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1},rcpt:null,weekShop:0,weekSup:0,weekGive:0,memAcc:0,
-    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:{},slp:{},
+    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:{},slp:{},water:{},
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
@@ -38,7 +38,7 @@ function agg(){
   S.buildings.forEach(function(b){var d=defOf(b),k=condFactor(b);a.seats+=d.seats*k;a.fcap+=d.fcap*k;a.ccap+=d.ccap*k;a.kcap+=d.kcap*k;a.park+=d.park*k;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);a.rep+=d.rep;});
   ['seats','fcap','ccap','kcap','park'].forEach(function(k){a[k]=Math.round(a[k]);});
   for(var fk in S.floor){var fd=D[S.floor[fk]];if(fd)a.beauty+=fd.beauty||0;}
-  S.paths.forEach(function(p){var pd=p.f&&D[p.f];if(pd)a.beauty+=pd.beauty||0;});
+  S.paths.forEach(function(p){var pd=p.f&&D[p.f];if(pd)a.beauty+=pd.beauty||0;if(PATHK[p.k])a.beauty+=PATHK[p.k].beauty||0;});
   return a;
 }
 // 만족도 비중 (합 1): 영성이 가장 크다

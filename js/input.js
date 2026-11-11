@@ -2,11 +2,13 @@
 /* ---------- 입력 ---------- */
 function pickBuilding(px,py){
   UI.selTile=null;
-  for(var z=MAXH*LV+6.4;z>=0;z-=0.06){
+  for(var z=MAXH*LV+6.4;z>=MINH*LV;z-=0.06){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
     var id=occ[ty][tx];
-    if(id){var b=bById(id),bz=b?bLevel(b)*LV:0;if(b&&z>=bz-.05&&z<=bz+bHeightAt(b,tx,ty)+.05){if(isRoom(b))UI.selTile={x:tx,y:ty};return id;}}
+    // 지면 아래로 내려간 시선이 땅에 닿으면 멈춘다
+    if(z<0&&!id&&groundZ(w[0],w[1])>=z+.06)break;
+    if(id){var b=bById(id),bz=b?bZ(b):0;if(b&&z>=bz-.05&&z<=bz+bHeightAt(b,tx,ty)+.05){if(isRoom(b))UI.selTile={x:tx,y:ty};return id;}}
   }
   return null;
 }
@@ -133,8 +135,22 @@ function onPanel(e){
   }
   else if(a==='gter'){
     var gf=UI.selFloor,gw=gf?terApply(gf.x,gf.y,'ter_set',+v):'칸을 먼저 고르세요';
-    if(gw){toast(gw,1600);sfx('error',.4);}else{sfx('place',.6);toast('땅 높이 '+v,1000);}
+    if(gw){toast(gw,1600);sfx('error',.4);}else{sfx('place',.6);toast('땅 '+lvName(+v),1000);}
     renderDetail();hud(true);
+  }
+  else if(a==='wfill'||a==='wdrain'){
+    var wf=UI.selFloor;if(!wf)return;
+    var ww=a==='wfill'?fillWater(wf.x,wf.y):drainWater(wf.x,wf.y);
+    if(ww){toast(ww,2000);sfx('error',.4);}else{sfx('place',.6);toast(a==='wfill'?'물을 채웠어요':'물을 뺐어요',1200);}
+    renderDetail();hud(true);
+  }
+  else if(a==='wbridge'){
+    var bf=UI.selFloor;if(!bf)return;
+    extStart('path');var bc=UI.pc;bc.k='arch';bc.x=bf.x;bc.y=bf.y;bc.l=0;bc.slope=0;bc.hist=[];renderDetail();
+  }
+  else if(a==='wfount'){
+    var ff=UI.selFloor;if(!ff)return;
+    UI.selFloor=null;UI.tab='build';UI.fold=false;UI.cat='garden';startPlace('wfount');UI.ghost={x:ff.x,y:ff.y};renderDetail();
   }
   else if(a==='gramp'){
     var rf=UI.selFloor;if(!rf)return;
@@ -142,8 +158,8 @@ function onPanel(e){
   }
   else if(a==='fexp'){UI.fexp=UI.fexp===v?null:v;renderFinance();}
   else if(a==='mexp'){UI.mexp=UI.mexp===v?null:v;renderStatus();}
-  else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),0,MAXH-1);renderDetail();}
-  else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),0,MAXL);renderDetail();}
+  else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),MINH,MAXH-1);renderDetail();}
+  else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),MINH,MAXL);renderDetail();}
   else if(a==='demtile'){
     var st=UI.selTile,lr=st&&roomAt(st.x,st.y),lw0=lr&&lr.tiles.length===1&&(tileOf(lr,st.x,st.y).f||1)<=1?lastHallWhy(lr):'';
     if(lw0){toast(lw0,2600);sfx('error',.4);return;}

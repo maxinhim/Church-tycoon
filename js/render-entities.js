@@ -143,6 +143,7 @@ function drawEntity(b,cars){
   if(k==='floor'){drawFloorTile(b.def,b.x,b.y);return;}
   if(k==='terrain'){drawTerIcon(b);return;}
   if(k==='fountain'){drawFountain(b);return;}
+  if(k==='wfount'){drawWFount(b);return;}
   if(k==='lamp'){drawLamp(b);return;}
   if(k==='hedge'){drawHedge(b);return;}
   if(k==='arch'){drawRoseArch(b);return;}

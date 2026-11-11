@@ -7,6 +7,7 @@
    연결 다리(k='sky')는 같은 역할 건물의 위층끼리 잇는 실내 통로로, 바깥 길찾기에는 들어가지 않는다. */
 var LV=.9,MAXL=10;
 var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:40},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:60},
+  arch:{name:'아치 다리',col:'#e6dccb',edge:'#8f7b5e',cost:90,beauty:.6},
   sky:{name:'연결 다리',col:'#c9d6df',edge:'#5f7a8f',cost:120}};
 var SCREEN_DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 화면 기준 ↘ ↙ ↖ ↗ (회전된 좌표)
 
@@ -14,10 +15,10 @@ function piecesAt(x,y){return S.paths.filter(function(p){return p.x===x&&p.y===y
 function pieceById(id){for(var i=0;i<S.paths.length;i++)if(S.paths[i].id===id)return S.paths[i];return null;}
 function pieceTop(p){return p.l+p.s;}
 // d 방향 면이 열린 높이. 경사의 옆면은 막혀 있어 -1
-function portLevel(p,d){if(!p.s)return p.l;if(d===p.d)return p.l+1;if(d===OPP[p.d])return p.l;return -1;}
+function portLevel(p,d){if(!p.s)return p.l;if(d===p.d)return p.l+1;if(d===OPP[p.d])return p.l;return NOPORT;}
 function pieceUp(p){return p.y<ROWS&&p.x<COLS&&p.l>th(p.x,p.y);}
 function pieceCost(p){return p.s?90+(pieceUp(p)?30:0):PATHK[p.k].cost+(pieceUp(p)?30:0);}
-function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?'철골 계단':PATHK[p.k].name+(pieceUp(p)?' 다리':''));}
+function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?'철골 계단':PATHK[p.k].name+(pieceUp(p)&&p.k!=='arch'?' 다리':''));}
 // p 위치의 표면 높이(층 단위가 아니라 z)
 function pieceH(p,wx,wy){
   if(!p.s)return p.l*LV;
@@ -28,6 +29,7 @@ function pieceFits(p){
   if(p.x<0||p.y<0||p.x>=COLS||p.y>=ROWS-1)return '부지 밖이에요';
   if(p.y>=PZ)return '주차 구역에는 길을 놓을 수 없어요 (이미 포장돼 걸을 수 있어요)';
   if(p.l<th(p.x,p.y))return '땅보다 낮게는 지을 수 없어요';
+  if(p.l<0&&isWater(p.x,p.y))return '물속에는 길을 놓을 수 없어요. 땅 높이의 다리로 건너세요';
   if(isRamp(p.x,p.y))return '흙 경사로 위에는 길을 놓을 수 없어요';
   if(pieceTop(p)>MAXL)return MAXL+'층 높이보다 높게는 지을 수 없어요';
   if(p.k==='sky'&&p.s)return '연결 다리는 평지로만 지을 수 있어요';
@@ -85,10 +87,11 @@ function pcUndo(){
 }
 // 화면에서 가장 위에 보이는 길 조각
 function pickPieceAt(px,py){
-  for(var z=MAXL*LV+.3;z>=-.01;z-=.03){
+  for(var z=MAXL*LV+.3;z>=MINH*LV-.01;z-=.03){
     var w=toWorld(px,py,z),tx=Math.floor(w[0]),ty=Math.floor(w[1]);
     if(tx<0||ty<0||tx>=COLS||ty>=ROWS)continue;
     var ps=piecesAt(tx,ty);
+    if(z<-.06&&!ps.length&&groundZ(w[0],w[1])>=z+.06)break;
     for(var i=0;i<ps.length;i++)if(Math.abs(z-pieceH(ps[i],w[0],w[1]))<.05)return ps[i];
   }
   return null;
@@ -98,7 +101,7 @@ function pcStartAt(px,py){
   var c=UI.pc,p=pickPieceAt(px,py);
   if(p){
     var pl=portLevel(p,c.dir);
-    if(pl<0){c.dir=p.d;pl=p.l+1;}
+    if(pl===NOPORT){c.dir=p.d;pl=p.l+1;}
     c.x=p.x+DIRS[c.dir][0];c.y=p.y+DIRS[c.dir][1];c.l=pl;
   }else{var t=groundTile(px,py);c.x=t.x;c.y=t.y;c.l=(t.x>=0&&t.y>=0&&t.x<COLS&&t.y<ROWS)?th(t.x,t.y):0;}
   c.hist=[];
@@ -107,7 +110,7 @@ function pcStartAt(px,py){
 /* ---------- 그리기 ---------- */
 // 조각이 d 방향으로 무언가(땅·다른 조각·문)와 이어져 있는지 — 난간을 그릴지 정한다
 function pieceLinked(p,d){
-  var pl=portLevel(p,d);if(pl<0)return false;
+  var pl=portLevel(p,d);if(pl===NOPORT)return false;
   var nx=p.x+DIRS[d][0],ny=p.y+DIRS[d][1];
   if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&groundPort(nx,ny,OPP[d])===pl)return true;
   if(nx<0||ny<0||nx>=COLS||ny>=ROWS)return pl===0;
@@ -125,13 +128,14 @@ function drawPiece(p,tint){
   var C=W.map(function(w){var r=rotPt(w[0],w[1]);return {rx:r[0],ry:r[1],h:pieceH(p,w[0],w[1])+lift};});
   var R=rrect(p.x,p.y,p.x+1,p.y+1);
   // 기둥: 공중에 뜬 부분 아래
-  if(p.l>g){var cx=p.x+.5,cy=p.y+.5;box(rrect(cx-.07,cy-.07,cx+.07,cy+.07),gz,pieceH(p,cx,cy)-deck,tint||'#b7a68d');}
+  if(p.l>g&&p.k==='arch'&&!tint)drawArchUnder(p,gz);
+  else if(p.l>g){var cx=p.x+.5,cy=p.y+.5;box(rrect(cx-.07,cy-.07,cx+.07,cy+.07),gz,pieceH(p,cx,cy)-deck,tint||'#b7a68d');}
   // 앞쪽 두 옆면(화면 기준 오른쪽 아래·왼쪽 아래)
   var bottom=function(h){return p.l===g?gz:h-deck;};
   var side=function(sel,shadeK){
     var e=C.filter(sel);if(e.length!==2)return;
     if(p.l===g&&!p.s)return;
-    quad([[e[0].rx,e[0].ry,bottom(e[0].h)],[e[1].rx,e[1].ry,bottom(e[1].h)],[e[1].rx,e[1].ry,e[1].h],[e[0].rx,e[0].ry,e[0].h]],shade(tint||(p.k==='wood'?'#8d6339':'#b3a283'),shadeK),EDGE);
+    quad([[e[0].rx,e[0].ry,bottom(e[0].h)],[e[1].rx,e[1].ry,bottom(e[1].h)],[e[1].rx,e[1].ry,e[1].h],[e[0].rx,e[0].ry,e[0].h]],shade(tint||(p.k==='wood'?'#8d6339':p.k==='arch'?'#cdbfa8':'#b3a283'),shadeK),EDGE);
   };
   side(function(q){return Math.abs(q.ry-R.y1)<1e-6;},.93);
   side(function(q){return Math.abs(q.rx-R.x1)<1e-6;},.74);
@@ -156,7 +160,7 @@ function drawPiece(p,tint){
   c.stroke();
   // 난간: 공중에 뜬 조각에서 이어지지 않은 면
   if((p.l>g||p.s)&&!deckCovered(p)){
-    c.strokeStyle=tint?'rgba(255,255,255,.85)':'#f3efe6';c.lineWidth=Math.max(.8,1.4*PJ.s);c.beginPath();
+    c.strokeStyle=tint?'rgba(255,255,255,.85)':(p.k==='arch'?'#b5483a':'#f3efe6');c.lineWidth=Math.max(.8,(p.k==='arch'?2:1.4)*PJ.s);c.beginPath();
     for(var d=0;d<4;d++){
       if(pieceLinked(p,d))continue;
       var a,b2;
@@ -169,6 +173,17 @@ function drawPiece(p,tint){
     }
     c.stroke();
   }
+}
+// 아치 다리 밑: 앞쪽 두 옆면에 둥근 아치 (물·땅까지 내려오는 교각)
+function drawArchUnder(p,gz){
+  var c=PJ.c,R=rrect(p.x,p.y,p.x+1,p.y+1),zt=p.l*LV-.12,zb=Math.max(gz,zt-1.2);
+  [[[R.x0,R.y1],[R.x1,R.y1],.93],[[R.x1,R.y0],[R.x1,R.y1],.74]].forEach(function(f){
+    var a=f[0],b=f[1],n=8,i,q;
+    c.beginPath();q=P(a[0],a[1],zb);c.moveTo(q[0],q[1]);q=P(a[0],a[1],zt);c.lineTo(q[0],q[1]);q=P(b[0],b[1],zt);c.lineTo(q[0],q[1]);q=P(b[0],b[1],zb);c.lineTo(q[0],q[1]);
+    for(i=1;i<n;i++){var t=i/n,u=.12+.76*t,x=b[0]+(a[0]-b[0])*u,y=b[1]+(a[1]-b[1])*u,z=zb+(zt-zb-.1)*Math.sin(Math.PI*t);q=P(x,y,z);if(i===1){var q0=P(b[0]+(a[0]-b[0])*.12,b[1]+(a[1]-b[1])*.12,zb);c.lineTo(q0[0],q0[1]);}c.lineTo(q[0],q[1]);}
+    q=P(b[0]+(a[0]-b[0])*.88,b[1]+(a[1]-b[1])*.88,zb);c.lineTo(q[0],q[1]);c.closePath();
+    c.fillStyle=shade('#cdbfa8',f[2]);c.fill();c.strokeStyle=EDGE;c.lineWidth=Math.max(.5,PJ.s*.9);c.stroke();
+  });
 }
 // 짓기 미리보기: 다음 조각과 진행 방향 화살표
 function drawPathGhost(){
