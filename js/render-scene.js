@@ -49,14 +49,13 @@ function draw(){
   // 지도 밖도 잔디 (우주처럼 떠 보이지 않게)
   c.fillStyle='#80b169';c.fillRect(0,0,VW,VH);
   PJ.c=c;PJ.ox=cam.ox;PJ.oy=cam.oy;PJ.s=cam.z;
-  drawGround();
-  drawWxGround();
+  legacy(function(){drawGround();drawWxGround();});
   drawFloors();
   drawPuddles();
-  drawCloudShadows();
+  legacy(drawCloudShadows);
   // 파인 칸의 입구: 먼저 어두운 흙으로 메워 두고, 그 안쪽은 칸마다 그린다
   pitBuild();if(PIT.path){c.fillStyle='#4f3d2b';c.fill(PIT.path);}
-  drawOutTrees(true);
+  legacy(function(){drawOutTrees(true);});
   var sb=UI.sel?bById(UI.sel):null;
   var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)&&!isTerDef(UI.tool)?D[UI.tool]:null,gok=false;
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
@@ -81,7 +80,7 @@ function draw(){
     }
     var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bZ(b);
     r.zb=bz;if(b.z==null&&ceilOver(b)<99)r.zt=Math.min(bz+bHeight(b),ceilOver(b)*LV-.15);
-    r.f=function(){atZ(bz,function(){drawEntity(b,d.kind==='lot'?Math.round(use*d.park):0);drawWear(b);});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
+    r.f=d.cell?function(){atZ(bz,function(){drawEntity(b,0);});}:function(){atZ(bz,function(){legacy(function(){var lb=legB(b);drawEntity(lb,d.kind==='lot'?Math.round(use*d.park):0);drawWear(lb);});});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
   });
   S.paths.forEach(function(p){
     var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;
@@ -95,17 +94,21 @@ function draw(){
     if(z<-.01)ve.f=function(){var u=unrot(p[0],p[1]),cx=Math.floor(u[0]),cy=Math.floor(u[1]);pitClip(rrect(cx,cy,cx+1,cy+1),function(){drawVisitor(v);});};
     E.push(ve);
   });
-  for(var k=0;k<2;k++){
-    var span=COLS+2*BAND,wx=k===0?((S.clock*1.6+3)%span)-BAND:COLS+BAND-((S.clock*1.25+9)%span),ly=k===0?ROWS-1+.58:ROWS-1+.14;
-    if(wx<-BAND||wx+.8>COLS+BAND)continue;
-    (function(wx,ly,col){
-      var r1=rrect(wx,ly,wx+.8,ly+.3),r2=rrect(wx+.18,ly+.03,wx+.58,ly+.27);
-      E.push({x0:r1.x0,y0:r1.y0,x1:r1.x1,y1:r1.y1,f:function(){drawRoadCar({r1:r1,r2:r2,c:col});}});
-    })(wx,ly,k?'#3d78c7':'#d65a4a');
-  }
-  var ar=rrect(ENT-.06,PZ-.07,ENT+1.06,PZ+.07);ar.f=drawArch;E.push(ar);
-  var rg=rrect(ENT-.05,ROWS-1-.05,ENT+1.05,ROWS-1+.05);rg.f=drawRoadGap;E.push(rg);
-  fenceSegs().forEach(function(f){var r=fenceRect(f);r.f=function(){drawFenceSeg(f);};E.push(r);});
+  // 도로의 차·입구·울타리는 예전 칸 단위 그림: 자리(rect)만 지금 칸으로 바꿔 정렬에 넣고, 그릴 때는 legacy로
+  var LE=function(r,f){E.push({x0:r.x0*G,y0:r.y0*G,x1:r.x1*G,y1:r.y1*G,f:function(){legacy(f);}});};
+  legacy(function(){
+    for(var k=0;k<2;k++){
+      var span=COLS+2*BAND,wx=k===0?((S.clock*1.6+3)%span)-BAND:COLS+BAND-((S.clock*1.25+9)%span),ly=k===0?ROWS-1+.58:ROWS-1+.14;
+      if(wx<-BAND||wx+.8>COLS+BAND)continue;
+      (function(wx,ly,col){
+        var r1=rrect(wx,ly,wx+.8,ly+.3),r2=rrect(wx+.18,ly+.03,wx+.58,ly+.27);
+        LE(r1,function(){drawRoadCar({r1:r1,r2:r2,c:col});});
+      })(wx,ly,k?'#3d78c7':'#d65a4a');
+    }
+    LE(rrect(ENT-.06,PZ-.07,ENT+1.06,PZ+.07),drawArch);
+    LE(rrect(ENT-.05,ROWS-1-.05,ENT+1.05,ROWS-1+.05),drawRoadGap);
+    fenceSegs().forEach(function(f){LE(fenceRect(f),function(){drawFenceSeg(f);});});
+  });
   snowmen().forEach(function(t){var r=rrect(t.x+.25,t.y+.25,t.x+.75,t.y+.75);r.f=function(){drawSnowman(t);};E.push(r);});
   sortEnt(E).forEach(function(e){e.f();});
   // 고른 건물·미리보기 바닥 표시는 그림 위에 얹는다 (높인 땅 위에서도 보이게)
@@ -115,7 +118,7 @@ function draw(){
   });
   var gz=gd&&UI.ghost?plLevelZ(gd,UI.ghost.x,UI.ghost.y,UI.face):0;
   if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&(movingId()||S.money>=gd.cost);atZ(gz,function(){footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');});}
-  drawOutTrees(false);
+  legacy(function(){drawOutTrees(false);});
   drawWxOverlay(c);
   drawMarkers(c);
   if(isRoomDef(UI.tool))drawRoomGhost();
@@ -125,7 +128,7 @@ function draw(){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);setPlaceLevel(gb,gd,gb.x,gb.y,gb.face);
     if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
     ensureDoors(gb);
-    atZ(gz,function(){c.globalAlpha=.78;drawEntity(gb,Math.round(gd.park*.5));c.globalAlpha=1;drawDoorPads(gb);});
+    atZ(gz,function(){c.globalAlpha=.78;if(gd.cell)drawEntity(gb,0);else legacy(function(){drawEntity(legB(gb),Math.round(gd.park*.5));});c.globalAlpha=1;drawDoorPads(gb);});
   }
   // 고른 길 조각·바닥 칸: 건물을 고를 때처럼 노란 반투명 + 점선 테두리 (지금 무엇을 고치는지 보이게)
   if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.6;drawPiece(spc,'#ffd23f');c.globalAlpha=1;
@@ -134,7 +137,7 @@ function draw(){
   if(UI.selFloor&&!UI.sel&&!UI.selPiece&&selCardOn()){var sf=UI.selFloor,sp=sf.pid&&pieceById(sf.pid);
     if(!sp&&isRamp(sf.x,sf.y))slopeFoot(sf.x,sf.y,th(sf.x,sf.y)*LV,tslope(sf.x,sf.y),LV,'rgba(255,210,63,.38)','#ffd23f',[6,4]);
     else atZ(sp?sp.l*LV+.02:th(sf.x,sf.y)*LV+.02,function(){footprint(sf.x,sf.y,1,1,'rgba(255,210,63,.38)','#ffd23f',[6,4]);});}
-  if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);});
+  if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);drawDoorChoices(sb);});
   drawFx(c);
 }
 // 건물 위 표시: 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가
@@ -142,7 +145,7 @@ function drawMarkers(c){
   var s=Math.max(.7,cam.z);
   // 문이 닫혀 있으면 교회 입구 위에 자물쇠 (누르면 문 열기 카드)
   if(!S.open){
-    var gm=rotPt(ENT+.5,PZ),gq=P(gm[0],gm[1],1.75),pr=(S.clock*1.4)%1;
+    var gm=rotPt(entC(),PZ),gq=P(gm[0],gm[1],1.75),pr=(S.clock*1.4)%1;
     c.strokeStyle='rgba(255,210,63,'+(0.8*(1-pr)).toFixed(3)+')';c.lineWidth=2;c.beginPath();c.arc(gq[0],gq[1],(10+10*pr)*s,0,6.283);c.stroke();
     c.fillStyle='#d6453a';c.strokeStyle='#fff';c.lineWidth=1.6;c.beginPath();c.arc(gq[0],gq[1],10*s,0,6.283);c.fill();c.stroke();
     c.strokeStyle='#fff';c.lineWidth=1.6*s;c.beginPath();c.arc(gq[0],gq[1]-2*s,3*s,Math.PI,0);c.stroke();
@@ -163,12 +166,15 @@ function iconCanvas(d){
   var W=66,H=46,cvs=document.createElement('canvas');
   cvs.width=W*2;cvs.height=H*2;cvs.style.width=W+'px';cvs.style.height=H+'px';
   var g=cvs.getContext('2d');g.scale(2,2);
-  var tot=heightOf(d.id),wh=d.w+d.h;
-  var s=Math.min((W-6)/(wh*HW),(H-4)/(wh*HH+tot*ZH+14));
+  var dw=d.w/G,dh=d.h/G,tot=heightOf(d.id),wh=dw+dh,HW0=HW*G,HH0=HH*G;
+  var s=Math.min((W-6)/(wh*HW0),(H-4)/(wh*HH0+tot*ZH+14));
   var keep={c:PJ.c,ox:PJ.ox,oy:PJ.oy,s:PJ.s},rot=ROT;
-  ROT=0;PJ.c=g;PJ.s=s;PJ.ox=W/2-(d.w-d.h)*HW*s/2;PJ.oy=(H-(wh*HH+tot*ZH+14)*s)/2+(tot*ZH+14)*s;
-  quad([[0,0,0],[d.w,0,0],[d.w,d.h,0],[0,d.h,0]],'#86b86f','rgba(40,80,30,.25)');
-  drawEntity({x:0,y:0,def:d.id,id:7},Math.round(d.park*.6));
+  ROT=0;PJ.c=g;PJ.s=s;PJ.ox=W/2-(dw-dh)*HW0*s/2;PJ.oy=(H-(wh*HH0+tot*ZH+14)*s)/2+(tot*ZH+14)*s;
+  if(d.cell){dw=d.w;dh=d.h;}
+  legacy(function(){
+    quad([[0,0,0],[dw,0,0],[dw,dh,0],[0,dh,0]],'#86b86f','rgba(40,80,30,.25)');
+    drawEntity({x:0,y:0,def:d.id,id:7},Math.round(d.park*.6));
+  });
   ROT=rot;PJ.c=keep.c;PJ.ox=keep.ox;PJ.oy=keep.oy;PJ.s=keep.s;
   return cvs;
 }

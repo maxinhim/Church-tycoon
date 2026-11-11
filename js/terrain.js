@@ -6,7 +6,7 @@
    · 땅을 높이거나 낮추면 그 위의 것(바닥 타일·건물·땅에 놓인 길)이 함께 움직인다.
      여러 칸짜리 건물은 모든 칸을 함께 맞춘다
    · 땅 높이와 그 위 건물 층수를 합쳐 MAXH(10)층을 넘지 않는다 */
-var MAXH=10,MINH=-10,NOPORT=-99,TER_UP=60,TER_DOWN=30,TER_RAMP=80;
+var MAXH=10,MINH=-10,NOPORT=-99,TER_UP=30,TER_DOWN=15,TER_RAMP=40;
 function th(x,y){var v=S.hgt&&S.hgt[x+','+y];return v||0;}
 function tslope(x,y){var v=S.slp&&S.slp[x+','+y];return v==null?-1:v;}
 function isRamp(x,y){return tslope(x,y)>=0;}
@@ -34,9 +34,9 @@ function groundTile(px,py){return surfaceTile(px,py);}
 /* ---------- 바꾸기 ----------
    terPlan: 무엇이 바뀌는지와 비용, 못 하면 why. 아무것도 바꾸지 않는다 */
 function terZoneWhy(x,y){
-  if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
+  if(x<0||y<0||x>=COLS||y>=ROWS-RD)return '부지 밖이에요';
   if(y>=PZ)return '주차 구역의 땅은 바꿀 수 없어요';
-  if(x===ENT&&y===PZ-1)return '교회 입구 바로 앞 칸은 높일 수 없어요';
+  if(isEnt(x)&&y===PZ-1)return '교회 입구 바로 앞 칸은 높일 수 없어요';
   return '';
 }
 function terPlan(x,y,id,lvl,dir){
@@ -199,7 +199,7 @@ function wallPattern(id,ra,rb){
   var p=WALLP[id];if(!p){try{p=ctx.createPattern(im,'repeat');}catch(e){p=null;}if(!p||!p.setTransform)return null;WALLP[id]=p;}
   var alongX=Math.abs(ra[1]-rb[1])<1e-6,k=ZB;ZB=0;
   var O=alongX?P(0,ra[1],0):P(ra[0],0,0),X=alongX?P(1,ra[1],0):P(ra[0],1,0);ZB=k;
-  var w=im.width,hgt=im.height||w;
+  var w=im.width/G,hgt=im.height||im.width;
   p.setTransform(new DOMMatrix([(X[0]-O[0])/w,(X[1]-O[1])/w,0,LV*ZH*PJ.s/hgt,O[0],O[1]]));
   return p;
 }

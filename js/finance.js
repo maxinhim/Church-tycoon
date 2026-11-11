@@ -53,7 +53,7 @@ function setGate(open){
   S.open=open;
   if(open){
     addLog('교회 문을 열었어요');sfx('gate_open',.8,0);toast('교회 문을 열었어요! 방문자가 찾아오기 시작해요',2400);
-    F.push({x:ENT+.5,y:PZ-.5,z:1.6,t:2.4,d:2.4,text:'교회 문을 열었어요',col:'#ffe28a',big:1});
+    F.push({x:entC(),y:PZ-1,z:1.6,t:2.4,d:2.4,text:'교회 문을 열었어요',col:'#ffe28a',big:1});
   }else{
     // 주차 구역에 있던 사람은 돌아가고, 부지 안에 있던 사람은 볼일을 마치고 나간다
     V.forEach(function(v){if(v.y>=PZ&&v.state!=='leave'&&v.state!=='inside')goLeave(v);});
@@ -73,7 +73,7 @@ function renderGatePop(){
 // 화면의 (px,py)가 교회 입구 아치 위인지 (여유 10px)
 function gateHit(px,py){
   var L=1e9,R=-1e9,T=1e9,B=-1e9;
-  [[ENT-.1,PZ],[ENT+1.1,PZ]].forEach(function(p){[0,1.5].forEach(function(z){var r=rotPt(p[0],p[1]),q=toScreen(r[0],r[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
+  [[ENT-.2,PZ],[ENT+EW+.2,PZ]].forEach(function(p){[0,1.5].forEach(function(z){var r=rotPt(p[0],p[1]),q=toScreen(r[0],r[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
   var pad=Math.max(10,14*cam.z);
   return px>=L-pad&&px<=R+pad&&py>=T-pad&&py<=B+pad;
 }
@@ -83,7 +83,7 @@ function syncGate(){
   var on=performance.now()<gatePopUntil&&!isPortrait();
   if(el.hidden===on)el.hidden=!on;
   if(!on)return;
-  var p=rotPt(ENT+.5,PZ),q=toScreen(p[0],p[1],1.8),vw=window.innerWidth;
+  var p=rotPt(entC(),PZ),q=toScreen(p[0],p[1],1.8),vw=window.innerWidth;
   var x=clamp(q[0],110,vw-110),y=Math.max(q[1],el.offsetHeight+60);
   el.style.transform='translate('+Math.round(x)+'px,'+Math.round(y)+'px) translate(-50%,-100%)';
 }

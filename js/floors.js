@@ -12,7 +12,7 @@ function floorSlot(x,y,pid){
 }
 // 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
 function floorWhy(x,y,id,pid){
-  if(x<0||y<0||x>=COLS||y>=ROWS-1)return '부지 밖이에요';
+  if(x<0||y<0||x>=COLS||y>=ROWS-RD)return '부지 밖이에요';
   if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';
   if(!pid&&isWater(x,y))return '물이 차 있어요. 먼저 물을 빼 주세요';
   var sl=floorSlot(x,y,pid);if(!sl)return '데크가 없어요';
@@ -120,7 +120,7 @@ function applyDoorFix(b){
 function walkSearch(sx,sy,add){
   var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x];};
   var walk=function(x,y){return groundOk(x,y)||!!add[x+','+y];};
-  var goal=function(x,y){return (walk(x,y)&&!!NAV.reach[gid(x,y)])||(x===ENT&&y===PZ-1);};
+  var goal=function(x,y){return (walk(x,y)&&!!NAV.reach[gid(x,y)])||(isEnt(x)&&y===PZ-1);};
   if(!free(sx,sy))return null;
   var dist={},prev={},dq=[[sx,sy]],k0=sx+','+sy;dist[k0]=walk(sx,sy)?0:1;
   while(dq.length){

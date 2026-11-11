@@ -5,7 +5,7 @@
    · 채우려면 웅덩이의 0층 아래에 건물·길이 없어야 한다 (바닥 타일은 그대로 남고, 물을 빼면 다시 보인다)
    · 물이 찬 칸은 걸을 수 없다. 0층 높이의 다리로 건넌다. 물 위에는 다리와 물 분수만 놓는다
    · 물 옆 칸을 0층 아래로 파면 물이 그 칸으로 이어진다 */
-var WATER_COST=15,WATER_LV=-.35;
+var WATER_COST=8,WATER_LV=-.35;
 function lvName(h){return h<0?'지하 '+(-h)+'층':'높이 '+h;}
 function isWater(x,y){return !!(S.water&&S.water[x+','+y]);}
 function waterZ(){return WATER_LV*LV;}

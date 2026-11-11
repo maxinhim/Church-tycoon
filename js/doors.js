@@ -4,7 +4,7 @@
    문: {x,y,d,l}  (x,y)=건물 칸, d=문이 바깥으로 향하는 방향(DIRS 순서), l=층(0이 1층).
    입구와 출구가 같은 자리면 출입구 하나로 쓴다. */
 var OPP=[1,0,3,2];
-function faceDims(d,face){return (face===0||face===1)?{w:d.h,h:d.w}:{w:d.w,h:d.h};}
+function faceDims(d,face){var w=d.w/U,h=d.h/U;return (face===0||face===1)?{w:h,h:w}:{w:w,h:h};}
 function bDims(b){if(isRoom(b)){var r=roomDef(b);return {w:r.w,h:r.h};}return faceDims(D[b.def],b.face);}
 function needsDoor(b){return !!defOf(b).fill;}
 function bTiles(b){
@@ -36,27 +36,40 @@ function validSpot(b,s){return doorSpots(b).some(function(q){return sameSpot(q,s
 function bestFace(b){
   var ts=bTiles(b),cx=0,cy=0;
   ts.forEach(function(t){cx+=t.x+.5;cy+=t.y+.5;});cx/=ts.length;cy/=ts.length;
-  var gx=ENT+.5-cx,gy=ROWS-.5-cy,best=2,bv=-1e9;
+  var gx=entC()-cx,gy=ROWS-.5-cy,best=2,bv=-1e9;
   for(var d=0;d<4;d++){var v=DIRS[d][0]*gx+DIRS[d][1]*gy;if(v>bv){bv=v;best=d;}}
   return best;
 }
-// 기본 문: 정면 가운데에 출입구 하나. 바로 앞이 막혀 있으면 걸어 나갈 수 있는 자리를 고른다
+/* 기본 문 (처음 지을 때만): 상황에 맞는 자리를 고른다.
+   · 이미 걸을 수 있는 길·바닥에 닿는 자리가 가장 좋고(입구에서 닿는 길이면 더), 그다음은 정면, 가운데에 가까운 자리
+   · 앞이 건물로 막혔거나 울타리 밖을 향한 자리는 맨 뒤
+   · 길에 닿는 자리가 둘 이상이면 입구와 출구를 따로 낸다. 아니면 문 하나를 함께 쓴다 (길 한 줄만 이으면 되게)
+   지은 뒤에는 카드의 '입구 고르기·출구 고르기'로 직접 바꾼다 */
+function doorScore(b,s,face,cx,cy){
+  var o=doorOut(s);
+  if(o.x<0||o.y<0||o.x>=COLS||o.y>=ROWS)return -1e6;
+  if(o.y>=PZ&&s.y<PZ)return -1e5;
+  var sc=0,n=doorNode(s,b);
+  if(n>=0)sc+=NAV.reach&&NAV.reach[n]?100:60;
+  else if(occ[o.y]&&occ[o.y][o.x])sc-=1000;
+  if(s.d===face)sc+=10;
+  return sc-(Math.abs(s.x+.5-cx)+Math.abs(s.y+.5-cy))*.2;
+}
 function defaultDoors(b){
   var face=b.face!=null?b.face:bestFace(b);
   var sp=doorSpots(b).filter(function(s){return s.l===0;});
   if(!sp.length)sp=doorSpots(b);
-  var front=sp.filter(function(s){return s.d===face;});
-  if(!front.length)front=sp;
-  var free=front.filter(function(s){return doorNode(s,b)>=0;});
-  if(!free.length)free=sp.filter(function(s){return doorNode(s,b)>=0;});
-  if(free.length)front=free;
-  else{
-    // 닿는 길이 아직 없어도, 문 앞 칸이 비어 있어야 나중에 길을 이을 수 있다
-    var open=function(s){var o=doorOut(s);return o.x>=0&&o.y>=0&&o.x<COLS&&o.y<ROWS&&!(occ[o.y]&&occ[o.y][o.x]);};
-    var of=front.filter(open);if(!of.length)of=sp.filter(open);if(of.length)front=of;
+  var ts=bTiles(b),cx=0,cy=0;ts.forEach(function(t){cx+=t.x+.5;cy+=t.y+.5;});cx/=ts.length;cy/=ts.length;
+  // 정면 가운데 쪽으로 살짝 끌어 준다
+  cx+=DIRS[face][0]*.01;cy+=DIRS[face][1]*.01;
+  var sc=sp.map(function(s){return {s:s,v:doorScore(b,s,face,cx,cy)};}).sort(function(a,c){return c.v-a.v;});
+  var ent=sc[0].s,ext=null;
+  for(var i=1;i<sc.length&&!ext;i++){
+    var q=sc[i];if(q.v<50)break;
+    if(Math.abs(q.s.x-ent.x)+Math.abs(q.s.y-ent.y)>=1||q.s.d!==ent.d)ext=q.s;
   }
-  var s=front[Math.floor((front.length-1)/2)];
-  return {ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};
+  ext=ext||ent;
+  return {ent:{x:ent.x,y:ent.y,d:ent.d,l:ent.l},ext:{x:ext.x,y:ext.y,d:ext.d,l:ext.l}};
 }
 function ensureDoors(b){
   if(!needsDoor(b)){if(b.door)delete b.door;return;}
@@ -95,6 +108,27 @@ function drawDoorsOn(b,onlyTile){
     quad([[p1[0],p1[1],z0],[p2[0],p2[1],z0],[p2[0],p2[1],z1],[p1[0],p1[1],z1]],barn?'#6b4423':'#4a3628',EDGE);
     quad([[p1[0],p1[1],z1],[p2[0],p2[1],z1],[p2[0],p2[1],z1+.09],[p1[0],p1[1],z1+.09]],col);
   });
+}
+/* ---------- 문 자리 직접 고르기 ----------
+   카드에서 '입구 고르기'·'출구 고르기'를 누르면 낼 수 있는 자리가 모두 지도에 뜨고, 그중 하나를 누르면 그리로 옮긴다 */
+function doorPadPos(s){return {x:s.x+.5+DIRS[s.d][0]*.82,y:s.y+.5+DIRS[s.d][1]*.82,z:s.l*LV+.04};}
+function drawDoorChoices(b){
+  var dp=UI.doorPick;if(!dp||!b||dp.id!==b.id)return;
+  var c=PJ.c,col=dp.which==='ent'?'#3f9d5a':'#e08a2c',pr=.5+.5*Math.sin((S.clock||0)*5);
+  doorSpots(b).forEach(function(s){
+    if(sameSpot(s,b.door[dp.which]))return;
+    var w=doorPadPos(s),r=.2,pts=[[w.x-r,w.y],[w.x,w.y-r],[w.x+r,w.y],[w.x,w.y+r]].map(function(p){var q=rotPt(p[0],p[1]);return [q[0],q[1],w.z];});
+    c.globalAlpha=.55+.35*pr;quad(pts,'#ffffff',col);c.globalAlpha=1;
+  });
+}
+function doorPickTap(px,py){
+  var dp=UI.doorPick,b=dp&&bById(dp.id);UI.doorPick=null;
+  if(!b||!b.door)return false;
+  var best=null,bd=26*26;
+  doorSpots(b).forEach(function(s){var w=doorPadPos(s),m=rotPt(w.x,w.y),q=toScreen(m[0],m[1],w.z+bZ(b)),dx=q[0]-px,dy=q[1]-py,d=dx*dx+dy*dy;if(d<bd){bd=d;best=s;}});
+  if(!best)return false;
+  b.door[dp.which]={x:best.x,y:best.y,d:best.d,l:best.l};
+  recalc();save();return true;
 }
 // 선택했을 때 문 바깥에 '입'·'출' 표시
 function drawDoorPads(b){

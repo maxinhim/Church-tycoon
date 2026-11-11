@@ -15,9 +15,9 @@
 var GRIPES={
   wc:{s:'화장실',n:'화장실을 못 찾은',fix:'화장실·편의실 칸',ids:['wc','mcomf']},
   food:{s:'배고픔',n:'배가 고파도 먹을 곳이 없던',fix:'매점·빵집·식당·카페',ids:['shop','bakery','dining','cafe','grill','market','cook']},
-  drink:{s:'목마름',n:'목이 말라도 마실 곳이 없던',fix:'식수대·자판기·커피 카트·카페',ids:['drinkfount','vending','coffeecart','cafe','shop','books','bakery'],near:24},
+  drink:{s:'목마름',n:'목이 말라도 마실 곳이 없던',fix:'식수대·자판기·커피 카트·카페',ids:['drinkfount','vending','coffeecart','cafe','shop','books','bakery'],near:24*G},
   lonely:{s:'외로움',n:'어울릴 곳이 없어 외로웠던',fix:'소모임(운동·취미·음악)·소그룹실·청년부실',ids:['cell','youth'],cat:'club'},
-  seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','sunbed','parasol','elder'],near:18},
+  seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','sunbed','parasol','elder'],near:18*G},
   bin:{n:'쓰레기 버릴 곳이 없던',fix:'매장 둘레에 쓰레기통'},
   bare:{n:'볼거리 없이 삭막하다고 느낀',fix:'다니는 길 둘레에 나무·화단·장식'},
   crowd:{n:'건물이 붐벼 그냥 돌아선',fix:'자리를 늘리세요 (층 올리기·하나 더)'}
@@ -104,8 +104,8 @@ function gripeBought(v,b){if(TRASHY.indexOf(b.def)>=0&&Math.random()<0.5)v.trash
 // 둘러보며: 둘레가 꾸며져 있는지 보고, 쓰레기통이 가까우면 버린다
 function gripeLook(v){
   if(v.wcT==null)gripeInit(v);
-  v.looks++;if(nearSum(DECOR,v.x,v.y,4)>=1)v.nice++;
-  if(v.trash&&nearAny(BINS,v.x,v.y,7))v.trash=false;
+  v.looks++;if(nearSum(DECOR,v.x,v.y,4*G)>=1)v.nice++;
+  if(v.trash&&nearAny(BINS,v.x,v.y,7*G))v.trash=false;
 }
 // 떠날 때: 남은 쓰레기, 삭막했던 둘러보기
 function gripeLeave(v){

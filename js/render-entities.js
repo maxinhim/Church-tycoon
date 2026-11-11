@@ -2,7 +2,7 @@
 /* 정면 방향 돌리기: 그림 함수는 '정면이 +y(face 2)'라고 보고 칸 안 좌표(u,v)로 그린다.
    fPt·fRect가 그 좌표를 실제 정면 방향(face)으로 돌려 준다. W·H는 정의상 가로·세로(돌리기 전) */
 function fPt(b,u,v){
-  var d=D[b.def],W=d.w,H=d.h,f=b.face==null?2:b.face;
+  var d=D[b.def],W=d.w/U,H=d.h/U,f=b.face==null?2:b.face;
   if(f===2)return [b.x+u,b.y+v];
   if(f===3)return [b.x+W-u,b.y+H-v];
   if(f===0)return [b.x+v,b.y+W-u];
@@ -77,10 +77,10 @@ function towerRect(face,x,y,w,h){
   return rrect(x+.02,y+h-.68,x+.64,y+h-.08);
 }
 function drawLot(b,cars){
-  var d=D[b.def],x=b.x,y=b.y,c=PJ.c,cols=d.w*2,row,i;
-  box(rrect(x+.02,y+.02,x+d.w-.02,y+d.h-.02),0,.04,'#59626b','#5d6670');
+  var d=D[b.def],dw=d.w/U,dh=d.h/U,x=b.x,y=b.y,c=PJ.c,cols=dw*2,row,i;
+  box(rrect(x+.02,y+.02,x+dw-.02,y+dh-.02),0,.04,'#59626b','#5d6670');
   c.strokeStyle='rgba(255,255,255,.72)';c.lineWidth=Math.max(.6,1.2*PJ.s);c.beginPath();
-  for(row=0;row<d.h;row++)for(i=0;i<=cols;i++){
+  for(row=0;row<dh;row++)for(i=0;i<=cols;i++){
     var a=rotPt(x+i*.5,y+row+.1),bb=rotPt(x+i*.5,y+row+.9),p1=P(a[0],a[1],.04),p2=P(bb[0],bb[1],.04);
     c.moveTo(p1[0],p1[1]);c.lineTo(p2[0],p2[1]);
   }
@@ -388,7 +388,7 @@ function drawTopiary(b){
 }
 // 물길: 이웃 칸이 물길이면 그쪽으로 물이 이어진다
 function drawCanal(b){
-  var x=b.x,y=b.y,isC=function(nx,ny){if(nx<0||ny<0||nx>=COLS||ny>=ROWS)return false;var o=bById(occ[ny][nx]);return !!o&&D[o.def].kind==='canal';};
+  var x=b.x,y=b.y,isC=function(nx,ny){if(nx<0||ny<0||nx>=COLS||ny>=ROWS)return false;var o=bById(occ[Math.round(ny*U)]&&occ[Math.round(ny*U)][Math.round(nx*U)]);return !!o&&D[o.def].kind==='canal';};
   var n=[isC(x+1,y),isC(x-1,y),isC(x,y+1),isC(x,y-1)],e=.2;
   box(rrect(x,y,x+1,y+1),0,.06,'#7fae63','#86b86f');
   var x0=n[1]?x:x+e,x1=n[0]?x+1:x+1-e,y0=n[3]?y:y+e,y1=n[2]?y+1:y+1-e;
@@ -492,7 +492,7 @@ function cLine(b,pts,z,col,wd){
 }
 function cRing(b,cu,cv,r,z,a0,a1){var pts=[],n=18;for(var i=0;i<=n;i++){var a=a0+(a1-a0)*i/n;pts.push([cu+Math.cos(a)*r,cv+Math.sin(a)*r]);}cLine(b,pts,z);}
 function drawCourt(b){
-  var d=D[b.def],W=d.w,H=d.h,t=d.court,z=.055;
+  var d=D[b.def],W=d.w/U,H=d.h/U,t=d.court,z=.055;
   box(fRect(b,.04,.04,W-.04,H-.04),0,.05,shade(d.surf,.8),d.surf);
   var parts=[],post=function(u,v,h,col){parts.push({r:fRect(b,u-.04,v-.04,u+.04,v+.04),z0:.05,z1:h,c:col||'#59626b'});};
   if(t!=='pingpong'&&t!=='fitness')cLine(b,[[.25,.25],[W-.25,.25],[W-.25,H-.25],[.25,H-.25],[.25,.25]],z);

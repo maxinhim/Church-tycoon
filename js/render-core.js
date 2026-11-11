@@ -5,7 +5,18 @@
 var ROT=0, cam={ox:0,oy:0,z:0.6}, ZMIN=0.3, ZMAX=2.6, PJ={c:null,ox:0,oy:0,s:1};
 // ZB: 지금 그리는 것이 놓인 바닥 높이(z). 높인 땅 위의 건물·바닥은 이 값만 올려 두고 평소처럼 그린다
 var ZB=0;
-function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*PJ.s, PJ.oy+(rx+ry)*HH*PJ.s-((z||0)+ZB)*ZH*PJ.s];}
+/* U: 지금 그리는 좌표의 단위. 1 = 지금 칸, G = 예전 칸(한 변이 G배).
+   legacy(fn): 예전 칸 단위로 짠 그림(건물·꾸미기·땅·울타리·입구)을 그대로 그린다. 그동안 COLS·ROWS·ENT·PZ·BAND도 예전 값이 된다.
+   legacy 안에서는 지도 상태(occ·땅 높이)를 칸 좌표로 읽지 말 것 — 좌표가 예전 단위다 */
+var U=1;
+function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*U*PJ.s, PJ.oy+(rx+ry)*HH*U*PJ.s-((z||0)+ZB)*ZH*PJ.s];}
+function legacy(fn){
+  if(U!==1)return fn();
+  COLS/=G;ROWS/=G;ENT/=G;PZ/=G;BAND/=G;U=G;
+  try{return fn();}finally{COLS*=G;ROWS*=G;ENT*=G;PZ*=G;BAND*=G;U=1;}
+}
+// 건물을 예전 칸 좌표로 옮긴 사본 (그릴 때만 쓴다)
+function legB(b){var o=Object.create(b);o.x=b.x/G;o.y=b.y/G;return o;}
 function atZ(z,fn){var k=ZB;ZB=z;try{fn();}finally{ZB=k;}}
 function rotPt(x,y){switch(ROT){case 0:return [x,y];case 1:return [ROWS-y,x];case 2:return [COLS-x,ROWS-y];default:return [y,COLS-x];}}
 function unrot(rx,ry){switch(ROT){case 0:return [rx,ry];case 1:return [ry,ROWS-rx];case 2:return [COLS-rx,ROWS-ry];default:return [COLS-ry,rx];}}

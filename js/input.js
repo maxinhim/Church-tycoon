@@ -16,7 +16,7 @@ function placeGhost(t){
   // 다리 밑 땅을 눌렀으면 밑에, 데크를 눌렀으면 데크 위에 놓는다
   UI.plLow=!t.pid&&t.x>=0&&t.y>=0&&t.x<COLS&&t.y<ROWS&&piecesAt(t.x,t.y).length>0;
   var d=faceDims(D[UI.tool],UI.face);
-  UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-1-d.h)};
+  UI.ghost={x:clamp(t.x-Math.floor((d.w-1)/2),0,COLS-d.w),y:clamp(t.y-Math.floor((d.h-1)/2),0,ROWS-RD-d.h)};
 }
 function onGhostTile(t){
   if(!UI.ghost||!UI.tool||!D[UI.tool]||isRoomDef(UI.tool)||isFloorDef(UI.tool)||isTerDef(UI.tool)||UI.tool==='path')return false;
@@ -28,9 +28,11 @@ function onTap(px,py){
   var popOpen=!$('#gatePop').hidden;
   if(!isPlacing()&&gateHit(px,py)){if(popOpen)closeGatePop();else openGatePop();return;}
   if(popOpen)closeGatePop();
+  // 문 자리 고르는 중: 뜬 자리 가운데 하나를 누르면 옮기고, 다른 곳을 누르면 그만둔다
+  if(UI.doorPick){var dpw=UI.doorPick.which,dok=doorPickTap(px,py);toast(dok?(dpw==='ent'?'입구를 옮겼어요':'출구를 옮겼어요'):'문 고르기를 그만뒀어요',1200);if(dok)sfx('place',.5);renderDetail();return;}
   if(isRoomDef(UI.tool)){tapRoomTile(pickTile(px,py));return;}
   // 바닥: 누른 칸으로 시작 자리만 옮긴다 (칠하기는 ✓)
-  if(isFloorDef(UI.tool)||isTerDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-2)};if(ft.pid&&isFloorDef(UI.tool))UI.ghost.pid=ft.pid;if(!UI.fold)renderDetail();return;}
+  if(isFloorDef(UI.tool)||isTerDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-RD-1)};if(ft.pid&&isFloorDef(UI.tool))UI.ghost.pid=ft.pid;if(!UI.fold)renderDetail();return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
   if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
   // 지은 것을 누르면 패널을 열지 않고 그 위에 작은 카드만 띄운다 (열려 있던 패널은 닫는다)
@@ -70,7 +72,7 @@ function setupInput(){
     if(gest.mode==='pan'){cam.ox+=e.clientX-gest.lx;cam.oy+=e.clientY-gest.ly;clampCam();}
     else if(gest.mode==='ghost'){
       var w=toWorld(e.clientX,e.clientY,0),gd=faceDims(D[UI.tool],UI.face);
-      var nx=clamp(gest.g0.x+Math.round(w[0]-gest.w0[0]),0,COLS-gd.w),ny=clamp(gest.g0.y+Math.round(w[1]-gest.w0[1]),0,ROWS-1-gd.h);
+      var nx=clamp(gest.g0.x+Math.round(w[0]-gest.w0[0]),0,COLS-gd.w),ny=clamp(gest.g0.y+Math.round(w[1]-gest.w0[1]),0,ROWS-RD-gd.h);
       if(nx!==UI.ghost.x||ny!==UI.ghost.y){UI.ghost.x=nx;UI.ghost.y=ny;renderDetail();}
     }
     gest.lx=e.clientX;gest.ly=e.clientY;
@@ -118,6 +120,7 @@ function onPanel(e){
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}
   else if(a==='door'){var pr=v.split(':');cycleDoor(bById(UI.sel),pr[0],+pr[1]);renderDetail();}
+  else if(a==='doorpick'){UI.doorPick=UI.doorPick&&UI.doorPick.which===v?null:{id:UI.sel,which:v};if(UI.doorPick)toast((v==='ent'?'입구':'출구')+'를 낼 자리를 지도에서 누르세요',1800);renderDetail();}
   else if(a==='dempiece'){var pc2=pieceById(UI.selPiece),dw=pieceDemWhy(pc2);if(pc2&&dw){toast(dw,1800);sfx('error',.4);return;}if(pc2){var pn=pieceName(pc2);removePiece(pc2.id,.5);sfx('demolish',.7);toast(pn+'을(를) 철거했어요',1400);}UI.selPiece=null;renderDetail();hud(true);}
   else if(a==='undo'){
     var ok2=isTerDef(UI.tool)?terUndoLast():isFloorDef(UI.tool)?floorUndo():(function(){var u=UI.undo.pop();if(!u)return false;return u.bid?unbuild(u):removeTile(u.x,u.y,1);})();
@@ -186,8 +189,8 @@ function onPanel(e){
     if(a==='hireA'){var cnd=S.cands[+v];msg=hireAssoc(+v);done=cnd?cnd.name+' '+cnd.title+'님을 청빙했어요':'';}
     else if(a==='dismiss'){dismissAssoc(+v);done='부교역자가 사임했어요';}
     else if(a==='searchA'){msg=searchCands();done='새 후보를 찾았어요';}
-    else if(a==='appoint'){msg=appoint(v);done=OFFICE[v]?OFFICE[v].name+'를 임명했어요':'';if(!msg)F.push({x:ENT+.5,y:PZ-1.5,z:1.4,t:2.2,d:2.2,text:OFFICE[v].name+' 임직',col:'#ffe28a',big:1});}
-    else if(a==='runEv'){msg=runEvent(v);done=EVENTS[v]?EVENTS[v].name+'을(를) 열었어요':'';if(!msg)F.push({x:ENT+.5,y:PZ-1.5,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
+    else if(a==='appoint'){msg=appoint(v);done=OFFICE[v]?OFFICE[v].name+'를 임명했어요':'';if(!msg)F.push({x:entC(),y:PZ-2.5,z:1.4,t:2.2,d:2.2,text:OFFICE[v].name+' 임직',col:'#ffe28a',big:1});}
+    else if(a==='runEv'){msg=runEvent(v);done=EVENTS[v]?EVENTS[v].name+'을(를) 열었어요':'';if(!msg)F.push({x:entC(),y:PZ-2.5,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
     else if(a==='repair'){msg=repair(bById(UI.sel));done='수리를 마쳤어요';}
     else if(a==='repairAll'){msg=repairAll();done='낡은 건물을 모두 고쳤어요';}
     else if(a==='borrow'){msg=borrow(v);done=LOANS[v]?LOANS[v].name+' '+fmt(LOANS[v].amt)+'을 받았어요':'';}

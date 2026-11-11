@@ -41,7 +41,7 @@ function renderSelCard(){
   el.hidden=!on;
   if(!on){scHtml='';scKey='';return;}
   var key=UI.sel?'b'+UI.sel:(UI.selPiece?'p'+UI.selPiece:'f'+UI.selFloor.x+','+UI.selFloor.y);
-  if(key!==scKey){scKey=key;scMore=false;scArm=0;}
+  if(key!==scKey){scKey=key;scMore=false;scArm=0;UI.doorPick=null;}
   var h='',row='',more='';
   if(UI.sel){
     var b=bById(UI.sel),bd=defOf(b),fl=b.floors||1,st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
@@ -55,7 +55,7 @@ function renderSelCard(){
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
-    if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');if(doorFix(b))row+=scBtn('fixdoor','문 옮기기','pri',null,'길을 이을 수 있는 쪽으로 문 옮기기');}
+    if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');row+=scBtn('doorpick','입구 고르기','pri','ent','입구를 낼 자리를 지도에서 고르기');}
     if(lk)row+=scBtn('link',UI.linkPick===b.id?'길 잇기 ⌄':'길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
     var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
     if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));
@@ -63,8 +63,7 @@ function renderSelCard(){
     if(lk&&UI.linkPick===b.id)h+=linkRow(lp.tiles.length);
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
-    if(b.door)more+='<div class="scd"><span>입구</span>'+scBtn('door','◀','','ent:-1','입구를 이전 자리로')+scBtn('door','▶','','ent:1','입구를 다음 자리로')+
-      '<span>출구</span>'+scBtn('door','◀','','ext:-1','출구를 이전 자리로')+scBtn('door','▶','','ext:1','출구를 다음 자리로')+'</div>';
+    if(b.door)more+='<div class="scb">'+scBtn('doorpick','입구 고르기',UI.doorPick&&UI.doorPick.which==='ent'?'pri':'','ent','입구를 낼 자리를 지도에서 고르기')+scBtn('doorpick','출구 고르기',UI.doorPick&&UI.doorPick.which==='ext'?'pri':'','ext','출구를 낼 자리를 지도에서 고르기')+'</div>';
     var mb='';
     if(canStack(b)){if(fl<maxFloors(b))mb+=scBtn('floorup','층 올리기 '+fmt(floorCostOf(b)));if(fl>1)mb+=scBtn('floordown','위층 철거 +'+fmt(floorCostOf(b)*0.5));}
     if(st)mb+=scBtn('demtile',(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5));
@@ -129,7 +128,7 @@ function syncSelCard(){
   el.style.setProperty('--ax',Math.round(clamp(top[0]-(x-w/2),14,w-14))+'px');
   el.style.transform='translate('+Math.round(x-w/2)+'px,'+Math.round(y)+'px)';
 }
-function closeSelCard(){UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.selFloor=null;renderSelCard();}
+function closeSelCard(){UI.doorPick=null;UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.selFloor=null;renderSelCard();}
 function setupSelCard(){
   var el=$('#selCard');
   el.addEventListener('click',function(e){

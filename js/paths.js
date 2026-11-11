@@ -6,11 +6,11 @@
    계단은 아래가 빈 철골 계단이라 계단 밑과 다리 아래 땅을 그대로 걸을 수 있다.
    연결 다리(k='sky')는 같은 역할 건물의 위층끼리 잇는 실내 통로로, 바깥 길찾기에는 들어가지 않는다. */
 var LV=.9,MAXL=10;
-var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:40,sn:'돌계단',sc:'#8f8676',side:'#b3a283'},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:60,sn:'나무 계단',sc:'#7a5530',side:'#8d6339'},
-  brick:{name:'벽돌길',col:'#b9694e',edge:'#7c3f2c',cost:55,sn:'벽돌 계단',sc:'#8a4a36',side:'#9a5540'},marble:{name:'대리석 길',col:'#efece4',edge:'#a9a59b',cost:80,sn:'대리석 계단',sc:'#bdb8ad',side:'#d2cec4',beauty:.3},
-  steel:{name:'철판 길',col:'#aeb7bf',edge:'#58626d',cost:50,sn:'철골 계단',sc:'#58626d',side:'#7d8791'},
-  arch:{name:'아치 다리',col:'#e6dccb',edge:'#8f7b5e',cost:90,beauty:.6},
-  sky:{name:'연결 다리',col:'#c9d6df',edge:'#5f7a8f',cost:120}};
+var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:20,sn:'돌계단',sc:'#8f8676',side:'#b3a283'},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:30,sn:'나무 계단',sc:'#7a5530',side:'#8d6339'},
+  brick:{name:'벽돌길',col:'#b9694e',edge:'#7c3f2c',cost:28,sn:'벽돌 계단',sc:'#8a4a36',side:'#9a5540'},marble:{name:'대리석 길',col:'#efece4',edge:'#a9a59b',cost:40,sn:'대리석 계단',sc:'#bdb8ad',side:'#d2cec4',beauty:.3},
+  steel:{name:'철판 길',col:'#aeb7bf',edge:'#58626d',cost:25,sn:'철골 계단',sc:'#58626d',side:'#7d8791'},
+  arch:{name:'아치 다리',col:'#e6dccb',edge:'#8f7b5e',cost:45,beauty:.6},
+  sky:{name:'연결 다리',col:'#c9d6df',edge:'#5f7a8f',cost:60}};
 var SCREEN_DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 화면 기준 ↘ ↙ ↖ ↗ (회전된 좌표)
 
 function piecesAt(x,y){return S.paths.filter(function(p){return p.x===x&&p.y===y;});}
@@ -19,7 +19,7 @@ function pieceTop(p){return p.l+p.s;}
 // d 방향 면이 열린 높이. 경사의 옆면은 막혀 있어 -1
 function portLevel(p,d){if(!p.s)return p.l;if(d===p.d)return p.l+1;if(d===OPP[p.d])return p.l;return NOPORT;}
 function pieceUp(p){return p.y<ROWS&&p.x<COLS&&p.l>th(p.x,p.y);}
-function pieceCost(p){return p.s?90+(pieceUp(p)?30:0):PATHK[p.k].cost+(pieceUp(p)?30:0);}
+function pieceCost(p){return p.s?45+(pieceUp(p)?15:0):PATHK[p.k].cost+(pieceUp(p)?15:0);}
 function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?(PATHK[p.k].sn||'철골 계단'):PATHK[p.k].name+(pieceUp(p)&&p.k!=='arch'?' 다리':''));}
 // p 위치의 표면 높이(층 단위가 아니라 z)
 function pieceH(p,wx,wy){
@@ -28,7 +28,7 @@ function pieceH(p,wx,wy){
   return (p.l+clamp(t,0,1))*LV;
 }
 function pieceFits(p){
-  if(p.x<0||p.y<0||p.x>=COLS||p.y>=ROWS-1)return '부지 밖이에요';
+  if(p.x<0||p.y<0||p.x>=COLS||p.y>=ROWS-RD)return '부지 밖이에요';
   if(p.y>=PZ)return '주차 구역에는 길을 놓을 수 없어요 (이미 포장돼 걸을 수 있어요)';
   if(p.l<th(p.x,p.y))return '땅보다 낮게는 지을 수 없어요';
   if(p.l<0&&isWater(p.x,p.y))return '물속에는 길을 놓을 수 없어요. 땅 높이의 다리로 건너세요';

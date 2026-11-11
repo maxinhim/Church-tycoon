@@ -21,7 +21,7 @@ function computeWalk(){
   WALK=[];
   for(var y=0;y<ROWS;y++){
     var row=[],z=zoneOf(y);
-    for(var x=0;x<COLS;x++)row.push(z==='road'?x===ENT:(z==='park'?true:false));
+    for(var x=0;x<COLS;x++)row.push(z==='road'?isEnt(x):(z==='park'?true:false));
     WALK.push(row);
   }
   for(var k in S.floor){var p=k.split(','),fx=+p[0],fy=+p[1];if(fy>=0&&fy<ROWS&&fx>=0&&fx<COLS)WALK[fy][fx]=true;}
@@ -36,8 +36,8 @@ function groundOk(x,y){if(!WALK)computeWalk();return x>=0&&y>=0&&x<COLS&&y<ROWS&
 function gateOpen(){return !!S.open||NAV.all;}
 // 세로로 한 칸 옮길 때 울타리를 넘는지: 부지 ↔ 주차 구역은 입구 열에서만, 들어올 때는 문이 열려 있어야
 function crossOk(x,y,ny){
-  if(y>=PZ&&ny<PZ)return x===ENT&&gateOpen();
-  if(y<PZ&&ny>=PZ)return x===ENT;
+  if(y>=PZ&&ny<PZ)return isEnt(x)&&gateOpen();
+  if(y<PZ&&ny>=PZ)return isEnt(x);
   return true;
 }
 function nodeOk(n){if(isPieceNode(n)){var p=nodePiece(n);return !!p&&!deckCovered(p);}return groundOk(n%COLS,(n/COLS)|0);}

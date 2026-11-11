@@ -4,7 +4,7 @@
    지은 칸을 다시 누르면 위층이 올라간다(최대 10층). 칸 하나를 지우면 끊어진 부분은 따로 나뉜다.
    건물 객체: {id, def, x, y, tiles:[{x,y,f}], inUse, uses}  (def는 kind가 'mroom'인 정의, x,y는 칸들의 좌상단)
    정의의 per(칸·층 면적당 수치), fk(채우는 필요), rname(건물 이름)으로 역할별 수치가 정해진다. */
-var MROOM={maxF:10,floorCost:1000,fh:.9,fill0:40,fillPer:3,fillMax:66};
+var MROOM={maxF:10,floorCost:250,fh:.9,fill0:40,fillPer:.75,fillMax:66};
 var RDC={},PDC={};
 
 function isRoomDef(id){return !!D[id]&&D[id].kind==='mroom';}
@@ -32,8 +32,8 @@ function roomDef(b){
   var mf=roomMaxF(b);
   d.name=base.rname+' ('+b.tiles.length+'칸'+(mf>1?' · '+mf+'층':'')+')';
   d.w=x1-x0+1;d.h=y1-y0+1;d.cost=cost;
-  for(k in base.per)d[k]=base.per[k]*n;
-  d.fill={};d.fill[base.fk]=Math.min(MROOM.fillMax,MROOM.fill0+MROOM.fillPer*n);
+  for(k in base.per)d[k]=Math.max(1,Math.round(base.per[k]*n));
+  d.fill={};d.fill[base.fk]=Math.round(Math.min(MROOM.fillMax,MROOM.fill0+MROOM.fillPer*n));
   d.desc='칸을 이어 붙여 지은 '+base.rname;
   RDC[b.id]={key:key,d:d};
   return d;
@@ -69,7 +69,7 @@ function roomsChanged(){
 /* 이 칸을 누르면 무슨 일이 생기는지: 새 칸 / 위층 / 불가 */
 function tilePlan(x,y,def){
   def=def||'mroom';
-  if(x<0||y<0||x>=COLS||y>=ROWS-1)return {ok:false,why:'부지 밖이에요'};
+  if(x<0||y<0||x>=COLS||y>=ROWS-RD)return {ok:false,why:'부지 밖이에요'};
   if(y>=PZ)return {ok:false,why:'주차 구역에는 주차장만 지을 수 있어요'};
   var r=roomAt(x,y);
   if(r){

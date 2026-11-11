@@ -39,7 +39,7 @@ function arrowMode(d){
 }
 // 입구 아치 쪽 방향 (DIRS 번호)
 function gateFace(d,x,y){
-  var gx=ENT+.5-(x+d.w/2),gy=PZ-(y+d.h/2),best=2,bv=-1e9;
+  var gx=entC()-(x+d.w/2),gy=PZ-(y+d.h/2),best=2,bv=-1e9;
   for(var i=0;i<4;i++){var v=DIRS[i][0]*gx+DIRS[i][1]*gy;if(v>bv){bv=v;best=i;}}
   return best;
 }
@@ -300,7 +300,7 @@ function plDir(d){
   var o=faceDims(df,UI.face),n=faceDims(df,d),g=UI.ghost;
   UI.face=d;
   // 가로세로가 바뀌면 가운데를 지키며 돌린다
-  if(g){g.x=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w);g.y=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-1-n.h);}
+  if(g){g.x=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w);g.y=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-RD-n.h);}
   renderDetail();
 }
 function plTurn(){plDir(screenToWorldDir((worldToScreenDir(plCur())+1)%4));}
@@ -351,7 +351,7 @@ function plOk(){
     // 조경·꾸미기는 길처럼 이어서: 한 칸 나아가고 되돌리기를 쌓는다 (막힌 칸이면 회색 ✓로 알려 준다)
     UI.undo.push({bid:nb.id,cost:d.cost,w:S.week});
     var dm=faceDims(d,UI.face),st=plStep(d),nx=g.x+st[0]*dm.w,ny=g.y+st[1]*dm.h;
-    if(nx>=0&&ny>=0&&nx+dm.w<=COLS&&ny+dm.h<=ROWS-1){g.x=nx;g.y=ny;}
+    if(nx>=0&&ny>=0&&nx+dm.w<=COLS&&ny+dm.h<=ROWS-RD){g.x=nx;g.y=ny;}
     renderDetail();
   }else{
     // 큰 건물은 하나 짓고 끝. 방금 지은 것은 카드에서 이번 주 안에 전액 되돌릴 수 있다

@@ -5,6 +5,11 @@ function mk(id,name,cat,w,h,cost,up,kind,wall,roofc,o){
   var d={id:id,name:name,cat:cat,w:w,h:h,cost:cost,up:up,kind:kind,wall:wall,roofc:roofc,H:1,roof:'flat',rh:0,deco:'',towerH:0,
     seats:0,fcap:0,ccap:0,kcap:0,park:0,beauty:0,vis:0,rep:0,cap:0,dur:5,income:0,fill:null,desc:''};
   for(var k in o) d[k]=o[k];
+  // 예전 한 칸 = G×G 칸: 그림 크기는 그대로 두고 차지하는 칸만 늘린다. 칸 건물·바닥·지형·길은 한 칸 그대로
+  if(kind!=='mroom'&&kind!=='floor'&&kind!=='terrain'&&kind!=='path'&&!d.cell){d.w*=G;d.h*=G;}
+  // 한 칸짜리는 칸이 작아진 만큼 값도 줄인다: 바닥은 같은 길이의 길이 같은 값이 되게 절반, 칸 건물은 넓이대로 1/4
+  if(kind==='floor'){d.cost=Math.round(d.cost/G);d.beauty=d.beauty/3;}
+  if(kind==='mroom'){d.cost=Math.round(d.cost/(G*G));for(var pk in d.per)d.per[pk]=d.per[pk]/(G*G);}
   DEFS.push(d); return d;
 }
 mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.95,roof:'gable',rh:.55,deco:'crossRidge',seats:24,fill:{word:48},cap:10,dur:5,desc:'작고 따뜻한 첫 예배 공간'});
@@ -73,7 +78,7 @@ mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe
 mk('bench','벤치','comfort',1,1,160,0,'bench','#8a6a46','#8a6a46',{prop:1,dir:'face',ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
-mk('wfount','물 분수','garden',1,1,500,2,'wfount','#c9c2b6','#7fb7d9',{beauty:2.5,water:true,desc:'호수·강 위에 띄우는 분수. 물이 찬 칸에만 놓아요'});
+mk('wfount','물 분수','garden',1,1,250,2,'wfount','#c9c2b6','#7fb7d9',{beauty:1.2,water:true,cell:true,desc:'호수·강 위에 띄우는 분수. 물이 찬 칸에만 놓아요'});
 mk('lamp','가로등','deco',1,1,120,1,'lamp','#3d4650','#f5e6a8',{beauty:0.5,desc:'저녁에도 길을 밝혀요'});
 mk('hedge','생울타리','deco',1,1,90,0,'hedge','#3f7d3c','#5a9a4f',{beauty:0.6,desc:'잘 다듬은 낮은 나무 울타리'});
 mk('rosearch','꽃 아치','garden',1,1,260,0,'arch','#f1ece2','#d9567a',{spr:'pergola',dir:'axis',beauty:1.2,desc:'장미가 감긴 정원 아치'});
@@ -138,7 +143,7 @@ mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'p
 mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.08,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
 mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
-mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 60',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
+mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
 /* 꾸미기에 마음 쓰도록: 기능 건물(예배·교제·매장·돌봄·편의·주차)은 2배 값.
    정원·장식·바닥·길·지형·편의 소품은 그대로. 초기 자금·목표 보상·대출·신용 한도도 같은 비율로 올렸다 */

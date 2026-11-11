@@ -10,7 +10,7 @@ function spawnV(member){
   if(member)needs.word=8+Math.random()*10;
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
     member:!!member,wallet:Math.round(member?36+Math.random()*120:20+Math.random()*96),
-    life:55+Math.random()*30,speed:1.9+Math.random()*0.7,ph:Math.random()*6.28,
+    life:55+Math.random()*30,speed:(1.9+Math.random()*0.7)*G,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
   gripeInit(V[V.length-1]);
@@ -28,7 +28,7 @@ function wanderGoal(v){
   var best=-1,bs=1e9;
   for(var i=0;i<12;i++){
     var n=L[(Math.random()*L.length)|0];if(n===v.node)continue;
-    var q=nodePos(n),sc=(TRAF[n]||0)*1.5+Math.hypot(q.x-v.x,q.y-v.y)*.12+Math.random()*2;
+    var q=nodePos(n),sc=(TRAF[n]||0)*1.5+Math.hypot(q.x-v.x,q.y-v.y)*.12/G+Math.random()*2;
     if(sc<bs){bs=sc;best=n;}
   }
   return best;
@@ -118,7 +118,7 @@ function depart(v){
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
   var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
-  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:ENT+0.5,y:PZ-0.6,t:1.6,text:'+1 성도',col:'#fff2b0'});}
+  if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:entC(),y:PZ-1.2,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 // 욕구가 이만큼 차면 그 욕구는 됐다고 보고, 평균이 이만큼이면 돌아간다 (높을수록 건물을 더 많이 들른다)
 function decide(v){
@@ -138,7 +138,7 @@ function decide(v){
     // 모든 건물을 골고루: 거리보다 '이번 주에 얼마나 쓰였나(자리 대비)'와 '지금 붐비나'를 더 크게 본다.
     // 새 건물에는 조금만 더 끌리고, 사람마다 조금씩 다르게 고른다
     var jit={};cands.forEach(function(b){jit[b.id]=Math.random()*4;});
-    var cost=function(b){var d=defOf(b),cp=Math.max(1,d.cap);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3+(b.weekUses||0)/cp*2.5+b.inUse/cp*4-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
+    var cost=function(b){var d=defOf(b),cp=Math.max(1,d.cap);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5+b.inUse/cp*4-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],tn=doorNode(b.door.ent),p=navPath(v.node,function(m){return m===tn;});
