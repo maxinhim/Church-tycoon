@@ -913,6 +913,29 @@ async function waterChecks(browser, url) {
     // 되돌리기로 땅이 올라오면 물도 사라진다
     terApply(25, 5, 'ter_set', -1); fillWater(25, 5); S.hgt = Object.assign({}, S.hgt); delete S.hgt['25,5']; terChanged([{ x: 25, y: 5 }]);
     o.fix = !isWater(25, 5);
+    // 옆면(벽) 타일
+    S.wall = {}; UI.undo = [];
+    terApply(26, 10, 'ter_set', 2); const wm0 = S.money;
+    o.wallSet = cellHasFace(26, 10) && !cellHasFace(28, 12) && wallSwap(26, 10, 'f_brick') === '' && wallId(26, 10) === 'f_brick' && wm0 - S.money === D.f_brick.cost && !!wallSwap(26, 10, 'f_brick');
+    paintFloor(26, 10, 'f_wood');
+    UI.fold = true; UI.tool = null; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: 26, y: 10 }; UI.wallMode = false; renderSelCard();
+    const wc = document.getElementById('selCard');
+    o.wallCard = !!wc.querySelector('[data-act="wmode"]') && !wc.querySelector('[data-act="wswap"]');
+    wc.querySelector('[data-act="wmode"]').click();
+    o.wallCard = o.wallCard && wc.querySelectorAll('[data-act="wswap"]').length === FLOOR_IDS.length && /옆면/.test(wc.textContent);
+    // 이어 짓기: 높이·윗면·옆면이 함께 이어지고, 되돌리기 한 번에 함께 돌아온다
+    selExtend(0); const em = S.money; UI.undo = [];
+    o.extCost = extPlan(27, 10).cost === 2 * TER_UP + D.f_wood.cost + D.f_brick.cost;
+    o.extWall = extApply(27, 10) === '' && th(27, 10) === 2 && S.floor['27,10'] === 'f_wood' && wallId(27, 10) === 'f_brick';
+    terUndoLast();
+    o.extUndo = th(27, 10) === 0 && !wallId(27, 10) && !S.floor['27,10'] && S.money === em;
+    endPlace();
+    // 경사로 하나의 세모 옆면, 파인 칸의 벽, 물을 채워도 유지
+    terApply(26, 13, 'ter_ramp', 0, 0); wallSwap(26, 13, 'f_step');
+    terApply(28, 15, 'ter_set', -2); wallSwap(28, 15, 'f_gravel'); fillWater(28, 15);
+    o.wallKeep = cellHasFace(26, 13) && wallId(28, 15) === 'f_gravel' && isWater(28, 15);
+    const wr = S.money; o.wallErase = wallSwap(26, 10, 'f_erase') === '' && !wallId(26, 10) && S.money - wr === Math.floor(D.f_brick.cost * .5);
+    wallSwap(26, 10, 'f_brick');
     for (let k = 0; k < 4; k++) { ROT = k; draw(); }
     ROT = 0;
     o.json = JSON.stringify(S).length > 0;
@@ -930,6 +953,10 @@ async function waterChecks(browser, url) {
   check(r.pick && r.pickFlat, '지하: 파인 칸과 평지를 눌러 고를 수 있음');
   check(r.card && r.drain, '물 카드: 다리 놓기·물 빼기, 빼면 타일이 다시 보임');
   check(r.fix, '물: 땅이 0층 이상이 되면 사라짐');
+  check(r.wallSet && r.wallErase, '벽 타일: 벽이 있는 칸에 붙이고 떼기(반값 환불)');
+  check(r.wallCard, '벽 타일: 땅 카드에서 윗면·옆면을 바꿔 고름');
+  check(r.extCost && r.extWall && r.extUndo, '벽 타일: 이어 지으면 높이·윗면·옆면이 함께 이어지고 한 번에 되돌려짐');
+  check(r.wallKeep, '벽 타일: 경사로 세모 옆면·파인 칸에도 붙고, 물을 채워도 남음');
   check(errs.length === 0, '지하·물: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

@@ -144,6 +144,13 @@ function onPanel(e){
     if(ww){toast(ww,2000);sfx('error',.4);}else{sfx('place',.6);toast(a==='wfill'?'물을 채웠어요':'물을 뺐어요',1200);}
     renderDetail();hud(true);
   }
+  else if(a==='wmode'){UI.wallMode=!UI.wallMode;renderDetail();}
+  else if(a==='wswap'){
+    var wsf=UI.selFloor;if(!wsf)return;
+    var keepU=UI.undo;UI.undo=null;var wsw=wallSwap(wsf.x,wsf.y,v);UI.undo=keepU;
+    if(wsw){toast(wsw,1600);sfx('error',.4);}else sfx(v==='f_erase'?'demolish':'floor',.6);
+    renderDetail();hud(true);
+  }
   else if(a==='wbridge'){
     var bf=UI.selFloor;if(!bf)return;
     extStart('path');var bc=UI.pc;bc.k='arch';bc.x=bf.x;bc.y=bf.y;bc.l=0;bc.slope=0;bc.hist=[];renderDetail();

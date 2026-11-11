@@ -165,6 +165,51 @@ function drawTerGhost(){
    높인 칸·경사로 칸은 그 칸의 흙 덩어리(앞쪽 두 옆면 + 윗면)를 하나의 그림 단위로 그린다.
    윗면에는 잔디(또는 깔아 둔 바닥 타일)를 얹는다 */
 var TER_SIDE='#9b7752',TER_RAMP_C='#b48d5f';
+/* ---------- 옆면(벽) 타일 ----------
+   S.wall = {"x,y": 바닥 타일 id}  그 칸에 맞닿은 흙벽에 붙이는 타일. 윗면 바닥(S.floor)과 달라도 된다.
+   두 칸 사이의 벽은 높은 쪽 칸의 타일을 먼저 쓰고, 없으면 낮은 쪽(파인 칸) 타일을 쓴다.
+   경사로 하나만 만들었을 때 생기는 세모 옆면도 같은 벽이라 똑같이 붙는다. 물을 채워도 지우지 않는다 */
+function wallId(x,y){var v=S.wall&&S.wall[x+','+y];return v&&D[v]?v:null;}
+// 그 칸에 벽(높이가 다른 이웃과 맞닿은 면)이 있는지
+function cellHasFace(x,y){
+  for(var d=0;d<4;d++){
+    var e=TER_EDGE[d],nx=x+DIRS[d][0],ny=y+DIRS[d][1];
+    for(var i=0;i<2;i++){var cx=x+e[i][0],cy=y+e[i][1];if(Math.abs(cornerZ(x,y,cx,cy)-cornerZ(nx,ny,cx,cy))>.01)return true;}
+  }
+  return false;
+}
+function wallSwap(x,y,id){
+  if(!S.wall)S.wall={};
+  var k=x+','+y,prev=wallId(x,y);
+  if(id==='f_erase'){if(!prev)return '붙인 벽 타일이 없어요';S.money+=Math.floor(D[prev].cost*.5);delete S.wall[k];}
+  else{
+    if(prev===id)return '이미 같은 벽이에요';
+    var c=floorSwapCost(prev,id);if(c>0&&S.money<c)return '자금이 '+fmt(c-S.money)+' 모자라요';
+    S.money-=c;S.wall[k]=id;
+  }
+  if(UI.undo)UI.undo.push({wall:k,prev:prev,id:id,c:id==='f_erase'?-Math.floor(D[prev].cost*.5):floorSwapCost(prev,id)});
+  save();return '';
+}
+function wallUndo(u){if(u.prev)S.wall[u.wall]=u.prev;else delete S.wall[u.wall];S.money+=u.c;save();}
+// 세로 면에 타일 무늬를 입힌다: 가로는 면의 방향, 세로는 한 층 높이에 무늬 한 장
+var WALLP={};
+function wallPattern(id,ra,rb){
+  var tx=FLOOR_TEX[id],im=tx&&sprOf(tx);if(!im||typeof ctx==='undefined'||PJ.c!==ctx)return null;
+  var p=WALLP[id];if(!p){try{p=ctx.createPattern(im,'repeat');}catch(e){p=null;}if(!p||!p.setTransform)return null;WALLP[id]=p;}
+  var alongX=Math.abs(ra[1]-rb[1])<1e-6,k=ZB;ZB=0;
+  var O=alongX?P(0,ra[1],0):P(ra[0],0,0),X=alongX?P(1,ra[1],0):P(ra[0],1,0);ZB=k;
+  var w=im.width,hgt=im.height||w;
+  p.setTransform(new DOMMatrix([(X[0]-O[0])/w,(X[1]-O[1])/w,0,LV*ZH*PJ.s/hgt,O[0],O[1]]));
+  return p;
+}
+// 흙벽 한 면: 벽 타일이 있으면 무늬(없으면 그 색) + 면의 밝기, 없으면 흙
+function terFace(pts,ra,rb,wid,front,tint){
+  if(tint||!wid){quad(pts,shade(tint||TER_SIDE,front),EDGE);return false;}
+  var wp=wallPattern(wid,ra,rb);
+  quad(pts,wp||shade(D[wid].wall,front),wp?null:EDGE);
+  if(wp)quad(pts,'rgba(20,14,8,'+(1-front+.04).toFixed(2)+')',EDGE);
+  return true;
+}
 function terCells(){
   var out={};
   for(var k in S.hgt||{})out[k]=1;
@@ -191,7 +236,8 @@ function drawTerCell(x,y,tint){
       var oa=cornerZ(x,y,a[0],a[1]),ob=cornerZ(x,y,b[0],b[1]);
       if(oa>-.01&&ob>-.01)continue;
       var bk=Math.abs(ra[1]-r.y0)<1e-6&&Math.abs(rb[1]-r.y0)<1e-6?.93:.74;
-      quad([[ra[0],ra[1],Math.min(0,oa)*LV],[rb[0],rb[1],Math.min(0,ob)*LV],[rb[0],rb[1],0],[ra[0],ra[1],0]],shade(tint||TER_SIDE,bk),EDGE);
+      var bw=nin&&wallId(nx,ny)||wallId(x,y);
+      if(terFace([[ra[0],ra[1],Math.min(0,oa)*LV],[rb[0],rb[1],Math.min(0,ob)*LV],[rb[0],rb[1],0],[ra[0],ra[1],0]],ra,rb,bw,bk,tint))continue;
       c.strokeStyle='rgba(60,40,20,.18)';c.lineWidth=Math.max(.5,.8*PJ.s);c.beginPath();
       for(var l2=Math.ceil(Math.min(oa,ob)+.01);l2<0;l2++){var ya=Math.max(l2,oa),yb=Math.max(l2,ob),p3=P(ra[0],ra[1],ya*LV),p4=P(rb[0],rb[1],yb*LV);c.moveTo(p3[0],p3[1]);c.lineTo(p4[0],p4[1]);}
       c.stroke();
@@ -199,7 +245,8 @@ function drawTerCell(x,y,tint){
     }
     var ta=cornerZ(x,y,a[0],a[1]),tb=cornerZ(x,y,b[0],b[1]),ba=Math.min(ta,cornerZ(nx,ny,a[0],a[1])),bb=Math.min(tb,cornerZ(nx,ny,b[0],b[1]));
     if(ta-ba<.01&&tb-bb<.01)continue;
-    quad([[ra[0],ra[1],ba*LV],[rb[0],rb[1],bb*LV],[rb[0],rb[1],tb*LV],[ra[0],ra[1],ta*LV]],shade(tint||TER_SIDE,front),EDGE);
+    var fw=wallId(x,y)||(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS?wallId(nx,ny):null);
+    if(terFace([[ra[0],ra[1],ba*LV],[rb[0],rb[1],bb*LV],[rb[0],rb[1],tb*LV],[ra[0],ra[1],ta*LV]],ra,rb,fw,front,tint))continue;
     // 층마다 가는 흙 줄
     c.strokeStyle='rgba(60,40,20,.18)';c.lineWidth=Math.max(.5,.8*PJ.s);c.beginPath();
     for(var l=Math.ceil(Math.min(ba,bb)+.01);l<Math.max(ta,tb);l++){

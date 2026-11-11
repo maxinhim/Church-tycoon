@@ -17,6 +17,15 @@ function floorRow(prev,pid,x,y){
   }).join('');
   return '<div class="scb fsr">'+h+'</div>';
 }
+// 옆면(벽) 타일 줄: 윗면 바닥과 같은 종류를 벽에 붙인다
+function wallRow(prev){
+  var h=FLOOR_IDS.filter(function(id){return id!==prev;}).map(function(id){
+    var c=floorSwapCost(prev,id);
+    return '<button class="btn sm fsw" data-act="wswap" data-v="'+id+'" style="--fc:'+D[id].wall+'" aria-label="옆면을 '+D[id].name+'(으)로 '+(c<0?'환불 ':'')+fmt(Math.abs(c))+'"><i></i>'+D[id].name+' '+(c<0?'+':'')+fmt(Math.abs(c))+'</button>';
+  }).join('');
+  if(prev)h+='<button class="btn sm" data-act="wswap" data-v="f_erase">흙벽으로 +'+fmt(Math.floor(D[prev].cost*.5))+'</button>';
+  return '<div class="scb fsr">'+h+'</div>';
+}
 function linkRow(n){
   return '<div class="scb fsr">'+FLOOR_IDS.map(function(id){var c=n*D[id].cost;
     return '<button class="btn sm fsw" data-act="linkf" data-v="'+id+'" style="--fc:'+D[id].wall+'"'+(S.money<c?' disabled':'')+' aria-label="'+D[id].name+'(으)로 '+n+'칸 잇기 '+fmt(c)+'"><i></i>'+D[id].name+' '+fmt(c)+'</button>';}).join('')+'</div>';
@@ -77,6 +86,10 @@ function renderSelCard(){
     // 빈 땅·바닥 칸: 바닥 깔기·바꾸기, 땅 높이기·낮추기, 경사로를 바로 고른다
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
     h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?lvName(gh)+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'눌러서 바로 깔아요')+'</span></div>'+floorRow(cur,0,sf.x,sf.y);
+    // 벽이 있는 칸: 옆면 타일로 바꿔 고를 수 있다 (줄은 하나만 보인다)
+    var face=cellHasFace(sf.x,sf.y),wm=face&&UI.wallMode,wcur=wallId(sf.x,sf.y);
+    if(wm)h='<div class="sct"><b>옆면(벽) · '+(wcur?D[wcur].name:'흙벽')+'</b><span>'+(gh?lvName(gh)+' · ':'')+'이 칸에 맞닿은 벽에 붙여요</span></div>'+wallRow(wcur);
+    if(face)row+=scBtn('wmode',wm?'윗면 타일':'옆면 타일','',null,wm?'윗면 바닥 타일 고르기':'옆면(벽) 타일 고르기');
     var up=terPlan(sf.x,sf.y,'ter_set',gh+1),dn=gh>MINH||isRamp(sf.x,sf.y)?terPlan(sf.x,sf.y,'ter_set',isRamp(sf.x,sf.y)?gh:gh-1):null;
     if(!up.why)row+=scBtn('gter','땅 높이기 '+fmt(up.cost),'',gh+1,'땅을 한 층 높이기 '+fmt(up.cost));
     if(dn&&!dn.why)row+=scBtn('gter',(isRamp(sf.x,sf.y)?'평평하게 ':'땅 낮추기 ')+fmt(dn.cost),'',isRamp(sf.x,sf.y)?gh:gh-1);

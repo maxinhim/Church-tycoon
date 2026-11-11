@@ -58,7 +58,7 @@ function placeWhy(d,x,y,face){
   return '';
 }
 function startPlace(id){
-  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
@@ -122,6 +122,8 @@ function selExtend(d){
     var nl=h+(d===rd?1:d===OPP[rd]?-1:0);if(nl<MINH){toast('더 내려갈 수 없어요',1200);return;}
     extStart('ter_ramp');UI.ext=true;UI.rdir=rd;UI.tlv=nl;
   }else{extStart('ter_set');UI.ext=true;UI.tlv=h;UI.tfloor=cur||null;}
+  // 벽 타일도 함께 이어진다
+  UI.twall=wallId(t.x,t.y);
   UI.fdir=d;UI.ghost={x:nx,y:ny};UI.flast={x:t.x,y:t.y};renderDetail();
 }
 // ▲▼ (v = +1 / -1)
@@ -159,12 +161,13 @@ function extPlan(x,y){
     if(UI.tlv<MINH)return {why:'더 내려갈 수 없어요'};
     if(tslope(x,y)===UI.rdir&&h===UI.tlv)return {why:'이미 같은 경사로예요'};
     var c0=0;if(h!==UI.tlv||isRamp(x,y)){var sp=terPlan(x,y,'ter_set',UI.tlv);if(sp.why&&sp.why!=='이미 그 높이예요')return {why:sp.why};c0=sp.cost||0;}
-    return {cost:c0+TER_RAMP};
+    return {cost:c0+TER_RAMP+(UI.twall&&wallId(x,y)!==UI.twall?floorSwapCost(wallId(x,y),UI.twall):0)};
   }
   if(h>UI.tlv)return {why:'이 칸이 더 높아요. 낮추려면 그 칸을 골라 ▼를 누르세요'};
   var cost=0,ch=false;
   if(h!==UI.tlv||isRamp(x,y)){var p=terPlan(x,y,'ter_set',UI.tlv);if(p.why)return {why:p.why};cost+=p.cost;ch=true;}
   if(UI.tfloor){var sl=floorSlot(x,y,0),cur=sl&&sl.get();if(sl&&!sl.busy&&cur!==UI.tfloor){cost+=floorSwapCost(cur,UI.tfloor);ch=true;}}
+  if(UI.twall&&wallId(x,y)!==UI.twall){cost+=floorSwapCost(wallId(x,y),UI.twall);ch=true;}
   return ch?{cost:cost}:{why:'이미 같은 높이·바닥이에요'};
 }
 function extApply(x,y){
@@ -176,6 +179,7 @@ function extApply(x,y){
     if(th(x,y)!==UI.tlv||isRamp(x,y))w=terApply(x,y,'ter_set',UI.tlv);
     if(!w&&UI.tfloor){var fw=paintFloor(x,y,UI.tfloor,0);if(fw&&fw!=='이미 같은 바닥이에요'&&UI.undo.length===n0)w=fw;}
   }
+  if(!w&&UI.twall&&wallId(x,y)!==UI.twall)wallSwap(x,y,UI.twall);
   // 한 번의 ✓로 생긴 되돌리기는 한 묶음으로
   var g=++extSeq;for(var i=n0;i<UI.undo.length;i++)UI.undo[i].g=g;
   return w;
@@ -185,7 +189,7 @@ var extSeq=0;
 function terUndoLast(){
   var u=UI.undo[UI.undo.length-1];if(!u)return false;
   var g=u.g;
-  do{var t=UI.undo[UI.undo.length-1];if(t.ter){UI.undo.pop();terUndo(t);}else floorUndo();}
+  do{var t=UI.undo[UI.undo.length-1];if(t.ter){UI.undo.pop();terUndo(t);}else if(t.wall){UI.undo.pop();wallUndo(t);}else floorUndo();}
   while(g&&UI.undo.length&&UI.undo[UI.undo.length-1].g===g);
   return true;
 }

@@ -40,7 +40,7 @@ const r=await p.evaluate(()=>{restart('easy');S.goal=GOALS.length;S.step=STEPS.l
   else if(o===9&&S.buildings.length){const bb=S.buildings[ri(S.buildings.length)];op='dem '+bb.def;if(!lastHallWhy(bb))demolish(bb.id);}
   else if(o===10){op='piece';addPiece({x:rx(),y:ry(),l:ri(6)-3,s:ri(2),d:ri(4),k:['stone','wood','arch','sky'][ri(4)]});}
   else if(o===11&&S.paths.length){op='rmpiece';const pc=S.paths[ri(S.paths.length)];if(!pieceDemWhy(pc))removePiece(pc.id,.5);}
-  else if(o===12){op='floor';paintFloor(rx(),ry(),FLOOR_IDS[ri(FLOOR_IDS.length)]);}
+  else if(o===12){op='floor';paintFloor(rx(),ry(),FLOOR_IDS[ri(FLOOR_IDS.length)]);UI.undo=[];wallSwap(rx(),ry(),R()<.2?'f_erase':FLOOR_IDS[ri(FLOOR_IDS.length)]);UI.undo=[];}
   else if(o===13){op='undo';UI.undo=[];const x=rx(),y=ry();if(!terApply(x,y,'ter_set',ri(7)-4)){const u=UI.undo.pop();if(u&&u.ter)terUndo(u);}UI.undo=[];}
   else if(o===14&&S.buildings.length){const bb=S.buildings[ri(S.buildings.length)];op='floor+ '+bb.def;if(canStack(bb))for(let k=0;k<ri(12);k++)addFloor(bb);}
   else if(o===15){op='run';for(let k=0;k<60;k++)update(0.1);S.dlg=null;S.over=false;if(R()<.2){save();const s2=load();s2.open=S.open;S=s2;V=[];rebuildOcc();recalc();levelTick(true);}}
