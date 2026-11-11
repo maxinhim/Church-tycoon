@@ -7,6 +7,8 @@ var OPP=[1,0,3,2];
 function faceDims(d,face){var w=d.w/U,h=d.h/U;return (face===0||face===1)?{w:h,h:w}:{w:w,h:h};}
 function bDims(b){if(isRoom(b)){var r=roomDef(b);return {w:r.w,h:r.h};}return faceDims(D[b.def],b.face);}
 function needsDoor(b){return !!defOf(b).fill;}
+// 입구·출구 건물을 지어야 하는 건물 (한 칸짜리 소품 — 벤치·자판기 등 — 은 옆 길에서 바로 쓴다)
+function needsGates(b){return needsDoor(b)&&!defOf(b).cell;}
 function bTiles(b){
   if(isRoom(b))return b.tiles;
   var dm=bDims(b),out=[];
@@ -71,18 +73,18 @@ function defaultDoors(b){
   ext=ext||ent;
   return {ent:{x:ent.x,y:ent.y,d:ent.d,l:ent.l},ext:{x:ext.x,y:ext.y,d:ext.d,l:ext.l}};
 }
+// 문은 붙어 있는 입구·출구 건물에서 읽는다 (gates.js). 둘 다 제자리에 있어야 b.door가 생긴다
 function ensureDoors(b){
   if(!needsDoor(b)){if(b.door)delete b.door;return;}
-  if(b.door&&validSpot(b,b.door.ent)&&validSpot(b,b.door.ext))return;
-  b.door=defaultDoors(b);
-}
-// which: 'ent' | 'ext', step: +1 / -1 (둘레를 따라 다음 자리로)
-function cycleDoor(b,which,step){
-  if(!b||!b.door)return;
-  var sp=doorSpots(b),i=0;
-  for(var k=0;k<sp.length;k++)if(sameSpot(sp[k],b.door[which])){i=k;break;}
-  b.door[which]=sp[(i+step+sp.length)%sp.length];
-  recalc();save();
+  if(!needsGates(b)){
+    // 소품: 정면부터 돌아가며, 바로 옆이 걷는 길인 쪽을 쓴다
+    var f=b.face==null?2:b.face,order=[f,(f+2)%4,(f+3)%4,OPP[f]].filter(function(v,i,a){return a.indexOf(v)===i;}),pick=null;
+    for(var i=0;i<4&&!pick;i++){var dd=[0,1,2,3][(f+i)%4],sp={x:b.x,y:b.y,d:dd,l:0};if(doorNode(sp,b)>=0)pick=sp;}
+    pick=pick||{x:b.x,y:b.y,d:f,l:0};b.door={ent:pick,ext:{x:pick.x,y:pick.y,d:pick.d,l:0}};return;
+  }
+  var g=gatesOf(b);
+  if(gateOk(g.ent,b)&&gateOk(g.ext,b))b.door={ent:gateSpot(g.ent,b),ext:gateSpot(g.ext,b)};
+  else delete b.door;
 }
 function doorText(b){
   if(!b.door)return '';
@@ -93,6 +95,7 @@ function doorText(b){
 /* ---------- 문 그리기 ---------- */
 // 벽에 문을 그린다. 화면 앞쪽을 향한 벽에만 보인다. onlyTile이 있으면 그 칸의 문만
 function drawDoorsOn(b,onlyTile){
+  return;  // 입구·출구 건물이 문을 보여 준다
   if(!b.door)return;
   var ins=isRoom(b)?.09:.1,same=sameSpot(b.door.ent,b.door.ext),barn=!isRoom(b)&&D[b.def].deco==='barn';
   [['ent',b.door.ent],['ext',b.door.ext]].forEach(function(it,i){
@@ -109,27 +112,7 @@ function drawDoorsOn(b,onlyTile){
     quad([[p1[0],p1[1],z1],[p2[0],p2[1],z1],[p2[0],p2[1],z1+.09],[p1[0],p1[1],z1+.09]],col);
   });
 }
-/* ---------- 문 자리 직접 고르기 ----------
-   카드에서 '입구 고르기'·'출구 고르기'를 누르면 낼 수 있는 자리가 모두 지도에 뜨고, 그중 하나를 누르면 그리로 옮긴다 */
 function doorPadPos(s){return {x:s.x+.5+DIRS[s.d][0]*.82,y:s.y+.5+DIRS[s.d][1]*.82,z:s.l*LV+.04};}
-function drawDoorChoices(b){
-  var dp=UI.doorPick;if(!dp||!b||dp.id!==b.id)return;
-  var c=PJ.c,col=dp.which==='ent'?'#3f9d5a':'#e08a2c',pr=.5+.5*Math.sin((S.clock||0)*5);
-  doorSpots(b).forEach(function(s){
-    if(sameSpot(s,b.door[dp.which]))return;
-    var w=doorPadPos(s),r=.2,pts=[[w.x-r,w.y],[w.x,w.y-r],[w.x+r,w.y],[w.x,w.y+r]].map(function(p){var q=rotPt(p[0],p[1]);return [q[0],q[1],w.z];});
-    c.globalAlpha=.55+.35*pr;quad(pts,'#ffffff',col);c.globalAlpha=1;
-  });
-}
-function doorPickTap(px,py){
-  var dp=UI.doorPick,b=dp&&bById(dp.id);UI.doorPick=null;
-  if(!b||!b.door)return false;
-  var best=null,bd=26*26;
-  doorSpots(b).forEach(function(s){var w=doorPadPos(s),m=rotPt(w.x,w.y),q=toScreen(m[0],m[1],w.z+bZ(b)),dx=q[0]-px,dy=q[1]-py,d=dx*dx+dy*dy;if(d<bd){bd=d;best=s;}});
-  if(!best)return false;
-  b.door[dp.which]={x:best.x,y:best.y,d:best.d,l:best.l};
-  recalc();save();return true;
-}
 // 선택했을 때 문 바깥에 '입'·'출' 표시
 function drawDoorPads(b){
   if(!b||!b.door)return;

@@ -11,7 +11,7 @@ function levelOf(sc){if(!(sc>=LV_BASE))return 1;return Math.min(LV_MAX,1+Math.fl
 function assetValue(){
   var t=0;
   S.buildings.forEach(function(b){
-    var d=defOf(b);if(!d)return;
+    var d=defOf(b);if(!d||b.free)return;
     // 이번 주에 지은 것은 아직 전액 되돌릴 수 있으므로 다음 주부터 친다 (짓고 되돌리기로 Level만 올리지 못하게)
     if(b.bw===S.week)return;
     if(isRoom(b)){b.tiles.forEach(function(q){t+=D[b.def].cost+((q.f||1)-1)*MROOM.floorCost;});return;}

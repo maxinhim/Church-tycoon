@@ -8,8 +8,10 @@ var ZB=0;
 /* U: 지금 그리는 좌표의 단위. 1 = 지금 칸, G = 예전 칸(한 변이 G배).
    legacy(fn): 예전 칸 단위로 짠 그림(건물·꾸미기·땅·울타리·입구)을 그대로 그린다. 그동안 COLS·ROWS·ENT·PZ·BAND도 예전 값이 된다.
    legacy 안에서는 지도 상태(occ·땅 높이)를 칸 좌표로 읽지 말 것 — 좌표가 예전 단위다 */
-var U=1;
-function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*U*PJ.s, PJ.oy+(rx+ry)*HH*U*PJ.s-((z||0)+ZB)*ZH*PJ.s];}
+var U=1,ZU=1,CELL_K=.5;
+function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*U*PJ.s, PJ.oy+(rx+ry)*HH*U*PJ.s-((z||0)*ZU+ZB)*ZH*PJ.s];}
+// 한 칸짜리 소품: 지금 칸 단위로, 높이는 CELL_K배로 그린다 (가로·세로는 칸이 작아서 저절로 CELL_K배)
+function cellDraw(b,fn){var k=ZU;ZU=D[b.def]&&D[b.def].kind==='gate'?1:CELL_K;try{fn();}finally{ZU=k;}}
 function legacy(fn){
   if(U!==1)return fn();
   COLS/=G;ROWS/=G;ENT/=G;PZ/=G;BAND/=G;U=G;

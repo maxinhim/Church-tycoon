@@ -110,7 +110,8 @@ function navReach(s){
 }
 function doorNode(s,b){
   if(!s)return -1;
-  var o=doorOut(s),lv=(b?bLevel(b):cellLevel(s.x,s.y))+s.l;
+  // 문 자리(x,y)는 입구·출구 건물(또는 소품) 칸이라, 건물을 모르면 그 칸의 높이가 곧 문 높이다
+  var o=doorOut(s),lv=b?bLevel(b)+s.l:cellLevel(s.x,s.y);
   if(o.x>=0&&o.y>=0&&o.x<COLS&&o.y<ROWS&&groundOk(o.x,o.y)&&groundPort(o.x,o.y,OPP[s.d])===lv)return gid(o.x,o.y);
   return pieceNodeAt(o.x,o.y,OPP[s.d],lv);
 }

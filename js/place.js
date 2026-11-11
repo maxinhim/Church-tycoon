@@ -52,12 +52,14 @@ function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 function placeWhy(d,x,y,face){
   var zw=zoneWhy(d,x,y,face)||levelWhy(d,x,y,face);if(zw)return zw;
   if(!canPlace(d,x,y,face))return '다른 건물이나 길과 겹쳐요. 끌어서 옮겨 보세요';
+  if(isGateDef(d)){var gw=gateAttachWhy(d,x,y);if(gw)return gw;}
   if(movingId())return '';
   if(isLocked(d.id))return lockLabel(d.id)+' 지을 수 있어요';
   if(S.money<d.cost)return '자금이 '+fmt(d.cost-S.money)+' 모자라요';
   return '';
 }
 function startPlace(id){
+  if(!isGateDef(D[id]))UI.gateFor=null;
   UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
@@ -73,8 +75,21 @@ function startPlace(id){
   }
   renderPanel();
 }
+/* 입구·출구 놓기: 건물 b의 둘레 가운데 길 쪽 좋은 자리에 미리보기를 띄운다. ✓로 짓고, 입구 다음에는 출구로 이어진다 */
+function startGateFlow(b,role){
+  var gs=gatesOf(b);if(gs[role]){role=role==='ent'?'ext':'ent';if(gs[role])return;}
+  var id=gateId(role,UI.gateDesign||'arch');
+  UI.tab='build';UI.fold=false;UI.cat='gate';UI.sel=null;UI.selPiece=null;UI.selFloor=null;
+  UI.gateFor=b.id;startPlace(id);UI.gateFor=b.id;
+  var c=gateBest(b,id,gs.ent);if(c){UI.ghost={x:c.x,y:c.y};}
+  toast(defOf(b).name+'의 '+(role==='ent'?'입구':'출구')+'를 놓으세요 · 바로 옆 칸 아무 데나',1800);
+  renderPanel();
+}
 // 그만두면 건축 목록으로 돌아간다 (이미 지은 것은 그대로)
 function endPlace(){
+  // 입구·출구를 놓다가 그만두면 그 건물의 카드로 (무엇이 빠졌는지 보이게)
+  if(UI.gateFor&&bById(UI.gateFor)&&!UI.moving){var gf=UI.gateFor;UI.gateFor=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;UI.fold=true;UI.sel=gf;renderPanel();return;}
+  UI.gateFor=null;
   // 옮기기를 그만두면 목록이 아니라 그 건물의 카드로 돌아간다
   if(UI.moving&&bById(UI.moving)){var mid=UI.moving;UI.moving=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;UI.fold=true;UI.sel=mid;renderPanel();return;}
   UI.moving=null;UI.tool=null;UI.ghost=null;UI.undo=[];UI.pc=null;renderPanel();}
@@ -344,8 +359,18 @@ function plOk(){
   if(movingId()){plMoveDone();return;}
   var d=D[UI.tool],g=UI.ghost,why2=placeWhy(d,g.x,g.y,UI.face);
   if(why2){toast(why2,1600);sfx('error',.4);return;}
+  if(isGateDef(d)){
+    var gw=buildGate(UI.tool,g.x,g.y);if(gw){toast(gw,1600);sfx('error',.4);return;}
+    var gnb=S.buildings[S.buildings.length-1],ob=bById(gnb.of);plBuzz();plLock=now+350;sfx('build',.7);
+    // 입구를 지었으면 곧바로 출구 놓기로, 둘 다 있으면 건물 카드로
+    if(ob&&!gatesOf(ob).ext){startGateFlow(ob,'ext');hud(true);return;}
+    UI.tool=null;UI.ghost=null;UI.gateFor=null;UI.fold=true;UI.sel=ob?ob.id:gnb.id;
+    toast(ob&&usable(ob)?defOf(ob).name+' 운영을 시작해요':(ob?'입구·출구를 지었어요 · 길을 이어 주세요':d.name+'을(를) 지었어요'),1800);renderPanel();hud(true);return;
+  }
   if(!build(UI.tool,g.x,g.y,plFace()))return;
   var nb=S.buildings[S.buildings.length-1];
+  // 방문자가 쓰는 건물: 곧바로 입구 놓기로 이어진다
+  if(needsGates(nb)&&!AUTOGATE()){UI.lastBuilt={bid:nb.id,cost:d.cost,w:S.week};startGateFlow(nb,'ent');hud(true);return;}
   plBuzz();plLock=now+350;sfx(isDecoCat(d)?'place':'build',.8);
   if(isDecoCat(d)){
     // 조경·꾸미기는 길처럼 이어서: 한 칸 나아가고 되돌리기를 쌓는다 (막힌 칸이면 회색 ✓로 알려 준다)
@@ -368,7 +393,7 @@ function canMove(b){return !!b&&!isRoom(b)&&!!D[b.def];}
 function movingId(){var b=UI.moving&&bById(UI.moving);return b&&UI.tool===b.def&&isPlacing()?b.id:0;}
 function startMove(b){
   if(!canMove(b))return;
-  UI.tab='build';UI.fold=false;UI.tool=b.def;UI.face=b.face==null?2:b.face;UI.ghost={x:b.x,y:b.y};UI.moving=b.id;
+  UI.tab='build';UI.fold=false;UI.tool=b.def;UI.face=b.face==null?2:b.face;UI.ghost={x:b.x,y:b.y};UI.moving=b.id;UI.gateFor=isGate(b)?b.of:null;
   UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.undo=[];UI.pc=null;
   renderPanel();
 }
@@ -378,13 +403,20 @@ function plMoveDone(){
   if(why){toast(why,1600);sfx('error',.4);return;}
   var f0=b.face==null?2:b.face,dx=g.x-b.x,dy=g.y-b.y,same=!dx&&!dy&&f0===face,links=(b.links||[]).length;
   if(!same){
-    if(b.door&&f0===face)['ent','ext'].forEach(function(k){b.door[k]={x:b.door[k].x+dx,y:b.door[k].y+dy,d:b.door[k].d,l:b.door[k].l};});
-    else delete b.door;
+    var g0=gatesOf(b);
     b.x=g.x;b.y=g.y;b.face=face;setPlaceLevel(b,D[b.def],g.x,g.y,face);
+    if(isGate(b)){var ga=gateAttach(g.x,g.y,bLevel(b),b.of);if(ga){b.face=ga.d;b.of=ga.b.id;}}
+    // 건물을 옮기면 붙어 있던 입구·출구도 같이 옮긴다 (제자리에 못 붙으면 걷어 내고 값을 돌려준다)
+    else if(f0===face&&(dx||dy)){
+      rebuildOcc();
+      ['ent','ext'].forEach(function(k){var q=g0[k];if(!q)return;var nx=q.x+dx,ny=q.y+dy;
+        if(nx>=0&&ny>=0&&nx<COLS&&ny<PZ&&(!occ[ny][nx]||occ[ny][nx]===q.id)){q.x=nx;q.y=ny;setPlaceLevel(q,D[q.def],nx,ny,2);}});
+    }
+    rebuildOcc();dropLooseGates();
     releaseVisitors(b.id);structureChanged();plBuzz();sfx('place',.7);
   }
   UI.moving=null;UI.tool=null;UI.ghost=null;UI.fold=true;UI.sel=b.id;
-  var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(links&&!(b.links||[]).length?' · 연결 다리가 끊겼어요':'')+(b.door&&!usable(b)?' · 입구까지 길을 이어 주세요':'');
+  var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(links&&!(b.links||[]).length?' · 연결 다리가 끊겼어요':'')+(needsGates(b)&&!b.door?' · 입구·출구를 다시 지어 주세요':(needsDoor(b)&&!usable(b)?' · 입구까지 길을 이어 주세요':''));
   toast(msg,1800);renderPanel();hud(true);
 }
 function plBuzz(){try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}}
@@ -394,16 +426,19 @@ function canUnbuild(u){var b=u&&bById(u.bid);return !!b&&(b.floors||1)<=1&&u.w==
 function unbuild(u){
   if(!canUnbuild(u))return false;
   var b=bById(u.bid);
-  var d=defOf(b);demolish(b.id);S.money+=u.cost-Math.floor(d.cost*0.5);S.fresh=Math.max(0,(S.fresh||0)-(d.beauty||0));save();
+  var d=defOf(b);demolishGatesOf(b,true);demolish(b.id);S.money+=u.cost-Math.floor(d.cost*0.5);S.fresh=Math.max(0,(S.fresh||0)-(d.beauty||0));save();
   return true;
 }
 // 바닥 타일 깔기: 아래 띠 없이 지도 위 ✓·✕·화살표와 ✓ 옆 값 표시만 쓴다
 function isTileFloor(){return placeKind()==='floor'&&!isTerDef(UI.tool);}
 function renderPbar(){
   var el=$('#pbar');if(!el)return;
-  var k=placeKind();el.hidden=!k||k==='bld'||isTileFloor();if(el.hidden){plHtml='';syncPlace();return;}
+  var k=placeKind(),gt=k==='bld'&&isGateDef(D[UI.tool])&&!movingId();el.hidden=!k||(k==='bld'&&!gt)||isTileFloor();if(el.hidden){plHtml='';syncPlace();return;}
   var h='',undo=UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'',d=D[UI.tool];
-  if(k==='bld'){
+  if(gt){
+    // 입구·출구 모양 고르기: 작은 줄 하나
+    h='<div class="prow"><b class="lvl">'+(d.role==='ent'?'입구':'출구')+'</b>'+segBtns('gdesign',d.design,GATE_DESIGNS.map(function(g){return [g[0],g[1]+' '+fmt(D[gateId(d.role,g[0])].cost)];}))+'</div>';
+  }else if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
     var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 건물이 바라볼 방향(정면·출입구)을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');

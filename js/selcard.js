@@ -41,7 +41,7 @@ function renderSelCard(){
   el.hidden=!on;
   if(!on){scHtml='';scKey='';return;}
   var key=UI.sel?'b'+UI.sel:(UI.selPiece?'p'+UI.selPiece:'f'+UI.selFloor.x+','+UI.selFloor.y);
-  if(key!==scKey){scKey=key;scMore=false;scArm=0;UI.doorPick=null;}
+  if(key!==scKey){scKey=key;scMore=false;scArm=0;}
   var h='',row='',more='';
   if(UI.sel){
     var b=bById(UI.sel),bd=defOf(b),fl=b.floors||1,st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
@@ -50,13 +50,18 @@ function renderSelCard(){
     if(b.door&&bd.cap)sub.push('회전 '+rotTime(b).toFixed(1)+'초'+(qLen(b)?' · 줄 '+queueCount(b)+'/'+qLen(b):''));
     if(maintainable(b))sub.push('상태 '+Math.round(condOf(b))+'%'+(wearStage(b)?' · 효율 '+Math.round(condFactor(b)*100)+'%':''));
     var warn='';
-    if(b.door&&!usable(b))warn=b.q&&b.q.entry<0?'대기줄 끝이 길에 닿지 않아요':(!b.acc||!b.acc.ent?'입구까지 길이 없어 이용 못 해요':'출구에서 나갈 길이 없어요');
+    var gs=needsGates(b)?gatesOf(b):null,gmiss=gs&&(!gs.ent||!gs.ext);
+    if(gmiss)warn=!gs.ent&&!gs.ext?'입구·출구를 지어야 운영돼요':(!gs.ent?'입구를 지어야 운영돼요':'출구를 지어야 운영돼요');
+    else if(needsGates(b)&&!b.door)warn='입구·출구가 건물에서 떨어졌어요. 다시 지어 주세요';
+    else if(b.door&&!usable(b))warn=b.q&&b.q.entry<0?'대기줄 끝이 길에 닿지 않아요':(!b.acc||!b.acc.ent?'입구까지 길이 없어 이용 못 해요':'출구에서 나갈 길이 없어요');
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
+    if(gmiss)row+=scBtn('gatego',!gs.ent?'입구 짓기':'출구 짓기','pri',!gs.ent?'ent':'ext',!gs.ent?'이 건물의 입구 짓기':'이 건물의 출구 짓기');
+    if(isGate(b)){var ob=bById(b.of);h=h.replace('</b>','</b><span>'+(ob?defOf(ob).name+'의 '+(D[b.def].role==='ent'?'입구':'출구'):'붙은 건물 없음')+'</span>');}
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
-    if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');row+=scBtn('doorpick','입구 고르기','pri','ent','입구를 낼 자리를 지도에서 고르기');}
+    if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');}
     if(lk)row+=scBtn('link',UI.linkPick===b.id?'길 잇기 ⌄':'길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
     var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
     if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));
@@ -64,7 +69,6 @@ function renderSelCard(){
     if(lk&&UI.linkPick===b.id)h+=linkRow(lp.tiles.length);
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
-    if(b.door)more+='<div class="scb">'+scBtn('doorpick','입구 고르기',UI.doorPick&&UI.doorPick.which==='ent'?'pri':'','ent','입구를 낼 자리를 지도에서 고르기')+scBtn('doorpick','출구 고르기',UI.doorPick&&UI.doorPick.which==='ext'?'pri':'','ext','출구를 낼 자리를 지도에서 고르기')+'</div>';
     var mb='';
     if(canStack(b)){if(fl<maxFloors(b))mb+=scBtn('floorup','층 올리기 '+fmt(floorCostOf(b)));if(fl>1)mb+=scBtn('floordown','위층 철거 +'+fmt(floorCostOf(b)*0.5));}
     if(st)mb+=scBtn('demtile',(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5));
@@ -129,7 +133,7 @@ function syncSelCard(){
   el.style.setProperty('--ax',Math.round(clamp(top[0]-(x-w/2),14,w-14))+'px');
   el.style.transform='translate('+Math.round(x-w/2)+'px,'+Math.round(y)+'px)';
 }
-function closeSelCard(){UI.doorPick=null;UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.selFloor=null;renderSelCard();}
+function closeSelCard(){UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.selFloor=null;renderSelCard();}
 function setupSelCard(){
   var el=$('#selCard');
   el.addEventListener('click',function(e){

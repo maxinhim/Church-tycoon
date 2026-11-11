@@ -1,7 +1,9 @@
 'use strict';
 /* ---------- 대기줄 ----------
    대기줄 타일(D[id].queue인 바닥 타일)을 건물 입구 앞 칸부터 이어 깔면 그 건물의 대기줄이 된다.
-   · 줄은 입구 앞 칸에서 시작해 맞닿은 대기줄 타일을 따라 이어진다(경사로 위도 된다). 한 칸에 한 명
+   · 줄은 언제나 한 줄이다. 타일마다 바로 앞 칸(입구 쪽)을 기억하고(S.qprev = {"x,y": 앞 칸 방향}),
+     새 타일은 입구 바로 앞이나 어느 줄의 끝에만 이어 붙는다. 갈래·합치기는 안 된다. 옆 줄과 맞닿아도 섞이지 않아
+     지그재그 줄을 촘촘히 만들 수 있다(경사로 위도 된다). 중간 타일을 걷으면 그 뒤는 끊긴다. 한 칸에 한 명
    · 방문자는 줄의 끝(입구에서 가장 먼 칸)에 닿은 길에서 줄로 들어간다. 줄 타일은 길이 아니라서 지나다닐 수 없고,
      줄에 선 방문자는 들어갈 때까지 줄을 떠나지 못한다. 줄이 꽉 차면 꽉 찬 건물처럼 잠깐 기다리다 돌아선다
    · 오래 기다리면(QUEUE_PATIENCE초) 불편 '줄'이 생긴다
@@ -22,32 +24,68 @@ function rotTime(b){var d=defOf(b);return d.dur*STAY*(ROT_CAT[d.cat]||1)*capK(d)
 function useK(b){return qLen(b)?1+QUEUE_E*qFill(b):QUEUE_NONE_E;}
 // 방문자가 이 건물로 갈 때 향하는 곳: 줄이 있으면 줄 끝, 없으면 입구 앞
 function entNode(b){if(!b||!b.door)return -1;return b.q?b.q.entry:doorNode(b.door.ent,b);}
+function qPrev(x,y){var v=S.qprev&&S.qprev[x+','+y];return v==null?-1:v;}
+// 칸 a에서 d 방향 이웃으로 걸어 넘어갈 수 있는 높이인지
+function qPort(x,y,d){var nx=x+DIRS[d][0],ny=y+DIRS[d][1],g=groundPort(x,y,d);return g!==NOPORT&&nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&groundPort(nx,ny,OPP[d])===g;}
+// 뒤에 이어진 칸이 있는지 (줄 끝이 아닌지)
+function qHasNext(x,y){
+  for(var d=0;d<4;d++){var nx=x+DIRS[d][0],ny=y+DIRS[d][1];if(isQueueCell(nx,ny)&&qPrev(nx,ny)===OPP[d])return true;}
+  return false;
+}
+// 입구 건물이 이 칸 바로 앞을 보고 있는지 (그 입구의 방향)
+function qGateAt(x,y,d){
+  var gx=x+DIRS[d][0],gy=y+DIRS[d][1];if(gx<0||gy<0||gx>=COLS||gy>=ROWS)return null;
+  var g=bById(occ[gy][gx]);
+  return g&&isGate(g)&&D[g.def].role==='ent'&&g.face===OPP[d]?g:null;
+}
+/* (x,y)에 새 대기줄 타일을 놓으면 이을 앞 칸 방향. 없으면 -1.
+   입구 바로 앞(아직 줄이 없을 때) > 방금 깐 칸(UI.flast)이 줄 끝이면 그것 > 맞닿은 다른 줄 끝 */
+function qLinkFor(x,y){
+  var best=-1,bs=0;
+  for(var d=0;d<4;d++){
+    var nx=x+DIRS[d][0],ny=y+DIRS[d][1],sc=0;
+    var g=qGateAt(x,y,d);
+    if(g){if(!qPort(x,y,d)&&groundPort(x,y,d)!==bLevel(g))continue;sc=3;}
+    else if(isQueueCell(nx,ny)&&qPort(x,y,d)&&!qHasNext(nx,ny))sc=UI.flast&&UI.flast.x===nx&&UI.flast.y===ny?2:1;
+    if(sc>bs){bs=sc;best=d;}
+  }
+  return best;
+}
+// 바닥 칸에 무엇을 깔거나 걷을 때 (floors.js floorSlot에서): 대기줄 타일이면 앞 칸을 기억해 둔다
+function queueTileSet(x,y,v){
+  if(!S.qprev)S.qprev={};
+  var k=x+','+y;
+  if(!isQueueId(v)){delete S.qprev[k];return;}
+  if(S.qprev[k]==null){var d=qLinkFor(x,y);if(d>=0)S.qprev[k]=d;}
+}
+function queueWhy(x,y,pid){
+  if(pid)return '대기줄은 땅에만 깔 수 있어요';
+  if(isQueueCell(x,y))return '';
+  return qLinkFor(x,y)<0?'대기줄은 건물 입구 바로 앞이나 줄의 끝에 이어 깔아요':'';
+}
 function queueRebuild(){
-  var own={};QSIDE={};
+  QSIDE={};
   S.buildings.forEach(function(b){
     b.q=null;if(!b.door)return;
-    var s=b.door.ent;if(s.l!==0)return;
-    var o=doorOut(s);
-    if(o.x<0||o.y<0||o.x>=COLS||o.y>=PZ||!isQueueCell(o.x,o.y)||own[o.x+','+o.y])return;
-    if(groundPort(o.x,o.y,OPP[s.d])!==bLevel(b))return;
-    var cells=[{x:o.x,y:o.y}],i,d;own[o.x+','+o.y]=b.id;
-    QSIDE[o.x+','+o.y+','+OPP[s.d]]=1;
-    for(i=0;i<cells.length;i++)for(d=0;d<4;d++){
-      var c=cells[i],nx=c.x+DIRS[d][0],ny=c.y+DIRS[d][1],k=nx+','+ny;
-      if(nx<0||ny<0||nx>=COLS||ny>=PZ||own[k]||!isQueueCell(nx,ny))continue;
-      var gp=groundPort(c.x,c.y,d);if(gp===NOPORT||groundPort(nx,ny,OPP[d])!==gp)continue;
-      own[k]=b.id;cells.push({x:nx,y:ny});
+    var s=b.door.ent,o=doorOut(s);
+    if(o.x<0||o.y<0||o.x>=COLS||o.y>=PZ||!isQueueCell(o.x,o.y)||qPrev(o.x,o.y)!==OPP[s.d])return;
+    // 입구 앞 칸부터 뒤로 이어진 칸을 하나씩 따라간다
+    var cells=[{x:o.x,y:o.y}],seen={},cur=cells[0];seen[o.x+','+o.y]=1;QSIDE[o.x+','+o.y+','+OPP[s.d]]=1;
+    for(var guard=0;guard<4096;guard++){
+      var nx2=null;
+      for(var d=0;d<4&&!nx2;d++){var nx=cur.x+DIRS[d][0],ny=cur.y+DIRS[d][1],k=nx+','+ny;if(!seen[k]&&isQueueCell(nx,ny)&&qPrev(nx,ny)===OPP[d])nx2={x:nx,y:ny};}
+      if(!nx2)break;seen[nx2.x+','+nx2.y]=1;cells.push(nx2);cur=nx2;
     }
-    // 줄 끝: 가장 먼 칸부터 거슬러 오며 길에 닿은 칸을 찾는다
-    var entry=-1,len=0;
-    for(i=cells.length-1;i>=0&&entry<0;i--)for(d=0;d<4&&entry<0;d++){
-      var c2=cells[i],mx=c2.x+DIRS[d][0],my=c2.y+DIRS[d][1],g2=groundPort(c2.x,c2.y,d);
-      if(g2===NOPORT)continue;
-      if(groundOk(mx,my)&&groundPort(mx,my,OPP[d])===g2)entry=gid(mx,my);
-      else{var pn=pieceNodeAt(mx,my,OPP[d],g2);if(pn>=0)entry=pn;}
-      if(entry>=0){len=i+1;QSIDE[c2.x+','+c2.y+','+d]=1;}
+    // 줄 끝 칸 둘레의 길에서 들어온다 (앞 칸 쪽은 빼고)
+    var last=cells[cells.length-1],back=qPrev(last.x,last.y),entry=-1;
+    for(var d2=0;d2<4&&entry<0;d2++){
+      if(d2===back)continue;
+      var mx=last.x+DIRS[d2][0],my=last.y+DIRS[d2][1],g2=groundPort(last.x,last.y,d2);if(g2===NOPORT)continue;
+      if(groundOk(mx,my)&&groundPort(mx,my,OPP[d2])===g2)entry=gid(mx,my);
+      else{var pn=pieceNodeAt(mx,my,OPP[d2],g2);if(pn>=0)entry=pn;}
+      if(entry>=0)QSIDE[last.x+','+last.y+','+d2]=1;
     }
-    b.q={cells:cells.slice(0,len),all:cells,entry:entry};
+    b.q={cells:cells,all:cells,entry:entry};
   });
   // 줄이 사라졌거나 짧아졌으면 넘치는 사람은 풀어 준다
   for(var id in QL){
@@ -92,7 +130,8 @@ function drawQueueRails(x,y){
   var c=PJ.c,s=PJ.s,st=d.qs,k=ZB;ZB=0;
   for(var dr=0;dr<4;dr++){
     var nx=x+DIRS[dr][0],ny=y+DIRS[dr][1];
-    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&isQueueCell(nx,ny)&&groundPort(x,y,dr)!==NOPORT&&groundPort(nx,ny,OPP[dr])===groundPort(x,y,dr))continue;
+    // 줄에서 바로 앞·뒤로 이어진 칸 쪽만 연다 (옆 줄과 맞닿아도 난간으로 가른다)
+    if(isQueueCell(nx,ny)&&(qPrev(x,y)===dr||qPrev(nx,ny)===OPP[dr]))continue;
     if(QSIDE[x+','+y+','+dr])continue;
     var e=QEDGE[dr],ax=x+e[0][0]*.92+.04,ay=y+e[0][1]*.92+.04,bx=x+e[1][0]*.92+.04,by=y+e[1][1]*.92+.04;
     var za=groundZ(clamp(ax,x+.001,x+.999),clamp(ay,y+.001,y+.999)),zb=groundZ(clamp(bx,x+.001,x+.999),clamp(by,y+.001,y+.999));

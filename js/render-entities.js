@@ -144,6 +144,7 @@ function drawEntity(b,cars){
   if(k==='terrain'){drawTerIcon(b);return;}
   if(k==='fountain'){drawFountain(b);return;}
   if(k==='wfount'){drawWFount(b);return;}
+  if(k==='gate'){drawGateEnt(b);return;}
   if(k==='lamp'){drawLamp(b);return;}
   if(k==='hedge'){drawHedge(b);return;}
   if(k==='arch'){drawRoseArch(b);return;}

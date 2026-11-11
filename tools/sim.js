@@ -47,6 +47,8 @@ function runBot(cfg) {
       if (++tries > 300) { failed(id, '300번 시도'); return false; }
       const m0 = S.money, n0 = okN(), f0 = S.fresh, fl0 = JSON.stringify(S.floor); if (!build(id, c[0], c[1], 2)) continue;
       const nb = S.buildings[S.buildings.length - 1];
+      // 입구·출구 건물도 값을 내고 짓는다 (길 쪽 가장 좋은 자리)
+      recalc(); if (needsGates(nb) && autoGates(nb)) { failed(id, '입구·출구 자리 없음'); demolish(nb.id); S.floor = JSON.parse(fl0); S.money = m0; S.fresh = f0; recalc(); continue; }
       recalc(); let lw = ''; if (nb.door && !usable(nb)) { lw = linkDoor(nb); recalc(); }
       // 문에 닿지 못하거나, 다른 건물의 길을 막았으면 되돌린다
       if ((nb.door && !usable(nb)) || okN() < n0 + (nb.door ? 1 : 0)) { failed(id, nb.door && !usable(nb) ? '길 못 이음(' + (lw || JSON.stringify(nb.acc)) + ')' : '다른 건물 막음'); demolish(nb.id); S.floor = JSON.parse(fl0); S.money = m0; S.fresh = f0; recalc(); continue; }
@@ -122,7 +124,7 @@ function runBot(cfg) {
     const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } }), page = await ctx.newPage();
     const errs = []; page.on('pageerror', e => errs.push(e.message));
     await page.addInitScript(seed => { let s = seed; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-      window.__CT_TEST = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
+      window.__CT_TEST = true; window.__CT_GATES = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
     await page.goto(url); await page.evaluate(() => window.__ct.init());
     out[strat] = await page.evaluate(runBot, { strat, weeks: WEEKS, diff: DIFFK });
     out[strat].errs = errs; await ctx.close();

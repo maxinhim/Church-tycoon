@@ -6,7 +6,9 @@ function mk(id,name,cat,w,h,cost,up,kind,wall,roofc,o){
     seats:0,fcap:0,ccap:0,kcap:0,park:0,beauty:0,vis:0,rep:0,cap:0,dur:5,income:0,fill:null,desc:''};
   for(var k in o) d[k]=o[k];
   // 예전 한 칸 = G×G 칸: 그림 크기는 그대로 두고 차지하는 칸만 늘린다. 칸 건물·바닥·지형·길은 한 칸 그대로
-  if(kind!=='mroom'&&kind!=='floor'&&kind!=='terrain'&&kind!=='path'&&!d.cell){d.w*=G;d.h*=G;}
+  // 꾸미기·조경·편의 소품(건물·주차장·칸 건물이 아닌 한 칸짜리)은 새 칸 하나에 작게 놓는다 (그림도 절반 크기)
+  if(['bld','lot','mroom','floor','terrain','path','gate'].indexOf(kind)<0&&w===1&&h===1)d.cell=true;
+  if(kind!=='mroom'&&kind!=='floor'&&kind!=='terrain'&&kind!=='path'&&kind!=='gate'&&!d.cell){d.w*=G;d.h*=G;}
   // 한 칸짜리는 칸이 작아진 만큼 값도 줄인다: 바닥은 같은 길이의 길이 같은 값이 되게 절반, 칸 건물은 넓이대로 1/4
   if(kind==='floor'){d.cost=Math.round(d.cost/G);d.beauty=d.beauty/3;}
   if(kind==='mroom'){d.cost=Math.round(d.cost/(G*G));for(var pk in d.per)d.per[pk]=d.per[pk]/(G*G);}
@@ -148,6 +150,13 @@ mk('q_wood','나무 울타리 대기줄','path',1,1,20,0,'floor','#c9b48f','#7a5
 mk('q_chain','쇠사슬 대기줄','path',1,1,20,0,'floor','#bfc3c6','#59626b',{queue:true,qs:'chain',pat:'grid',beauty:0.02,short:'입구 앞부터',desc:'쇠기둥과 사슬로 가른 대기줄'});
 mk('q_hedge','화단 대기줄','path',1,1,30,0,'floor','#d6cdb9','#4f8a4a',{queue:true,qs:'hedge',pat:'',beauty:0.06,short:'입구 앞부터',desc:'꽃이 핀 낮은 화단으로 가른 대기줄'});
 mk('q_paint','바닥 선 대기줄','path',1,1,12,0,'floor','#b9b3a7','#f2c230',{queue:true,qs:'paint',pat:'',beauty:0.01,short:'입구 앞부터',desc:'바닥에 노란 선만 그은 가장 싼 대기줄'});
+var GATE_DESIGNS=[['arch','아치'],['wood','나무 문'],['glass','유리문'],['stone','돌기둥'],['flower','꽃 문']];
+// 입구·출구 건물 (gates.js): 이용 효과가 있는 건물은 둘 다 붙여 지어야 운영된다. 한 칸, 모양만 다르다
+GATE_DESIGNS.forEach(function(g,i){
+  var cost=[120,80,150,140,110][i];
+  mk('g_'+g[0],g[1]+' 입구','gate',1,1,cost,0,'gate','#3f9d5a','#3f9d5a',{role:'ent',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 지어요. 방문자가 여기로 들어가요'});
+  mk('x_'+g[0],g[1]+' 출구','gate',1,1,cost,0,'gate','#e08a2c','#e08a2c',{role:'ext',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 지어요. 방문자가 여기로 나와요'});
+});
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
@@ -159,8 +168,9 @@ DEFS.forEach(function(d){if(PRICY_CATS.indexOf(d.cat)>=0&&!d.prop)d.cost=Math.ro
 var COURT_H={pingpong:.5,fitness:1.2,badminton:.9,jokgu:.5,gateball:.4,hoops:1.7,futsal:.8};
 DEFS.forEach(function(d){if(d.kind==='court')d.hgt=COURT_H[d.court];});
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
-function heightOf(id){
-  var d=D[id];
+// 한 칸짜리 소품은 그림을 절반 크기로 그리므로 높이도 절반 (입구·출구는 제 높이)
+function heightOf(id){var d=D[id];return heightOfDef(d)*(d.cell&&d.kind!=='gate'?CELL_K:1);}
+function heightOfDef(d){
   if(d.hgt!=null)return d.hgt;
   if(d.kind==='bld')return Math.max(d.H+(d.rh||0.05),d.towerH?d.towerH+0.75:0);
   return {market:.95,canal:.1,birdbath:.7,topiary:.7,fence:.62,lamp2:1.8,bollard:.5,stonelamp:1.2,bin:.5,board:1.1,bell:1.6,bikerack:.4,parasol:1.3,lot:.12,tree:1.4,flower:.25,bench:.45,spire:2.7,wfount:1.1,fountain:.9,lamp:1.7,hedge:.55,arch:1.45,floor:.02,stage:.7,playground:1.2,pond:.15,picnic:.5,statue:1.7,planter:.6,gazebo:1.4,busstop:1.1}[d.kind]||1;

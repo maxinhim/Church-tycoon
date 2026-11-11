@@ -45,8 +45,11 @@ function terPlan(x,y,id,lvl,dir){
   if(lvl>MAXH-1)return {why:'땅은 '+(MAXH-1)+'층 높이까지 올릴 수 있어요'};
   if(lvl<MINH)return {why:'땅은 지하 '+(-MINH)+'층까지 내릴 수 있어요'};
   var cells=[{x:x,y:y}],bid=occ[y][x],b=bid?bById(bid):null;
+  if(b&&isGate(b)){var gb=bById(b.of);if(gb){b=gb;x=gb.x;y=gb.y;}}
   if(b){
     cells=bTiles(b).map(function(t){return {x:t.x,y:t.y};});
+    // 붙은 입구·출구 칸도 함께 높인다
+    S.buildings.forEach(function(g){if(isGate(g)&&g.of===b.id&&g.z==null)cells.push({x:g.x,y:g.y});});
     if(b.z!=null)return {why:'데크 위 건물 밑의 땅은 바꿀 수 없어요'};
     if(lvl+bTopFloors(b)>MAXH)return {why:'땅 높이와 건물 층수를 합쳐 '+MAXH+'층을 넘을 수 없어요'};
     if(lvl+bLevelsTall(b)>ceilOver(b))return {why:'위의 다리·계단에 건물이 닿아요'};

@@ -63,7 +63,8 @@ function syncRoomBox(b){
 }
 function roomsChanged(){
   S.buildings.forEach(function(b){if(isRoom(b))syncRoomBox(b);});
-  rebuildOcc();bump();recalc();save();
+  rebuildOcc();dropLooseGates();bump();recalc();
+  save();
 }
 
 /* 이 칸을 누르면 무슨 일이 생기는지: 새 칸 / 위층 / 불가 */

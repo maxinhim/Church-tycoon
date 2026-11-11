@@ -21,12 +21,14 @@ function run(cfg){
     const side=i%2?1:-1,x=side>0?ENT+2+cfg.q+2:ENT-cfg.q-2-d.h,y=44-((i/2)|0)*(d.w+3);
     // 문이 큰길 쪽을 보게 (face 1 = -x, face 0 = +x)
     build(cfg.def,x,y,side>0?1:0);const b=S.buildings[S.buildings.length-1];made.push(b);
-    const fy=y+((bDims(b).h/2)|0);b.door={ent:{x:side>0?x:x+bDims(b).w-1,y:fy,d:side>0?1:0,l:0},ext:{x:side>0?x:x+bDims(b).w-1,y:fy-1,d:side>0?1:0,l:0}};
-    const o=doorOut(b.door.ent),step=side>0?-1:1;let cx=o.x;
-    for(let k=0;k<cfg.q;k++){S.floor[cx+','+o.y]='q_rope';cx+=step;}
+    // 입구·출구 건물: 큰길 쪽 벽 바로 옆 칸에 (입구는 가운데, 출구는 그 위 칸)
+    const fy=y+((bDims(b).h/2)|0),gx=side>0?x-1:x+bDims(b).w,gd=side>0?1:0,step=side>0?-1:1;
+    UI.gateFor=b.id;buildGate('g_arch',gx,fy);buildGate('x_arch',gx,fy-1);UI.gateFor=null;recalc();
+    const o={x:gx+DIRS[gd][0],y:fy};let cx=o.x;UI.flast=null;
+    for(let k=0;k<cfg.q;k++){paintFloor(cx,o.y,'q_rope');UI.flast={x:cx,y:o.y};cx+=step;}
     // 줄 끝(또는 문 앞)에서 큰길까지, 출구에서 큰길까지
     for(;side>0?cx>=ENT+2:cx<ENT;cx+=step)S.floor[cx+','+o.y]='f_block';
-    const o2=doorOut(b.door.ext);for(let ex=o2.x;side>0?ex>=ENT+2:ex<ENT;ex+=step)S.floor[ex+','+o2.y]='f_block';
+    const o2={x:gx+DIRS[gd][0],y:fy-1};for(let ex=o2.x;side>0?ex>=ENT+2:ex<ENT;ex+=step)S.floor[ex+','+o2.y]='f_block';
   }
   recalc();
   const ok=made.every(b=>usable(b)&&(cfg.q?qLen(b)===cfg.q:!b.q));
@@ -48,7 +50,7 @@ const cases=[['A 1채, 줄 없음',1,0],['B 1채 + 줄 10칸',1,10],['C 1채 + �
 console.log(`건물 ${DEF}, 성도 ${MEM}명 고정, ${WEEKS}주 평균`);
 console.log('| 경우 | 회전(초) | 효과배율 | 이용/주 | 채운 필요/주 | 돌아갈 때 평균 | 평균 기다림(초) | 붐빔 불편/주 | 줄 불편/주 | 지은 값 | 유지비/주 |');console.log('|---|---|---|---|---|---|---|---|---|---|---|');
 for(const c of cases){const p=await b.newPage();p.on('pageerror',e=>console.log('ERR',e.message));
-  await p.addInitScript(()=>{let s=5;Math.random=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};window.__CT_TEST=true;window.requestAnimationFrame=()=>0;try{localStorage.clear()}catch(e){}});
+  await p.addInitScript(()=>{let s=5;Math.random=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};window.__CT_TEST=true;window.__CT_GATES=true;window.requestAnimationFrame=()=>0;try{localStorage.clear()}catch(e){}});
   await p.goto(URL);await p.evaluate(()=>window.__ct.init());
   const r=await p.evaluate(run,{def:DEF,n:c[1],q:c[2],mem:MEM,weeks:WEEKS});
   console.log(`| ${c[0]}${r.ok?'':' (연결 실패)'} | ${r.rot} | ${r.useK} | ${r.usesWk} | ${r.fillWk} | ${r.depAvg} | ${r.wait} | ${r.crowdWk} | ${r.queueWk} | ${r.cost} | ${r.upkeep} |`);await p.close();}

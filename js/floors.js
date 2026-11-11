@@ -8,7 +8,7 @@ function floorSlot(x,y,pid){
   if(pid){var p=pieceById(pid);if(!p||!isDeckPiece(p))return null;
     return {get:function(){return p.f||null;},set:function(v){if(v)p.f=v;else delete p.f;},busy:deckCovered(p)};}
   var k=x+','+y;
-  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])};
+  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];queueTileSet(x,y,v);},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])};
 }
 // 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
 function floorWhy(x,y,id,pid){
@@ -18,6 +18,7 @@ function floorWhy(x,y,id,pid){
   var sl=floorSlot(x,y,pid);if(!sl)return '데크가 없어요';
   if(sl.busy)return '건물이 있어요';
   var prev=sl.get();
+  if(isQueueId(id)&&!isQueueId(prev)){var qw=queueWhy(x,y,pid);if(qw)return qw;}
   if(id==='f_erase')return prev?'':'지울 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
   if(S.money<floorSwapCost(prev,id))return '자금이 부족해요';
@@ -111,21 +112,6 @@ function linkPlan(b){
     r.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});
   }
   return {tiles:tiles,cost:tiles.length*D[LINK_FLOOR].cost};
-}
-// 지금 문으로는 길을 이을 수 없을 때: 이을 수 있는 다른 문 자리(1층, 길이 가장 짧은 곳)를 찾는다. 없으면 null
-function doorFix(b){
-  if(!b||!b.door)return null;
-  var keep=b.door,best=null,bn=1e9;
-  doorSpots(b).forEach(function(s){
-    if(s.l!==0)return;
-    b.door={ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};
-    var lp=linkPlan(b);if(!lp.why&&lp.tiles.length<bn){bn=lp.tiles.length;best=s;}
-  });
-  b.door=keep;return best;
-}
-function applyDoorFix(b){
-  var s=doorFix(b);if(!s)return '문을 옮겨도 길을 이을 자리가 없어요. 둘레를 막은 것을 치우거나 건물을 옮겨 주세요';
-  b.door={ent:s,ext:{x:s.x,y:s.y,d:s.d,l:s.l}};recalc();save();return '';
 }
 function walkSearch(sx,sy,add){
   var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x]&&!isQueueCell(x,y);};

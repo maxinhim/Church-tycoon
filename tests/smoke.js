@@ -211,7 +211,8 @@ async function modularChecks(browser, url) {
     // 방문자는 가까운 곳부터 가므로, 입구 근처의 기본 예배실을 치워 이 예배실을 쓰게 한다
     S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
     // 방문자는 바닥·길 위로만 다니므로 입구까지 길을 잇고, 교회 문을 연다
-    o.unlinked = !usable(rooms()[0]);
+    o.gateless = !usable(rooms()[0]); autoGates(rooms()[0], null, null, true); recalc();
+    o.unlinked = o.gateless && !usable(rooms()[0]);
     o.linkOk = linkDoor(rooms()[0]) === '' && usable(rooms()[0]);
     S.open = true;
     for (let i = 0; i < 4000; i++) update(0.1);
@@ -265,7 +266,9 @@ async function pathChecks(browser, url) {
     const room = S.buildings.find(b => b.def === 'mroom');
     // 잔디 칸에서 이미 닿는 바닥까지 보도블록을 깐다
     const connect = (x, y) => { const t = walkSearch(x, y, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc(); return !!t; };
-    S.open = true; linkDoor(room);
+    // 입구·출구는 계단 자리(가운데 앞줄)를 비켜서 짓는다
+    { const cs = gateCands(room, 'g_arch').filter(c => c.x !== X + 1); UI.gateFor = room.id; buildGate('g_arch', cs[0].x, cs[0].y); const c2 = gateCands(room, 'x_arch').filter(c => c.x !== X + 1)[0]; buildGate('x_arch', c2.x, c2.y); UI.gateFor = null; S.money += 500; }
+    S.open = true; recalc(); linkDoor(room);
     o.unconnected = room.acc.ok && defOf(room).seats === D.mroom.per.seats * 4;
     // 땅에서 방 쪽(-y)으로 오르막 1칸, 이어서 평지 다리 1칸
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 2; UI.pc.l = 0; UI.pc.dir = 3; UI.pc.slope = 1;
@@ -282,35 +285,41 @@ async function pathChecks(browser, url) {
     o.ground = grassNo && groundOk(X + 1, Y + 1) && groundOk(X + 1, Y + 2);
     connect(X + 1, Y + 3);
     // 2층 입구를 다리 쪽으로
-    room.door.ent = { x: X + 1, y: Y, d: 2, l: 1 }; recalc();
+    // 2층 입구: 다리 데크 위에 입구 건물을 새로 짓는다
+    S.buildings = S.buildings.filter(g => !(isGate(g) && g.of === room.id && D[g.def].role === 'ent')); rebuildOcc();
+    UI.gateFor = room.id; o.gate2 = buildGate('g_wood', X + 1, Y + 1); UI.gateFor = null; recalc();
+    o.dbgG = [o.gate2, JSON.stringify(room.door || null), JSON.stringify(piecesAt(X + 1, Y + 1)), JSON.stringify(placeLevel(D.g_wood, X + 1, Y + 1, 2)), JSON.stringify(room.tiles)];
+    if (!room.door) return o;
     o.connected = room.acc.ok && room.door.ent.l === 1;
     const dn = doorNode(room.door.ent), path = navPath(gateNode(), m => m === dn);
-    o.navUp = !!path && path.some(w => w.z >= LV - 0.01);
+    // 입구 건물은 다리 데크 위에 서므로, 방문자는 계단을 올라 입구 앞(계단 꼭대기 쪽)까지 간다
+    o.navUp = !!path && path.some(w => w.z >= LV * .45 - 0.01); o.dbgN = [dn, !!path, path && path.map(w => +w.z.toFixed(2)).join(',')];
     // 방문자가 실제로 계단을 올라 2층 입구로 들어간다
     S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
     let maxZ = 0;
     for (let i = 0; i < 4000; i++) { update(0.1); V.forEach(v => { if ((v.z || 0) > maxZ) maxZ = v.z; }); }
-    o.climbed = maxZ >= LV - 0.01 && room.uses > 0;
+    o.climbed = maxZ >= LV * .45 - 0.01 && room.uses > 0;
     for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
     window.__ct.setRot(0);
     // 계단을 철거하면 2층 입구에 닿을 수 없어 이용 불가
     removePiece(S.paths.find(p => p.s === 1).id, 1);
     o.cutOff = !room.acc.ent && !usable(room);
-    // 문은 둘레를 따라 옮겨도 항상 올바른 자리
-    const n = doorSpots(room).length; let ok = true;
-    for (let i = 0; i < n + 2; i++) { cycleDoor(room, 'ent', 1); if (!validSpot(room, room.door.ent)) ok = false; }
-    o.cycle = ok && n > 0;
+    // 입구·출구 건물: 건물 바로 옆에만, 건물마다 하나씩
+    { const far = gateAttachWhy(D.g_arch, X + 1, Y + 8), again = gateCands(room, 'g_arch')[0]; UI.gateFor = room.id;
+      const dup = again ? buildGate('g_arch', again.x, again.y) : 'none'; UI.gateFor = null;
+      o.cycle = /옆 칸/.test(far) && /이미 입구/.test(dup); }
     // 정면 방향: 예배당(3×2)을 오른쪽(+x)을 향해 지으면 2×3을 차지하고 출입구도 그쪽
     let fb = null;
     for (let y = 0; y < ROWS - 4 && !fb; y++) for (let x = 0; x < COLS - 3; x++) {
       if (canPlace(D.chapel, x, y, 0) && free(x + 4, y + 1)) { build('chapel', x, y, 0); fb = S.buildings[S.buildings.length - 1]; break; }
     }
-    o.facing = !!fb && fb.face === 0 && bDims(fb).w === 4 && bDims(fb).h === 6 && fb.door.ent.d === 0 &&
+    o.facing = !!fb && fb.face === 0 && bDims(fb).w === 4 && bDims(fb).h === 6 && !!fb.door &&
       [0, 1, 2, 3].every(i => [0, 1, 2, 3, 4, 5].every(j => occ[fb.y + j][fb.x + i] === fb.id));
     // 모든 방문 건물에 입구·출구가 있다
-    o.allDoors = S.buildings.every(b => !defOf(b).fill || (b.door && validSpot(b, b.door.ent) && validSpot(b, b.door.ext)));
+    o.allDoors = S.buildings.every(b => !b.door || (gateOk(gatesOf(b).ent, b) && gateOk(gatesOf(b).ext, b))) && S.buildings.filter(b => defOf(b).fill && !isRoom(b)).every(b => !!b.door);
     return o;
   });
+  if (!r.navUp) console.log('DBGN', JSON.stringify(r.dbgN));
   check(r.found, '길: 시험할 빈 자리를 찾음');
   check(r.defaultDoor, '문: 기본 예배실에 출입구가 있고 이용 가능');
   check(r.unconnected, '길: 1층 출입구만 있어도 2층 좌석이 들어감');
@@ -322,7 +331,7 @@ async function pathChecks(browser, url) {
   check(r.navUp, '길찾기: 입구 아치에서 계단을 올라 2층 입구까지 경로가 있음');
   check(r.climbed, '방문자: 실제로 계단을 올라 2층 입구로 이용함');
   check(r.cutOff, '문: 계단을 철거하면 2층 입구에 닿지 못해 이용 불가');
-  check(r.cycle, '문: 둘레를 따라 옮겨도 항상 올바른 자리');
+  check(r.cycle, '입구·출구: 건물 바로 옆에만 짓고, 건물마다 입구 하나');
   check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
   check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 입구·출구가 있음');
   check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
@@ -353,8 +362,8 @@ async function stackChecks(browser, url) {
     o.noStackGarden = !canStack({ def: 'tree' });
     // 역할이 다른 칸은 합쳐지지도, 쌓이지도 않는다
     let X = -1, Y = -1;
-    for (let y = 1; y < ROWS - 3 && X < 0; y++) for (let x = 0; x + 5 <= COLS; x++) {
-      if ([0, 1, 2, 3, 4].every(i => free(x + i, y) && free(x + i, y + 1))) { X = x; Y = y; break; }
+    for (let y = 4; y < ROWS - 6 && X < 0; y++) for (let x = 4; x + 9 <= COLS; x++) {
+      if ([-2, -1, 0, 1, 2, 3, 4, 5, 6].every(i => [-2, -1, 0, 1, 2, 3].every(j => free(x + i, y + j)))) { X = x; Y = y; break; }
     }
     placeTile(X, Y, 'mfel'); placeTile(X + 1, Y, 'mcare');
     o.roles = S.buildings.filter(b => b.def === 'mfel').length === 1 && S.buildings.filter(b => b.def === 'mcare').length === 1 && !tilePlan(X + 1, Y, 'mfel').ok;
@@ -367,6 +376,7 @@ async function stackChecks(browser, url) {
     o.linked = A.links.indexOf(B.id) >= 0 && B.links.indexOf(A.id) >= 0;
     o.skyNotNav = !NAV.reach[PN + S.paths.find(p => p.k === 'sky').id];
     // A가 꽉 차면 다리를 건너 B로
+    autoGates(A, null, null, true); autoGates(B, null, null, true); recalc();
     linkDoor(A); linkDoor(B);
     A.inUse = defOf(A).cap;
     spawnV(); const v = V[V.length - 1]; v.target = A.id; arrive(v);
@@ -375,6 +385,7 @@ async function stackChecks(browser, url) {
     o.xferDone = v.state === 'inside' && v.inside === B.id && maxZ >= LV - 0.01;
     A.inUse = 0;
     // 역할이 다른 건물을 이으면 연결되지 않고 경고 표시
+    S.buildings = S.buildings.filter(g => !(isGate(g) && (g.of === A.id || g.of === B.id))); rebuildOcc(); recalc();
     placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X, Y + 1, 'mcare'); placeTile(X, Y + 1, 'mcare');
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 1; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky'; pcBuild();
     const sk2 = S.paths.find(p => p.k === 'sky' && p.y === Y + 1);
@@ -392,7 +403,7 @@ async function stackChecks(browser, url) {
     o.floorBlocked = paintFloor(cell.x, cell.y, 'f_brick') !== '';
     paintFloor(fx, fy, 'f_wood');
     // 새로 넣은 건물·요소를 모두 지어 본다
-    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor' && !d.water);
+    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor' && d.kind !== 'gate' && !d.water);
     const missing = [];
     want.forEach(d => {
       if (S.buildings.some(b => b.def === d.id)) return;
@@ -401,7 +412,8 @@ async function stackChecks(browser, url) {
       if (!done) missing.push(d.id);
     });
     o.allBuilt = missing.length === 0 ? '' : missing.join(',');
-    o.allDoors = S.buildings.every(b => !defOf(b).fill || (b.door && validSpot(b, b.door.ent)));
+    o.noDoor = S.buildings.filter(b => needsGates(b) && !isRoom(b) && !b.door && gateCands(b, 'g_arch').length > 1).map(b => b.def + '@' + b.x + ',' + b.y).join(' ');
+    o.allDoors = !o.noDoor;
     for (let i = 0; i < 1500; i++) update(0.1);
     for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
     window.__ct.setRot(0);
@@ -420,6 +432,7 @@ async function stackChecks(browser, url) {
   check(r.skyRules, '연결 다리: 땅 높이·경사로는 지을 수 없음');
   check(r.floorPaint && r.floorUndo && r.floorErase && r.floorBlocked, '바닥: 칠하기·되돌리기·지우기, 건물 위 금지, 분위기 반영, 걸을 수 있음');
   check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
+  if (!r.allDoors) console.log('DBG', r.noDoor);
   check(r.allDoors, '문: 새 건물에도 모두 입구·출구가 있음');
   check(errs.length === 0, '새 건물·요소: 시뮬레이션·4방향 그리기·패널 ' + r.cats + '개 분류 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -688,9 +701,9 @@ async function ministryChecks(browser, url) {
   await page.click('#dock [data-v="garden"]'); await page.click('#cards [data-v="tree"]');
   const repeat = await page.evaluate(() => {
     const n0 = S.buildings.length, mA = S.money;
-    found: for (let y = 18; y < PZ - 4; y++) for (let x = 6; x < COLS - 8; x++) if (canPlace(D.tree, x, y, 2) && canPlace(D.tree, x + 2, y, 2)) { UI.ghost = { x, y }; break found; }
+    found: for (let y = 18; y < PZ - 4; y++) for (let x = 6; x < COLS - 8; x++) if (canPlace(D.tree, x, y, 2) && canPlace(D.tree, x + 1, y, 2)) { UI.ghost = { x, y }; break found; }
     UI.fdir = 0; const g0 = { ...UI.ghost }; plLock = 0; plOk();
-    const moved = UI.tool === 'tree' && UI.ghost.x === g0.x + 2 && UI.ghost.y === g0.y && S.buildings.length === n0 + 1;
+    const moved = UI.tool === 'tree' && UI.ghost.x === g0.x + 1 && UI.ghost.y === g0.y && S.buildings.length === n0 + 1;
     syncPlace(); const arrows = [...document.querySelectorAll('#place .parr')].filter(e => !e.hidden).length === 4 && document.querySelector('#place .parr.on').dataset.v === '0';
     syncPlace(); const und = document.querySelector('#place [data-pl="undo"]'); const undoOnMap = !und.hidden && document.getElementById('pbar').hidden; und.click();
     return moved && arrows && undoOnMap && S.buildings.length === n0 && S.money === mA;
@@ -781,7 +794,7 @@ async function ministryChecks(browser, url) {
     S.money += 5000; startPlace('fence_w'); let p = spot('fence_w'); UI.ghost = { ...p };
     plDir(2); if (UI.face !== 0) return 'fence face ' + UI.face; plDir(0); if (UI.face !== 2) return 'fence face2';
     plLock = 0; plOk(); plLock = 0; plOk();
-    const f2 = S.buildings.slice(-2); if (!(f2[0].def === 'fence_w' && f2[1].x === f2[0].x + 2 && f2[1].face === 2)) return 'fence line';
+    const f2 = S.buildings.slice(-2); if (!(f2[0].def === 'fence_w' && f2[1].x === f2[0].x + 1 && f2[1].face === 2)) return 'fence line';
     endPlace(); startPlace('bench'); p = spot('bench'); UI.ghost = { ...p }; syncPlace();
     if (arrowMode(D.bench) !== 'face') return 'bench mode'; plDir(2); plLock = 0; plOk();
     const bn = S.buildings[S.buildings.length - 1]; if (bn.face !== 2 || (UI.ghost.x === p.x && UI.ghost.y === p.y)) return 'bench';
@@ -922,7 +935,7 @@ async function waterChecks(browser, url) {
     o.kinds = pieceName(pieceById(S.paths[S.paths.length - 4].id)) === '벽돌 계단' && /대리석/.test(pieceName(S.paths[S.paths.length - 2]));
     o.underTile = paintFloor(4, 12, 'f_block') === '' && paintFloor(6, 12, 'f_brick') === '';
     o.underFirst = /바닥 타일만/.test(placeLevel(D.bench, 4, 12, 2).why || '');
-    o.underLow = /낮아서/.test(placeLevel(D.tree, 5, 12, 2).why || '') && !placeLevel(D.bench, 5, 12, 2).why;
+    o.underLow = /낮아서/.test(placeLevel(D.spire, 5, 12, 2).why || '') && !placeLevel(D.bench, 5, 12, 2).why;
     UI.plLow = true;
     const pl6 = placeLevel(D.bench, 6, 12, 2);
     o.underPick = pl6.l === 0 && !pl6.deck && build('bench', 6, 12, 2);
@@ -1032,12 +1045,14 @@ async function queueChecks(browser, url) {
     // 기도실(수용 2명)을 (20,20)에 정면 +y로. 입구 앞 (x,22)부터 아래로 대기줄 6칸, 그 끝에서 입구 길까지 보도블록
     build('pray', 20, 20, 2); const b = S.buildings[S.buildings.length - 1];
     const t0 = rotTime(b), k0 = useK(b);
-    const ex = b.door.ent.x; b.door.ext = { x: b.x + 1, y: b.y, d: 0, l: 0 }; // 출구는 옆으로 따로
-    for (let i = 0; i < 6; i++) paintFloor(ex, 22 + i, 'q_rope');
-    paintFloor(ex, 28, 'f_block'); recalc(); linkDoor(b); recalc();
-    o.built = !!b.q && b.q.cells.length === 6 && b.q.entry >= 0 && Math.abs(nodePos(b.q.entry).x - ex - .5) + Math.abs(nodePos(b.q.entry).y - 27.5) === 1 && usable(b) && b.q.cells[0].y === 22;
+    const ex = b.door.ent.x, Q0 = doorOut(b.door.ent).y; // 입구 건물 바로 앞 칸부터
+    for (let i = 0; i < 6; i++) paintFloor(ex, Q0 + i, 'q_rope');
+    paintFloor(ex, Q0 + 6, 'f_block'); recalc(); linkDoor(b); recalc();
+    o.built = !!b.q && b.q.cells.length === 6 && b.q.entry >= 0 && Math.abs(nodePos(b.q.entry).x - ex - .5) + Math.abs(nodePos(b.q.entry).y - (Q0 + 5.5)) === 1 && usable(b) && b.q.cells[0].y === Q0;
     o.dbg = [JSON.stringify(b.q), gid(ex, 28), usable(b), JSON.stringify(b.door), JSON.stringify(b.acc), !groundOk(ex, 24), groundOk(ex, 28)];
-    o.noWalk = !groundOk(ex, 24) && groundOk(ex, 28) && navReach(gateNode())[gid(ex, 24)] === undefined;
+    o.noWalk = !groundOk(ex, Q0 + 2) && groundOk(ex, Q0 + 6) && navReach(gateNode())[gid(ex, Q0 + 2)] === undefined;
+    // 한 줄만: 줄 중간 옆에는 갈래를 낼 수 없고, 아무 줄에도 닿지 않는 칸에는 깔 수 없음
+    o.single = /이어 깔아요/.test(floorWhy(ex + 1, Q0 + 2, 'q_rope') || '') && /이어 깔아요/.test(floorWhy(ex + 6, Q0 + 2, 'q_rope') || '');
     o.rot = t0 === D.pray.dur * STAY * ROT_CAT.worship * capK(D.pray) * QUEUE_NONE_T && k0 === QUEUE_NONE_E && rotTime(b) > t0 * 1.3 && useK(b) > 1.3 && useK(b) / (rotTime(b) / t0 * QUEUE_NONE_T) > k0 / QUEUE_NONE_T;
     // 방문자 7명을 보낸다: 2명은 들어가고 나머지는 줄에 선다
     V.length = 0; const vs = [];
@@ -1064,11 +1079,11 @@ async function queueChecks(browser, url) {
     for (let i = 0; i < 60; i++) stepV(extra, .1);
     o.full = o.full && extra.state !== 'queue' && (S.grip.crowd || 0) === 1;
     // 줄 타일을 걷어내면 넘치는 사람은 풀려난다
-    floorSwap(ex, 25, 'f_erase'); recalc();
+    floorSwap(ex, Q0 + 3, 'f_erase'); recalc();
     o.shrink = b.q.cells.length === 0 || b.q.entry < 0 || queueCount(b) <= b.q.cells.length;
-    paintFloor(ex, 25, 'q_wood'); recalc(); o.mixed = b.q.cells.length === 6;
+    UI.flast = null; paintFloor(ex, Q0 + 3, 'q_wood'); recalc(); o.mixed = b.q.cells.length === 6;
     // 경사로 위에도 깔린다
-    terApply(40, 20, 'ter_ramp', 0, 0); o.ramp = paintFloor(40, 20, 'q_chain') === '' && isQueueCell(40, 20);
+    terApply(40, 20, 'ter_ramp', 0, 0); o.ramp = /이어 깔아요/.test(paintFloor(40, 20, 'q_chain')) && !isQueueCell(40, 20);
     ['q_hedge', 'q_paint'].forEach((id, i) => paintFloor(44 + i, 20, id));
     for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
     // 카드에 회전 시간과 줄
@@ -1078,14 +1093,88 @@ async function queueChecks(browser, url) {
     return o;
   });
   check(r.built && r.noWalk, '대기줄: 입구 앞부터 이어 깔면 그 건물의 줄이 되고, 줄 타일은 지나다닐 수 없음');
+  check(r.single, '대기줄: 한 줄로만 이어지고 갈래·떨어진 칸은 깔리지 않음');
   if (!(r.built && r.noWalk)) console.log('DBG', r.dbg.join(' | '));
   check(r.rot, '회전 시간: 성격·수용 인원·줄 길이로 정해지고, 줄이 길수록 길어지며 1초당 효과는 더 좋음');
   check(r.lined && r.served, '대기줄: 방문자가 줄 끝으로 들어와 차례대로 서고, 중간에 떠나지 않고 들어감');
   check(r.gripe, '대기줄: 오래 기다리면 불편이 생김');
   check(r.full, '대기줄: 줄이 꽉 차면 끝에서 잠깐 기다리다 돌아섬');
-  check(r.shrink && r.mixed && r.ramp, '대기줄: 타일을 걷으면 줄이 줄고, 모양을 섞어도 이어지며, 경사로에도 깔림');
+  check(r.shrink && r.mixed && r.ramp, '대기줄: 타일을 걷으면 줄이 끊기고, 다시 깔면 이어지며 모양을 섞어도 됨');
   check(r.card && r.defs, '대기줄: 모양 5가지가 길·지형에 있고, 건물 카드에 회전 시간과 줄 인원이 보임');
   check(errs.length === 0, '대기줄: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
+async function gateChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; window.__CT_GATES = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.step = STEPS.length; S.money = 999999; levelTick(true); S.goal = GOALS.length; S.dlg = null; S.open = true;
+    S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
+    const o = {};
+    // 시작 예배실은 입구·출구가 있어 바로 쓸 수 있다
+    const room = S.buildings.find(b => b.def === 'room'); const rg = gatesOf(room);
+    o.start = usable(room) && !!rg.ent && !!rg.ext && rg.ent.def === 'g_arch';
+    // 한 칸짜리 소품: 벤치·쓰레기통은 한 칸, 그림 높이도 절반. 큰 건물은 2배 칸
+    o.small = ['bench', 'bin', 'lamp', 'tree', 'statue', 'drinkfount', 'vending'].every(id => D[id].w === 1 && D[id].h === 1 && D[id].cell) && D.chapel.w === 6 && heightOf('bench') < .3;
+    // 화면에서 짓기: 기도실을 지으면 곧바로 입구 놓기, ✓ 다음 출구 놓기, ✓면 건물 카드
+    UI.tab = 'build'; UI.fold = false; UI.cat = 'worship'; startPlace('pray');
+    let spot = null; for (let y = 10; y < 40 && !spot; y += 2) for (let x = 6; x < 50 && !spot; x += 2) if (canPlace(D.pray, x, y, 2) && [-2, -1, 0, 1, 2, 3].every(j => [-2, -1, 0, 1, 2, 3].every(i => !occ[y + j][x + i]))) spot = { x, y };
+    UI.ghost = { ...spot }; UI.face = 2; plLock = 0; plOk();
+    const pr = S.buildings.find(b => b.def === 'pray');
+    o.flowEnt = !!pr && !usable(pr) && isPlacing() && UI.tool === 'g_arch' && UI.gateFor === pr.id && !!UI.ghost && !document.getElementById('pbar').hidden;
+    const m0 = S.money; plLock = 0; plOk();
+    o.flowExt = !!gatesOf(pr).ent && isPlacing() && UI.tool === 'x_arch' && m0 - S.money === D.g_arch.cost;
+    document.querySelector('#pbar [data-act="gdesign"][data-v="flower"]').click();
+    plLock = 0; plOk();
+    o.flowDone = !!gatesOf(pr).ext && gatesOf(pr).ext.def === 'x_flower' && !isPlacing() && UI.sel === pr.id && !!pr.door;
+    // 입구는 건물 반대쪽을 바라보고, 그 바깥 칸에서 들어간다
+    const ge = gatesOf(pr).ent, gx = gatesOf(pr).ext;
+    o.facing = occ[ge.y - DIRS[ge.face][1]][ge.x - DIRS[ge.face][0]] === pr.id && pr.door.ent.x === ge.x && doorOut(pr.door.ent).x === ge.x + DIRS[ge.face][0];
+    // 길을 이으면 운영된다
+    o.link = linkDoor(pr) === '' && usable(pr);
+    // 건물을 옮기면 입구·출구도 같이 옮겨지고, 회전하면 떨어져 나가 값을 돌려받는다
+    const before = [ge.x, ge.y]; let mv = null; for (let dx = 4; dx < 20 && !mv; dx += 2) if (canPlace(D.pray, pr.x + dx, pr.y, 2) && [ge, gx].every(g => !occ[g.y][g.x + dx])) mv = dx;
+    startMove(pr); UI.ghost = { x: pr.x + mv, y: pr.y }; plMoveDone();
+    o.moveWith = ge.x === before[0] + mv && ge.y === before[1] && !!pr.door; o.mvd = [mv, before, ge.x, ge.y, !!pr.door];
+    // 옮길 자리에서 출구 칸이 막혀 있으면 출구는 떨어져 나가고 값을 돌려받는다
+    let mv2 = null; for (let dx = 4; dx < 24 && !mv2; dx += 2) if (canPlace(D.pray, pr.x + dx, pr.y, 2) && !occ[ge.y][ge.x + dx] && canPlace(D.tree, gx.x + dx, gx.y, 2)) mv2 = dx;
+    build('tree', gx.x + mv2, gx.y, 2);
+    const m1 = S.money; startMove(pr); UI.ghost = { x: pr.x + mv2, y: pr.y }; plMoveDone();
+    o.rotDrop = !!gatesOf(pr).ent && !gatesOf(pr).ext && !pr.door && S.money - m1 === D.x_flower.cost && !usable(pr);
+    UI.sel = pr.id; UI.fold = true; UI.tool = null; renderSelCard();
+    o.card = /출구를 지어야/.test(document.getElementById('selCard').textContent) && !!document.querySelector('#selCard [data-act="gatego"]');
+    // 철거하면 입구·출구도 함께 사라진다
+    autoGates(pr); o.mvd.push(!!gatesOf(pr).ext); const n0 = S.buildings.filter(isGate).length; demolish(pr.id);
+    o.demolish = S.buildings.filter(isGate).length === n0 - 2;
+    // 입구 칸 밑의 땅만 따로 바꿀 수 없다 (건물과 함께)
+    const rgE = rg.ent; o.ter = terPlan(rgE.x, rgE.y, 'ter_set', 1).cells.length > 4;
+    // 대기줄 지그재그: 옆 줄과 맞닿아도 섞이지 않고 한 줄
+    const ch = S.buildings.find(b => b.def === 'room'); const ent = ch.door.ent, q0 = doorOut(ent);
+    UI.flast = null; const lay = (x, y) => { const w = paintFloor(x, y, 'q_rope'); UI.flast = { x, y }; return w; };
+    S.floor = {}; recalc();
+    const path = [[0, 0], [0, 1], [1, 1], [2, 1], [2, 0], [3, 0], [3, 1]].map(p => [q0.x + p[0], q0.y + p[1]]);
+    // 입구 앞 칸은 하나, 그 아래 → 오른쪽 → 위(입구 줄과 맞닿음) → 오른쪽 → 아래
+    const ws = path.map(p => lay(p[0], p[1]));
+    paintFloor(q0.x + 4, q0.y + 1, 'f_block'); recalc();
+    o.snake = ws.every(w => w === '') && !!ch.q && ch.q.cells.length === 7 && ch.q.cells.map(c => c.x + ',' + c.y).join(' ') === path.map(p => p.join(',')).join(' ');
+    // 갈래: 줄 중간 옆 칸은 이어지지 않는다
+    UI.flast = null; o.branch = /이어 깔아요/.test(floorWhy(q0.x + 1, q0.y + 2, 'q_rope') || '') && /이어 깔아요/.test(floorWhy(q0.x - 1, q0.y + 1, 'q_rope') || '');
+    for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
+    return o;
+  });
+  check(r.start, '입구·출구: 시작 예배실에는 처음부터 있어 바로 쓸 수 있음');
+  check(r.small, '소품: 벤치·쓰레기통·가로등·나무 등은 한 칸, 그림 높이도 작게');
+  check(r.flowEnt && r.flowExt && r.flowDone, '입구·출구: 건물을 지으면 곧바로 입구 → 출구 놓기, 모양을 골라 ✓, 끝나면 건물 카드');
+  check(r.facing && r.link, '입구·출구: 건물 반대쪽을 보고 바깥 칸에서 드나들며, 길을 이으면 운영');
+  if (!(r.moveWith && r.rotDrop && r.card && r.demolish)) console.log('DBGM', JSON.stringify([r.mvd, r.moveWith, r.rotDrop, r.card, r.demolish]));
+  check(r.moveWith && r.rotDrop && r.card, '입구·출구: 건물을 옮기면 같이 옮겨지고, 못 붙는 쪽은 떨어져 값을 돌려받고 카드에 다시 지으라고 뜸');
+  check(r.demolish && r.ter, '입구·출구: 건물과 함께 철거되고, 땅을 바꾸면 함께 움직임');
+  check(r.snake && r.branch, '대기줄: 지그재그로 맞닿아도 놓은 순서대로 한 줄, 갈래는 안 됨');
+  check(errs.length === 0, '입구·출구: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
 
@@ -1121,6 +1210,8 @@ async function terrainChecks(browser, url) {
     [[19, 10], [19, 11], [20, 10], [20, 11]].forEach(t => paintFloor(t[0], t[1], 'f_block'));
     // 경사로 아래에서 기존 바닥까지
     const t = walkSearch(19, 14, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc();
+    // 출구도 길 쪽으로 다시 짓는다 (처음엔 길이 없어 아무 쪽에나 났다)
+    { const xg = gatesOf(pr).ext; S.buildings = S.buildings.filter(g => g !== xg); rebuildOcc(); recalc(); autoGates(pr, null, null, true); recalc(); }
     o.reach = !!(pr.acc && pr.acc.ok);
     const path = navPath(gateNode(), m => m === doorNode(pr.door.ent));
     o.climb = !!path && Math.abs(path[path.length - 1].z - 2 * LV) < .01;
@@ -1499,23 +1590,25 @@ async function earlyChecks(browser, url) {
     o.old = L2.lvl === null && L2.lvc === 2 && L2.step === STEPS.length;
     // 미리보기 첫 자리: 화면 가운데가 길이어도 바닥 타일 위에 놓이지 않는다
     S.money = 50000; homeView(); startPlace('wc'); o.offPath = !!UI.ghost && !onFloorAt(D.wc, UI.ghost.x, UI.ghost.y, UI.face) && canPlace(D.wc, UI.ghost.x, UI.ghost.y, UI.face); endPlace();
-    // 문 앞이 막힌 건물: 카드에 이유와 '문 옮기기'가 보이고, 누르면 길을 이을 수 있게 됨
+    // 입구 건물이 빠진 건물: 카드에 '입구를 지어야 운영돼요'와 '입구 짓기'. 누르면 길 쪽 자리에 미리보기가 뜨고 ✓로 짓는다
     { let spot = null; for (let y = 4; y < PZ - 8 && !spot; y++)for (let x = 4; x < COLS - 12 && !spot; x++) { let ok = true; for (let j = -3; j <= 6 && ok; j++)for (let i = -3; i <= 10 && ok; i++)if (occ[y + j][x + i] || S.floor[(x + i) + ',' + (y + j)]) ok = false; if (ok) spot = { x, y }; }
       build('wc', spot.x, spot.y, 2); const wc = S.buildings[S.buildings.length - 1]; recalc();
-      const out = doorOut(wc.door.ent); build('tree', wc.x, out.y, 2); recalc();
-      const blocked = !!linkPlan(wc).why; UI.sel = wc.id; UI.fold = true; UI.tool = null; renderSelCard();
-      const btn = document.querySelector('#selCard [data-act="doorpick"]'), why = (document.querySelector('#selCard .scw') || {}).textContent || '';
-      if (btn) btn.click();
-      const picking = !!UI.doorPick && UI.doorPick.which === 'ent';
-      // 지도에 뜬 자리 가운데 뒤쪽(-y) 자리를 누른다
-      const back = doorSpots(wc).find(q => q.d === 3), w = doorPadPos(back), m = rotPt(w.x, w.y), q = toScreen(m[0], m[1], w.z + bZ(wc));
-      onTap(q[0], q[1]);
-      o.fd = [blocked, !!btn, why, picking, !UI.doorPick, JSON.stringify(wc.door), JSON.stringify(back)];
-      o.fixdoor = blocked && !!btn && /막혀/.test(why) && picking && !UI.doorPick && wc.door.ent.d === 3 && sameSpot(wc.door.ent, back);
-      wc.door.ext = { ...wc.door.ent }; recalc(); o.fd.push(o.fixdoor, linkPlan(wc).why); o.fixdoor = o.fixdoor && !linkPlan(wc).why;
-      // 옆에 이미 길이 있으면 처음부터 그쪽으로 문이 난다
-      { const px = spot.x + 5, py = spot.y - 2; S.floor[px + ',' + py] = 'f_block'; recalc(); build('pray', px + 1, py, 2); const pr = S.buildings[S.buildings.length - 1];
-        o.autoDoor = pr.def === 'pray' && pr.door.ent.d === 1 && doorOut(pr.door.ent).x === px && doorOut(pr.door.ent).y === py; demolish(pr.id); delete S.floor[px + ',' + py]; recalc(); }
+      const eg = gatesOf(wc).ent; S.buildings = S.buildings.filter(g => g !== eg); rebuildOcc(); recalc();
+      UI.sel = wc.id; UI.fold = true; UI.tool = null; renderSelCard();
+      const btn = document.querySelector('#selCard [data-act="gatego"]'), why = (document.querySelector('#selCard .scw') || {}).textContent || '';
+      const unusable = !usable(wc) && !wc.door; if (btn) btn.click();
+      const placing = isPlacing() && isGateDef(D[UI.tool]) && D[UI.tool].role === 'ent' && UI.gateFor === wc.id && !!UI.ghost && !gateAttachWhy(D[UI.tool], UI.ghost.x, UI.ghost.y);
+      // 모양을 바꿔 짓는다
+      document.getElementById('pbar').querySelector('[data-act="gdesign"][data-v="stone"]').click();
+      const m0 = S.money; plLock = 0; plOk();
+      const ng = gatesOf(wc).ent;
+      o.fixdoor = unusable && !!btn && /입구를 지어야/.test(why) && placing && !!ng && ng.def === 'g_stone' && m0 - S.money === D.g_stone.cost && !!wc.door && !isPlacing() && UI.sel === wc.id;
+      o.fd = [unusable, !!btn, why, placing, ng && ng.def, m0 - S.money, !!wc.door, isPlacing(), UI.sel === wc.id];
+      // 다른 건물 옆이 아니면 못 짓고, 같은 건물에 입구 둘은 안 된다
+      o.fixdoor = o.fixdoor && /옆 칸/.test(gateAttachWhy(D.g_arch, spot.x + 9, spot.y + 5));
+      // 옆에 이미 길이 있으면 처음부터 그쪽으로 입구가 난다 (길과 건물 사이 칸에 입구, 바깥이 길)
+      { const px = spot.x + 6, py = spot.y - 2; S.floor[px + ',' + py] = 'f_block'; recalc(); build('pray', px + 2, py, 2); const pr = S.buildings[S.buildings.length - 1];
+        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 1 && doorOut(pr.door.ent).x === px && doorOut(pr.door.ent).y === py; demolish(pr.id); delete S.floor[px + ',' + py]; recalc(); }
       // 새로 지을 때는 처음부터 막히지 않은 쪽으로 문이 난다
       const t2 = { x: spot.x + 6, y: spot.y }; build('tree', t2.x, t2.y + 2, 2); recalc(); build('wc', t2.x, t2.y, 2); const wc2 = S.buildings[S.buildings.length - 1]; recalc();
       o.fd.push(linkPlan(wc2).why, wc2.def, JSON.stringify(wc2.door)); o.fixdoor = o.fixdoor && !linkPlan(wc2).why; UI.sel = null; }
@@ -1575,7 +1668,7 @@ async function earlyChecks(browser, url) {
   check(r.selHi, '고른 바닥 칸·길 조각: 지도에 노란 반투명 표시가 그려짐');
   check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 띠 없이 지도 위 ▲▼와 ✓ 옆 높이 글씨만');
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
-  check(r.fixdoor, '문 고르기: 막힌 건물 카드에 이유와 입구 고르기, 지도에 뜬 자리를 눌러 옮김, 새 건물은 막히지 않은 쪽으로 문이 남');
+  check(r.fixdoor, '입구·출구 건물: 빠지면 카드에 이유와 짓기 버튼, 누르면 길 쪽 자리에 미리보기, 모양을 골라 ✓로 지음');
   if (!r.fixdoor) console.log('DBG', JSON.stringify(r.fd));
   check(r.autoDoor, '문 자동: 지을 때 옆에 길이 있으면 그쪽으로 문이 남');
   check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
@@ -1603,6 +1696,7 @@ async function earlyChecks(browser, url) {
     await terrainChecks(browser, url);
     await waterChecks(browser, url);
     await queueChecks(browser, url);
+    await gateChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);
     await gripeChecks(browser, url);
