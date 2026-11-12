@@ -135,7 +135,7 @@ function settleNote(r){
 }
 function rcptHtml(r,full){
   var wn=r.wx&&WEATHER[r.wx]?'<div class="rw">'+wxIcon(r.wx)+'주일 날씨 '+WEATHER[r.wx].n+(r.wxLost>0?' · 출석 '+r.wxLost+'명 줄었어요':'')+'</div>':'';
-  return '<div class="rk">'+(Math.floor(r.w/52)+1)+'년 '+(r.w%52+1)+'주 · 주일 정산'+(full?' <small>· 항목을 누르면 계산 방식</small>':'')+'</div>'+wn+'<ul>'+rcptLines(r).map(function(l){
+  return '<div class="rk">'+dateText(r.w,true)+' · 주일 정산'+(full?' <small>· 항목을 누르면 계산 방식</small>':'')+'</div>'+wn+'<ul>'+rcptLines(r).map(function(l){
     var row='<span>'+l[0]+'</span><b class="'+(l[1]<0?'neg':'pos')+'">'+(l[1]<0?'−':'+')+fmt(Math.abs(l[1]))+'</b>';
     if(!full)return '<li>'+row+'</li>';
     var open=UI.fexp===l[2];

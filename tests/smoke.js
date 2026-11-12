@@ -1128,6 +1128,20 @@ async function queueChecks(browser, url) {
   check(r.full, '대기줄: 줄이 꽉 차면 끝에서 잠깐 기다리다 돌아섬');
   check(r.shrink && r.mixed && r.ramp, '대기줄: 타일을 걷으면 줄이 끊기고, 다시 깔면 이어지며 모양을 섞어도 됨');
   check(r.card && r.defs, '대기줄: 모양 5가지가 길·지형에 있고, 건물 카드에 회전 시간과 줄 인원이 보임');
+  // 달력: 한 달 5주·한 해 12달(60주), 계절별 날씨 (눈은 겨울만, 폭염·비는 여름만, 봄·가을은 바람)
+  const cal = await (async () => { const pg = await ctx.newPage(); await pg.addInitScript(() => { window.__CT_TEST = true; window.requestAnimationFrame = () => 0; }); await pg.goto(url);
+    const o = await pg.evaluate(() => { window.__ct.init(); const q = {};
+      q.fmt = dateText(0) === '1월 1주' && dateText(4) === '1월 5주' && dateText(5) === '2월 1주' && dateText(59, true) === '1년차 12월 5주' && dateText(60, true) === '2년차 1월 1주';
+      const sk = m => { S.week = (m - 1) * WEEKS_PER_MONTH; return seasonKey(); };
+      q.season = [sk(3), sk(5), sk(6), sk(8), sk(9), sk(11), sk(12), sk(1), sk(2)].join() === 'spring,spring,summer,summer,autumn,autumn,winter,winter,winter';
+      const seen = {}; ['spring', 'summer', 'autumn', 'winter'].forEach(k => { seen[k] = Object.keys(WX_SEASON[k].w).sort().join(); });
+      q.wx = seen.winter === 'cloud,snow,sun' && seen.summer === 'cloud,heat,rain,storm,sun' && seen.spring === 'cloud,sun,wind' && seen.autumn === 'cloud,sun,wind';
+      S.week = 0; document.body.dataset.x = 1; syncClock(); q.hud = document.getElementById('ckWeek').textContent === '1월 1주';
+      S.week = 12 * 5 - 1; q.xm = EVENTS.christmas && monthOf() === 12 && evBlock('christmas') !== '월에만';
+      S.week = 20; q.ev = /12월에만/.test(evBlock('christmas')); return q; });
+    await pg.close(); return o; })();
+  check(cal.fmt && cal.season && cal.hud, '달력: 한 달 5주, 한 해 12달(60주), 시계는 "0월 0주"로 보임, 계절은 달로 나뉨');
+  check(cal.wx && cal.ev, '날씨: 눈은 겨울에만, 폭염·비는 여름에만, 봄·가을은 바람, 행사 계절은 달로 안내');
   check(errs.length === 0, '대기줄: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

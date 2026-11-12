@@ -283,7 +283,7 @@ function renderStaff(){
 }
 function renderEvents(){
   var act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
-  var h='<div class="staff"><p class="hint">행사는 자금을 쓰고, 한 번 열면 정해진 주가 지나야 다시 열 수 있어요. 오래 열지 않으면 공동체가 침체돼요. 올해 '+weekOfYear()+'주째예요.</p>';
+  var h='<div class="staff"><p class="hint">행사는 자금을 쓰고, 한 번 열면 정해진 주가 지나야 다시 열 수 있어요. 오래 열지 않으면 공동체가 침체돼요. 지금은 '+dateText()+'이에요.</p>';
   if(act.length)h+='<div class="qev">'+act.map(function(id){return '<span>진행 중 · '+EVENTS[id].name+' '+S.ev[id].left+'주</span>';}).join('')+'</div>';
   Object.keys(EVENTS).forEach(function(id){
     var e=EVENTS[id];if(e.hidden)return;
@@ -354,7 +354,7 @@ function renderStatus(){
   var rp=needRepair(),rc=rp.reduce(function(t,b){return t+repairCost(b);},0);
   if(rp.length)h+='<div class="btns"><button class="btn pri" data-act="repairAll"'+(S.money<rc?' disabled':'')+'>낡은 건물 '+rp.length+'곳 모두 수리 · '+fmt(rc)+'</button></div>';
   h+='<div class="sec">주간 수입과 지출</div>'+chart();
-  h+='<div class="sec">소식</div><ul class="log">'+(S.log.length?S.log.map(function(l){return '<li>'+(Math.floor(l.w/52)+1)+'년차 '+(l.w%52+1)+'주 · '+l.msg+'</li>';}).join(''):'<li>아직 소식이 없어요. 한 주가 지나면 기록됩니다.</li>')+'</ul>';
+  h+='<div class="sec">소식</div><ul class="log">'+(S.log.length?S.log.map(function(l){return '<li>'+dateText(l.w,true)+' · '+l.msg+'</li>';}).join(''):'<li>아직 소식이 없어요. 한 주가 지나면 기록됩니다.</li>')+'</ul>';
   panel.innerHTML=h;
 }
 function chart(){

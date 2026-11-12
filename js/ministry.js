@@ -139,7 +139,7 @@ function appoint(k){
 }
 
 /* ---------- 특별행사 ---------- */
-// season: [시작 주, 끝 주] (한 해 52주 중, 1부터). need(): 조건이 안 되면 이유 문장
+// season: [시작 월, 끝 월] (1~12월). need(): 조건이 안 되면 이유 문장
 var EVENTS={
   smallgroup:{name:'소그룹 모임',cost:150,cd:2,dur:2,goal:0,desc:'2주간 만족 +6, 이탈 -30%',
     need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;}},
@@ -157,21 +157,26 @@ var EVENTS={
     costFn:function(){return 1500+S.members*15;},mods:function(m){m.mood+=12;m.loss*=0.5;}},
   revival:{name:'부흥회',cost:3000,cd:16,dur:1,goal:3,desc:'1주간 방문자 +120%, 정착률 +50%',
     need:function(){return A.seats>=80?'':'좌석이 80석 이상 필요해요';},mods:function(m){m.vis*=2.2;m.join*=1.5;}},
-  easter:{name:'부활절 연합예배',season:[12,16],cost:500,cd:20,dur:1,goal:0,desc:'방문자 +60%, 헌금 +30%',mods:function(m){m.vis*=1.6;m.offer*=1.3;}},
-  vbs:{name:'여름성경학교',season:[26,33],cost:800,cd:20,dur:2,goal:1,desc:'2주간 가족 방문자 +30%, 돌봄 효과 +20%',
+  easter:{name:'부활절 연합예배',season:[4,4],cost:500,cd:20,dur:1,goal:0,desc:'방문자 +60%, 헌금 +30%',mods:function(m){m.vis*=1.6;m.offer*=1.3;}},
+  vbs:{name:'여름성경학교',season:[7,8],cost:800,cd:20,dur:2,goal:1,desc:'2주간 가족 방문자 +30%, 돌봄 효과 +20%',
     need:function(){return A.kcap>=10?'':'돌봄 공간이 10 이상 필요해요';},mods:function(m){m.vis*=1.3;m.care*=1.2;}},
-  thanks:{name:'추수감사 예배',season:[44,47],cost:300,cd:20,dur:1,goal:0,desc:'헌금 +50%, 만족 +5',mods:function(m){m.offer*=1.5;m.mood+=5;}},
-  christmas:{name:'성탄 축하 예배',season:[49,52],cost:800,cd:20,dur:1,goal:0,desc:'방문자 +80%, 만족 +6',mods:function(m){m.vis*=1.8;m.mood+=6;}},
+  thanks:{name:'추수감사 예배',season:[11,11],cost:300,cd:20,dur:1,goal:0,desc:'헌금 +50%, 만족 +5',mods:function(m){m.offer*=1.5;m.mood+=5;}},
+  christmas:{name:'성탄 축하 예배',season:[12,12],cost:800,cd:20,dur:1,goal:0,desc:'방문자 +80%, 만족 +6',mods:function(m){m.vis*=1.8;m.mood+=6;}},
   joint:{name:'연합 행사',hidden:true,cost:0,cd:0,dur:2,goal:0,desc:'',mods:function(m){m.vis*=1.2;}}
 };
-function weekOfYear(){return S.week%52+1;}
+// 달력 (balance.js WEEKS_PER_MONTH·YEAR_WEEKS): 몇 년차 몇 월 몇 주
+function weekOfYear(w){return (w==null?S.week:w)%YEAR_WEEKS+1;}
+function monthOf(w){return Math.floor((weekOfYear(w)-1)/WEEKS_PER_MONTH)+1;}
+function weekInMonth(w){return (weekOfYear(w)-1)%WEEKS_PER_MONTH+1;}
+function yearOf(w){return Math.floor((w==null?S.week:w)/YEAR_WEEKS)+1;}
+function dateText(w,withYear){return (withYear?yearOf(w)+'년차 ':'')+monthOf(w)+'월 '+weekInMonth(w)+'주';}
 function evCost(e){return e.costFn?e.costFn():e.cost;}
 function evState(id){return S.ev[id]||(S.ev[id]={cd:0,left:0});}
 // 열 수 없으면 이유, 열 수 있으면 ''
 function evBlock(id){
   var e=EVENTS[id],st=evState(id);
   if((e.goal||0)>S.goal)return lockText(e.goal)+' 열 수 있어요';
-  if(e.season){var w=weekOfYear();if(w<e.season[0]||w>e.season[1])return e.season[0]+'~'+e.season[1]+'주에만 열 수 있어요';}
+  if(e.season){var mo=monthOf();if(mo<e.season[0]||mo>e.season[1])return (e.season[0]===e.season[1]?e.season[0]+'월':e.season[0]+'~'+e.season[1]+'월')+'에만 열 수 있어요';}
   if(st.left>0)return '진행 중이에요';
   if(st.cd>0)return st.cd+'주 뒤에 다시 열 수 있어요';
   if(S.money<evCost(e))return '자금이 부족해요';

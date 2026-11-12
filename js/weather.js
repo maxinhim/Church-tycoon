@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- 날씨 ----------
    날씨는 한 주에 한 번(월요일) 정해지고, 다음 주 날씨를 미리 알려 준다. 비·폭우·눈은 2~3일만 오고 그쳐 맑음·흐림이 된다.
-   계절(올해 몇째 주)에 따라 나오는 날씨가 다르다. 겨울엔 눈, 여름엔 폭염·폭우.
+   계절(몇 월인지)에 따라 나오는 날씨가 다르다. 눈은 겨울(12~2월)에만, 폭염·비·폭우는 여름(6~8월)에만, 봄·가을(3~5월·9~11월)엔 바람이 방해가 된다.
    · 맑음: 방문자 조금 늘고, 야외 자리(벤치·피크닉·파라솔·야외 예배터)의 효과가 커진다
    · 흐림: 구름 그림자가 지나간다
    · 비: 방문자가 줄고 야외 자리는 쉰다. 실내 매장이 붐비고 우산이 펴진다. 길에 물웅덩이
@@ -16,19 +16,19 @@ var WEATHER={
   cloud:{n:'흐림',vis:1,tip:'구름이 끼었어요'},
   rain:{n:'비',vis:0.7,tip:'야외 자리는 쉬고 실내 매장이 붐벼요'},
   storm:{n:'폭우·천둥',vis:0.4,tip:'방문자가 크게 줄고 벼락이 쳐요. 십자가 첨탑이 피뢰침이 돼요'},
-  wind:{n:'바람',vis:0.9,tip:'파라솔은 접고, 놀이터는 연날리기로 붐벼요'},
+  wind:{n:'바람',vis:0.75,tip:'방문자가 줄고 야외 자리 효과가 떨어져요. 파라솔은 접고, 놀이터는 연날리기로 붐벼요'},
   snow:{n:'눈',vis:0.75,tip:'걸음이 느려지지만 아이들이 눈사람을 만들어요'},
   heat:{n:'폭염',vis:0.8,tip:'편의 욕구가 빨리 떨어지고 시원한 음료가 잘 팔려요. 물가 장식이 있으면 덜 지쳐요'}
 };
 // 계절별로 나올 날씨의 비율
 var WX_SEASON={
-  spring:{n:'봄',w:{sun:40,cloud:25,rain:20,wind:15}},
-  summer:{n:'여름',w:{sun:33,cloud:14,rain:20,storm:13,heat:20}},
-  autumn:{n:'가을',w:{sun:45,cloud:25,rain:12,wind:18}},
-  winter:{n:'겨울',w:{sun:30,cloud:28,snow:32,wind:10}}
+  spring:{n:'봄',w:{sun:40,cloud:25,wind:35}},
+  summer:{n:'여름',w:{sun:30,cloud:12,rain:24,storm:14,heat:20}},
+  autumn:{n:'가을',w:{sun:40,cloud:25,wind:35}},
+  winter:{n:'겨울',w:{sun:30,cloud:30,snow:40}}
 };
 var OUTDOOR=['stage','bench','picnic','parasol','playground','market','court'];
-function seasonKey(){var w=weekOfYear();return w>=10&&w<=22?'spring':(w<=35&&w>22?'summer':(w<=47&&w>35?'autumn':'winter'));}
+function seasonKey(){var m=monthOf();return m>=3&&m<=5?'spring':(m>=6&&m<=8?'summer':(m>=9&&m<=11?'autumn':'winter'));}
 function ensureWx(){
   if(!S.wx)S.wx={cur:'sun',next:'cloud',day:dayIdx(),clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1};
   return S.wx;
@@ -65,6 +65,7 @@ function wxFill(d){
   var c=wxNow();
   if(c==='sun'&&OUTDOOR.indexOf(d.kind)>=0)return 1.25;
   if(c==='wind'&&d.kind==='playground')return 1.3;
+  if(c==='wind'&&OUTDOOR.indexOf(d.kind)>=0)return 0.7;
   return 1;
 }
 // 바깥에 있는 방문자의 편의 욕구가 떨어지는 속도(초당)
@@ -99,7 +100,7 @@ function wxChanged(prev){
     toast('비가 그치고 무지개가 떴어요! 만족도와 평판이 조금 올라요',3000);
   }else if(c!==prev)toast('오늘 날씨: '+WEATHER[c].n+' · '+WEATHER[c].tip,3000);
   if(c==='heat'&&!hasWater())S.tempMood-=1.5;
-  if(c==='snow'&&weekOfYear()>=51&&w.xmas!==S.week){
+  if(c==='snow'&&monthOf()===12&&weekInMonth()>=4&&w.xmas!==S.week){
     w.xmas=S.week;S.rep=clamp(S.rep+2,0,100);S.tempMood+=2;
     toast('화이트 크리스마스! 눈 오는 성탄에 평판이 올라요',3200);
   }
