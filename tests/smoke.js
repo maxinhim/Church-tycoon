@@ -284,26 +284,13 @@ async function pathChecks(browser, url) {
     paintFloor(X + 1, Y + 1, 'f_block'); paintFloor(X + 1, Y + 2, 'f_block');
     o.ground = grassNo && groundOk(X + 1, Y + 1) && groundOk(X + 1, Y + 2);
     connect(X + 1, Y + 3);
-    // 2층 입구를 다리 쪽으로
-    // 2층 입구: 다리 데크 위에 입구 건물을 새로 짓는다
-    S.buildings = S.buildings.filter(g => !(isGate(g) && g.of === room.id && D[g.def].role === 'ent')); rebuildOcc();
-    UI.gateFor = room.id; o.gate2 = buildGate('g_wood', X + 1, Y + 1); UI.gateFor = null; recalc();
-    o.dbgG = [o.gate2, JSON.stringify(room.door || null), JSON.stringify(piecesAt(X + 1, Y + 1)), JSON.stringify(placeLevel(D.g_wood, X + 1, Y + 1, 2)), JSON.stringify(room.tiles)];
-    if (!room.door) return o;
-    o.connected = room.acc.ok && room.door.ent.l === 1;
-    const dn = doorNode(room.door.ent), path = navPath(gateNode(), m => m === dn);
-    // 입구 건물은 다리 데크 위에 서므로, 방문자는 계단을 올라 입구 앞(계단 꼭대기 쪽)까지 간다
-    o.navUp = !!path && path.some(w => w.z >= LV * .45 - 0.01); o.dbgN = [dn, !!path, path && path.map(w => +w.z.toFixed(2)).join(',')];
-    // 방문자가 실제로 계단을 올라 2층 입구로 들어간다
-    S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
-    let maxZ = 0;
-    for (let i = 0; i < 4000; i++) { update(0.1); V.forEach(v => { if ((v.z || 0) > maxZ) maxZ = v.z; }); }
-    o.climbed = maxZ >= LV * .45 - 0.01 && room.uses > 0;
-    for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
-    window.__ct.setRot(0);
-    // 계단을 철거하면 2층 입구에 닿을 수 없어 이용 불가
-    removePiece(S.paths.find(p => p.s === 1).id, 1);
-    o.cutOff = !room.acc.ent && !usable(room);
+    // 입구·출구는 건물 1층 둘레에만: 다리 데크(2층 높이) 위에는 지을 수 없다
+    { const old = gatesOf(room).ent; UI.gateFor = room.id;
+      o.gate2 = gateAttachWhy(D.g_wood, X + 1, Y + 1); UI.gateFor = null;
+      o.connected = /1층 둘레/.test(o.gate2) && !!old && gateOk(old, room) && room.acc.ok;
+      // 예전 저장처럼 위층에 붙은 입구는 제자리로 치지 않는다
+      const fake = { def: 'g_wood', x: X + 1, y: Y + 1, z: 1, face: 3, of: room.id };
+      o.navUp = !gateOk(fake, room); o.dbgN = [o.gate2]; }
     // 입구·출구 건물: 건물 바로 옆에만, 건물마다 하나씩
     { const far = gateAttachWhy(D.g_arch, X + 1, Y + 8), again = gateCands(room, 'g_arch')[0]; UI.gateFor = room.id;
       const dup = again ? buildGate('g_arch', again.x, again.y) : 'none'; UI.gateFor = null;
@@ -327,10 +314,8 @@ async function pathChecks(browser, url) {
   check(r.undo, '길: 되돌리기로 마지막 조각과 커서가 돌아옴');
   check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
   check(r.ground, '길: 다리 아래와 철골 계단 밑 땅으로 걸어 다닐 수 있음');
-  check(r.connected, '길: 2층에 단 입구도 다리와 이으면 이용 가능');
-  check(r.navUp, '길찾기: 입구 아치에서 계단을 올라 2층 입구까지 경로가 있음');
-  check(r.climbed, '방문자: 실제로 계단을 올라 2층 입구로 이용함');
-  check(r.cutOff, '문: 계단을 철거하면 2층 입구에 닿지 못해 이용 불가');
+  check(r.connected, '입구·출구: 다리 위(2층 높이)에는 못 짓고 1층 둘레에만 지음');
+  check(r.navUp, '입구·출구: 위층 높이에 붙은 입구는 제자리로 치지 않음');
   check(r.cycle, '입구·출구: 건물 바로 옆에만 짓고, 건물마다 입구 하나');
   check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
   check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 입구·출구가 있음');

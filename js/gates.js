@@ -3,7 +3,8 @@
    방문자가 쓰는 건물(이용 효과가 있는 건물)은 입구 건물과 출구 건물을 하나씩 지어야 운영된다.
    · 입구·출구는 한 칸짜리. 건물 바로 옆 칸에 붙여 짓고, 건물 반대쪽(바깥)을 바라본다
    · 방문자는 입구 바깥 칸에서 들어가고 출구 바깥 칸으로 나온다. 대기줄은 입구 바깥 칸부터 깐다
-   · 높은 데크 위에 지으면 그 높이 층으로 드나든다 (계단·다리로 2층에 들어가는 길)
+   · 건물 1층 둘레에만 붙인다: gate가 선 높이가 건물이 선 높이(bLevel)와 같아야 한다
+     (데크 위 건물은 같은 데크 위에. 다리 위에서 위층으로 드나드는 입구는 없다)
    gate 건물: {def, x, y, face(바깥쪽 DIRS 번호), of(붙은 건물 id)}. 건물 쪽에서는 b.door = {ent, ext}로 읽는다
    (둘 다 있고 제자리에 붙어 있을 때만. 없으면 b.door가 없고 이용할 수 없다) */
 // 모양 목록(GATE_DESIGNS)은 정의를 만드는 buildings.js에 있다
@@ -19,8 +20,8 @@ function gateAttach(x,y,gl,want){
     var id=occ[ty][tx],b=id&&bById(id);
     if(!b||isGate(b)||!needsGates(b))continue;
     if(want&&b.id!==want)continue;
-    // 건물의 그 칸에 gate 높이의 벽이 있어야 한다
-    if(!wallAt(b,tx,ty,gl))continue;
+    // 건물 1층 둘레만: gate가 건물과 같은 높이에 서야 한다
+    if(gl!==bLevel(b)||!wallAt(b,tx,ty,gl))continue;
     best={b:b,d:d};
   }
   return best;
@@ -31,14 +32,18 @@ function gatesOf(b){var o={};S.buildings.forEach(function(g){if(isGate(g)&&g.of=
 function gateOk(g,b){
   if(!g||!b)return false;
   var tx=g.x-DIRS[g.face][0],ty=g.y-DIRS[g.face][1];
-  return tx>=0&&ty>=0&&tx<COLS&&ty<ROWS&&occ[ty][tx]===b.id&&wallAt(b,tx,ty,gateLevel(g));
+  return tx>=0&&ty>=0&&tx<COLS&&ty<ROWS&&occ[ty][tx]===b.id&&gateLevel(g)===bLevel(b)&&wallAt(b,tx,ty,gateLevel(g));
 }
 function gateSpot(g,b){return {x:g.x,y:g.y,d:g.face,l:gateLevel(g)-bLevel(b)};}
 // 지을 수 없는 까닭 (place.js placeWhy에서 함께 본다)
 function gateAttachWhy(d,x,y){
   var pl=placeLevel(d,x,y,2);if(pl.why)return pl.why;
   var role=d.role,want=UI.gateFor&&bById(UI.gateFor)?UI.gateFor:0,a=gateAttach(x,y,pl.l,want);
-  if(!a)return want?defOf(bById(want)).name+' 바로 옆 칸에 붙여 지어요':'입구·출구는 건물 바로 옆 칸에 붙여 지어요';
+  if(!a){
+    var nb=null;for(var k=0;k<4&&!nb;k++){var tx=x-DIRS[k][0],ty=y-DIRS[k][1],o=tx>=0&&ty>=0&&tx<COLS&&ty<ROWS&&bById(occ[ty][tx]);if(o&&!isGate(o)&&needsGates(o)&&(!want||o.id===want))nb=o;}
+    if(nb)return '입구·출구는 건물 1층 둘레에만 지어요';
+    return want?defOf(bById(want)).name+' 바로 옆 칸에 붙여 지어요':'입구·출구는 건물 바로 옆 칸에 붙여 지어요';
+  }
   var g=gatesOf(a.b)[role];if(g&&g.id!==movingId())return '이미 '+(role==='ent'?'입구':'출구')+'가 있어요. 그것을 옮기거나 철거하세요';
   return '';
 }
