@@ -86,9 +86,6 @@ function setupInput(){
   cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
   cv.addEventListener('wheel',function(e){e.preventDefault();zoomAt(e.clientX,e.clientY,cam.z*Math.exp(-e.deltaY*0.0015));},{passive:false});
   $('#bRot').addEventListener('click',rotateView);
-  $('#bIn').addEventListener('click',function(){var c=viewCenter();zoomAt(c[0],c[1],cam.z*1.3);});
-  $('#bOut').addEventListener('click',function(){var c=viewCenter();zoomAt(c[0],c[1],cam.z/1.3);});
-  $('#bHome').addEventListener('click',homeView);
 }
 function syncTabs(){
   var g=UI.fold?'':tabGroup(UI.tab);

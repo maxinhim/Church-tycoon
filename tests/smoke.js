@@ -118,7 +118,7 @@ async function playChecks(browser, url) {
   await page.click('#fab [data-fab="status"]'); await page.click('#bGear'); await page.click('#bMenu');
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="close"]');
   await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
-  for (const b of ['#bRot', '#bIn', '#bOut', '#bHome']) await page.click(b);
+  await page.click('#bRot');
   // 톱니바퀴를 열어 배속을 바꾸고, 1×가 아니면 톱니바퀴에 표시가 붙는다
   // 보통 모드에서는 빨리 감기(2×~8×)가 숨겨지고 일시정지·1×만 보인다
   await page.click('#bGear');

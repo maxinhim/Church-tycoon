@@ -23,7 +23,7 @@
 html,body{height:100%}
 body{
   background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:14px; line-height:1.4;
-  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-left:max(4px,env(safe-area-inset-left,0px)); padding-right:max(4px,env(safe-area-inset-right,0px));
   padding-top:0; padding-bottom:0; overflow:hidden; overscroll-behavior:none;
   -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
 }

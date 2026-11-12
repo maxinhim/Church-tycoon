@@ -77,3 +77,21 @@ h1{font-size:12.5px}
   .fab .fc{width:35px;height:35px}
   .fab svg{width:16px;height:16px}
 }
+
+/* ---------- 가장자리로: 버튼·카드를 화면 모서리에 바싹 붙인다 (지도를 더 넓게) ---------- */
+#ui{padding-block:4px;column-gap:6px;row-gap:4px}
+/* 왼쪽 도구 열: 돌리기 · 설정(톱니바퀴). 설정 메뉴는 버튼 오른쪽으로 열린다 */
+.tools{top:0;gap:5px}
+.tools #gear{position:relative}
+.tools .gbtn{width:34px;height:34px;border-radius:10px}
+#gearMenu{left:calc(100% + 6px);right:auto;top:0}
+#spBadge{right:-3px;bottom:-3px}
+#toast{top:0}
+#dock{bottom:calc(4px + var(--fabh) + 6px)}
+#rcpt{right:4px}
+#rcpt.side{left:46px;bottom:48px}
+#gearMenu{width:max-content;min-width:176px;max-width:min(260px,calc(100vw - 70px));white-space:nowrap}
+#gearMenu{align-items:stretch;gap:5px;padding:7px 8px}
+#gearMenu .btn{white-space:nowrap;width:100%;height:28px}
+#gearMenu .sp button{height:28px;min-width:30px;font-size:12px}
+#gearMenu .sp{flex-wrap:nowrap}
