@@ -57,6 +57,21 @@ var GRIPE_SHOW=0.1;      // 챙길 일에는 방문자의 이 비율(최소 3명
 /* 방문자 행동 */
 /* 달력: 한 달 5주, 한 해 12달 = 60주. 계절은 달로 나눈다 (봄 3~5, 여름 6~8, 가을 9~11, 겨울 12~2월). 처음 시작은 1월 1주 */
 var WEEKS_PER_MONTH=5,YEAR_WEEKS=60;
+/* 성도 한 사람 한 사람 (people.js)
+   · 호감 레벨 1~PP_LV_MAX. 다음 레벨까지 경험치 = PP_XP0 + PP_XP_K × 지금 레벨. 매주 예배에 나오며 PP_WEEK_XP(만족도 50 아래면 PP_WEEK_XP_LOW)씩 쌓이고,
+     심방(PP_VISIT)·선물(PP_GIFT)로 크게 오른다 (한 사람에게 cd주에 한 번)
+   · 단계(PP_STEPS): 새가족 → 세례교인 → 집사 → 장로(남)·권사(여) → 신학 수료 → 부교역자. 레벨(lv)이 되면 값(cost)을 내고 교육(dur주)을 시작하고, 다 차면 직접 임명한다
+   · 헌금: 한 사람의 주일 헌금은 레벨마다 +PP_GIVE_LV, 직분마다 매주 PP_GIVE_RANK만큼 더 (신학 수료 뒤 평신도로 남으면 가장 크다)
+   · 영성: (레벨−1) × PP_SPIRIT_LV + 직분 PP_SPIRIT_RANK 를 모두 더해 × PP_SPIRIT_K 만큼 말씀·기도·찬양 자리에 더한다
+   · 목양 수용력: 직분마다 PP_CAP_RANK
+   · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자도 격려(ASSOC_CHEER)로 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
+var PP_LV_MAX=10,PP_XP0=6,PP_XP_K=4,PP_WEEK_XP=1,PP_WEEK_XP_LOW=.4;
+var PP_VISIT={cost:40,xp:8,cd:2},PP_GIFT={cost:120,xp:18,cd:4};
+var PP_STEPS=[{lv:2,cost:50,dur:2},{lv:3,cost:150,dur:3},{lv:5,cost:400,dur:4},{lv:7,cost:2500,dur:8},{lv:8,cost:1200,dur:3}];
+var PP_GIVE_LV=.015,PP_GIVE_RANK=[0,1,3,10,120];
+var PP_SPIRIT_LV=.05,PP_SPIRIT_RANK=[0,.3,.6,1,2],PP_SPIRIT_K=.15;
+var PP_CAP_RANK=[0,1.5,6,14,25];
+var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율
 /* 회전 시간과 대기줄
    회전 시간 = 건물의 dur × STAY × 성격(ROT_CAT) × 수용 인원 보정(capK) × 줄 보정.

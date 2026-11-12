@@ -2,6 +2,7 @@
 /* ---------- HUD / 토스트 ---------- */
 var toastTimer=0;
 function toast(msg,ms){
+  if(UI.scr&&typeof scrToast==='function')scrToast(msg,ms);
   var el=$('#toast');el.textContent=msg;el.hidden=false;
   clearTimeout(toastTimer);toastTimer=setTimeout(function(){el.hidden=true;},ms||2400);
 }

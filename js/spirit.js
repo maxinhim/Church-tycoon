@@ -31,7 +31,9 @@ function spiritParts(){
   var m=Math.max(1,S.members),E=expectK(m),st=S.staff,N=SPIRIT_NEED,cap={w:N.w.b,p:N.p.b,r:N.r.b};
   S.buildings.forEach(function(b){var s=SPIRIT_B[b.def];if(!s)return;var k=condFactor(b)*(b.floors||1)*BLD_SAT;for(var q in s)cap[q]+=s[q]*k;});
   cap.w+=8*st.edu;cap.p+=8*st.prayer+Math.min(6,S.off.kwonsa);cap.r+=10*st.praise;
-  S.assoc.forEach(function(a){if(a.field==='edu')cap.w+=6*a.skill;else if(a.field==='praise')cap.r+=6*a.skill;else if(a.field==='visit')cap.p+=4*a.skill;});
+  S.assoc.forEach(function(a){var k=asSkill(a);if(a.field==='edu')cap.w+=6*k;else if(a.field==='praise')cap.r+=6*k;else if(a.field==='visit')cap.p+=4*k;});
+  // 성도들의 호감 레벨과 직분
+  var pp=PA.sp*PP_SPIRIT_K;cap.w+=pp;cap.p+=pp;cap.r+=pp;
   var need={w:Math.max(N.w.f,m*N.w.r*E),p:Math.max(N.p.f,m*N.p.r*E),r:Math.max(N.r.f,m*N.r.r*E)},o={cap:cap,need:need,E:E};
   ['w','p','r'].forEach(function(q){o[q]=Math.min(1,cap[q]/Math.max(1,need[q]));});
   var SC=SACRAMENT,fs=SC.fest.span,fest=Math.max(recent('easter',fs),recent('thanks',fs),recent('christmas',fs),recent('revival',fs));

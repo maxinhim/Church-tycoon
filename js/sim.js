@@ -19,7 +19,7 @@ function update(dt){
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
   // 목표는 주중에도 이루는 즉시 보상 (0.5초마다 확인)
-  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;checkGoal();wishTick();evTick();}
+  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;checkGoal();wishTick();evTick();peopleTick();}
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
@@ -41,7 +41,8 @@ function weekEnd(){
   // 주일 날씨(비·눈·폭우)에 따라 출석이 줄어든다
   var closed=!S.open,full=closed?0:Math.min(m,A.seats),attend=Math.round(full*wxAttend()),wxLost=full-attend;
   // 출석이 많을수록 한 사람당 헌금 효과는 줄어든다
-  var offering=Math.round(attend*OFFER_PER*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500));
+  var ppFlat=closed?0:Math.round(PA.flat);
+  var offering=Math.round(attend*OFFER_PER*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500))+ppFlat;
   var online=closed?Math.round(m*1.2):0;
   var visGive=Math.round(S.visitsWeek*VIS_GIVE*(0.5+S.rep/100));
   var sponsor=Math.round(Math.max(0,SPONSOR0-SPONSOR_DROP*S.week));
@@ -50,7 +51,7 @@ function weekEnd(){
   var loanList=S.loans.map(function(l){return {n:LOANS[l.k].name,p:Math.round(l.pay)};});
   var upTop=S.buildings.map(function(b){var d=defOf(b),u=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);return {n:d.name,u:u,w:wearStage(b)};})
     .filter(function(o){return o.u>0;}).sort(function(a,b){return b.u-a.u;}).slice(0,3);
-  var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,visits:S.visitsWeek,rep:Math.round(S.rep),week:S.week,
+  var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,ppFlat:ppFlat,ppK:ppGiveK(),visits:S.visitsWeek,rep:Math.round(S.rep),week:S.week,
     up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,team:Math.round(teamPay()),assoc:Math.round(assocPay()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
   var loan=payLoans();
   // 매장 재료비는 팔 때마다 바로 나갔다(S.weekSup). 정산 때는 나머지만 오간다
@@ -83,7 +84,7 @@ function weekEnd(){
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}
   decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;
-  for(var k in OFFICE){var mx=officeMax(k);if(S.off[k]>mx){addLog('성도가 줄어 '+OFFICE[k].name+' '+(S.off[k]-mx)+'명이 직분을 내려놓았어요');S.off[k]=mx;}}
+  peopleWeek();
   if(S.week-S.candWeek>=6)refreshCands();
   var ev='';
   if(S.evtLeft>0){S.evtLeft--;if(S.evtLeft===0)S.evt=null;}

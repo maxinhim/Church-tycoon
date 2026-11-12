@@ -111,6 +111,8 @@ function rcptWhy(r,k){
     L.push('출석 '+r.attend+'명 = 성도 '+x.m+'명 중 좌석('+x.seats+'석) 안에 든 '+x.full+'명'+(r.wxLost>0?' − 주일 날씨로 '+r.wxLost+'명 줄어듦':''));
     L.push('헌금 = 출석 × '+OFFER_PER+' × 만족도 보정 '+pct(0.4+0.6*x.mood/100)+' (만족도 '+x.mood+'%) × 사역 보정 '+pct(x.offerMod));
     L.push('출석이 많을수록 한 사람당 효과가 줄어요 (÷ '+(1+r.attend/500).toFixed(2)+')');
+    if(x.ppK&&Math.abs(x.ppK-1)>.004)L.push('사역 보정에는 성도들의 평균 호감 레벨 '+pct(x.ppK)+'이 들어 있어요');
+    if(x.ppFlat)L.push('+ 직분자·신학 수료 성도의 헌금 '+fmt(x.ppFlat));
     L.push('늘리려면: 좌석(예배당), 만족도, 재정·목양 사역팀');
   }else if(k==='online'){L.push('교회 문을 닫은 주일에는 온라인 헌금만 들어와요: 성도 '+x.m+'명 × 1.2');L.push('문을 열면 주일 헌금으로 바뀌어요');}
   else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × '+VIS_GIVE+' × 평판 보정 '+pct(0.5+x.rep/100)+' (평판 '+x.rep+')');}

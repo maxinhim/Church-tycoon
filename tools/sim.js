@@ -71,9 +71,17 @@ function runBot(cfg) {
   function seats() { if (S.members > A.seats * 0.85) { const id = best(d => d.seats, d => HALLS.indexOf(d.id) >= 0); if (id) put(id); } }
   function events(list) { Object.keys(S.ev).forEach(id => { if (evReady(id)) { claimEvent(id); stat.claims = (stat.claims || 0) + 1; } }); list.forEach(id => { if (EVENTS[id] && !evBlock(id) && S.money > evCost(EVENTS[id]) + RES) { if (runEvent(id) === '') stat.events++; } }); }
   function staffUp(keys) { keys.forEach(k => { const lv = S.staff[k] || 0; if (lv < 3 && (STAFF[k].goal || 0) <= S.goal && S.money > STAFF[k].costs[lv] + RES * 2) { if (hireTeam(k) === '') stat.staff++; } }); }
+  // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계 교육을 시작하고, 남는 돈으로 몇 명을 심방한다
+  function people() {
+    (S.people || []).forEach(p => { if (p.tr && p.tr.ready && (p.tr.to < 5 || S.assoc.length < assocSlots())) { if (ppAppoint(p.id)) stat.appoint = (stat.appoint || 0) + 1; } });
+    const L = (S.people || []).filter(p => !p.tr).sort((x, y) => y.rank - x.rank || y.lv - x.lv);
+    L.forEach(p => { const st = ppStep(p); if (!st || p.rank >= 3) return; if (p.lv >= st.lv && S.money > st.cost + RES && ppTrain(p.id) === '') stat.train = (stat.train || 0) + 1; });
+    let n = Math.ceil(S.members * 0.1);
+    L.forEach(p => { if (n <= 0 || p.rank >= 3 || p.lv >= 6) return; if (S.money > PP_VISIT.cost + RES * 1.5 && !ppCareWhy(p, 'visit')) { ppCare(p.id, 'visit'); n--; stat.visits = (stat.visits || 0) + 1; } });
+  }
   function pastoral() {
+    people();
     if (S.members <= MOD.cap * 0.9) return;
-    Object.keys(OFFICE).forEach(k => { while (OFFICE[k].goal <= S.goal && S.off[k] < officeMax(k) && S.money > OFFICE[k].cost + RES) { if (appoint(k) !== '') break; stat.staff++; } });
     if (S.assoc.length < assocSlots() && S.cands.length) { let bi = 0; S.cands.forEach((c, i) => { if (c.skill > S.cands[bi].skill) bi = i; }); if (S.money > S.cands[bi].fee + RES * 2 && hireAssoc(bi) === '') stat.staff++; }
   }
   function spiritBuild() {

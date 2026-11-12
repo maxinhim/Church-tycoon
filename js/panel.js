@@ -42,7 +42,8 @@ function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'
 function openGroup(g){
   UI.lastBuilt=null;
   // 행사는 화면 전체를 쓴다 (screens.js)
-  if(g==='minis'){openScreen('events',UI.minisTab==='staff'?'staff':'events');return;}
+  if(g==='minis'){openScreen('events');return;}
+  if(SCREENS[g]){openScreen(g);return;}
   if(UI.scr)closeScreen();
   // 지도에서 짓는 중에 건축 버튼을 누르면 짓기를 그만두고 목록으로
   if(g==='build'&&isPlacing()){endPlace();return;}
@@ -251,28 +252,21 @@ function meter(v){var p=Math.round(clamp(v,0,1)*100);return '<div class="bar"><i
 function srow(title,meta,desc,btns,extra){
   return '<div class="srow"><div class="tx"><b>'+title+'</b> <span class="meta">'+meta+'</span><p>'+desc+'</p>'+(extra||'')+'</div><div class="btns">'+btns+'</div></div>';
 }
-function renderStaff(){
-  var h='<div class="staff"><div class="sec">목양</div>';
-  h+=srow('목양 수용력',S.members+' / '+Math.round(MOD.cap)+'명','담임목사·부교역자·직분자·돌봄팀이 함께 돌볼 수 있는 성도 수예요. 넘으면 그만큼 성도가 떠나요.','',meter(MOD.cap/Math.max(1,S.members)));
-  h+='<div class="sec">부교역자 · '+S.assoc.length+' / '+assocSlots()+'명</div>';
-  if(!S.assoc.length)h+='<p class="hint">아직 함께 사역하는 부교역자가 없어요. 성도 50명마다 한 명씩 더 청빙할 수 있어요.</p>';
-  S.assoc.forEach(function(a,i){
-    h+=srow(a.name+' '+a.title,FIELDS[a.field].name+' '+stars(a.skill)+' · 사례비 주 '+a.pay,FIELDS[a.field].desc+' (별마다), 목양 수용력 +35','<button class="btn" data-act="dismiss" data-v="'+i+'">사임</button>');
-  });
-  h+='<p class="hint">청빙 후보 · 6주마다 새 후보가 찾아와요. 청빙 비용은 사례비 4주치예요.</p>';
-  S.cands.forEach(function(c,i){
-    var full=S.assoc.length>=assocSlots();
-    h+=srow(c.name+' '+c.title+' 후보',FIELDS[c.field].name+' '+stars(c.skill)+' · 사례비 주 '+c.pay,FIELDS[c.field].desc+' (별마다)',
-      '<button class="btn pri" data-act="hireA" data-v="'+i+'"'+(full||S.money<c.fee?' disabled':'')+'>'+(full?'자리 없음':'청빙 '+fmt(c.fee))+'</button>');
-  });
-  h+='<div class="btns"><button class="btn" data-act="searchA"'+(S.money<100?' disabled':'')+'>다른 후보 찾기 · 100</button></div>';
-  h+='<div class="sec">직분자 임명 · 모두 '+offTotal()+'명</div>';
-  Object.keys(OFFICE).forEach(function(k){
-    var o=OFFICE[k],mx=officeMax(k),lk=o.goal>S.goal;
-    // 임직식 비용은 청빙 버튼처럼 버튼 안에 ('임명 300')
-    h+=srow(o.name,S.off[k]+' / '+mx+'명 · 성도 '+o.per+'명마다 한 명',o.desc,
-      lk?'<button class="btn" disabled>'+lockText(o.goal)+'</button>':'<button class="btn pri" data-act="appoint" data-v="'+k+'"'+(S.off[k]>=mx||S.money<o.cost?' disabled':'')+'>임명 '+fmt(o.cost)+'</button>');
-  });
+// part: 'teams' 목양 수용력·사역팀 (행사 화면) / 'cands' 부교역자 청빙 후보 (직분자 화면)
+function renderStaff(part){
+  var h='<div class="staff">';
+  if(part==='cands'){
+    h+='<p class="hint">부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 성도 50명마다 한 자리가 늘어요. 6주마다 새 후보가 찾아오고, 청빙 비용은 사례비 4주치예요. 성도를 길러 신학교에 보내면 별 5개 부교역자를 얻을 수도 있어요.</p>';
+    S.cands.forEach(function(c,i){
+      var full=S.assoc.length>=assocSlots();
+      h+=srow(c.name+' '+c.title+' 후보',FIELDS[c.field].name+' '+stars(c.skill)+' · 사례비 주 '+c.pay,FIELDS[c.field].desc+' (별마다)',
+        '<button class="btn pri" data-act="hireA" data-v="'+i+'"'+(full||S.money<c.fee?' disabled':'')+'>'+(full?'자리 없음':'청빙 '+fmt(c.fee))+'</button>');
+    });
+    h+='<div class="btns"><button class="btn" data-act="searchA"'+(S.money<100?' disabled':'')+'>다른 후보 찾기 · 100</button></div></div>';
+    panel.innerHTML=h;return;
+  }
+  h+='<div class="sec">목양</div>';
+  h+=srow('목양 수용력',S.members+' / '+Math.round(MOD.cap)+'명','담임목사·부교역자·직분자·세례교인·돌봄팀이 함께 돌볼 수 있는 성도 수예요. 넘으면 그만큼 성도가 떠나요.','',meter(MOD.cap/Math.max(1,S.members)));
   h+='<div class="sec">사역팀 · 주 '+fmt(teamPay())+'</div>';
   Object.keys(STAFF).forEach(function(k){
     var t=STAFF[k],lv=S.staff[k]||0,lk=(t.goal||0)>S.goal,next=t.costs[lv];
@@ -336,9 +330,9 @@ function moodWhy(k){
   else if(k==='park'){cap('park','주차 자리');L.push('주차 자리가 많은 곳: '+topCap('park'));L.push('주차 구역에 주차장·주차 타워·자전거 거치대를 지어요');}
   else if(k==='past'){
     cap('past','돌볼 수 있는 성도');
-    var st=S.staff,o=S.off,as=S.assoc.reduce(function(t,a){return t+35+(a.field==='visit'?12*a.skill:0);},0);
-    L.push('담임 목사 25'+(st.care?' + 돌봄팀 '+8*st.care:'')+(as?' + 부교역자 '+as:'')+(o.deacon?' + 집사 '+6*o.deacon:'')+(o.kwonsa?' + 권사 '+10*o.kwonsa:'')+(o.elder?' + 장로 '+18*o.elder:''));
-    L.push('행사 › 사역자 탭에서 부교역자 청빙·직분자 임명·돌봄팀으로 늘려요');
+    var st=S.staff,o=S.off,as=Math.round(S.assoc.reduce(function(t,a){return t+35+(a.field==='visit'?12*asSkill(a):0);},0));
+    L.push('담임 목사 25'+(st.care?' + 돌봄팀 '+8*st.care:'')+(as?' + 부교역자 '+as:'')+(PA.cap?' + 세례교인·신학 수료 '+Math.round(PA.cap):'')+(o.deacon?' + 집사 '+6*o.deacon:'')+(o.kwonsa?' + 권사 '+10*o.kwonsa:'')+(o.elder?' + 장로 '+18*o.elder:''));
+    L.push('성도 화면에서 세례·직분 임명, 직분자 화면에서 부교역자 청빙, 행사 › 사역팀의 돌봄팀으로 늘려요');
   }
   if(w)L.unshift('만족도 비중 '+Math.round(w*100)+'%');
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');

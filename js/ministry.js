@@ -57,7 +57,6 @@ function unlockNames(n){
   for(var id in UNLOCK)if(UNLOCK[id]===n)out.push(id==='sky'?'연결 다리':(D[id]?D[id].name:id));
   for(var k in STAFF)if((STAFF[k].goal||0)===n&&n>0)out.push(STAFF[k].name);
   for(var e in EVENTS)if((EVENTS[e].goal||0)===n&&n>0&&!EVENTS[e].hidden)out.push(EVENTS[e].name);
-  for(var o in OFFICE)if(OFFICE[o].goal===n)out.push(OFFICE[o].name+' 임명');
   return out;
 }
 function checkGoal(){
@@ -123,20 +122,13 @@ function dismissAssoc(i){
 function searchCands(){if(S.money<100)return '자금이 부족해요';S.money-=100;refreshCands();save();return '';}
 
 /* ---------- 직분자 ---------- */
+// 직분은 성도 화면에서 한 사람씩 세운다 (people.js). 여기는 직분마다의 효과 설명
 var OFFICE={
-  deacon:{name:'집사',per:8,cost:150,goal:1,desc:'목양 수용력 +6, 운영비 -1% (최대 -12%)'},
-  kwonsa:{name:'권사',per:15,cost:300,goal:2,desc:'목양 수용력 +10, 만족 +0.4 (최대 +6)'},
-  elder:{name:'장로',per:25,cost:600,goal:3,desc:'목양 수용력 +18, 이탈 -2% (최대 -20%), 평판 +0.1/주'}
+  deacon:{name:'집사',desc:'목양 수용력 +6, 운영비 -1% (최대 -12%)'},
+  kwonsa:{name:'권사',desc:'목양 수용력 +10, 만족 +0.4 (최대 +6)'},
+  elder:{name:'장로',desc:'목양 수용력 +18, 이탈 -2% (최대 -20%), 평판 +0.1/주'}
 };
 function offTotal(s){s=s||S;return (s.off.deacon||0)+(s.off.kwonsa||0)+(s.off.elder||0);}
-function officeMax(k){return Math.floor(S.members/OFFICE[k].per);}
-function appoint(k){
-  var o=OFFICE[k];
-  if(o.goal>S.goal)return lockText(o.goal)+' 임명할 수 있어요';
-  if(S.off[k]>=officeMax(k))return '성도 '+o.per+'명마다 '+o.name+' 한 명을 세울 수 있어요';
-  if(S.money<o.cost)return '임직식 비용이 부족해요';
-  S.money-=o.cost;S.off[k]++;recalc();save();return '';
-}
 
 /* ---------- 특별행사 ----------
    행사 화면(screens.js)에서 고른다. 시작하면 값을 내고, 소요 시간(dur 주, 게임 속 시간) 동안 진행 효과(mods)가 적용된다.
@@ -150,11 +142,8 @@ function rwMood(v){S.tempMood+=v;return '만족 +'+v;}
 var EVENTS={
   smallgroup:{name:'소그룹 모임',ic:'🫖',col:'#6fa86a',cost:150,cd:2,dur:2,goal:0,desc:'가정과 교회에서 모여 삶을 나눠요',fx:'만족 +6, 이탈 -30%',rwt:'만족 +2',
     need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;},rw:function(){return [rwMood(2)];}},
-  communion:{name:'성찬식',ic:'🍞',col:'#b0763f',cost:200,cd:4,dur:2,goal:0,desc:'떡과 잔을 나누며 은혜를 기억해요',fx:'영성(성례) 크게 ↑, 만족 +4',rwt:'만족 +2',
+  communion:{name:'성찬식',ic:'🍞',col:'#b0763f',cost:200,cd:4,dur:2,goal:0,desc:'떡과 잔을 나누며 은혜를 기억해요 (세례는 성도 화면에서 한 사람씩 베풀어요)',fx:'영성(성례) 크게 ↑, 만족 +4',rwt:'만족 +2',
     need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=4;},rw:function(){return [rwMood(2)];}},
-  baptism:{name:'세례식',ic:'💧',col:'#4f8fc4',cost:300,cd:6,dur:4,goal:0,desc:'새 성도가 믿음을 고백하고 세례를 받아요',fx:'영성(성례) ↑, 새 성도 정착(이탈 -25%, 만족 +2)',rwt:'평판 +4',
-    need:function(){return S.newSinceBap>=3?'':'지난 세례 뒤 새 성도가 3명 이상 필요해요 (지금 '+S.newSinceBap+'명)';},
-    now:function(){S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=2;},rw:function(){return [rwRep(4)];}},
   street:{name:'노방전도',ic:'📣',col:'#d98a3a',cost:250,cd:3,dur:2,goal:0,desc:'거리에서 이웃을 만나 교회를 소개해요',fx:'방문자 +40%',rwt:'평판 +1',mods:function(m){m.vis*=1.4;},rw:function(){return [rwRep(1)];}},
   bazaar:{name:'바자회',ic:'🛍️',col:'#c9627a',cost:300,cd:8,dur:3/7,goal:1,desc:'물건을 모아 팔고 수익으로 이웃을 도와요',fx:'',rwt:'수익 600 + 성도×12, 평판 +2',
     rw:function(){return [rwMoney(600+S.members*12),rwRep(2)];}},
@@ -253,7 +242,7 @@ function refreshMods(){
   m.decay*=1-0.2*st.admin;m.upkeep*=1-0.04*st.admin;m.loss*=1-0.05*st.newcomer;
   m.rep+=0.2*st.media+0.5*st.mission;
   S.assoc.forEach(function(a){
-    m.cap+=35;var k=a.skill;
+    m.cap+=35;var k=asSkill(a);
     if(a.field==='edu')m.care*=1+0.04*k;
     else if(a.field==='praise'){m.word*=1+0.04*k;part('찬양 부교역자',0.6*k);}
     else if(a.field==='visit'){m.cap+=12*k;m.loss*=1-0.03*k;}
@@ -261,7 +250,8 @@ function refreshMods(){
     else if(a.field==='mission'){m.vis*=1+0.04*k;m.rep+=0.15*k;}
   });
   var o=S.off;
-  m.cap+=6*o.deacon+10*o.kwonsa+18*o.elder;
+  m.cap+=6*o.deacon+10*o.kwonsa+18*o.elder+PA.cap;
+  m.offer*=ppGiveK();
   m.upkeep*=1-Math.min(0.12,0.01*o.deacon);
   part('권사',Math.min(6,0.4*o.kwonsa));
   m.loss*=1-Math.min(0.2,0.02*o.elder);
