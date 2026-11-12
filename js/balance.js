@@ -93,6 +93,9 @@ var PP_GIVE_LV=.005;
 // 교육 행사: 보상 수령 때 모든 성도 경험치 + xp. 값 = base + 성도 × per
 var EDU_EV={bible:{base:150,per:2,xp:12},creed:{base:250,per:3,xp:20},training:{base:600,per:5,xp:40}};
 var PP_SPIRIT_LV=.01,PP_SPIRIT_K=.15;
+/* 부교역자에게 성도 돌봄 맡기기: 매주 부교역자 한 사람이 (ASSOC_CARE0 + ASSOC_CARE_K × 실력)명을 심방하고, 선물 때가 된 사람에게는 선물도 한다.
+   맡길 성도는 호감 Lv(S.deleg.lv) 아래인 사람만, 레벨이 낮은 순으로. 교회 자금이 ASSOC_CARE_RES 아래로 내려가면 멈춘다 */
+var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
 var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율
 /* 회전 시간과 대기줄

@@ -85,6 +85,24 @@ function peopleWeek(){
   var x=S.mood>=50?PP_WEEK_XP:PP_WEEK_XP_LOW;
   (S.people||[]).forEach(function(p){ppGain(p,x);});
   (S.assoc||[]).forEach(function(a){asGain(a,.5);});
+  delegWeek();
+}
+/* 부교역자에게 성도 돌봄 맡기기 (balance.js ASSOC_CARE*) */
+function delegState(){return S.deleg||(S.deleg={on:false,lv:DELEG_LV0,last:null});}
+function asCare(a){return Math.round(ASSOC_CARE0+ASSOC_CARE_K*asSkill(a));}
+function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+asCare(a);},0);}
+function delegPool(){var L=delegState().lv;return (S.people||[]).filter(function(p){return p.lv<L;});}
+function delegWeek(){
+  var d=delegState();d.last=null;
+  if(!d.on||!S.assoc.length)return;
+  var cap=delegCap(),n=0,cost=0,up=0;
+  delegPool().sort(function(a,b){return a.lv-b.lv||a.vw-b.vw;}).forEach(function(p){
+    if(n>=cap)return;var did=false;
+    ['visit','gift'].forEach(function(k){var c=k==='gift'?PP_GIFT:PP_VISIT;if(ppCareWhy(p,k)||S.money-c.cost<ASSOC_CARE_RES)return;var r=ppCare(p.id,k);did=true;cost+=c.cost;if(r)up++;});
+    if(did)n++;
+  });
+  d.last={n:n,cost:cost,up:up,w:S.week};
+  if(n)addLog('부교역자들이 성도 '+n+'명을 돌봤어요 · '+fmt(cost));
 }
 /* 심방·선물 */
 function ppCareWhy(p,kind){

@@ -620,6 +620,11 @@ async function ministryChecks(browser, url) {
       pe.assoc = aOk && !!am && S.assoc.length === 1 && S.assoc[0].home && S.assoc[0].skill === 5 && S.assoc[0].name === tname && S.members === mem0 - 1 && S.people.length === mem0 - 1 && !ppById(t3.id) && Math.abs(asSkill(S.assoc[0]) - 5 * ASSOC_HOME_K) < .01;
       // 부교역자 격려: 레벨이 오르면 실력이 커진다
       const a0 = S.assoc[0], sk0 = asSkill(a0); a0.xp = asNeed(1) - 1; m1 = cash(); pe.cheer = asCheer(0) === '+2' && cash() === m1 - ASSOC_CHEER.cost && asSkill(a0) > sk0 && /주 뒤/.test(asCheer(0));
+      // 부교역자에게 돌봄 맡기기: 켜면 매주 Lv 아래 성도를 능력만큼 심방·선물, 자금이 바닥 가까우면 멈춤
+      { const d = delegState(); d.lv = 10; S.people.forEach(z => { z.vw = -99; z.gw = -99; }); const low = delegPool().length; S.money = 99999; delegWeek(); const off = d.last === null;
+        d.on = true; const cap = delegCap(); const m2 = cash(); delegWeek(); const did = d.last.n, spent = m2 - cash();
+        S.people.forEach(z => { z.vw = -99; z.gw = -99; }); S.money = ASSOC_CARE_RES + 10; delegWeek(); const stop = d.last.n === 0;
+        pe.deleg = off && cap === asCare(S.assoc[0]) && cap >= ASSOC_CARE0 && did === Math.min(cap, low) && spent === did * (PP_VISIT.cost + PP_GIFT.cost) && stop; d.on = false; S.money = 99999; }
       // 교육 행사: 보상 수령 때 모든 성도 경험치
       S.goal = Math.max(S.goal, 1); const xs = S.people.map(z => z.lv * 1000 + z.xp); S.ev.bible = { cd: 0 }; const be = runEvent('bible'); S.ev.bible.end = evNow() - .01; evTick(); const got = claimEvent('bible');
       pe.edu = be === '' && !!got && /모든 성도 경험치/.test(got[0]) && S.people.every((z, i) => z.lv * 1000 + z.xp > xs[i]) && !!EVENTS.creed && !!EVENTS.training;
@@ -677,6 +682,7 @@ async function ministryChecks(browser, url) {
   check(r.pe.bapt && r.pe.grow && r.pe.last70, '성장 단계: 세례 → 양육반 → 제자반 뒤 세 갈래(직분·교역·섬김), 마지막 단계는 모두 Lv 70부터');
   check(r.pe.deacon && r.pe.elder && r.pe.kwonsa && r.pe.cstaff, '성장 단계: 헌신성도 → 집사 → 장로(남)·권사(여), 섬김 끝 교회직원도 직분자이고 운영비·노후를 줄임');
   check(r.pe.grad && r.pe.slot && r.pe.assoc && r.pe.cheer, '성장 단계: 소그룹 리더 … 간사 → 신학교 → 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자, 격려로 레벨이 오름');
+  check(r.pe.deleg, '부교역자: 성도 돌봄을 맡기면 매주 능력만큼 호감 Lv 아래 성도를 심방·선물하고, 자금이 바닥 가까우면 멈춤');
   check(r.pe.edu, '교육 행사: 성경공부·교리공부·제자훈련 세미나의 보상을 받으면 모든 성도 경험치가 오름');
   check(r.pe.shrink && r.pe.week && r.pe.say && r.pe.legacy, '성도: 줄면 마음이 덜 붙은 사람부터 떠나고, 주마다 정이 들며, 한마디·초상화가 있고, 예전 저장의 직분도 이어짐');
   check(r.event && r.season, '행사: 비용을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
