@@ -80,8 +80,12 @@ function runBot(cfg) {
     let n = Math.ceil(S.members * 0.1);
     L.forEach(p => { if (n <= 0) return; if (S.money > PP_VISIT.cost + RES * 1.5 && !ppCareWhy(p, 'visit')) { ppCare(p.id, 'visit'); n--; stat.visits = (stat.visits || 0) + 1; } });
   }
+  // 고민·갈등: 할 수 있는 선택 가운데 가장 좋은 것(설명에 조건이 붙은 것 → 무료 보통 → 돈) — 사람이 하듯 대체로 지혜롭게
+  function cares() {
+    (S.cares || []).slice().forEach(c => { const o = CARES[c.k].o; let pick = -1; [0, 1, 2].forEach(i => { if (pick < 0 && o[i] && !careWhy(c, i)) pick = i; }); if (pick >= 0 && careChoose(c.id, pick) != null) stat.cares = (stat.cares || 0) + 1; });
+  }
   function pastoral() {
-    people();
+    cares(); people();
     if (S.members <= MOD.cap * 0.9) return;
     if (S.assoc.length < assocSlots() && S.cands.length) { let bi = 0; S.cands.forEach((c, i) => { if (c.skill > S.cands[bi].skill) bi = i; }); if (S.money > S.cands[bi].fee + RES * 2 && hireAssoc(bi) === '') stat.staff++; }
   }

@@ -16,7 +16,8 @@ var VIS_GIVE=3;          // 방문자 헌금: 한 명당
 var SPONSOR0=600,SPONSOR_DROP=6;   // 개척 후원: 시작 금액, 주마다 줄어드는 양
 
 /* 성도 수: 정착·이탈 */
-var JOIN_P=0.09;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다
+var JOIN_P=0.072;        // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
+var REFER_K=0.015;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
 var MOOD_LEAVE=45;       // 만족도가 이보다 낮으면 떠나는 성도가 는다
 var MOOD_GAIN=50;        // 만족도가 이보다 높으면 소개로 새 성도가 온다
 
@@ -93,6 +94,9 @@ var PP_GIVE_LV=.005;
 // 교육 행사: 보상 수령 때 모든 성도 경험치 + xp. 값 = base + 성도 × per
 var EDU_EV={bible:{base:150,per:2,xp:12},creed:{base:250,per:3,xp:20},training:{base:600,per:5,xp:40}};
 var PP_SPIRIT_LV=.01,PP_SPIRIT_K=.15;
+/* 성도의 고민·갈등 (concerns.js): 매주 min(CARE_P_MAX, 성도 × CARE_P_PER) 확률로 하나 생긴다 (동시에 CARE_MAX개까지, 성도 CARE_MIN_MEM명부터)
+   지혜로운 선택 CARE_GOOD · 보통 CARE_OK · 돈으로만 CARE_MONEY(값 CARE_COST) 경험치. CARE_DUE주 안에 고르지 않으면 레벨 −2, CARE_LEAVE 확률로 떠남, 만족 −CARE_IGNORE_MOOD */
+var CARE_P_PER=.01,CARE_P_MAX=.45,CARE_MAX=3,CARE_MIN_MEM=6,CARE_GOOD=60,CARE_OK=25,CARE_MONEY=10,CARE_COST=300,CARE_DUE=3,CARE_LEAVE=.3,CARE_IGNORE_MOOD=1.5;
 /* 부교역자에게 성도 돌봄 맡기기: 매주 부교역자 한 사람이 (ASSOC_CARE0 + ASSOC_CARE_K × 실력)명을 심방하고, 선물 때가 된 사람에게는 선물도 한다.
    맡길 성도는 호감 Lv(S.deleg.lv) 아래인 사람만, 레벨이 낮은 순으로. 교회 자금이 ASSOC_CARE_RES 아래로 내려가면 멈춘다 */
 var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;

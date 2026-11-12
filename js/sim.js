@@ -73,7 +73,7 @@ function weekEnd(){
   if(m>A.seats)churn+=(m-A.seats)*0.3;
   if(m>MOD.cap)churn+=(m-MOD.cap)*0.1;
   var lose=Math.floor(churn+Math.random());
-  var gain=mood>=MOOD_GAIN?Math.floor(m*0.02*(mood-MOOD_GAIN)/(100-MOOD_GAIN)/(1+m/300)+Math.random()):0;
+  var gain=mood>=MOOD_GAIN?Math.floor(m*REFER_K*(mood-MOOD_GAIN)/(100-MOOD_GAIN)/(1+m/300)+Math.random()):0;
   S.members=Math.max(0,m-lose+gain);
   if(lose>gain)msg+=' · 성도 '+(lose-gain)+'명이 떠났어요';
   // 평판: 40을 넘으면 넘은 만큼 빨리 식는다. 봉사·선교·행사·미디어로 꾸준히 채워야 80을 지킨다
@@ -84,7 +84,7 @@ function weekEnd(){
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}
   decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;
-  peopleWeek();
+  peopleWeek();caresWeek();
   if(S.week-S.candWeek>=6)refreshCands();
   var ev='';
   if(S.evtLeft>0){S.evtLeft--;if(S.evtLeft===0)S.evt=null;}

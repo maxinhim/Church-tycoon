@@ -628,6 +628,26 @@ async function ministryChecks(browser, url) {
       // 교육 행사: 보상 수령 때 모든 성도 경험치
       S.goal = Math.max(S.goal, 1); const xs = S.people.map(z => z.lv * 1000 + z.xp); S.ev.bible = { cd: 0 }; const be = runEvent('bible'); S.ev.bible.end = evNow() - .01; evTick(); const got = claimEvent('bible');
       pe.edu = be === '' && !!got && /모든 성도 경험치/.test(got[0]) && S.people.every((z, i) => z.lv * 1000 + z.xp > xs[i]) && !!EVENTS.creed && !!EVENTS.training;
+      // 고민·갈등: 생기면 알림, 교회가 갖춘 것을 잇는 선택은 조건이 있고 효과가 크며, 돈만 쓰면 어중간, 다그치면 마음이 멀어지고, 오래 두면 멀어짐
+      { const ce = {}; pe.ce = ce; S.cares = []; S.careId = 1; const rnd = Math.random; Math.random = () => 0; caresWeek(); Math.random = rnd;
+        ce.made = S.cares.length === 1 && !!CARES[S.cares[0].k];
+        const P2 = S.people; S.cares = [{ id: 50, k: 'marriage', a: P2[0].id, b: 0, w: S.week }];
+        const pa = P2[0]; pa.lv = 10; pa.xp = 0; const hasCounsel = careHas(['counsel']);
+        ce.gate = !hasCounsel && /상담실/.test(careWhy(S.cares[0], 0)) && careChoose(50, 0) === null && S.cares.length === 1;
+        const m0 = cash(), xl = pa.lv; const r3 = careChoose(50, 2); ce.money = /호감 \+/.test(r3) && cash() === m0 - PP_VISIT.cost && S.cares.length === 0;
+        S.cares = [{ id: 51, k: 'doubt', a: pa.id, b: 0, w: S.week }]; const lv1 = pa.lv; const rnd2 = Math.random; Math.random = () => .99; const r4 = careChoose(51, 3); Math.random = rnd2; ce.bad = /멀어/.test(r4) && pa.lv === lv1 - 2;
+        // 지혜로운 선택: 부교역자가 있으면 1:1 양육
+        S.cares = [{ id: 52, k: 'doubt', a: pa.id, b: 0, w: S.week }]; const x0 = pa.lv * 1000 + pa.xp; ce.wise = careWhy(S.cares[0], 1) === '' && /호감 \+35/.test(careChoose(52, 1)) && pa.lv * 1000 + pa.xp > x0;
+        // 갈등: 두 사람 모두에게
+        const pb = P2[1]; S.cares = [{ id: 53, k: 'seat', a: pa.id, b: pb.id, w: S.week }]; const b0 = pb.lv * 1000 + pb.xp; const r5 = careChoose(53, 1); ce.pair = r5.split('호감 +').length === 3 && pb.lv * 1000 + pb.xp > b0;
+        // 오래 두면: 레벨 −2, 만족 −
+        S.cares = [{ id: 54, k: 'lonely', a: pb.id, b: 0, w: S.week - CARE_DUE }]; const lv2 = pb.lv, tm = S.tempMood; const rnd3 = Math.random; Math.random = () => .99; caresWeek(); Math.random = rnd3;
+        ce.due = S.cares.every(c => c.id !== 54) && pb.lv === Math.max(1, lv2 - 2) && S.tempMood < tm;
+        // 선택지 순서는 사건마다 섞이지만 같은 사건은 늘 같다
+        const o1 = careOrder({ id: 7, k: 'job' }).join(), o2 = careOrder({ id: 8, k: 'job' }).join(), o3 = careOrder({ id: 9, k: 'job' }).join();
+        ce.shuffle = o1 === careOrder({ id: 7, k: 'job' }).join() && (o1 !== o2 || o2 !== o3);
+        ce.block = /<button[^>]*data-act="carepick"/.test(concernBlock((S.cares = [{ id: 55, k: 'job', a: pa.id, b: 0, w: S.week }], pa))) && !concernBlock(P2[3]);
+        S.cares = []; S.tempMood = 0; }
       // 성도가 줄면 마음이 덜 붙은 사람부터 떠나고, 한 주가 지나면 조금씩 정이 든다
       const keep = S.people.find(z => z.node === 'elder'); S.members = 6; recalc(); pe.shrink = S.people.length === 6 && !!ppById(keep.id);
       const x0 = S.people[S.people.length - 1].xp, l0 = S.people[S.people.length - 1].lv; peopleWeek(); pe.week = S.people[S.people.length - 1].xp > x0 || S.people[S.people.length - 1].lv > l0;
@@ -683,6 +703,9 @@ async function ministryChecks(browser, url) {
   check(r.pe.deacon && r.pe.elder && r.pe.kwonsa && r.pe.cstaff, '성장 단계: 헌신성도 → 집사 → 장로(남)·권사(여), 섬김 끝 교회직원도 직분자이고 운영비·노후를 줄임');
   check(r.pe.grad && r.pe.slot && r.pe.assoc && r.pe.cheer, '성장 단계: 소그룹 리더 … 간사 → 신학교 → 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자, 격려로 레벨이 오름');
   check(r.pe.deleg, '부교역자: 성도 돌봄을 맡기면 매주 능력만큼 호감 Lv 아래 성도를 심방·선물하고, 자금이 바닥 가까우면 멈춤');
+  if (!Object.values(r.pe.ce || {}).every(Boolean)) console.log('CARE', JSON.stringify(r.pe.ce));
+  check(r.pe.ce.made && r.pe.ce.gate && r.pe.ce.money && r.pe.ce.bad && r.pe.ce.wise, '고민: 교회가 갖춘 것을 잇는 지혜로운 선택은 조건이 있고 효과가 크며, 돈만 쓰면 어중간, 다그치면 마음이 멀어짐');
+  check(r.pe.ce.pair && r.pe.ce.due && r.pe.ce.shuffle && r.pe.ce.block, '갈등: 두 성도 모두에게 결과, 기한을 넘기면 마음이 멀어짐, 선택지 순서는 사건마다 섞임');
   check(r.pe.edu, '교육 행사: 성경공부·교리공부·제자훈련 세미나의 보상을 받으면 모든 성도 경험치가 오름');
   check(r.pe.shrink && r.pe.week && r.pe.say && r.pe.legacy, '성도: 줄면 마음이 덜 붙은 사람부터 떠나고, 주마다 정이 들며, 한마디·초상화가 있고, 예전 저장의 직분도 이어짐');
   check(r.event && r.season, '행사: 비용을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
@@ -743,7 +766,12 @@ async function ministryChecks(browser, url) {
     // 목록 위 '모두 심방': 이 목록에서 할 수 있는 사람 모두 (대기 기간인 사람은 빼고)
     const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
     o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
-    o.bulk = nv > 3 && S.money === mb - nv * PP_VISIT.cost && S.people.every(q => !ppCareOk(q, 'visit')) && document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]').disabled && !!document.querySelector('#scrBody [data-act="bulk"][data-v="gift"]:not([disabled])'); S.lvl = lv1;
+    o.bulk = nv >= 2 && S.money === mb - nv * PP_VISIT.cost && S.people.every(q => !ppCareOk(q, 'visit')) && document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]').disabled && !!document.querySelector('#scrBody [data-act="bulk"][data-v="gift"]:not([disabled])'); S.lvl = lv1;
+    // 고민 탭: 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림 (행사 버튼 배지에도 셈)
+    { const q = S.people[1]; S.cares = [{ id: 90, k: 'lonely', a: q.id, b: 0, w: S.week }]; syncEvBadge(); document.querySelector('#scrTabs [data-v="care"]').click();
+      const cs = document.querySelectorAll('#scrBody .ppc'); o.care = cs.length === 1 && !!cs[0].querySelector('.pcare') && !document.getElementById('ppBadge').hidden;
+      cs[0].click(); const dl = document.getElementById('scrDlg'), btns = dl.querySelectorAll('[data-act="carepick"]'); o.care = o.care && /외로움/.test(dl.textContent) && btns.length === 4;
+      const ok = [...btns].find(b => !b.disabled); ok.click(); o.care = o.care && S.cares.length === 0 && !document.querySelector('#scrDlg .scare'); document.querySelector('#scrDlg [data-act="evclose"]').click(); }
     return o; });
   await page.click('#scr [data-act="scrclose"]'); await page.click('#fab [data-fab="officers"]');
   const offScr = await page.evaluate(() => { const o = {};
@@ -878,6 +906,7 @@ async function ministryChecks(browser, url) {
   check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(행사·사역자 탭), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
+  check(ppScr.care, '성도 화면: 고민 탭에 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');

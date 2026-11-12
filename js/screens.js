@@ -8,7 +8,7 @@
    UI.scr = 열린 화면('events'), UI.scrTab = 탭, UI.scrSel = 정보 창에 띄운 것 */
 var SCREENS={
   events:{title:'행사',tabs:[['events','행사'],['staff','사역팀']]},
-  people:{title:'성도',tabs:[['all','전체'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
+  people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
   officers:{title:'직분자',tabs:[['off','직분'],['B','교역'],['C','섬김'],['assoc','부교역자'],['cands','청빙']]}
 };
 var PP_PAGE=60;
@@ -108,7 +108,7 @@ function syncScreen(){
 function syncEvBadge(){
   var b=$('#evBadge');if(!b)return;var n=evReadyCount();
   b.hidden=!n;if(n)b.textContent=n;
-  var pb=$('#ppBadge'),pn=ppReadyCount();if(pb){pb.hidden=!pn;if(pn)pb.textContent=pn;}
+  var pb=$('#ppBadge'),pn=ppReadyCount()+caresCount();if(pb){pb.hidden=!pn;if(pn)pb.textContent=pn;}
 }
 function scrToast(msg,ms){
   var t=$('#scrToast');if(!t)return;t.textContent=msg;t.hidden=false;
@@ -155,19 +155,19 @@ function heartLv(lv){return '<span class="hlv" aria-label="호감 레벨 '+lv+'"
 function ppCardHtml(p){
   var ln=ppLine(p);
   return '<button class="evc ppc '+ln.c+'" data-act="ppopen" data-v="'+p.id+'" data-pp="'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+', 호감 레벨 '+p.lv+', '+ln.t+'">'+
-    '<span class="evr">'+ringSvg(ppProg(p))+'<span class="ppi">'+portraitSvg(p)+'</span>'+heartLv(p.lv)+'</span>'+
+    '<span class="evr">'+ringSvg(ppProg(p))+'<span class="ppi">'+portraitSvg(p)+'</span>'+heartLv(p.lv)+(careOf(p)?'<span class="pcare" aria-label="고민 있음">💬</span>':'')+'</span>'+
     '<span class="evn">'+p.n+'</span><span class="evp" data-evp>'+ln.t+'</span></button>';
 }
 // 급한 순서: 임명 대기 → 다음 단계 가능 → 교육 중 → 직분·레벨 높은 순
 function ppOrder(a,b){
-  var k=function(p){return (p.tr&&p.tr.ready?4000:0)+(ppCanStep(p)?2000:0)+(p.tr&&!p.tr.ready?1000:0)+ppDepth(p)*120+p.lv;};
+  var k=function(p){return (careOf(p)?8000:0)+(p.tr&&p.tr.ready?4000:0)+(ppCanStep(p)?2000:0)+(p.tr&&!p.tr.ready?1000:0)+ppDepth(p)*120+p.lv;};
   return k(b)-k(a)||a.id-b.id;
 }
 // 지금 화면(탭)에 보이는 성도 목록 — 일괄 심방·선물도 이 목록에 한다
 function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
   if(UI.scr==='officers')return all.filter(function(p){return ppTrack(p)===(tab==='off'?'A':tab);}).sort(ppOrder);
-  return all.filter(function(p){var d=ppDepth(p);return tab==='new'?d===0:tab==='grow'?d>=1&&d<=3:tab==='lead'?d>=4:tab==='todo'?((p.tr&&p.tr.ready)||ppCanStep(p)):true;}).sort(ppOrder);
+  return all.filter(function(p){var d=ppDepth(p);return tab==='care'?!!careOf(p):tab==='new'?d===0:tab==='grow'?d>=1&&d<=3:tab==='lead'?d>=4:tab==='todo'?((p.tr&&p.tr.ready)||ppCanStep(p)):true;}).sort(ppOrder);
 }
 function bulkBar(){
   if(UI.scr==='officers'&&UI.scrTab==='assoc'){
@@ -185,7 +185,7 @@ function peopleHtml(){
   var all=(S.people||[]),tab=UI.scrTab,L=scrPeople();
   var cnt='등록 성도 '+all.length+'명 · 세례교인 '+all.filter(ppBaptized).length+'명 · 직분자 '+offTotal()+'명';
   var h='<p class="shint">'+cnt+'. 심방·선물로 호감 레벨을 올려 <b>세례 → 양육반 → 제자반</b>으로 기르고, 제자반 뒤에는 <b>직분·교역·섬김</b> 가운데 한 갈래로 세워요. 마지막 단계는 Lv 70부터예요.</p>';
-  if(!L.length)return h+'<p class="sempty">'+(tab==='todo'?'지금 임명하거나 다음 단계로 세울 성도가 없어요. 심방으로 호감을 쌓아 보세요.':'여기에 해당하는 성도가 아직 없어요.')+'</p>';
+  if(!L.length)return h+'<p class="sempty">'+(tab==='care'?'지금 고민이나 갈등을 겪는 성도가 없어요.':tab==='todo'?'지금 임명하거나 다음 단계로 세울 성도가 없어요. 심방으로 호감을 쌓아 보세요.':'여기에 해당하는 성도가 아직 없어요.')+'</p>';
   var n=Math.min(L.length,UI.ppMore||PP_PAGE);
   h+='<div class="evg">'+L.slice(0,n).map(ppCardHtml).join('')+'</div>';
   if(L.length>n)h+='<div class="smore"><button class="btn" data-act="ppmore">더 보기 · '+(L.length-n)+'명</button></div>';
@@ -276,6 +276,12 @@ function scrPeopleClick(a,v,el){
     var o=v==='cheer'?asCheerAll():ppCareAll(scrPeople(),v),nm={visit:'심방',gift:'선물',cheer:'격려'}[v];
     if(!o.done){scrToast(o.poor?'자금이 부족해요':'지금 '+nm+'할 사람이 없어요',2000);sfx('error',.4);}
     else{sfx('coins',.6,0);if(o.up)setTimeout(function(){sfx('join',.6,0);},160);scrToast(o.done+'명에게 '+nm+'했어요'+(o.up?' · '+o.up+'명 레벨 업':'')+(o.poor?' · '+o.poor+'명은 자금이 모자라 다음에':''),2800);}
+    renderScreen();hud(true);return true;
+  }
+  if(a==='carepick'){
+    var cr=careChoose(+v,+el.dataset.i);
+    if(cr==null){scrToast('지금은 고를 수 없어요',1800);sfx('error',.4);}
+    else{sfx(/멀어|떠났|상처|서운|무거|나빠/.test(cr)?'error':'join',.6,0);scrToast(cr,3400);if(UI.scrSel&&UI.scrSel.t==='pp'&&!ppById(UI.scrSel.id))UI.scrSel=null;}
     renderScreen();hud(true);return true;
   }
   if(a==='deleg'){var d=delegState();d.on=!d.on;sfx('click',.4);scrToast(d.on?'부교역자들이 매주 호감 Lv '+d.lv+' 아래 성도를 돌봐요 (한 주 '+delegCap()+'명까지)':'성도 돌봄 맡기기를 껐어요',2400);save();renderScreen();return true;}
