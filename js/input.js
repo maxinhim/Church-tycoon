@@ -95,7 +95,12 @@ function syncTabs(){
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
+var SPEND_ACTS={floorup:1,fswap:1,gter:1,wswap:1,wfill:1,wbridge:1,pbuild:1,gramp:1,wfount:1};
 function onPanel(e){
+  var el=e.target.closest('[data-act]'),sa=el&&SPEND_ACTS[el.dataset.act],m0=S.money,pos=sa?spendPos():null;
+  onPanel0(e);if(sa)spendFx(m0,pos);
+}
+function onPanel0(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,v=el.dataset.v;
   if(a==='close'){closeDock();return;}
@@ -202,7 +207,8 @@ function onPanel(e){
 function tapRoomTile(t){
   UI.ghost={x:t.x,y:t.y};
   var p=tilePlan(t.x,t.y,UI.tool);
-  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){sfx('build',.7);
+  var m0=S.money;
+  if(p.ok&&S.money>=p.cost&&placeTile(t.x,t.y,UI.tool)){sfx('build',.7);spendFx(m0,{x:t.x+.5,y:t.y+.5,z:th(t.x,t.y)*LV+1});
     UI.undo.push({x:t.x,y:t.y});
     var rb=roomAt(t.x,t.y,UI.tool),d=defOf(rb);
     toast((p.kind==='floor'?tileOf(rb,t.x,t.y).f+'층으로 올렸어요':'칸을 지었어요')+' · '+d.name,1400);

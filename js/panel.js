@@ -108,7 +108,7 @@ function renderBuild(){
   else{
     buildOrder(UI.cat).forEach(function(d){
       var el=document.createElement('button');el.className='card';el.dataset.act='pick';el.dataset.v=d.id;
-      el.appendChild(iconCanvas(d));
+      el.appendChild(iconCanvas(d,.78));
       var lk=isLocked(d.id);if(lk)el.classList.add('lock');
       var tg=effTags(d);
       el.setAttribute('aria-label',d.name+', '+(lk?'잠김':fmt(d.cost))+'. '+effText(d));
@@ -116,12 +116,24 @@ function renderBuild(){
         '<span class="ef">'+(tg.length?tg.map(function(x){return '<i>'+x+'</i>';}).join(''):'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });
-    dragScroll(cards);
+    dragScroll(cards);cards.addEventListener('scroll',function(){if(cards._raf)return;cards._raf=requestAnimationFrame(function(){cards._raf=0;focusCard();});});
     // 직전에 고른 카드가 보이게 (가운데 쯤으로)
     var lp=UI.lastPick&&UI.lastPick[UI.cat],le=lp&&cards.querySelector('[data-v="'+lp+'"]');
     if(le){le.classList.add('last');cards.scrollLeft=Math.max(0,le.offsetLeft-cards.offsetLeft-(cards.clientWidth-le.offsetWidth)/2);}
   }
   refreshCards();renderDetail();
+}
+/* 카드 줄 가운데에 온 카드의 이름·설명·효과를 아래 두 줄로 */
+function focusCard(){
+  var c=$('#cards'),el=$('#detail');if(!c||!el||UI.tool==='demolish'||isPlacing())return;
+  var cs=c.querySelectorAll('.card');if(!cs.length)return;
+  var mid=c.scrollLeft+c.clientWidth/2,best=null,bd=1e9;
+  for(var i=0;i<cs.length;i++){var q=cs[i].offsetLeft-c.offsetLeft+cs[i].offsetWidth/2,dd=Math.abs(q-mid);if(dd<bd){bd=dd;best=cs[i];}}
+  if(c.scrollLeft<=2)best=cs[Math.min(cs.length-1,Math.floor(c.clientWidth/2/ (cs[0].offsetWidth+8)))]||best;
+  var cur=c.querySelector('.card.focus');if(cur===best&&el.dataset.f===best.dataset.v)return;
+  if(cur)cur.classList.remove('focus');best.classList.add('focus');
+  var d=D[best.dataset.v];if(!d)return;el.dataset.f=d.id;
+  el.innerHTML='<div class="tx full cinfo"><b>'+d.name+'</b> '+(d.desc||'')+'<br><span>'+effText(d)+'</span></div>';
 }
 // 마우스로도 가로로 끌어 넘긴다 (손가락은 기본 가로 스크롤). 끌었으면 그 클릭은 고르기로 치지 않는다
 function dragScroll(el){
@@ -144,6 +156,7 @@ function renderDetail(){
   renderSelCard();
   if(isPlacing()){renderPbar();return;}
   var el=$('#detail');if(!el)return;
+  if(UI.tab==='build'&&UI.bstep!=='cat'&&UI.tool!=='demolish'&&$('#cards')){el.dataset.f='';focusCard();return;}
   var h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 누르면 지도 위 카드에 철거 버튼이 나와요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 지도 위 작은 카드에서 옮기기·돌리기, 입구·출구, 철거를 할 수 있어요.')+'</div>';
   el.innerHTML=h;
 }

@@ -164,8 +164,8 @@ function drawMarkers(c){
     c.fillStyle='#fff';c.font='800 '+(9*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('?',q[0],q[1]+.5);
   });
 }
-function iconCanvas(d){
-  var W=66,H=46,cvs=document.createElement('canvas');
+function iconCanvas(d,k){
+  k=k||1;var W=Math.round(66*k),H=Math.round(46*k),cvs=document.createElement('canvas');
   cvs.width=W*2;cvs.height=H*2;cvs.style.width=W+'px';cvs.style.height=H+'px';
   var g=cvs.getContext('2d');g.scale(2,2);
   var dw=d.w/G,dh=d.h/G,tot=heightOf(d.id),wh=dw+dh,HW0=HW*G,HH0=HH*G;

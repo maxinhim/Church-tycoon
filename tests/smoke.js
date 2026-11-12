@@ -783,6 +783,18 @@ async function ministryChecks(browser, url) {
   check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 패널 없이 건물 위 카드, 그 주에는 카드에서 전액 되돌리기');
   check(repeat, '지도에서 짓기: 조경은 길처럼 화살표 쪽으로 한 칸씩 이어 짓기, 되돌리면 전액 환불');
   check(ended, '지도에서 짓기: ✕로 그만두면 목록으로 돌아옴');
+  // 짓는 값이 나가면 '-금액'이 그 자리에 뜨고, 카드 줄 아래에는 가운데 카드의 효과 문장이 뜬다
+  const spendInfo = await page.evaluate(() => {
+    UI.tab = 'build'; UI.fold = false; UI.cat = 'worship'; UI.bstep = 'items'; UI.tool = null; renderPanel();
+    const info = document.querySelector('#detail .cinfo'), txt = info ? info.textContent : '';
+    const small = document.querySelector('#cards .card canvas').getBoundingClientRect().width < 60;
+    S.money += 5000; startPlace('pray'); let m0 = S.money, n0 = F.length;
+    for (let y = 18; y < ROWS - 2 && !UI.ghost.ok; y++) for (let x = 8; x < COLS - 8; x++) if (canPlace(D.pray, x, y, UI.face)) { UI.ghost = { x, y, ok: 1 }; break; }
+    delete UI.ghost.ok; plLock = 0; plOk(); const fx = F.slice(n0).some(f => f.text === '-' + fmt(m0 - S.money) && m0 > S.money);
+    endPlace(); const pb = S.buildings.filter(b => b.def === 'pray').pop(); if (pb) demolish(pb.id); UI.fold = false; UI.sel = null; UI.lastBuilt = null; renderPanel();
+    return /\+/.test(txt) && txt.length > 8 && small && fx;
+  });
+  check(spendInfo, '건축: 카드 그림은 작게, 가운데 카드의 효과 문장이 뜨고, 지을 때 나간 돈이 -금액으로 뜸');
   check(catsFirst, '건축: 건축 버튼은 분류 목록(철거 포함)만 먼저 보여 줌');
   check(twoStep, '건축: 고른 분류의 건물은 가로 한 줄, 취소하면 직전에 고른 것이 보이고, 뒤로는 분류 목록');
   check(pathOk && escEnds, '지도에서 짓기: 길은 ✓로 한 칸씩 잇고 띠에서 종류를 고름, Esc로 끝냄');

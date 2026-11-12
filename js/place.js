@@ -343,7 +343,25 @@ function plNear(d,x,y,R,offFloor){
   }
   return null;
 }
+/* 돈이 나가면 동전 소리와 함께 얼마 나갔는지 그 자리에 띄운다 (건물·길·바닥·땅·칸·층 모두) */
+function spendPos(){
+  var b=UI.sel&&bById(UI.sel),sf=UI.selFloor,sp=UI.selPiece&&pieceById(UI.selPiece);
+  if(UI.pc&&UI.pc.x!=null&&UI.tool==='path')return {x:UI.pc.x+.5,y:UI.pc.y+.5,z:(UI.pc.l||0)*LV+.5};
+  if(UI.ghost&&UI.tool)return {x:UI.ghost.x+.5,y:UI.ghost.y+.5,z:ghostZ?ghostZ()+.6:.6};
+  if(b){var dm=bDims(b);return {x:b.x+dm.w/2,y:b.y+dm.h/2,z:bLevel(b)*LV+bHeight(b)+.5};}
+  if(sp)return {x:sp.x+.5,y:sp.y+.5,z:sp.l*LV+.6};
+  if(sf)return {x:sf.x+.5,y:sf.y+.5,z:th(sf.x,sf.y)*LV+.6};
+  var c=viewCenter(),w=toWorld(c[0],c[1],0);return {x:w[0],y:w[1],z:.6};
+}
+function spendFx(m0,pos){
+  var d=m0-S.money;if(!(d>0)||!pos)return;
+  sfx('coins',.55,120);
+  F.push({x:pos.x,y:pos.y,z:pos.z+.35,t:1.3,d:1.3,text:'-'+fmt(d),col:'#ffb4a0'});
+}
 function plOk(){
+  var m0=S.money,pos=spendPos();plOk0();spendFx(m0,pos);
+}
+function plOk0(){
   var k=placeKind(),now=performance.now();
   if(now<plLock)return;
   if(k==='path'){UI.pbarOpen=false;var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
