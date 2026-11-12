@@ -9,27 +9,6 @@ var scHtml='',scKey='',scMore=false,scArm=0;
 // 땅 카드: 교회 부지 안의 빈 땅(바닥이 깔렸든 아니든) 한 칸
 function selFloorOk(){var f=UI.selFloor;if(!f||f.x<0||f.y<0||f.x>=COLS||f.y>=PZ)return false;var sl=floorSlot(f.x,f.y,f.pid);return !!sl&&!sl.busy&&!piecesAt(f.x,f.y).some(function(p){return !p.s&&p.l===th(f.x,f.y);});}
 function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI.sel))||(UI.selPiece&&pieceById(UI.selPiece))||selFloorOk());}
-// 바닥 바꾸기 줄: 지금 바닥을 뺀 종류마다 (걷어낸 반값을 뺀) 바꾸는 값
-function floorRow(prev,pid,x,y){
-  var h=FLOOR_IDS.filter(function(id){return id!==prev;}).map(function(id){
-    var c=floorSwapCost(prev,id);
-    return '<button class="btn sm fsw" data-act="fswap" data-v="'+id+'" style="--fc:'+D[id].wall+'" aria-label="'+D[id].name+'(으)로 '+(prev?'바꾸기':'깔기')+' '+(c<0?'환불 ':'')+fmt(Math.abs(c))+'"><i></i>'+D[id].name+' '+(c<0?'+':'')+fmt(Math.abs(c))+'</button>';
-  }).join('');
-  return '<div class="scb fsr">'+h+'</div>';
-}
-// 옆면(벽) 타일 줄: 윗면 바닥과 같은 종류를 벽에 붙인다
-function wallRow(prev){
-  var h=FLOOR_IDS.filter(function(id){return id!==prev;}).map(function(id){
-    var c=floorSwapCost(prev,id);
-    return '<button class="btn sm fsw" data-act="wswap" data-v="'+id+'" style="--fc:'+D[id].wall+'" aria-label="옆면을 '+D[id].name+'(으)로 '+(c<0?'환불 ':'')+fmt(Math.abs(c))+'"><i></i>'+D[id].name+' '+(c<0?'+':'')+fmt(Math.abs(c))+'</button>';
-  }).join('');
-  if(prev)h+='<button class="btn sm" data-act="wswap" data-v="f_erase">흙벽으로 +'+fmt(Math.floor(D[prev].cost*.5))+'</button>';
-  return '<div class="scb fsr">'+h+'</div>';
-}
-function linkRow(n){
-  return '<div class="scb fsr">'+FLOOR_IDS.map(function(id){var c=n*D[id].cost;
-    return '<button class="btn sm fsw" data-act="linkf" data-v="'+id+'" style="--fc:'+D[id].wall+'"'+(S.money<c?' disabled':'')+' aria-label="'+D[id].name+'(으)로 '+n+'칸 잇기 '+fmt(c)+'"><i></i>'+D[id].name+' '+fmt(c)+'</button>';}).join('')+'</div>';
-}
 function scBtn(act,label,cls,v,aria){return '<button class="btn sm'+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v!=null?' data-v="'+v+'"':'')+(aria?' aria-label="'+aria+'"':'')+'>'+label+'</button>';}
 function scDem(label,cost){
   var armed=performance.now()<scArm;
@@ -62,11 +41,10 @@ function renderSelCard(){
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
     if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');}
-    if(lk)row+=scBtn('link',UI.linkPick===b.id?'길 잇기 ⌄':'길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
+    if(lk)row+=scBtn('link','길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
     var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
     if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));
     // 길 잇기를 누르면: 어떤 바닥으로 이을지 고르는 줄 (칸 수 × 한 칸 값)
-    if(lk&&UI.linkPick===b.id)h+=linkRow(lp.tiles.length);
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
     var mb='';
@@ -78,7 +56,7 @@ function renderSelCard(){
     var p=pieceById(UI.selPiece),sw=p.k==='sky'&&NAV.badSky[p.id],dk=isDeckPiece(p)&&!deckCovered(p);
     h='<div class="sct"><b>'+pieceName(p)+(p.f&&D[p.f]?' · '+D[p.f].name:'')+'</b><span>높이 '+p.l+(p.s?'→'+(p.l+1):'')+'</span></div>'+(sw?'<div class="scw">역할이 다른 건물을 이어 방문자가 건너지 않아요</div>':'');
     // 데크에는 바닥 타일을 바로 깔거나 바꿀 수 있다
-    if(dk)h+=floorRow(p.f||null,p.id,p.x,p.y);
+    if(dk)row+=scBtn('choose',p.f?'바닥 바꾸기':'바닥 깔기','pri','fswap','이 데크에 깔 바닥 고르기');
     if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmt(Math.floor(D[p.f].cost*.5)),'','f_erase');
     row+=scDem('철거',pieceCost(p)*0.5);
   }else if(isWater(UI.selFloor.x,UI.selFloor.y)){
@@ -89,11 +67,11 @@ function renderSelCard(){
   }else{
     // 빈 땅·바닥 칸: 바닥 깔기·바꾸기, 땅 높이기·낮추기, 경사로를 바로 고른다
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
-    h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?lvName(gh)+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'눌러서 바로 깔아요')+'</span></div>'+floorRow(cur,0,sf.x,sf.y);
+    h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?lvName(gh)+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'바닥을 깔면 걸을 수 있어요')+'</span></div>';
+    row+=scBtn('choose',cur?'바닥 바꾸기':'바닥 깔기','pri','fswap','이 칸에 깔 바닥 고르기');
     // 벽이 있는 칸: 옆면 타일로 바꿔 고를 수 있다 (줄은 하나만 보인다)
-    var face=cellHasFace(sf.x,sf.y),wm=face&&UI.wallMode,wcur=wallId(sf.x,sf.y);
-    if(wm)h='<div class="sct"><b>옆면(벽) · '+(wcur?D[wcur].name:'흙벽')+'</b><span>'+(gh?lvName(gh)+' · ':'')+'이 칸에 맞닿은 벽에 붙여요</span></div>'+wallRow(wcur);
-    if(face)row+=scBtn('wmode',wm?'윗면 타일':'옆면 타일','',null,wm?'윗면 바닥 타일 고르기':'옆면(벽) 타일 고르기');
+    var face=cellHasFace(sf.x,sf.y);
+    if(face)row+=scBtn('choose','벽 타일','','wswap','이 칸에 맞닿은 옆면(벽) 타일 고르기');
     var up=terPlan(sf.x,sf.y,'ter_set',gh+1),dn=gh>MINH||isRamp(sf.x,sf.y)?terPlan(sf.x,sf.y,'ter_set',isRamp(sf.x,sf.y)?gh:gh-1):null;
     if(!up.why)row+=scBtn('gter','땅 높이기 '+fmt(up.cost),'',gh+1,'땅을 한 층 높이기 '+fmt(up.cost));
     if(dn&&!dn.why)row+=scBtn('gter',(isRamp(sf.x,sf.y)?'평평하게 ':'땅 낮추기 ')+fmt(dn.cost),'',isRamp(sf.x,sf.y)?gh:gh-1);

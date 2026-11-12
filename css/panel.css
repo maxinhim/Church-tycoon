@@ -156,3 +156,39 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 .cinfo b{font-size:12.5px}
 .cinfo span{color:var(--good);font-weight:600}
 .detail{min-height:36px}
+/* 건축 창 압축: 제목 줄에 ‹·분류 이름, 작은 그림 카드, 아래 두 줄 설명. 낮은 가로 화면에서도 잘리지 않게 */
+#dock.bmode .dhead{padding:3px 4px 3px 8px;gap:6px}
+#dock.bmode .dhead h2{font-size:14px;display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap}
+#dock.bmode .dhead .bback{width:28px;height:28px;padding:0;border-radius:50%;font-size:18px;line-height:1;display:grid;place-items:center;flex:none}
+#dock.bmode .dclose{width:28px;height:28px}
+#dock.bmode .subtabs button{height:24px;padding:0 9px;font-size:12px}
+#panel.build{padding:5px 8px 6px}
+#panel.build .cards{gap:6px;min-height:0;padding-bottom:3px}
+#panel.build .card{width:68px;padding:2px 2px 3px;border-radius:9px;gap:0}
+#panel.build .card canvas{width:40px;height:28px}
+#panel.build .card .nm{font-size:11px;line-height:14px;max-width:64px;overflow:hidden;text-overflow:ellipsis}
+#panel.build .card .pr{font-size:10.5px;line-height:13px}
+#panel.build .card .pr small{font-size:9.5px}
+#panel.build .card .ef{min-height:0;margin-top:0}
+#panel.build .card .ef i{font-size:9.5px;line-height:12px;max-width:64px;overflow:hidden;text-overflow:ellipsis}
+#panel.build .detail{min-height:0;margin-top:3px}
+#panel.build .cinfo{font-size:11px;line-height:1.3}
+#panel.build .cinfo b{font-size:11.5px}
+#panel.build .btiles{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:4px}
+#panel.build .btile{min-height:44px}
+#panel.build .btile canvas{width:36px!important;height:25px!important}
+#panel.build .btile .bic{height:25px;font-size:17px}
+#panel.build .btile .nm{font-size:11px}
+/* 설명은 한 줄(넘치면 …), 효과는 끝까지 보이게 */
+#panel.build .cinfo .cd{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+#panel.build .cinfo .cd b{color:var(--ink)}
+#panel.build .cinfo .ce{color:var(--good);font-weight:600}
+@media (max-height:330px){
+  #dock.bmode{width:min(430px,62%)}
+  #panel.build .card .ef{display:none}
+  #panel.build .btiles{grid-template-columns:repeat(7,minmax(0,1fr))}
+  #panel.build .btile{min-height:40px}
+  #panel.build .btile canvas{width:32px!important;height:22px!important}
+  #panel.build .btile .bic{height:22px}
+  #panel.build .btile .nm{font-size:10.5px;letter-spacing:-.4px}
+}

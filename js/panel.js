@@ -55,6 +55,7 @@ function openGroup(g){
 }
 // 닫으면 짓던 것도 함께 취소한다 (미리보기만 지도에 남지 않게)
 function closeDock(){
+  if(UI.choose){var ck=UI.choose.kind;UI.choose=null;if(ck==='gdesign'){endPlace();return;}UI.fold=true;renderPanel();return;}
   UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;UI.lastBuilt=null;
   renderPanel();
 }
@@ -65,10 +66,14 @@ function renderPanel(){
   dock.hidden=UI.fold||isPlacing();rcptSide();syncTabs();renderPbar();renderSelCard();
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
-  $('#dtitle').textContent=GROUP_TITLE[g];
+  var dt=$('#dtitle'),cx=t==='build'&&UI.choose?chooseCtx():null;
+  if(cx)dt.innerHTML='<button class="bback" data-act="cback" aria-label="돌아가기">‹</button>'+cx.title;
+  else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]));
+  else dt.textContent=GROUP_TITLE[g];
+  $('#dock').classList.toggle('bmode',t==='build');
   var cs=UI.csub||'sport';
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
-    (t==='build'&&UI.bstep!=='cat'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
+    (t==='build'&&!UI.choose&&UI.bstep!=='cat'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
@@ -83,11 +88,67 @@ function buildOrder(cat){
     return a.d.cost-b.d.cost||a.i-b.i;
   }).map(function(o){return o.d;});
 }
+/* ---------- 고르는 창 (건축 카드와 같은 모양) ----------
+   지도 위 작은 카드에서 여러 종류 가운데 하나를 고를 때(바닥 깔기·바꾸기, 벽 타일, 길 잇기, 입구·출구 모양)
+   글자 버튼 줄 대신 건축 패널을 띄워 그림 카드로 고른다. UI.choose={kind, resume}.
+   ‹ 는 원래 카드로(입구·출구 모양은 처음이면 짓기를 그만둠, 바꾸던 중이면 지도로), 카드를 누르면 그 동작을 한다 */
+function chooseCtx(){
+  var c=UI.choose;if(!c)return null;
+  if(c.kind==='gdesign'){var d=D[UI.tool];if(!d||!isGateDef(d))return null;
+    return {title:(d.role==='ent'?'입구':'출구')+' 모양',items:GATE_DESIGNS.map(function(g){var id=gateId(d.role,g[0]);return {id:id,cost:D[id].cost,name:g[1]};}),cur:UI.tool};}
+  if(c.kind==='linkf'){var b=bById(UI.sel),lp=b&&linkPlan(b),n=lp&&!lp.why?lp.tiles.length:0;if(!n)return null;
+    return {title:'길 잇기 · '+n+'칸',items:FLOOR_IDS.map(function(id){return {id:id,cost:n*D[id].cost};})};}
+  var sp=UI.selPiece&&pieceById(UI.selPiece),sf=UI.selFloor,x=sp?sp.x:sf&&sf.x,y=sp?sp.y:sf&&sf.y;if(x==null)return null;
+  if(c.kind==='wswap'){var wp=wallId(x,y),wi=FLOOR_IDS.filter(function(id){return id!==wp;}).map(function(id){return {id:id,cost:floorSwapCost(wp,id)};});
+    if(wp)wi.push({id:'f_erase',cost:-Math.floor(D[wp].cost*.5),name:'흙벽으로'});
+    return {title:'벽 타일 · '+(wp?D[wp].name:'흙벽'),items:wi};}
+  var prev=floorSlot(x,y,sp?sp.id:0).get();
+  return {title:prev?'바닥 바꾸기 · '+D[prev].name:'바닥 깔기',items:FLOOR_IDS.filter(function(id){return id!==prev;}).map(function(id){return {id:id,cost:floorSwapCost(prev,id)};})};
+}
+function openChooser(kind){
+  UI.choose={kind:kind,resume:kind==='gdesign'&&isPlacing()};
+  if(!chooseCtx()){UI.choose=null;return;}
+  UI.tab='build';UI.fold=false;renderPanel();
+}
+function chooseBack(){
+  var c=UI.choose;UI.choose=null;if(!c){renderPanel();return;}
+  if(c.kind==='gdesign'){if(!c.resume){endPlace();return;}renderPanel();return;}
+  UI.fold=true;renderPanel();
+}
+function choosePick(id){
+  var c=UI.choose;if(!c)return;UI.choose=null;
+  if(c.kind==='gdesign'){var d=D[id];UI.gateDesign=d.design;UI.tool=id;renderPanel();return;}
+  UI.fold=true;
+  var act=c.kind==='linkf'?'linkf':c.kind;
+  onPanel0({target:{closest:function(){return {dataset:{act:act,v:id}};}}});
+  renderPanel();
+}
+function renderChooser(){
+  var cx=chooseCtx();
+  if(!cx){UI.choose=null;panel.innerHTML='';return;}
+  panel.innerHTML='<div class="cards" id="cards"></div><div class="detail" id="detail"></div>';
+  var cards=$('#cards');
+  cx.items.forEach(function(it){
+    var d=D[it.id],el=document.createElement('button');el.className='card';el.dataset.act='cpick';el.dataset.v=it.id;
+    el.appendChild(iconCanvas(d,.6));
+    var poor=it.cost>0&&S.money<it.cost;if(poor)el.classList.add('poor');
+    var tg=effTags(d);
+    el.setAttribute('aria-label',(it.name||d.name)+', '+(it.cost<0?'환불 ':'')+fmt(Math.abs(it.cost)));
+    el.insertAdjacentHTML('beforeend','<span class="nm">'+(it.name||d.name)+'</span><span class="pr">'+(it.cost<0?'+':'')+fmt(Math.abs(it.cost))+'</span>'+
+      '<span class="ef">'+(tg.length?'<i>'+tg[0]+'</i>':'<i>'+(d.short||'')+'</i>')+'</span>');
+    if(it.id===cx.cur)el.classList.add('last');
+    cards.appendChild(el);
+  });
+  dragScroll(cards);cards.addEventListener('scroll',function(){if(cards._raf)return;cards._raf=requestAnimationFrame(function(){cards._raf=0;focusCard();});});
+  var le=cards.querySelector('.last');if(le)cards.scrollLeft=Math.max(0,le.offsetLeft-cards.offsetLeft-(cards.clientWidth-le.offsetWidth)/2);
+  focusCard();
+}
 /* 건축 패널은 두 단계: ① 분류 목록(타일) → ② 고른 분류의 건물 카드 한 줄(가로로 끌어 넘김, ‹ 뒤로로 ①).
    짓다가 취소하면 ②로 돌아오고, 직전에 고른 카드가 보이게 그 자리로 넘겨 둔다 (UI.lastPick[분류]) */
 function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&(cat!=='club'||x.sub===(UI.csub||'sport'));})[0];return d?iconCanvas(d):null;}
 function renderBuild(){
   panel.scrollTop=0;
+  if(UI.choose){renderChooser();return;}
   if(UI.bstep==='cat'){
     panel.innerHTML='<div class="btiles" id="btiles"></div>';
     var bt=$('#btiles');
@@ -101,19 +162,18 @@ function renderBuild(){
     });
     renderDetail();return;
   }
-  var cname=UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]);
-  panel.innerHTML='<div class="bnav"><button class="bback" data-act="bback" aria-label="분류 목록으로">‹ 뒤로</button><b>'+cname+'</b></div><div class="cards" id="cards"></div><div class="detail" id="detail"></div>';
+    panel.innerHTML='<div class="cards" id="cards"></div><div class="detail" id="detail"></div>';
   var cards=$('#cards');
   if(UI.tool==='demolish'){cards.innerHTML='<p class="hint">철거할 건물을 지도에서 누르세요. 건축비의 절반이 돌아옵니다.</p>';}
   else{
     buildOrder(UI.cat).forEach(function(d){
       var el=document.createElement('button');el.className='card';el.dataset.act='pick';el.dataset.v=d.id;
-      el.appendChild(iconCanvas(d,.78));
+      el.appendChild(iconCanvas(d,.6));
       var lk=isLocked(d.id);if(lk)el.classList.add('lock');
       var tg=effTags(d);
       el.setAttribute('aria-label',d.name+', '+(lk?'잠김':fmt(d.cost))+'. '+effText(d));
       el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?lockLabel(d.id,true):fmt(d.cost)+(d.up?'<small> · 주 '+d.up+'</small>':''))+'</span>'+
-        '<span class="ef">'+(tg.length?tg.map(function(x){return '<i>'+x+'</i>';}).join(''):'<i>'+(d.short||'')+'</i>')+'</span>');
+        '<span class="ef">'+(tg.length?'<i>'+tg[0]+'</i>':'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });
     dragScroll(cards);cards.addEventListener('scroll',function(){if(cards._raf)return;cards._raf=requestAnimationFrame(function(){cards._raf=0;focusCard();});});
@@ -125,7 +185,7 @@ function renderBuild(){
 }
 /* 카드 줄 가운데에 온 카드의 이름·설명·효과를 아래 두 줄로 */
 function focusCard(){
-  var c=$('#cards'),el=$('#detail');if(!c||!el||UI.tool==='demolish'||isPlacing())return;
+  var c=$('#cards'),el=$('#detail');if(!c||!el||(!UI.choose&&(UI.tool==='demolish'||isPlacing())))return;
   var cs=c.querySelectorAll('.card');if(!cs.length)return;
   var mid=c.scrollLeft+c.clientWidth/2,best=null,bd=1e9;
   for(var i=0;i<cs.length;i++){var q=cs[i].offsetLeft-c.offsetLeft+cs[i].offsetWidth/2,dd=Math.abs(q-mid);if(dd<bd){bd=dd;best=cs[i];}}
@@ -133,7 +193,8 @@ function focusCard(){
   var cur=c.querySelector('.card.focus');if(cur===best&&el.dataset.f===best.dataset.v)return;
   if(cur)cur.classList.remove('focus');best.classList.add('focus');
   var d=D[best.dataset.v];if(!d)return;el.dataset.f=d.id;
-  el.innerHTML='<div class="tx full cinfo"><b>'+d.name+'</b> '+(d.desc||'')+'<br><span>'+effText(d)+'</span></div>';
+  var ef=effText(d).replace(/ · 유지비 0\/주$/,'');
+  el.innerHTML='<div class="tx full cinfo"><div class="cd"><b>'+d.name+'</b> '+(d.desc||'')+'</div>'+(ef&&d.id!=='f_erase'?'<div class="ce">'+ef+'</div>':'')+'</div>';
 }
 // 마우스로도 가로로 끌어 넘긴다 (손가락은 기본 가로 스크롤). 끌었으면 그 클릭은 고르기로 치지 않는다
 function dragScroll(el){
@@ -156,7 +217,7 @@ function renderDetail(){
   renderSelCard();
   if(isPlacing()){renderPbar();return;}
   var el=$('#detail');if(!el)return;
-  if(UI.tab==='build'&&UI.bstep!=='cat'&&UI.tool!=='demolish'&&$('#cards')){el.dataset.f='';focusCard();return;}
+  if(UI.tab==='build'&&(UI.choose||UI.bstep!=='cat')&&UI.tool!=='demolish'&&$('#cards')){el.dataset.f='';focusCard();return;}
   var h='<div class="tx">'+(UI.tool==='demolish'?'철거할 건물이나 길을 누르면 지도 위 카드에 철거 버튼이 나와요.':'지을 것을 고르면 지도에 미리보기가 놓여요. 지은 건물을 누르면 지도 위 작은 카드에서 옮기기·돌리기, 입구·출구, 철거를 할 수 있어요.')+'</div>';
   el.innerHTML=h;
 }

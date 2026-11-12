@@ -967,9 +967,14 @@ async function waterChecks(browser, url) {
     paintFloor(26, 10, 'f_wood');
     UI.fold = true; UI.tool = null; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: 26, y: 10 }; UI.wallMode = false; renderSelCard();
     const wc = document.getElementById('selCard');
-    o.wallCard = !!wc.querySelector('[data-act="wmode"]') && !wc.querySelector('[data-act="wswap"]');
-    wc.querySelector('[data-act="wmode"]').click();
-    o.wallCard = o.wallCard && wc.querySelectorAll('[data-act="wswap"]').length === FLOOR_IDS.length && /옆면/.test(wc.textContent);
+    // 벽 타일 버튼을 누르면 건축 창 모양의 고르는 창이 뜨고, 카드를 누르면 그 벽에 붙고 원래 카드로 돌아온다
+    o.wallCard = !!wc.querySelector('[data-act="choose"][data-v="wswap"]') && !wc.querySelector('[data-act="wswap"]');
+    wc.querySelector('[data-act="choose"][data-v="wswap"]').click();
+    const wcards = [...document.querySelectorAll('#cards [data-act="cpick"]')].map(e => e.dataset.v);
+    o.wallCard = o.wallCard && !document.getElementById('dock').hidden && /벽 타일/.test(document.getElementById('dtitle').textContent) && wcards.includes('f_wood') && wcards.includes('f_erase') && !wcards.includes('f_brick');
+    const wm1 = S.money; document.querySelector('#cards [data-v="f_wood"]').click();
+    o.wallCard = o.wallCard && wallId(26, 10) === 'f_wood' && document.getElementById('dock').hidden && !wc.hidden && S.money === wm1 - floorSwapCost('f_brick', 'f_wood');
+    wallSwap(26, 10, 'f_brick');
     // 이어 짓기: 높이·윗면·옆면이 함께 이어지고, 되돌리기 한 번에 함께 돌아온다
     selExtend(0); const em = S.money; UI.undo = [];
     o.extCost = extPlan(27, 10).cost === 2 * TER_UP + D.f_wood.cost + D.f_brick.cost;
@@ -1137,10 +1142,17 @@ async function gateChecks(browser, url) {
     let spot = null; for (let y = 10; y < 40 && !spot; y += 2) for (let x = 6; x < 50 && !spot; x += 2) if (canPlace(D.pray, x, y, 2) && [-2, -1, 0, 1, 2, 3].every(j => [-2, -1, 0, 1, 2, 3].every(i => !occ[y + j][x + i]))) spot = { x, y };
     UI.ghost = { ...spot }; UI.face = 2; plLock = 0; plOk();
     const pr = S.buildings.find(b => b.def === 'pray');
-    o.flowEnt = !!pr && !usable(pr) && isPlacing() && UI.tool === 'g_arch' && UI.gateFor === pr.id && !!UI.ghost && !document.getElementById('pbar').hidden;
+    // 입구 모양은 건축 창 모양의 카드로 먼저 고른다 (그동안 지도 짓기는 멈춤), 고르면 지도에서 놓기
+    const chooseEnt = !isPlacing() && !document.getElementById('dock').hidden && /입구 모양/.test(document.getElementById('dtitle').textContent) && document.querySelectorAll('#cards [data-act="cpick"]').length === GATE_DESIGNS.length && !!document.querySelector('#detail .cinfo');
+    document.querySelector('#cards [data-v="g_arch"]').click();
+    o.flowEnt = chooseEnt && !!pr && !usable(pr) && isPlacing() && UI.tool === 'g_arch' && UI.gateFor === pr.id && !!UI.ghost && !document.getElementById('pbar').hidden;
     const m0 = S.money; plLock = 0; plOk();
-    o.flowExt = !!gatesOf(pr).ent && isPlacing() && UI.tool === 'x_arch' && m0 - S.money === D.g_arch.cost;
-    document.querySelector('#pbar [data-act="gdesign"][data-v="flower"]').click();
+    o.flowExt = !!gatesOf(pr).ent && !isPlacing() && /출구 모양/.test(document.getElementById('dtitle').textContent) && UI.tool === 'x_arch' && m0 - S.money === D.g_arch.cost;
+    document.querySelector('#cards [data-v="x_flower"]').click();
+    // 놓는 중에도 '모양 바꾸기'로 다시 고를 수 있고, ‹면 놓던 자리로 돌아온다
+    const gk = { ...UI.ghost }; document.querySelector('#pbar [data-act="choose"][data-v="gdesign"]').click();
+    const reopen = !isPlacing() && !document.getElementById('dock').hidden; document.querySelector('#dtitle [data-act="cback"]').click();
+    o.flowExt = o.flowExt && reopen && isPlacing() && UI.tool === 'x_flower' && UI.ghost.x === gk.x && UI.ghost.y === gk.y;
     plLock = 0; plOk();
     o.flowDone = !!gatesOf(pr).ext && gatesOf(pr).ext.def === 'x_flower' && !isPlacing() && UI.sel === pr.id && !!pr.door;
     // 입구는 건물 반대쪽을 바라보고, 그 바깥 칸에서 들어간다
@@ -1345,8 +1357,9 @@ async function deckChecks(browser, url) {
     // 바닥 타일을 누르면 카드가 뜨고 바로 바꾼다 (걷어낸 반값을 뺀 값)
     S.floor['8,4'] = 'f_block'; recalc(); UI.fold = true; UI.tool = null;
     const fm = rotPt(8.5, 4.5), fq = toScreen(fm[0], fm[1], 0); onTap(fq[0], fq[1]);
-    const card = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="fswap"][data-v="f_wood"]');
-    const m2 = S.money; document.querySelector('#selCard [data-act="fswap"][data-v="f_wood"]').click();
+    const card = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
+    document.querySelector('#selCard [data-act="choose"][data-v="fswap"]').click();
+    const m2 = S.money; document.querySelector('#cards [data-act="cpick"][data-v="f_wood"]').click();
     o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost - Math.floor(D.f_block.cost * .5);
     // 바꾸면 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다 (기존 바닥 위는 걷어낸 반값을 뺀 값)
     o.fchain = isPlacing() && UI.tool === 'f_wood' && !!UI.ghost && Math.abs(UI.ghost.x - 8) + Math.abs(UI.ghost.y - 4) === 1;
@@ -1356,7 +1369,7 @@ async function deckChecks(browser, url) {
     const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && S.money - m3 === Math.floor(D.f_wood.cost * .5);
     // 빈 땅을 누르면 바닥·땅 높이기·경사로 카드, 높이기를 누르면 바로 한 층
     closeSelCard(); const em = rotPt(6.5, 2.5), eq = toScreen(em[0], em[1], 0); onTap(eq[0], eq[1]);
-    const gcard = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="gter"]') && !!document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="fswap"]');
+    const gcard = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="gter"]') && !!document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
     document.querySelector('#selCard [data-act="gter"]').click();
     o.gcard = gcard && th(6, 2) === 1;
     // 카드가 열린 채 빈 땅을 누르면 닫기만 한다
@@ -1427,8 +1440,8 @@ async function gripeChecks(browser, url) {
     const cafe = put('cafe'); const lp = linkPlan(cafe), m0 = S.money;
     UI.sel = cafe.id; UI.fold = true; renderSelCard();
     document.querySelector('#selCard [data-act="link"]').click();
-    const row = [...document.querySelectorAll('#selCard [data-act="linkf"]')].map(b => b.dataset.v);
-    document.querySelector('#selCard [data-act="linkf"][data-v="f_brick"]').click();
+    const row = [...document.querySelectorAll('#cards [data-act="cpick"]')].map(b => b.dataset.v);
+    document.querySelector('#cards [data-act="cpick"][data-v="f_brick"]').click();
     o.link = lp.tiles.length > 0 && row.length === FLOOR_IDS.length && usable(cafe) && m0 - S.money === lp.tiles.length * D.f_brick.cost && lp.tiles.every(t => S.floor[t.x + ',' + t.y] === 'f_brick');
     UI.sel = null; closeSelCard && closeSelCard();
     // 화장실: 급한데 없으면 불편 + 일찍 돌아감, 있으면 찾아간다
@@ -1617,9 +1630,9 @@ async function earlyChecks(browser, url) {
       UI.sel = wc.id; UI.fold = true; UI.tool = null; renderSelCard();
       const btn = document.querySelector('#selCard [data-act="gatego"]'), why = (document.querySelector('#selCard .scw') || {}).textContent || '';
       const unusable = !usable(wc) && !wc.door; if (btn) btn.click();
-      const placing = isPlacing() && isGateDef(D[UI.tool]) && D[UI.tool].role === 'ent' && UI.gateFor === wc.id && !!UI.ghost && !gateAttachWhy(D[UI.tool], UI.ghost.x, UI.ghost.y);
+      const placing = !isPlacing() && !document.getElementById('dock').hidden && isGateDef(D[UI.tool]) && D[UI.tool].role === 'ent' && UI.gateFor === wc.id && !!UI.ghost && !gateAttachWhy(D[UI.tool], UI.ghost.x, UI.ghost.y);
       // 모양을 바꿔 짓는다
-      document.getElementById('pbar').querySelector('[data-act="gdesign"][data-v="stone"]').click();
+      document.querySelector('#cards [data-act="cpick"][data-v="g_stone"]').click();
       const m0 = S.money; plLock = 0; plOk();
       const ng = gatesOf(wc).ent;
       o.fixdoor = unusable && !!btn && /입구를 지어야/.test(why) && placing && !!ng && ng.def === 'g_stone' && m0 - S.money === D.g_stone.cost && !!wc.door && !isPlacing() && UI.sel === wc.id;

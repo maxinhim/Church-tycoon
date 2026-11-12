@@ -8,7 +8,7 @@
    · 칸 건물·바닥: 지도를 누르면 바로 지어진다. 띠에 되돌리기·완료만 둔다.
    아래 띠(#pbar)는 이름·비용·효과, 지을 수 없으면 그 까닭을 보여 준다. */
 var REPEAT_CATS=['garden','deco'],LINE_KINDS=['fence','hedge'],FRONT_KINDS=['bench','picnic','board','bell','bikerack','arch'],plLock=0,plHtml='',PL_DIRNAME=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'];
-function isPlacing(){return !UI.fold&&UI.tab==='build'&&!!UI.tool&&UI.tool!=='demolish';}
+function isPlacing(){return !UI.fold&&UI.tab==='build'&&!!UI.tool&&UI.tool!=='demolish'&&!UI.choose;}
 function placeKind(){
   if(!isPlacing())return '';
   if(UI.tool==='path')return 'path';
@@ -83,7 +83,7 @@ function startGateFlow(b,role){
   UI.tab='build';UI.fold=false;UI.cat='gate';UI.sel=null;UI.selPiece=null;UI.selFloor=null;
   UI.gateFor=b.id;startPlace(id);UI.gateFor=b.id;
   var c=gateBest(b,id,gs.ent);if(c){UI.ghost={x:c.x,y:c.y};}
-  toast(defOf(b).name+'의 '+(role==='ent'?'입구':'출구')+'를 놓으세요 · 바로 옆 칸 아무 데나',1800);
+  UI.choose={kind:'gdesign'};
   renderPanel();
 }
 // 그만두면 건축 목록으로 돌아간다 (이미 지은 것은 그대로)
@@ -456,7 +456,7 @@ function renderPbar(){
   var h='',undo=UI.undo.length?'<button class="btn" data-act="undo">되돌리기</button>':'',d=D[UI.tool];
   if(gt){
     // 입구·출구 모양 고르기: 작은 줄 하나
-    h='<div class="prow"><b class="lvl">'+(d.role==='ent'?'입구':'출구')+'</b>'+segBtns('gdesign',d.design,GATE_DESIGNS.map(function(g){return [g[0],g[1]+' '+fmt(D[gateId(d.role,g[0])].cost)];}))+'</div>';
+    h='<div class="prow"><b class="lvl">'+(d.role==='ent'?'입구':'출구')+'</b><span><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span></span><button class="btn" data-act="choose" data-v="gdesign">모양 바꾸기</button></div>';
   }else if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
     var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 건물이 바라볼 방향(정면·출입구)을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';

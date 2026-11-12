@@ -95,7 +95,7 @@ function syncTabs(){
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
-var SPEND_ACTS={floorup:1,fswap:1,gter:1,wswap:1,wfill:1,wbridge:1,pbuild:1,gramp:1,wfount:1};
+var SPEND_ACTS={cpick:1,floorup:1,fswap:1,gter:1,wswap:1,wfill:1,wbridge:1,pbuild:1,gramp:1,wfount:1};
 function onPanel(e){
   var el=e.target.closest('[data-act]'),sa=el&&SPEND_ACTS[el.dataset.act],m0=S.money,pos=sa?spendPos():null;
   onPanel0(e);if(sa)spendFx(m0,pos);
@@ -106,6 +106,9 @@ function onPanel0(e){
   if(a==='close'){closeDock();return;}
   if(a==='subtab'){UI.tab=v;if(tabGroup(v)==='minis')UI.minisTab=v;else UI.statusTab=v;renderPanel();return;}
   if(a==='cat'){UI.cat=v;UI.bstep='items';UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderPanel();}
+  if(a==='choose'){openChooser(v);return;}
+  if(a==='cback'){chooseBack();return;}
+  if(a==='cpick'){choosePick(v);return;}
   if(a==='bback'){UI.bstep='cat';if(UI.tool==='demolish')UI.tool=null;renderPanel();return;}
   if(a==='csub'){UI.csub=v;UI.tool=null;UI.ghost=null;renderPanel();}
   else if(a==='dem'){UI.bstep='items';UI.tool=(UI.tool==='demolish')?null:'demolish';UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderPanel();}
@@ -115,7 +118,7 @@ function onPanel0(e){
     startPlace(v);
   }
   else if(a==='cancel'){endPlace();}
-  else if(a==='link'){UI.linkPick=UI.linkPick===UI.sel?null:UI.sel;renderDetail();}
+  else if(a==='link'){openChooser('linkf');}
   else if(a==='linkf'){var lbd=bById(UI.sel),lw=linkDoor(lbd,v);UI.linkPick=null;if(lw){toast(lw,1600);sfx('error',.4);}else{toast('입구까지 '+D[v].name+'을(를) 깔았어요',1600);sfx('floor',.5);}renderDetail();hud(true);}
   else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
