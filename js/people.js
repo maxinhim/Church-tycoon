@@ -86,6 +86,18 @@ function ppCare(id,kind){
   var up=ppGain(p,c.xp);recalc();save();
   return up?'+'+p.lv:'';   // '+레벨'이면 레벨이 올랐다
 }
+// 일괄 심방·선물: 지금 할 수 있는 사람(대기 기간·최고 레벨이 아닌)만, 자금이 되는 만큼 앞에서부터
+function ppCareOk(p,kind){var w=ppCareWhy(p,kind);return !w||w==='자금이 부족해요';}
+function ppCareAll(list,kind){
+  var c=kind==='gift'?PP_GIFT:PP_VISIT,o={done:0,poor:0,up:0};
+  list.forEach(function(p){if(!ppCareOk(p,kind))return;if(S.money<c.cost){o.poor++;return;}var r=ppCare(p.id,kind);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
+  return o;
+}
+function asCheerAll(){
+  var o={done:0,poor:0,up:0};
+  S.assoc.forEach(function(a,i){var w=asCheerWhy(a);if(w&&w!=='자금이 부족해요')return;if(S.money<ASSOC_CHEER.cost){o.poor++;return;}var r=asCheer(i);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
+  return o;
+}
 /* 다음 단계: 교육을 시작하고(값), 다 차면 임명한다 */
 function ppStep(p){return p.rank<=4?PP_STEPS[p.rank]:null;}
 function ppStepName(p){return ['세례','집사 임명',p.g==='m'?'장로 임명':'권사 임명','신학교 지원','부교역자로 섭외'][p.rank];}

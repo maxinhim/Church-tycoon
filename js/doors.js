@@ -7,8 +7,9 @@ var OPP=[1,0,3,2];
 function faceDims(d,face){var w=d.w/U,h=d.h/U;return (face===0||face===1)?{w:h,h:w}:{w:w,h:h};}
 function bDims(b){if(isRoom(b)){var r=roomDef(b);return {w:r.w,h:r.h};}return faceDims(D[b.def],b.face);}
 function needsDoor(b){return !!defOf(b).fill;}
-// 입구·출구 건물을 지어야 하는 건물 (한 칸짜리 소품 — 벤치·자판기 등 — 은 옆 길에서 바로 쓴다)
-function needsGates(b){return needsDoor(b)&&!defOf(b).cell;}
+// 입구·출구 건물을 지어야 하는 건물. 한 칸짜리 소품(벤치·자판기 등)과 편의 시설(화장실·휴게실·수유실·안내실·편의실 칸)은 옆 길에서 바로 쓴다
+function noGateDef(d){return !!d&&(!!d.cell||d.cat==='comfort');}
+function needsGates(b){return needsDoor(b)&&!noGateDef(defOf(b));}
 function bTiles(b){
   if(isRoom(b))return b.tiles;
   var dm=bDims(b),out=[];
@@ -77,10 +78,10 @@ function defaultDoors(b){
 function ensureDoors(b){
   if(!needsDoor(b)){if(b.door)delete b.door;return;}
   if(!needsGates(b)){
-    // 소품: 정면부터 돌아가며, 바로 옆이 걷는 길인 쪽을 쓴다
-    var f=b.face==null?2:b.face,order=[f,(f+2)%4,(f+3)%4,OPP[f]].filter(function(v,i,a){return a.indexOf(v)===i;}),pick=null;
-    for(var i=0;i<4&&!pick;i++){var dd=[0,1,2,3][(f+i)%4],sp={x:b.x,y:b.y,d:dd,l:0};if(doorNode(sp,b)>=0)pick=sp;}
-    pick=pick||{x:b.x,y:b.y,d:f,l:0};b.door={ent:pick,ext:{x:pick.x,y:pick.y,d:pick.d,l:0}};return;
+    // 소품·편의 시설: 1층 둘레에서 정면 쪽부터, 바로 옆이 걷는 길인 자리를 쓴다 (입구에서 닿는 길이면 더 좋다)
+    var f=b.face==null?2:b.face,sp=doorSpots(b).filter(function(s){return s.l===0;}),pick=null,best=-1;
+    sp.forEach(function(s){var n=doorNode(s,b);if(n<0)return;var v=(NAV.reach&&NAV.reach[n]?10:5)+(s.d===f?1:0);if(v>best){best=v;pick=s;}});
+    pick=pick||sp[0]||{x:b.x,y:b.y,d:f,l:0};b.door={ent:pick,ext:{x:pick.x,y:pick.y,d:pick.d,l:0}};return;
   }
   var g=gatesOf(b);
   if(gateOk(g.ent,b)&&gateOk(g.ext,b))b.door={ent:gateSpot(g.ent,b),ext:gateSpot(g.ext,b)};

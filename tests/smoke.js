@@ -1543,7 +1543,7 @@ async function gripeChecks(browser, url) {
       o.start50d = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].map(k => k + Math.round(c[k] * 100)).join(' ') + ' mood' + Math.round(S.mood); }
     o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.chapel.cost === 5600 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && MROOM.floorCost === 250 && GOALS[0].r === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
-    o.props = ['bench', 'picnic', 'parasol', 'swing', 'sunbed', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
+    o.props = ['bench', 'picnic', 'parasol', 'swing', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
     S.money = 999999; levelTick(true); S.goal = GOALS.length; recalc();
     const put = id => { for (let y = PZ - 3; y > 0; y--) for (let x = 2; x < COLS - 3; x++) if (canPlace(D[id], x, y, 2) && !onFloorAt(D[id], x, y, 2)) { build(id, x, y, 2); const nb = S.buildings[S.buildings.length - 1]; recalc(); return nb; } return null; };
     // 길 잇기: 고른 바닥으로 깔고 값은 칸 수 × 그 바닥 값
@@ -1554,6 +1554,8 @@ async function gripeChecks(browser, url) {
     document.querySelector('#cards [data-act="cpick"][data-v="f_brick"]').click();
     o.link = lp.tiles.length > 0 && row.length === FLOOR_IDS.length && usable(cafe) && m0 - S.money === lp.tiles.length * D.f_brick.cost && lp.tiles.every(t => S.floor[t.x + ',' + t.y] === 'f_brick');
     UI.sel = null; closeSelCard && closeSelCard();
+    // 편의 시설(화장실·휴게실 등)은 입구·출구 없이 옆 길에서 바로 쓴다
+
     // 화장실: 급한데 없으면 불편 + 일찍 돌아감, 있으면 찾아간다
     S.grip = {}; spawnV(false); const v = V[V.length - 1]; v.urge = 'wc'; v.life = 50;
     o.noWc = urgeGo(v) === false && S.grip.wc === 1 && v.life <= 3 && v.annoy === 1 && !v.urge;
@@ -1595,6 +1597,10 @@ async function gripeChecks(browser, url) {
     club.weekUses = 0; cafe.weekUses = 60; const toCafe2 = pick(); club.weekUses = cafe.weekUses = 0;
     o.dbg = [toCafe, toCafe2, !!club, !!cafe && usable(cafe)];
     o.spread = toCafe >= 9 && toCafe2 <= 3 && NEED_OK >= 85 && WAIT_T < 5 && CROWD_ANNOY > 1 && GRIPE_W.crowd >= 1;
+    // 편의 시설(화장실·휴게실 등)은 입구·출구 없이 옆 길에서 바로 쓴다
+    { const w2 = put('lounge'); recalc(); const lk = linkDoor(w2); recalc(); const g2 = gatesOf(w2);
+      o.wcFree = !needsGates(w2) && !g2.ent && !g2.ext && (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && needsGates(S.buildings.find(b => b.def === 'room')) && noGateDef(D.wc) && noGateDef(D.mcomf) && !noGateDef(D.cafe);
+      o.wcDbg = [!needsGates(w2), !g2.ent, lk, usable(w2), JSON.stringify(w2.door), JSON.stringify(w2.acc)]; }
     o.fixes = gripeFixes(D.boardgame).includes('외로움') && gripeFixes(D.cell).includes('외로움') && gripeFixes(D.bakery).includes('배고픔') && gripeFixes(D.cafe).includes('목마름') && /외로움/.test(effText(D.futsal));
     // 소모임 분류: 제목 줄에 운동·취미·음악 칩, 고른 묶음만 목록에
     o.club = CATS.some(c => c[0] === 'club') && D.gym.cat === 'club' && D.gym.sub === 'sport' && OUTDOOR.indexOf('court') >= 0 && PRICY_CATS.indexOf('club') >= 0;
@@ -1670,6 +1676,8 @@ async function gripeChecks(browser, url) {
   check(r.start50, '새 교회: 만족도 항목이 50% 안팎에서 시작, 건물 효과는 60%만, 이탈 45·소개 50 기준 (' + r.start50d + ')');
   check(r.price, '가격: 초기 자금 20,000, 기능 건물·칸 위층·목표 보상·대출 2배, 꾸미기·바닥은 그대로');
   check(r.props, '편의 소품: 벤치·피크닉·파라솔·그네·선베드·식수대·쓰레기통·정자는 편의 분류, 값 그대로, 이어 놓기');
+  if (!r.wcFree) console.log('WC', JSON.stringify(r.wcDbg));
+  check(r.wcFree, '편의 시설: 화장실·휴게실·편의실 칸은 입구·출구 없이 옆 길에서 바로 이용');
   check(r.link, '길 잇기: 카드에서 바닥 종류를 골라 그 바닥으로 깔고, 값은 칸 수 × 그 바닥 값');
   check(r.noWc && r.goWc, '불편: 화장실이 급하면 찾아가고, 없으면 불편을 겪고 일찍 돌아감');
   check(r.trash && r.legs, '불편: 매장에서 산 뒤 쓰레기통이 없으면 불편, 오래 걸으면 쉴 자리·마실 것을 찾음');
@@ -1735,7 +1743,7 @@ async function earlyChecks(browser, url) {
     S.money = 50000; homeView(); startPlace('wc'); o.offPath = !!UI.ghost && !onFloorAt(D.wc, UI.ghost.x, UI.ghost.y, UI.face) && canPlace(D.wc, UI.ghost.x, UI.ghost.y, UI.face); endPlace();
     // 입구 건물이 빠진 건물: 카드에 '입구를 지어야 운영돼요'와 '입구 짓기'. 누르면 길 쪽 자리에 미리보기가 뜨고 ✓로 짓는다
     { let spot = null; for (let y = 4; y < PZ - 8 && !spot; y++)for (let x = 4; x < COLS - 12 && !spot; x++) { let ok = true; for (let j = -3; j <= 6 && ok; j++)for (let i = -3; i <= 10 && ok; i++)if (occ[y + j][x + i] || S.floor[(x + i) + ',' + (y + j)]) ok = false; if (ok) spot = { x, y }; }
-      build('wc', spot.x, spot.y, 2); const wc = S.buildings[S.buildings.length - 1]; recalc();
+      build('pray', spot.x, spot.y, 2); const wc = S.buildings[S.buildings.length - 1]; recalc();
       const eg = gatesOf(wc).ent; S.buildings = S.buildings.filter(g => g !== eg); rebuildOcc(); recalc();
       UI.sel = wc.id; UI.fold = true; UI.tool = null; renderSelCard();
       const btn = document.querySelector('#selCard [data-act="gatego"]'), why = (document.querySelector('#selCard .scw') || {}).textContent || '';

@@ -103,7 +103,7 @@ function dropLooseGates(){
   var n=0;
   S.buildings=S.buildings.filter(function(g){
     if(!isGate(g))return true;
-    var b=bById(g.of);if(b&&gateOk(g,b))return true;
+    var b=bById(g.of);if(b&&needsGates(b)&&gateOk(g,b))return true;
     if(!g.free)S.money+=D[g.def].cost;n++;return false;
   });
   if(n)rebuildOcc();

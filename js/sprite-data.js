@@ -35,8 +35,6 @@ var SPR_DATA={"tree":{"src":"assets/decor/tree.png","w":114,"h":146,"fw":0.78,"b
 "board_b":{"src":"assets/decor/board_b.png","w":86,"h":132,"fw":0.6,"by":0.2,"sway":0},
 "busstop":{"src":"assets/decor/busstop.png","w":140,"h":156,"fw":1.15,"by":0.35,"sway":0,"back":"busstop_b"},
 "busstop_b":{"src":"assets/decor/busstop_b.png","w":137,"h":162,"fw":1.15,"by":0.35,"sway":0},
-"sunbed":{"src":"assets/decor/sunbed.png","w":133,"h":122,"fw":0.95,"by":0.35,"sway":0,"back":"sunbed_b"},
-"sunbed_b":{"src":"assets/decor/sunbed_b.png","w":134,"h":90,"fw":0.95,"by":0.35,"sway":0},
 "library":{"src":"assets/decor/library.png","w":84,"h":134,"fw":0.55,"by":0.2,"sway":0,"back":"library_b"},
 "library_b":{"src":"assets/decor/library_b.png","w":84,"h":134,"fw":0.55,"by":0.2,"sway":0},
 "drinkfount":{"src":"assets/decor/drinkfount.png","w":76,"h":125,"fw":0.45,"by":0.25,"sway":0,"back":"drinkfount_b"},

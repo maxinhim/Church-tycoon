@@ -104,7 +104,6 @@ mk('lantern','초롱 등','deco',1,1,140,0,'lamp','#7a5530','#f5e6a8',{beauty:0.
    dir: 'face' 앞·뒤 그림이 있어 화살표가 바라보는 방향 / 'axis' 앞뒤가 같은 긴 것(화살표가 이어 짓는 방향, 눕는 방향도 따라감) / 없으면 방향 없음
    hgt: 높이(칸), 눌러서 고를 때와 카드·미리보기에 쓴다 */
 mk('swing','그네 의자','comfort',1,1,380,1,'spr','#8a6a46','#a07a52',{prop:1,hgt:1.3,dir:'face',ccap:2,fcap:2,fill:{comf:20,fel:14},cap:2,dur:4,beauty:0.8,desc:'지붕 아래 둘이 앉아 이야기하는 그네 의자'});
-mk('sunbed','선베드','comfort',1,1,220,0,'spr','#8a6a46','#a07a52',{prop:1,hgt:.5,dir:'face',ccap:2,fill:{comf:26},cap:1,dur:3,beauty:0.4,desc:'누워서 쉬어가는 나무 의자'});
 mk('library','작은 도서함','deco',1,1,260,0,'spr','#8a6844','#6b4f3a',{hgt:1.2,dir:'face',fill:{word:12,comf:8},cap:2,dur:3,beauty:0.5,vis:0.01,desc:'책을 빌려 읽고 나누는 작은 도서함. 방문자 +1%'});
 mk('drinkfount','식수대','comfort',1,1,180,0,'spr','#c9c2b6','#9aa3a8',{prop:1,hgt:1.1,dir:'face',ccap:2,fill:{comf:16},cap:2,dur:2,beauty:0.3,desc:'목을 축이는 돌 식수대. 편의 수용 +2'});
 mk('grill','바비큐 그릴','deco',1,1,300,1,'spr','#3d4650','#59626b',{hgt:1.4,dir:'face',fcap:3,fill:{fel:26,comf:6},cap:3,dur:4,beauty:0.3,desc:'함께 구워 먹으며 교제하는 그릴'});

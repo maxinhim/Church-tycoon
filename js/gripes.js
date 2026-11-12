@@ -17,7 +17,7 @@ var GRIPES={
   food:{s:'배고픔',n:'배가 고파도 먹을 곳이 없던',fix:'매점·빵집·식당·카페',ids:['shop','bakery','dining','cafe','grill','market','cook']},
   drink:{s:'목마름',n:'목이 말라도 마실 곳이 없던',fix:'식수대·자판기·커피 카트·카페',ids:['drinkfount','vending','coffeecart','cafe','shop','books','bakery'],near:24*G},
   lonely:{s:'외로움',n:'어울릴 곳이 없어 외로웠던',fix:'소모임(운동·취미·음악)·소그룹실·청년부실',ids:['cell','youth'],cat:'club'},
-  seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','sunbed','parasol','elder'],near:18*G},
+  seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','parasol','elder'],near:18*G},
   bin:{n:'쓰레기 버릴 곳이 없던',fix:'매장 둘레에 쓰레기통'},
   bare:{n:'볼거리 없이 삭막하다고 느낀',fix:'다니는 길 둘레에 나무·화단·장식'},
   crowd:{n:'건물이 붐벼 그냥 돌아선',fix:'자리를 늘리세요 (층 올리기·하나 더)'},

@@ -68,8 +68,8 @@ function renderScreen(){
     body.className='sbody list';var keep=panel;panel=body;renderStaff('teams');panel=keep;
   }else if(UI.scr==='officers'&&UI.scrTab==='cands'){
     body.className='sbody list';var keep2=panel;panel=body;renderStaff('cands');panel=keep2;
-  }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=peopleHtml();}
-  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=UI.scrTab==='assoc'?assocHtml():officersHtml();}
+  }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
+  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=bulkBar()+(UI.scrTab==='assoc'?assocHtml():officersHtml());}
   else if(UI.scr==='events'){
     body.className='sbody';
     var ids=Object.keys(EVENTS).filter(function(id){return !EVENTS[id].hidden;});
@@ -163,9 +163,27 @@ function ppOrder(a,b){
   var k=function(p){return (p.tr&&p.tr.ready?4000:0)+(!p.tr&&ppStep(p)&&p.lv>=ppStep(p).lv?2000:0)+(p.tr&&!p.tr.ready?1000:0)+p.rank*50+p.lv;};
   return k(b)-k(a)||a.id-b.id;
 }
-function peopleHtml(){
+// 지금 화면(탭)에 보이는 성도 목록 — 일괄 심방·선물도 이 목록에 한다
+function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
-  var L=all.filter(function(p){return tab==='new'?p.rank===0:tab==='bapt'?p.rank===1:tab==='todo'?((p.tr&&p.tr.ready)||(!p.tr&&ppStep(p)&&p.lv>=ppStep(p).lv)):true;}).sort(ppOrder);
+  if(UI.scr==='officers')return all.filter(function(p){return p.rank>=2;}).sort(ppOrder);
+  return all.filter(function(p){return tab==='new'?p.rank===0:tab==='bapt'?p.rank===1:tab==='todo'?((p.tr&&p.tr.ready)||(!p.tr&&ppStep(p)&&p.lv>=ppStep(p).lv)):true;}).sort(ppOrder);
+}
+// 목록 위 한 줄: 이 목록 모두에게 심방·선물 (할 수 있는 사람 수와 모두 드는 값)
+function bulkBar(){
+  if(UI.scr==='officers'&&UI.scrTab==='assoc'){
+    var na=S.assoc.filter(function(a){var w=asCheerWhy(a);return !w||w==='자금이 부족해요';}).length;
+    if(!S.assoc.length)return '';
+    return '<div class="sbulk"><span>부교역자 '+S.assoc.length+'명</span><button class="btn'+(na?' pri':'')+'" data-act="bulk" data-v="cheer"'+(na?'':' disabled')+'>모두 격려 · '+na+'명 · '+fmt(na*ASSOC_CHEER.cost)+'</button></div>';
+  }
+  var L=scrPeople();if(!L.length)return '';
+  var nv=L.filter(function(p){return ppCareOk(p,'visit');}).length,ng=L.filter(function(p){return ppCareOk(p,'gift');}).length;
+  return '<div class="sbulk"><span>이 목록 '+L.length+'명</span>'+
+    '<button class="btn'+(nv?' pri':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+'>모두 심방 · '+nv+'명 · '+fmt(nv*PP_VISIT.cost)+'</button>'+
+    '<button class="btn'+(ng?' pri':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+'>모두 선물 · '+ng+'명 · '+fmt(ng*PP_GIFT.cost)+'</button></div>';
+}
+function peopleHtml(){
+  var all=(S.people||[]).slice(),tab=UI.scrTab,L=scrPeople();
   var cnt='등록 성도 '+all.length+'명 · 세례교인 '+all.filter(function(p){return p.rank>=1;}).length+'명 · 직분자 '+offTotal()+'명';
   var h='<p class="shint">'+cnt+'. 성도를 눌러 <b>심방</b>하고, 호감 레벨이 오르면 <b>세례 → 집사 → 장로·권사 → 신학교</b>로 세워 가요. 교육이 끝나면 직접 임명해 주세요.</p>';
   if(!L.length)return h+'<p class="sempty">'+(tab==='todo'?'지금 임명하거나 다음 단계로 세울 성도가 없어요. 심방으로 호감을 쌓아 보세요.':'여기에 해당하는 성도가 아직 없어요.')+'</p>';
@@ -234,6 +252,12 @@ function asDlgHtml(i){
 function scrPeopleClick(a,v){
   if(a==='ppopen'){UI.scrSel={t:'pp',id:+v};sfx('click',.4);renderScreen();return true;}
   if(a==='asopen'){UI.scrSel={t:'as',id:+v};sfx('click',.4);renderScreen();return true;}
+  if(a==='bulk'){
+    var o=v==='cheer'?asCheerAll():ppCareAll(scrPeople(),v),nm={visit:'심방',gift:'선물',cheer:'격려'}[v];
+    if(!o.done){scrToast(o.poor?'자금이 부족해요':'지금 '+nm+'할 사람이 없어요',2000);sfx('error',.4);}
+    else{sfx('coins',.6,0);if(o.up)setTimeout(function(){sfx('join',.6,0);},160);scrToast(o.done+'명에게 '+nm+'했어요'+(o.up?' · '+o.up+'명 레벨 업':'')+(o.poor?' · '+o.poor+'명은 자금이 모자라 다음에':''),2800);}
+    renderScreen();hud(true);return true;
+  }
   if(a==='ppmore'){UI.ppMore=(UI.ppMore||PP_PAGE)+PP_PAGE;renderScreen();return true;}
   if(a==='ppvisit'||a==='ppgift'){
     var p=ppById(+v),r=ppCare(+v,a==='ppgift'?'gift':'visit');
