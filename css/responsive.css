@@ -17,3 +17,63 @@
   #rotate svg{animation:tilt 2.4s ease-in-out infinite}
 }
 @keyframes tilt{0%,25%{transform:rotate(0)}65%,100%{transform:rotate(-90deg)}}
+
+/* ---------- 작게: 화면 위 정보·버튼·글씨를 줄여 지도를 덜 가린다 ---------- */
+#ui{--fabh:62px;--toph:36px;row-gap:6px}
+#top{padding:3px 9px 4px;max-width:min(260px,100%)}
+h1{font-size:12.5px}
+.lvp{font-size:9.5px;padding:2px 6px}
+.goal{font-size:9.5px;gap:5px}
+.goal .bar{flex-basis:32px;height:4px}
+#clock{padding:3px 8px 4px;min-width:128px;gap:2px;border-radius:10px}
+.ck1 b{font-size:12px}
+.ck1 span{font-size:9.5px}
+.days i{font-size:9px;line-height:13px;border-radius:4px}
+.ckw{font-size:10px}
+.wxi{width:13px;height:13px}
+.gbtn{width:34px;height:34px}
+.gbtn svg{width:17px;height:17px}
+.tools{gap:6px}
+.tools button{width:34px;height:34px;border-radius:10px}
+.tools svg{width:17px;height:17px}
+#status{padding:3px 10px;gap:1px 12px;border-radius:10px}
+.stat .k{font-size:8.5px}
+.stat b{font-size:11.5px}
+.stat small{font-size:9px}
+#fab{gap:9px}
+.fab{gap:2px}
+.fab .fc{width:44px;height:44px}
+.fab svg{width:19px;height:19px}
+.fab .fl{font-size:10px;padding:0 7px}
+#toast{font-size:11.5px;padding:5px 10px;left:44px;max-width:calc(100% - 44px)}
+/* 기능 패널(건축·행사·현황) */
+#dock{width:min(360px,50%);border-radius:12px}
+.dhead{padding:3px 4px 3px 9px;gap:6px}
+.dhead h2{font-size:12.5px}
+.subtabs button{height:22px;padding:0 9px;font-size:11px}
+.dclose{width:28px;height:28px}
+.dclose svg{width:16px;height:16px}
+#panel{padding:6px 8px;font-size:12px}
+.btn{height:30px;font-size:12px;padding:0 10px;border-radius:8px}
+.sec{font-size:12.5px;margin:8px 0 4px}
+.srow{padding:5px 8px;gap:8px;border-radius:9px}
+.srow b{font-size:12.5px}
+.srow p,.srow .meta{font-size:10.5px}
+.hint{font-size:11.5px;padding:6px 2px}
+.cov{font-size:11px}
+.chip{height:24px;font-size:11.5px;padding:0 9px}
+/* 지도 위 작은 카드·짓기 띠 */
+#selCard{padding:5px 7px;font-size:11px;gap:4px}
+.sct b{font-size:12px}
+.sct span,.scw,.sce{font-size:10px}
+#selCard .btn.sm{height:25px;font-size:11px;padding:0 8px}
+#pbar{font-size:10.5px;padding:4px 6px 4px 10px}
+#pbar .btn{height:26px;font-size:11px}
+#gatePop .gpt b{font-size:12px}
+#gatePop .gpt span{font-size:10px}
+#rcpt{font-size:11px;width:210px}
+@media (max-height:480px){
+  #ui{--fabh:57px;--toph:34px}
+  .fab .fc{width:40px;height:40px}
+  .fab svg{width:18px;height:18px}
+}

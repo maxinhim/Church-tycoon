@@ -146,8 +146,5 @@ function drawGateEnt(b){
     quad([[s1[0],s1[1],.02],[s2[0],s2[1],.02],[s3[0],s3[1],.02],[s4[0],s4[1],.02]],'#d8d2c6',EDGE);
   }
   if(L.flower){var cols=['#e57aa5','#f2c230','#ffffff','#d6604f'];for(var k=0;k<6;k++){var u=.14+.72*k/5,pp=rotPt(f<2?x+.5-ox*.42:x+u,f<2?y+u:y+.5-oy*.42),pq=P(pp[0],pp[1],.05);c.fillStyle=cols[k%4];c.beginPath();c.arc(pq[0],pq[1],2*s,0,6.283);c.fill();}}
-  // 간판: 문 위(문이 뒤쪽이면 지붕 위)
-  var sm=front?rotPt(cx+ox*.42,cy+oy*.42):rotPt(cx,cy),sq=P(sm[0],sm[1],front?H+.02:H+.45);
-  c.fillStyle=d.role==='ent'?'#3f9d5a':'#e08a2c';c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(sq[0],sq[1],5.5*Math.max(.8,s),0,6.283);c.fill();c.stroke();
-  c.fillStyle='#fff';c.font='800 '+(7*Math.max(.8,s))+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(d.role==='ent'?'입':'출',sq[0],sq[1]+.5);
+  // '입'·'출' 간판은 달지 않는다 (지도를 덜 어지럽게. 어느 쪽인지는 누르면 카드에 나온다)
 }

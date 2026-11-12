@@ -192,3 +192,14 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
   #panel.build .btile .bic{height:22px}
   #panel.build .btile .nm{font-size:10.5px;letter-spacing:-.4px}
 }
+/* 지금 효과를 보고 있는 카드: 파란 테두리·옅은 파란 바탕·살짝 떠오름, 아래로 설명 줄을 가리키는 ▼ */
+#panel.build .cards{padding-top:3px;padding-bottom:9px;align-items:flex-start}
+#panel.build .card{position:relative;transition:transform .15s,box-shadow .15s,background-color .15s}
+#panel.build .card.last{border-color:var(--line)}
+#panel.build .card.focus{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--card));box-shadow:0 0 0 1.5px var(--accent),0 4px 10px rgba(42,86,198,.28);transform:translateY(-2px)}
+#panel.build .card.focus .nm{color:var(--accent)}
+#panel.build .card.focus::after{content:'';position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--accent);border-bottom:0}
+#panel.build .cards .cpad{flex:none;display:block}
+#panel.build .cinfo{border-left:3px solid var(--accent);padding-left:6px}
+@media (prefers-reduced-motion:no-preference){#panel.build .card.focus{animation:cfocus .22s ease-out}}
+@keyframes cfocus{from{transform:translateY(0) scale(.96)}to{transform:translateY(-2px) scale(1)}}

@@ -1068,6 +1068,15 @@ async function queueChecks(browser, url) {
     o.built = !!b.q && b.q.cells.length === 6 && b.q.entry >= 0 && Math.abs(nodePos(b.q.entry).x - ex - .5) + Math.abs(nodePos(b.q.entry).y - (Q0 + 5.5)) === 1 && usable(b) && b.q.cells[0].y === Q0;
     o.dbg = [JSON.stringify(b.q), gid(ex, 28), usable(b), JSON.stringify(b.door), JSON.stringify(b.acc), !groundOk(ex, 24), groundOk(ex, 28)];
     o.noWalk = !groundOk(ex, Q0 + 2) && groundOk(ex, Q0 + 6) && navReach(gateNode())[gid(ex, Q0 + 2)] === undefined;
+    // 줄은 입구 건물 앞에서 시작해야만 그 건물의 줄: 출구 앞에는 줄을 시작할 수 없고, 줄이 있으면 방문자는 줄 끝으로만 들어간다
+    { const xo = doorOut(b.door.ext), ow = qGateAt(xo.x, xo.y, OPP[b.door.ext.d]);
+      const nearEnd = [0, 1, 2, 3].some(d => isQueueCell(xo.x + DIRS[d][0], xo.y + DIRS[d][1]));
+      o.entOnly = !ow && (nearEnd || /입구 바로 앞/.test(queueWhy(xo.x, xo.y, 0))) && entNode(b) === b.q.entry && b.q.entry !== doorNode(b.door.ent, b) && !groundOk(doorOut(b.door.ent).x, doorOut(b.door.ent).y);
+      // 입구 건물을 다른 곳으로 옮기면 남은 줄 타일은 그 건물의 줄이 아니다
+      const eg = gatesOf(b).ent, keep = { x: eg.x, y: eg.y, face: eg.face }; S.buildings = S.buildings.filter(g => g !== eg); rebuildOcc(); recalc();
+      o.entOnly = o.entOnly && !b.q && !usable(b);
+      S.buildings.push(eg); Object.assign(eg, keep); rebuildOcc(); recalc();
+      o.entOnly = o.entOnly && !!b.q && b.q.cells.length === 6 && usable(b); }
     // 한 줄만: 줄 중간 옆에는 갈래를 낼 수 없고, 아무 줄에도 닿지 않는 칸에는 깔 수 없음
     o.single = /이어 깔아요/.test(floorWhy(ex + 1, Q0 + 2, 'q_rope') || '') && /이어 깔아요/.test(floorWhy(ex + 6, Q0 + 2, 'q_rope') || '');
     o.rot = t0 === D.pray.dur * STAY * ROT_CAT.worship * capK(D.pray) * QUEUE_NONE_T && k0 === QUEUE_NONE_E && rotTime(b) > t0 * 1.3 && useK(b) > 1.3 && useK(b) / (rotTime(b) / t0 * QUEUE_NONE_T) > k0 / QUEUE_NONE_T;
@@ -1111,6 +1120,7 @@ async function queueChecks(browser, url) {
   });
   check(r.built && r.noWalk, '대기줄: 입구 앞부터 이어 깔면 그 건물의 줄이 되고, 줄 타일은 지나다닐 수 없음');
   check(r.single, '대기줄: 한 줄로만 이어지고 갈래·떨어진 칸은 깔리지 않음');
+  check(r.entOnly, '대기줄: 입구 건물 앞에서 시작한 줄만 그 건물의 줄(출구 앞은 안 됨), 줄이 있으면 줄 끝으로만 들어가고 입구가 없으면 줄도 없음');
   if (!(r.built && r.noWalk)) console.log('DBG', r.dbg.join(' | '));
   check(r.rot, '회전 시간: 성격·수용 인원·줄 길이로 정해지고, 줄이 길수록 길어지며 1초당 효과는 더 좋음');
   check(r.lined && r.served, '대기줄: 방문자가 줄 끝으로 들어와 차례대로 서고, 중간에 떠나지 않고 들어감');

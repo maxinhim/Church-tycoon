@@ -115,6 +115,7 @@ function drawDoorsOn(b,onlyTile){
 function doorPadPos(s){return {x:s.x+.5+DIRS[s.d][0]*.82,y:s.y+.5+DIRS[s.d][1]*.82,z:s.l*LV+.04};}
 // 선택했을 때 문 바깥에 '입'·'출' 표시
 function drawDoorPads(b){
+  return;  // '입'·'출' 표시는 그리지 않는다 (입구·출구 건물이 있다)
   if(!b||!b.door)return;
   var same=sameSpot(b.door.ent,b.door.ext),c=PJ.c,s0=Math.max(.7,PJ.s);
   [['ent',b.door.ent],['ext',b.door.ext]].forEach(function(it,i){

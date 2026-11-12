@@ -139,8 +139,8 @@ function renderChooser(){
     if(it.id===cx.cur)el.classList.add('last');
     cards.appendChild(el);
   });
-  dragScroll(cards);cards.addEventListener('scroll',function(){if(cards._raf)return;cards._raf=requestAnimationFrame(function(){cards._raf=0;focusCard();});});
-  var le=cards.querySelector('.last');if(le)cards.scrollLeft=Math.max(0,le.offsetLeft-cards.offsetLeft-(cards.clientWidth-le.offsetWidth)/2);
+  cardStrip(cards);
+  var le=cards.querySelector('.last');if(le)scrollToCard(cards,le);
   focusCard();
 }
 /* 건축 패널은 두 단계: ① 분류 목록(타일) → ② 고른 분류의 건물 카드 한 줄(가로로 끌어 넘김, ‹ 뒤로로 ①).
@@ -176,10 +176,10 @@ function renderBuild(){
         '<span class="ef">'+(tg.length?'<i>'+tg[0]+'</i>':'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });
-    dragScroll(cards);cards.addEventListener('scroll',function(){if(cards._raf)return;cards._raf=requestAnimationFrame(function(){cards._raf=0;focusCard();});});
-    // 직전에 고른 카드가 보이게 (가운데 쯤으로)
+    cardStrip(cards);
+    // 직전에 고른 카드가 보이고 표시되게
     var lp=UI.lastPick&&UI.lastPick[UI.cat],le=lp&&cards.querySelector('[data-v="'+lp+'"]');
-    if(le){le.classList.add('last');cards.scrollLeft=Math.max(0,le.offsetLeft-cards.offsetLeft-(cards.clientWidth-le.offsetWidth)/2);}
+    if(le){le.classList.add('last');scrollToCard(cards,le);}
   }
   refreshCards();renderDetail();
 }
@@ -187,14 +187,36 @@ function renderBuild(){
 function focusCard(){
   var c=$('#cards'),el=$('#detail');if(!c||!el||(!UI.choose&&(UI.tool==='demolish'||isPlacing())))return;
   var cs=c.querySelectorAll('.card');if(!cs.length)return;
-  var mid=c.scrollLeft+c.clientWidth/2,best=null,bd=1e9;
-  for(var i=0;i<cs.length;i++){var q=cs[i].offsetLeft-c.offsetLeft+cs[i].offsetWidth/2,dd=Math.abs(q-mid);if(dd<bd){bd=dd;best=cs[i];}}
-  if(c.scrollLeft<=2)best=cs[Math.min(cs.length-1,Math.floor(c.clientWidth/2/ (cs[0].offsetWidth+8)))]||best;
+  // 넘기는 정도(0~1)에 따라 표시 자리가 첫 카드 가운데 → 마지막 카드 가운데로 옮겨 간다 (맨 앞·맨 뒤 카드도 고를 수 있게)
+  var max=c.scrollWidth-c.clientWidth,t=max>2?clamp(c.scrollLeft/max,0,1):0,cw=cs[0].offsetWidth;
+  var pt=c.scrollLeft+cw/2+t*(c.clientWidth-cw),best=null,bd=1e9;
+  for(var i=0;i<cs.length;i++){var q=cs[i].offsetLeft-c.offsetLeft+cs[i].offsetWidth/2,dd=Math.abs(q-pt);if(dd<bd){bd=dd;best=cs[i];}}
+  setFocusCard(best);
+}
+function setFocusCard(best){
+  var c=$('#cards'),el=$('#detail');if(!c||!el||!best)return;
   var cur=c.querySelector('.card.focus');if(cur===best&&el.dataset.f===best.dataset.v)return;
   if(cur)cur.classList.remove('focus');best.classList.add('focus');
   var d=D[best.dataset.v];if(!d)return;el.dataset.f=d.id;
   var ef=effText(d).replace(/ · 유지비 0\/주$/,'');
   el.innerHTML='<div class="tx full cinfo"><div class="cd"><b>'+d.name+'</b> '+(d.desc||'')+'</div>'+(ef&&d.id!=='f_erase'?'<div class="ce">'+ef+'</div>':'')+'</div>';
+}
+/* 카드 줄 준비: 카드가 다 들어가 넘길 수 없을 때도 조금 넘겨서 표시를 옮길 수 있게 끝에 빈 자리를 둔다.
+   마우스는 카드 위에 올리기만 해도 그 카드가 표시된다 */
+function cardStrip(cards){
+  dragScroll(cards);
+  var n=cards.querySelectorAll('.card').length,need=(n-1)*34,max=cards.scrollWidth-cards.clientWidth;
+  if(n>1&&max<need){var sp=document.createElement('i');sp.className='cpad';sp.style.width=(need-Math.max(0,max))+'px';cards.appendChild(sp);}
+  cards.addEventListener('scroll',function(){if(cards._raf)return;cards._raf=requestAnimationFrame(function(){cards._raf=0;focusCard();});});
+  cards.addEventListener('pointerover',function(e){if(e.pointerType!=='mouse')return;var k=e.target.closest('.card');if(k)setFocusCard(k);});
+}
+// 고른 카드가 표시되도록 그 자리로 넘긴다 (focusCard의 거꾸로)
+function scrollToCard(cards,le){
+  var cs=cards.querySelectorAll('.card'),idx=Array.prototype.indexOf.call(cs,le);if(idx<0)return;
+  var max=cards.scrollWidth-cards.clientWidth;if(max<=2)return;
+  var cw=cs[0].offsetWidth,q=le.offsetLeft-cards.offsetLeft+cw/2;
+  // q = s + cw/2 + (s/max)*(W-cw)  →  s = (q-cw/2)/(1+(W-cw)/max)
+  cards.scrollLeft=clamp((q-cw/2)/(1+(cards.clientWidth-cw)/max),0,max);
 }
 // 마우스로도 가로로 끌어 넘긴다 (손가락은 기본 가로 스크롤). 끌었으면 그 클릭은 고르기로 치지 않는다
 function dragScroll(el){
