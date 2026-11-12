@@ -19,7 +19,7 @@ function update(dt){
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
   // 목표는 주중에도 이루는 즉시 보상 (0.5초마다 확인)
-  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;checkGoal();wishTick();}
+  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;checkGoal();wishTick();evTick();}
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
@@ -81,7 +81,7 @@ function weekEnd(){
   S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
-  for(var id in S.ev){var st=S.ev[id];if(st.left>0)st.left--;if(st.cd>0)st.cd--;}
+  for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}
   decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;
   for(var k in OFFICE){var mx=officeMax(k);if(S.off[k]>mx){addLog('성도가 줄어 '+OFFICE[k].name+' '+(S.off[k]-mx)+'명이 직분을 내려놓았어요');S.off[k]=mx;}}
   if(S.week-S.candWeek>=6)refreshCands();

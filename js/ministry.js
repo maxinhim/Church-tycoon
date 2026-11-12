@@ -138,31 +138,38 @@ function appoint(k){
   S.money-=o.cost;S.off[k]++;recalc();save();return '';
 }
 
-/* ---------- 특별행사 ---------- */
-// season: [시작 월, 끝 월] (1~12월). need(): 조건이 안 되면 이유 문장
+/* ---------- 특별행사 ----------
+   행사 화면(screens.js)에서 고른다. 시작하면 값을 내고, 소요 시간(dur 주, 게임 속 시간) 동안 진행 효과(mods)가 적용된다.
+   시간이 다 차면 '보상 수령'을 눌러야 마무리 보상(rw)을 받고, 그때부터 쉬는 기간(cd 주)이 지나야 다시 열 수 있다.
+   season: [시작 월, 끝 월] (1~12월). need(): 조건이 안 되면 이유 문장. rw(): 마무리 보상을 주고 받은 것들을 글로 돌려준다
+   상태 S.ev[id] = {cd, run(진행 중이거나 보상 대기), t0(시작), end(끝), ready(보상 대기)}  (시각은 주 단위 실수: evNow()) */
+function evNow(){return S.week+S.t/WEEK;}
+function rwMoney(v){v=Math.round(v);S.money+=v;S.weekInc+=v;return '자금 +'+fmt(v);}
+function rwRep(v){gainRep(v);return '평판 +'+v;}
+function rwMood(v){S.tempMood+=v;return '만족 +'+v;}
 var EVENTS={
-  smallgroup:{name:'소그룹 모임',cost:150,cd:2,dur:2,goal:0,desc:'2주간 만족 +6, 이탈 -30%',
-    need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;}},
-  communion:{name:'성찬식',cost:200,cd:4,dur:2,goal:0,desc:'영성(성례) 크게 ↑, 2주간 만족 +4',
-    need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=4;}},
-  baptism:{name:'세례식',cost:300,cd:6,dur:4,goal:0,desc:'영성(성례) ↑, 평판 +4, 4주간 새 성도 정착(이탈 -25%, 만족 +2)',
+  smallgroup:{name:'소그룹 모임',ic:'🫖',col:'#6fa86a',cost:150,cd:2,dur:2,goal:0,desc:'가정과 교회에서 모여 삶을 나눠요',fx:'만족 +6, 이탈 -30%',rwt:'만족 +2',
+    need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;},rw:function(){return [rwMood(2)];}},
+  communion:{name:'성찬식',ic:'🍞',col:'#b0763f',cost:200,cd:4,dur:2,goal:0,desc:'떡과 잔을 나누며 은혜를 기억해요',fx:'영성(성례) 크게 ↑, 만족 +4',rwt:'만족 +2',
+    need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=4;},rw:function(){return [rwMood(2)];}},
+  baptism:{name:'세례식',ic:'💧',col:'#4f8fc4',cost:300,cd:6,dur:4,goal:0,desc:'새 성도가 믿음을 고백하고 세례를 받아요',fx:'영성(성례) ↑, 새 성도 정착(이탈 -25%, 만족 +2)',rwt:'평판 +4',
     need:function(){return S.newSinceBap>=3?'':'지난 세례 뒤 새 성도가 3명 이상 필요해요 (지금 '+S.newSinceBap+'명)';},
-    now:function(){gainRep(4);S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=2;}},
-  street:{name:'노방전도',cost:250,cd:3,dur:2,goal:0,desc:'2주간 방문자 +40%',mods:function(m){m.vis*=1.4;}},
-  bazaar:{name:'바자회',cost:300,cd:8,dur:0,goal:1,desc:'수익 600 + 성도×12, 평판 +2',
-    now:function(){var g=600+S.members*12;S.money+=g;S.weekInc+=g;gainRep(2);}},
-  service:{name:'지역 봉사의 날',cost:400,cd:6,dur:0,goal:1,desc:'평판 +6 (선교팀 단계마다 +50%)',
-    now:function(){gainRep(6*(1+0.5*S.staff.mission));}},
-  retreat:{name:'수련회',cost:1500,cd:12,dur:3,goal:2,desc:'영성(성례) ↑, 3주간 만족 +12, 이탈 -50% (비용 1,500 + 성도×15)',
-    costFn:function(){return 1500+S.members*15;},mods:function(m){m.mood+=12;m.loss*=0.5;}},
-  revival:{name:'부흥회',cost:3000,cd:16,dur:1,goal:3,desc:'1주간 방문자 +120%, 정착률 +50%',
-    need:function(){return A.seats>=80?'':'좌석이 80석 이상 필요해요';},mods:function(m){m.vis*=2.2;m.join*=1.5;}},
-  easter:{name:'부활절 연합예배',season:[4,4],cost:500,cd:20,dur:1,goal:0,desc:'방문자 +60%, 헌금 +30%',mods:function(m){m.vis*=1.6;m.offer*=1.3;}},
-  vbs:{name:'여름성경학교',season:[7,8],cost:800,cd:20,dur:2,goal:1,desc:'2주간 가족 방문자 +30%, 돌봄 효과 +20%',
-    need:function(){return A.kcap>=10?'':'돌봄 공간이 10 이상 필요해요';},mods:function(m){m.vis*=1.3;m.care*=1.2;}},
-  thanks:{name:'추수감사 예배',season:[11,11],cost:300,cd:20,dur:1,goal:0,desc:'헌금 +50%, 만족 +5',mods:function(m){m.offer*=1.5;m.mood+=5;}},
-  christmas:{name:'성탄 축하 예배',season:[12,12],cost:800,cd:20,dur:1,goal:0,desc:'방문자 +80%, 만족 +6',mods:function(m){m.vis*=1.8;m.mood+=6;}},
-  joint:{name:'연합 행사',hidden:true,cost:0,cd:0,dur:2,goal:0,desc:'',mods:function(m){m.vis*=1.2;}}
+    now:function(){S.newSinceBap=0;},mods:function(m){m.loss*=0.75;m.mood+=2;},rw:function(){return [rwRep(4)];}},
+  street:{name:'노방전도',ic:'📣',col:'#d98a3a',cost:250,cd:3,dur:2,goal:0,desc:'거리에서 이웃을 만나 교회를 소개해요',fx:'방문자 +40%',rwt:'평판 +1',mods:function(m){m.vis*=1.4;},rw:function(){return [rwRep(1)];}},
+  bazaar:{name:'바자회',ic:'🛍️',col:'#c9627a',cost:300,cd:8,dur:3/7,goal:1,desc:'물건을 모아 팔고 수익으로 이웃을 도와요',fx:'',rwt:'수익 600 + 성도×12, 평판 +2',
+    rw:function(){return [rwMoney(600+S.members*12),rwRep(2)];}},
+  service:{name:'지역 봉사의 날',ic:'🧹',col:'#4f9a83',cost:400,cd:6,dur:3/7,goal:1,desc:'동네를 청소하고 이웃을 섬겨요',fx:'',rwt:'평판 +6 (선교팀 단계마다 +50%)',
+    rw:function(){return [rwRep(Math.round(6*(1+0.5*S.staff.mission)))];}},
+  retreat:{name:'수련회',ic:'⛺',col:'#5c8a48',cost:1500,cd:12,dur:3,goal:2,desc:'온 교회가 함께 떠나 말씀과 쉼을 누려요 (비용 1,500 + 성도×15)',fx:'영성(성례) ↑, 만족 +12, 이탈 -50%',rwt:'만족 +3',
+    costFn:function(){return 1500+S.members*15;},mods:function(m){m.mood+=12;m.loss*=0.5;},rw:function(){return [rwMood(3)];}},
+  revival:{name:'부흥회',ic:'🔥',col:'#d65a4a',cost:3000,cd:16,dur:1,goal:3,desc:'강사를 모시고 온 동네를 초청해요',fx:'방문자 +120%, 정착률 +50%',rwt:'평판 +3',
+    need:function(){return A.seats>=80?'':'좌석이 80석 이상 필요해요';},mods:function(m){m.vis*=2.2;m.join*=1.5;},rw:function(){return [rwRep(3)];}},
+  easter:{name:'부활절 연합예배',ic:'🌷',col:'#b98bd6',season:[4,4],cost:500,cd:20,dur:1,goal:0,desc:'부활의 아침을 이웃 교회와 함께 맞아요',fx:'방문자 +60%, 헌금 +30%',rwt:'평판 +2',mods:function(m){m.vis*=1.6;m.offer*=1.3;},rw:function(){return [rwRep(2)];}},
+  vbs:{name:'여름성경학교',ic:'🎒',col:'#e0a030',season:[7,8],cost:800,cd:20,dur:2,goal:1,desc:'동네 아이들을 초대해 여름을 함께 보내요',fx:'가족 방문자 +30%, 돌봄 효과 +20%',rwt:'평판 +2',
+    need:function(){return A.kcap>=10?'':'돌봄 공간이 10 이상 필요해요';},mods:function(m){m.vis*=1.3;m.care*=1.2;},rw:function(){return [rwRep(2)];}},
+  thanks:{name:'추수감사 예배',ic:'🌾',col:'#c08a2e',season:[11,11],cost:300,cd:20,dur:1,goal:0,desc:'한 해의 열매를 감사하며 드려요',fx:'헌금 +50%, 만족 +5',rwt:'감사 헌금 300 + 성도×4',mods:function(m){m.offer*=1.5;m.mood+=5;},rw:function(){return [rwMoney(300+S.members*4)];}},
+  christmas:{name:'성탄 축하 예배',ic:'🎄',col:'#3f7a52',season:[12,12],cost:800,cd:20,dur:1,goal:0,desc:'성탄의 기쁨을 온 동네와 나눠요',fx:'방문자 +80%, 만족 +6',rwt:'평판 +3',mods:function(m){m.vis*=1.8;m.mood+=6;},rw:function(){return [rwRep(3)];}},
+  joint:{name:'연합 행사',hidden:true,auto:true,cost:0,cd:0,dur:2,goal:0,desc:'',mods:function(m){m.vis*=1.2;}}
 };
 // 달력 (balance.js WEEKS_PER_MONTH·YEAR_WEEKS): 몇 년차 몇 월 몇 주
 function weekOfYear(w){return (w==null?S.week:w)%YEAR_WEEKS+1;}
@@ -171,31 +178,65 @@ function weekInMonth(w){return (weekOfYear(w)-1)%WEEKS_PER_MONTH+1;}
 function yearOf(w){return Math.floor((w==null?S.week:w)/YEAR_WEEKS)+1;}
 function dateText(w,withYear){return (withYear?yearOf(w)+'년차 ':'')+monthOf(w)+'월 '+weekInMonth(w)+'주';}
 function evCost(e){return e.costFn?e.costFn():e.cost;}
-function evState(id){return S.ev[id]||(S.ev[id]={cd:0,left:0});}
+function evState(id){
+  var st=S.ev[id]||(S.ev[id]={cd:0});
+  // 예전 저장(남은 주 left로 세던 때)을 지금 꼴로
+  if(st.left>0&&st.end==null){st.run=true;st.t0=evNow();st.end=st.t0+st.left;st.ready=false;}
+  if(st.left!=null)delete st.left;
+  return st;
+}
+// 진행 중(효과가 적용되는 동안) / 끝나서 보상을 기다리는 중 / 얼마나 찼는지(0~1) / 남은 시간 글
+function evRunning(id){var st=S.ev[id];return !!(st&&st.run&&!st.ready&&st.end!=null);}
+function evReady(id){var st=S.ev[id];return !!(st&&st.run&&st.ready);}
+function evProg(id){var st=S.ev[id];if(!st||!st.run)return 0;if(st.ready)return 1;return clamp((evNow()-st.t0)/Math.max(1e-6,st.end-st.t0),0,1);}
+function durText(w){var d=Math.max(1,Math.round(w*7));return d>=7&&d%7===0?(d/7)+'주':(d>7?Math.floor(d/7)+'주 '+(d%7)+'일':d+'일');}
+function evLeftText(id){var st=S.ev[id];if(!st||!st.run||st.ready)return '';return durText(Math.max(1/7,st.end-evNow()));}
+function evSeasonText(e){return e.season?(e.season[0]===e.season[1]?e.season[0]+'월':e.season[0]+'~'+e.season[1]+'월'):'';}
 // 열 수 없으면 이유, 열 수 있으면 ''
 function evBlock(id){
   var e=EVENTS[id],st=evState(id);
   if((e.goal||0)>S.goal)return lockText(e.goal)+' 열 수 있어요';
-  if(e.season){var mo=monthOf();if(mo<e.season[0]||mo>e.season[1])return (e.season[0]===e.season[1]?e.season[0]+'월':e.season[0]+'~'+e.season[1]+'월')+'에만 열 수 있어요';}
-  if(st.left>0)return '진행 중이에요';
+  if(st.run)return st.ready?'보상을 먼저 받아 주세요':'진행 중이에요';
+  if(e.season){var mo=monthOf();if(mo<e.season[0]||mo>e.season[1])return evSeasonText(e)+'에만 열 수 있어요';}
   if(st.cd>0)return st.cd+'주 뒤에 다시 열 수 있어요';
   if(S.money<evCost(e))return '자금이 부족해요';
   return e.need?e.need():'';
 }
+function evBegin(id){var e=EVENTS[id],st=evState(id);st.run=true;st.ready=false;st.t0=evNow();st.end=st.t0+e.dur;}
 function runEvent(id){
   var why=evBlock(id);if(why)return why;
-  var e=EVENTS[id],st=evState(id);
+  var e=EVENTS[id];
   S.money-=evCost(e);
   if(e.now)e.now();
-  st.left=e.dur;st.cd=e.cd;if(!e.hidden)S.lastEv=S.week;
+  evBegin(id);if(!e.hidden)S.lastEv=S.week;
   // 영성(성례)은 언제 열었는지로 계산한다
   S.evW=S.evW||{};S.evW[id]=S.week;
   // 지난번과 다른 행사면 '새로 한 일', 바람으로 바라던 행사면 들어준 것
   if(!e.hidden){if(S.lastEvId!==id)noteNew();S.lastEvId=id;if(S.wish&&S.wish.t==='event'&&S.wish.id===id)S.wishRan=id;}
   addLog(e.name+'을(를) 열었어요');recalc();save();return '';
 }
+// 0.5초마다: 시간이 다 찬 행사는 효과를 멈추고 보상 대기로 (자동 행사는 그냥 끝난다)
+function evTick(){
+  var now=evNow(),ch=false;
+  for(var id in S.ev){var st=S.ev[id],e=EVENTS[id];if(!e||!st.run||st.ready||st.end==null||now<st.end)continue;
+    ch=true;
+    if(e.auto||!e.rw){st.run=false;st.cd=e.cd||0;continue;}
+    st.ready=true;toast(e.name+'이(가) 끝났어요 · 행사에서 보상을 받으세요',2600);sfx('bell',.5,0);
+  }
+  if(ch){recalc();save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();}
+}
+// 보상 수령: 마무리 보상을 주고 쉬는 기간을 시작한다. 받은 것들의 글 목록(못 받으면 null)
+function claimEvent(id){
+  var e=EVENTS[id],st=S.ev[id];if(!e||!st||!st.run||!st.ready)return null;
+  var got=e.rw?e.rw():[];
+  st.run=false;st.ready=false;st.cd=e.cd||0;
+  S.evW=S.evW||{};S.evW[id]=S.week;
+  addLog(e.name+' 마무리 · '+(got.join(', ')||'보상 없음'));recalc();save();
+  return got;
+}
+function evReadyCount(){var n=0;for(var id in S.ev)if(evReady(id)&&EVENTS[id]&&!EVENTS[id].hidden)n++;return n;}
 function evIdleWeeks(){return S.week<8?0:S.week-(S.lastEv||0);}
-function activeEvents(){return Object.keys(S.ev).filter(function(id){return S.ev[id].left>0&&EVENTS[id];});}
+function activeEvents(){return Object.keys(S.ev).filter(function(id){return EVENTS[id]&&evRunning(id);});}
 
 /* ---------- 목양 수용력과 각종 효과를 MOD로 모은다 ---------- */
 var MOD={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
@@ -253,7 +294,7 @@ var DILEMMAS=[
     o:[{l:'받는다',d:'자금 +5,000, 만족 -6, 평판 -2',f:function(){S.money+=5000;S.weekInc+=5000;S.tempMood-=6;S.rep-=2;}},
        {l:'정중히 사양한다',d:'평판 +2, 만족 +2',f:function(){S.rep+=2;S.tempMood+=2;}}]},
   {id:'joint',t:'연합 행사 제안',x:'이웃 교회가 함께 지역 행사를 열자고 제안했어요.',
-    o:[{l:'함께한다',d:'자금 -400, 2주간 방문자 +20%, 평판 +3',f:function(){S.money-=400;S.rep+=3;evState('joint').left=2;}},
+    o:[{l:'함께한다',d:'자금 -400, 2주간 방문자 +20%, 평판 +3',f:function(){S.money-=400;S.rep+=3;evBegin('joint');}},
        {l:'이번엔 사양한다',d:'변화 없음',f:function(){}}]},
   {id:'illness',t:'성도 가정의 위기',x:'한 성도 가정에 큰 병이 생겼어요.',
     o:[{l:'심방하고 돕는다',d:'자금 -300, 만족 +5, 평판 +2',f:function(){S.money-=300;S.tempMood+=5;S.rep+=2;}},

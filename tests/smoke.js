@@ -114,7 +114,7 @@ async function playChecks(browser, url) {
   check(!(await overlay()) && a !== await state(), '가로 복귀: 게임이 이어짐');
 
   // 동그란 기능 버튼·하위 탭·메뉴·닫기
-  await page.click('#fab [data-fab="minis"]'); await page.click('#subtabs [data-v="staff"]');
+  await page.click('#fab [data-fab="minis"]'); await page.click('#scr [data-act="scrtab"][data-v="staff"]'); await page.click('#scr [data-act="scrclose"]');
   await page.click('#fab [data-fab="status"]'); await page.click('#bGear'); await page.click('#bMenu');
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="close"]');
   await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
@@ -648,9 +648,33 @@ async function ministryChecks(browser, url) {
   await page.click('#fab [data-fab="status"]');
   const toggled = await page.evaluate(() => document.getElementById('dock').hidden);
   await page.click('#fab [data-fab="minis"]');
-  const minis = await page.evaluate(() => UI.tab === 'events' && /행사/.test(document.getElementById('subtabs').textContent) && /사역자/.test(document.getElementById('subtabs').textContent));
-  await page.click('#subtabs [data-v="staff"]');
-  const staffTab = await page.evaluate(() => UI.tab === 'staff' && /부교역자/.test(document.getElementById('panel').textContent));
+  // 행사 버튼은 화면 전체를 쓰는 행사 화면을 연다 (지도 위 창은 닫힘). 탭: 행사·사역자
+  const minis = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && r.height >= innerHeight - 1 && /행사/.test(document.getElementById('scrTabs').textContent) && /사역자/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .evc').length === Object.keys(EVENTS).filter(k => !EVENTS[k].hidden).length; });
+  // 행사 카드 → 정보 창 → 행사 시작 → 원형 게이지가 차오름 → 다 차면 보상 수령을 눌러야 보상
+  const evFlow = await page.evaluate(() => { const o = {}; const m0 = S.money, r0 = S.rep;
+    document.querySelector('#scrBody .evc[data-v="street"]').click();
+    const dl = document.getElementById('scrDlg'); o.dlg = !dl.hidden && /노방전도/.test(dl.textContent) && /진행 중 효과/.test(dl.textContent) && /마무리 보상/.test(dl.textContent) && /소요 시간/.test(dl.textContent);
+    dl.querySelector('[data-act="evstart"]').click();
+    o.started = S.money === m0 - EVENTS.street.cost && evRunning('street') && !evReady('street') && MOD.vis > 1.3 && evBlock('street') === '진행 중이에요';
+    const card = () => document.querySelector('#scrBody .evc[data-v="street"]');
+    o.fx = card().classList.contains('run') && card().classList.contains('fx') && /남음/.test(card().textContent);
+    const off = () => +card().querySelector('.rp').getAttribute('stroke-dashoffset');
+    const d0 = off(); S.t += WEEK * .5; syncScreen(); const d1 = off(); o.gauge = d0 > d1 && d1 > 0 && Math.abs(evProg('street') - .25) < .02;
+    // 시간이 다 차면: 효과는 멈추고 보상 대기, 받기 전에는 다시 열 수 없다
+    S.ev.street.end = evNow() - .01; evTick();
+    o.ready = evReady('street') && !evRunning('street') && MOD.vis < 1.3 && S.rep === r0 && card().classList.contains('ready') && /보상 수령/.test(card().textContent) && !document.getElementById('evBadge').hidden && /보상을 먼저/.test(evBlock('street'));
+    card().click(); const cb = document.querySelector('#scrDlg [data-act="evclaim"]'); o.claimBtn = !!cb; cb.click();
+    o.claimed = !evReady('street') && S.rep > r0 && S.ev.street.cd === EVENTS.street.cd && document.getElementById('evBadge').hidden && /뒤/.test(card().textContent) && claimEvent('street') === null;
+    // 바자회: 돈은 시작할 때가 아니라 보상 수령 때 들어온다
+    S.goal = Math.max(S.goal, 1); const m1 = S.money; runEvent('bazaar'); const paid = S.money === m1 - EVENTS.bazaar.cost; S.ev.bazaar.end = evNow() - .01; evTick(); const m2 = S.money; const got = claimEvent('bazaar');
+    o.bazaar = paid && S.money === m2 + 600 + S.members * 12 && got.length === 2;
+    // 예전 저장(남은 주 left)은 진행 중으로 이어진다
+    S.ev.smallgroup = { cd: 0, left: 2 }; o.old = evRunning('smallgroup') === false && (evState('smallgroup'), evRunning('smallgroup')) && S.ev.smallgroup.left === undefined;
+    S.ev = {}; recalc(); renderScreen(); return o; });
+  await page.click('#scr [data-act="scrtab"][data-v="staff"]');
+  const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && /부교역자/.test(document.getElementById('scrBody').textContent) && !!document.querySelector('#scrBody [data-act="hire"]'));
+  await page.keyboard.press('Escape');
+  const scrClosed = await page.evaluate(() => document.getElementById('scr').hidden && !UI.scr);
   await page.click('#fab [data-fab="build"]');
   // 건축 버튼은 분류 목록만 먼저 보여 준다
   const catsFirst = await page.evaluate(() => !!document.getElementById('btiles') && !document.getElementById('cards') && document.querySelectorAll('#btiles [data-act="cat"]').length === CATS.length && !!document.querySelector('#btiles [data-act="dem"]'));
@@ -662,6 +686,7 @@ async function ministryChecks(browser, url) {
   const effCard = await page.evaluate(() => /좌석 \+24/.test(document.querySelector('#cards [data-v="room"]').textContent));
   await page.click('#fab [data-fab="minis"]');
   const cancelled = await page.evaluate(() => UI.tool === null && UI.ghost === null && document.getElementById('place').hidden);
+  await page.click('#scr [data-act="scrclose"]');
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="cat"][data-v="worship"]'); await page.click('#cards [data-v="room"]');
   const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   // 화살표로 정면 방향 바꾸기
@@ -768,7 +793,10 @@ async function ministryChecks(browser, url) {
   });
   const smallBtns = await page.evaluate(() => { startPlace('bench'); syncPlace(); const r = document.querySelector('#place [data-pl="ok"]').getBoundingClientRect(); const a = document.querySelector('#place .parr').getBoundingClientRect(); endPlace(); return r.width <= 40 && a.width <= 34; });
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼으로 요약·챙길 일이 열리고, 다시 누르면 닫힘');
-  check(minis && staffTab, '기능 버튼: 행사 버튼 안에 행사·사역자 탭');
+  check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(행사·사역자 탭), Esc로 닫힘');
+  check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
+  check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');
+  check(evFlow.claimBtn && evFlow.claimed && evFlow.bazaar && evFlow.old, '행사 화면: 보상 수령을 눌러야 보상을 받고 그때부터 쉬는 기간, 예전 저장도 이어짐');
   check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개, 건물은 안내 띠 없음');
   check(btnPos, '지도에서 짓기: ✓는 왼쪽 위, ✕는 오른쪽 위 (미리보기보다 위)');
   check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
@@ -1552,7 +1580,7 @@ async function gripeChecks(browser, url) {
     // 성도들의 바람: 생기면 챙길 일 맨 위에 뜨고, 들어주면 보상·놓치면 벌점
     S.money = 99999; levelTick(true); S.wish = null; S.wishNext = S.week; S.wishOk = S.wishFail = 0; S.wishLeft = 0; S.wishMood = 0; S.evtLeft = 2; wishWeek();
     const w1 = S.wish; o.wish = !!w1 && warnings()[0].indexOf('성도들의 바람') === 0 && w1.due === S.week + WISH_DUE;
-    if (w1) { const rp0 = S.rep; if (w1.t === 'event') { S.ev[w1.id] = { cd: 0, left: 0 }; S.newSinceBap = 9; runEvent(w1.id); }
+    if (w1) { const rp0 = S.rep; if (w1.t === 'event') { S.ev[w1.id] = { cd: 0 }; S.newSinceBap = 9; runEvent(w1.id); }
       else { let done = false; for (let y = 1; y < ROWS && !done; y++) for (let x = 1; x < COLS - 5 && !done; x++) if (canPlace(D[w1.id], x, y, 2)) done = build(w1.id, x, y, 2); }
       wishTick(); o.wish = o.wish && !S.wish && S.wishOk === 1 && S.wishMood === WISH_GOOD && S.wishLeft === WISH_FX_WEEKS && MOD.parts.some(p => /바람을 들어줌/.test(p[0]) && p[1] === WISH_GOOD) && S.wishNext > S.week; }
     S.wishNext = S.week; wishWeek(); const w2 = S.wish; if (w2) { S.week = w2.due + 1; wishWeek(); }

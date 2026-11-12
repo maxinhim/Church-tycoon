@@ -41,6 +41,9 @@ var CLUB_SUBS=[['sport','운동'],['hobby','취미'],['music','음악']];
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
 function openGroup(g){
   UI.lastBuilt=null;
+  // 행사는 화면 전체를 쓴다 (screens.js)
+  if(g==='minis'){openScreen('events',UI.minisTab==='staff'?'staff':'events');return;}
+  if(UI.scr)closeScreen();
   // 지도에서 짓는 중에 건축 버튼을 누르면 짓기를 그만두고 목록으로
   if(g==='build'&&isPlacing()){endPlace();return;}
   if(!UI.fold&&tabGroup(UI.tab)===g){closeDock();return;}

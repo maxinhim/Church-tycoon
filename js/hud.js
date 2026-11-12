@@ -17,7 +17,7 @@ function hud(force){
   $('#vMem').innerHTML=S.members+' <small>명</small>';
   $('#vRep').innerHTML=Math.round(S.rep)+' <small>/100</small>';
   var dt=debt();$('#sDebt').hidden=dt<1;if(dt>=1)$('#vDebt').textContent=fmt(dt);
-  syncClock();levelTick();
+  syncClock();levelTick();syncScreen();
   $('#cname').textContent=S.name;
   stepTick();
   var g=GOALS[S.goal];

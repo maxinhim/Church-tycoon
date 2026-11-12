@@ -69,7 +69,7 @@ function runBot(cfg) {
   let decoN = 0;
   function decorate(n) { for (let i = 0; i < n; i++) { const L = decoIds(); if (!L.length) return; L.sort((a, b) => b.beauty / b.cost - a.beauty / a.cost); put(L[(decoN++) % Math.min(6, L.length)].id); } }
   function seats() { if (S.members > A.seats * 0.85) { const id = best(d => d.seats, d => HALLS.indexOf(d.id) >= 0); if (id) put(id); } }
-  function events(list) { list.forEach(id => { if (EVENTS[id] && !evBlock(id) && S.money > evCost(EVENTS[id]) + RES) { if (runEvent(id) === '') stat.events++; } }); }
+  function events(list) { Object.keys(S.ev).forEach(id => { if (evReady(id)) { claimEvent(id); stat.claims = (stat.claims || 0) + 1; } }); list.forEach(id => { if (EVENTS[id] && !evBlock(id) && S.money > evCost(EVENTS[id]) + RES) { if (runEvent(id) === '') stat.events++; } }); }
   function staffUp(keys) { keys.forEach(k => { const lv = S.staff[k] || 0; if (lv < 3 && (STAFF[k].goal || 0) <= S.goal && S.money > STAFF[k].costs[lv] + RES * 2) { if (hireTeam(k) === '') stat.staff++; } }); }
   function pastoral() {
     if (S.members <= MOD.cap * 0.9) return;

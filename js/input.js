@@ -88,7 +88,7 @@ function setupInput(){
   $('#bRot').addEventListener('click',rotateView);
 }
 function syncTabs(){
-  var g=UI.fold?'':tabGroup(UI.tab);
+  var g=UI.scr?'minis':(UI.fold?'':tabGroup(UI.tab));
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }

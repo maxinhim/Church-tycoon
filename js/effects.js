@@ -72,7 +72,7 @@ function statusSummary(){
   var c=S.cov||{},net=lastNet(S),w=warnings(),act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
   return '<div class="qnums"><div><span>만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
     '<div><span>이번 주 방문</span><b>'+S.visitsWeek+'</b></div><div><span>새 성도</span><b>'+S.joinedWeek+'</b></div></div>'+
-    (act.length?'<div class="qev">'+act.map(function(id){return '<span>'+EVENTS[id].name+' · '+S.ev[id].left+'주</span>';}).join('')+'</div>':'')+
+    (act.length?'<div class="qev">'+act.map(function(id){return '<span>'+EVENTS[id].name+' · '+evLeftText(id)+'</span>';}).join('')+'</div>':'')+
     '<div class="sec">챙길 일</div>'+(w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>');
 }
 
