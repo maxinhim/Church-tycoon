@@ -61,7 +61,7 @@ function drawBld(b){
       box(tr,.05,TH,'#f5f0e6');
       var mx=(tr.x0+tr.x1)/2,my=(tr.y0+tr.y1)/2;
       fr('L',tr,mx-.1,mx+.1,TH-.6,TH-.18,'#2d2a33');fr('R',tr,my-.1,my+.1,TH-.6,TH-.18,'#24222a');
-      fr('L',tr,mx-.12,mx+.12,.05,.6,'#4a3628');
+      // 종탑 밑에도 문을 그리지 않는다 (입구·출구 건물이 문 역할)
       var ap=hip(tr,TH,.75,d.roofc);cross(ap[0],ap[1],ap[2],1.05);
     };
     if(tr.x0+tr.x1+tr.y0+tr.y1<r.x0+r.x1+r.y0+r.y1){tower();main();}else{main();tower();}

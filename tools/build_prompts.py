@@ -315,8 +315,96 @@ sheet('S3', '소모임 음악 방 앞·뒤', (4, 2),
        "Row 2: choir room, 3x2, cream walls, a slate-blue gable roof, tall arched windows, a wide double door, a sign with a music note picture (columns 1-2); (empty); (empty)."],
       pair='h')
 
+# ---------------------------------------------------------------- 문 없는 건물 (입구·출구 건물이 따로 붙는다)
+# 게임에서 입구·출구는 건물 1층 둘레 아무 칸에나 붙는 작은 현관 건물이다. 그래서 건물 그림에는 문이 없어야 하고,
+# 1층 벽 아랫부분이 비어 있어야 현관이 어느 쪽에 붙어도 어색하지 않다.
+NODOOR = """NO DOORS (most important rule of this sheet)
+- These buildings have NO door on ANY wall: no front door, no back door, no side door, no door frame, no door-shaped arch, no doorstep, no entrance stairs, no porch, no canopy, no awning over a door, no ramp, no path leading to the wall.
+- Where a door would normally be, draw a plain wall with a window above, or just plain wall.
+- In the game, the entrance and the exit are separate small vestibule buildings that the player attaches later to ANY side of the ground floor. So every wall of the ground floor must be a closed wall whose lower half-storey (from the ground up to about window-sill height) is plain and uncluttered: no flower beds, bushes, benches, lamps, signs, pipes or boxes against the walls.
+- Nothing may stick out beyond the building's footprint, except roof eaves by a tiny amount. Towers, chimneys and crosses stand inside the footprint."""
+
+WIDE_ORIENT = """ORIENTATION (same as the attached reference sheet)
+- The roof ridge runs from the lower-left to the upper-right of the cell. The decorated main facade (bell tower, round window, cross) is on the SHORT gable end that faces the lower-left; the long side wall faces the lower-right.
+- FRONT view: shows the decorated main facade gable on the left and the long side wall on the right.
+- BACK view: the same building turned 180 degrees: the decorated facade is hidden; we see the plain rear gable end on the left and the opposite long wall on the right.
+- A square building (1x1 or 2x2) uses the same rule: its decorated facade faces the lower-left in the FRONT view."""
+
+HIRES = """GRID AND DETAIL
+- Draw each building big (about 70% of the cell width and at most 65% of the cell height, centered) with rich pixel detail: roof shingles or slate rows, brick or plaster texture, window frames and panes, trim, a stone base. More detail must come from more pixels, never from blur or soft painting. Keep the chunky pixel style and the outline color of the reference sheet.
+- The top of every tower, spire and cross must stay well inside its cell; nothing may touch or cross a cell edge or the image edge.
+- Use every cell exactly as listed. Do NOT add any other buildings, extra views, people, vehicles, trees, signs or text. Keep the lower-right corner of the image empty magenta (Gemini places its watermark there)."""
+
+PAIR_NODOOR = """FRONT/BACK PAIRS
+Each building takes TWO neighbouring cells in the same row: the LEFT cell is the FRONT VIEW and the RIGHT cell is the BACK VIEW of the very same building (one 3D model turned 180 degrees around its vertical axis: same shape, size, colors and position in the cell; only the sides facing the camera change). The front is defined by the decorated facade, never by a door."""
+
+def hires(key, title, grid, note, uses, intro, rows):
+    cols, nrow = grid
+    body = [intro, "GRID: exactly %d columns x %d rows of equal cells, no more and no fewer." % (cols, nrow)] + rows
+    parts = ["Create a single image: a sprite sheet for an isometric church-building management game. " + body[0], "",
+             STYLE.replace(", white wooden porches", ""), "", ISO, "",
+             layout(cols, nrow, empty_last=False), "", HIRES, "", PAIR_NODOOR, "", WIDE_ORIENT, "", NODOOR, "",
+             "CONTENTS"] + body[1:]
+    SHEETS.append({'key': key, 'title': title, 'grid': '%dx%d' % grid, 'note': note, 'uses': uses,
+                   'prompt': "\n".join(parts).strip()})
+
+def edit(key, title, ref, note, uses, items):
+    p = ["Edit the attached image (%s). It shows ONE building in two views separated by a black line: the LEFT half is the front view, the RIGHT half is the back view of the same building. Keep EVERYTHING exactly as it is: the same image size, the black dividing line, the magenta background, the building at the same size and position, the same pixel style, outline color, palette and lighting. Only change what is listed below." % ref, "",
+         "CHANGE: remove every door from the building, in both views.",
+         "- Replace each door, door frame and door arch with plain wall of the same material (same bricks, plaster or stone, same shading), continuing the wall pattern and the stone base across it. Keep any window that was above it.",
+         "- Also remove entrance steps, doorsteps, porches, canopies and stairs in front of where the doors were. Fill that space with the building's own wall and stone base or with the flat magenta background, so nothing sticks out beyond the building's walls.",
+         "- Do not add anything new. Do not move, redraw, enlarge or shrink anything else. Do not change the roof, the tower, the cross or the windows.",
+         "- The lower part of every wall must end up plain and closed, because in the game a separate small entrance building is attached to the wall later.", ""] + items
+    SHEETS.append({'key': key, 'title': title, 'grid': '수정', 'note': note, 'uses': uses, 'prompt': "\n".join(p).strip(),
+                   'img': 'edit-src/' + ref})
+
+EDIT_NOTE = ' 원본 시트를 통째로 고치게 하면 Gemini가 다른 칸까지 다시 그리기 쉬워서, 쓰는 한 쌍만 잘라 둔 그림(`docs/art/edit-src/`, 프롬프트 페이지에서 저장 가능)을 첨부한다. 결과가 원본보다 작게 오거나(2000px 미만) 건물 모양이 바뀌면 쓰지 않는다.'
+edit('R1', '수정: 작은 예배실 문 지우기', 'room-pair.png',
+     '지금 쓰는 고화질 그림(시트 W1)을 그대로 두고 문만 지운다. 새로 그리면 이미 맞춰 둔 화풍·크기가 달라질 수 있어 수정이 먼저다.' + EDIT_NOTE,
+     '작은 예배실(room) 앞·뒤 — 첨부: edit-src/room-pair.png',
+     ["THIS BUILDING: a small cream plaster chapel with a slate-blue gable roof and a white cross. In the front view (left), remove the arched wooden double door, its stone frame and the stone steps in front of it; the front gable becomes plain cream wall above the stone base, keeping the round window high on the gable. The back view (right) has no door; leave it unchanged."])
+edit('R3', '수정: 예배당 문 지우기', 'chapel-pair.png',
+     '예배당(시트 W3) 현관(작은 박공 지붕)·문·계단을 지운다. 종탑·창은 그대로.' + EDIT_NOTE,
+     '예배당(chapel) 앞·뒤 — 첨부: edit-src/chapel-pair.png',
+     ["THIS BUILDING: a red brick chapel with a slate-blue roof and a white bell tower. In the front view (left), remove the small gabled entrance porch, its arched wooden door and its stone steps; the entrance gable wall continues as plain red brick down to the stone base, keeping the round window above. The back view (right) has no door; leave it unchanged."])
+edit('R2', '수정: 대예배당 문 지우기', 'grand-pair.png',
+     '대예배당(시트 W2) 큰 문과 넓은 돌계단을 지운다. 장미창·종탑·버팀벽은 그대로.' + EDIT_NOTE,
+     '대예배당(grand) 앞·뒤 — 첨부: edit-src/grand-pair.png',
+     ["THIS BUILDING: a large cream limestone sanctuary with a slate-blue roof, buttresses and a tall bell tower with a spire. In the front view (left), remove the wide arched double door and the wide stone staircase in front of it; under the big round rose window the facade continues as plain limestone wall down to the stone base, with one tall narrow pointed-arch window (plain blue-grey glass) where the door was. Keep the rose window, the tower and the buttresses. The back view (right) has no door; leave it unchanged."])
+
+hires('W4', '고화질·문 없음: 기도실·새벽기도실 (2x2)', (2, 2),
+      '예배 건물 가운데 작은 두 채를 앞·뒤 한 쌍씩, 네 칸을 모두 쓴다 (빈칸이 있으면 Gemini가 딴 그림을 채워 넣는다). 시트 W3 그림을 참고로 붙인다.',
+      '기도실(pray, 1x1) 앞·뒤, 새벽기도실(dawn, 2x1) 앞·뒤',
+      "It contains exactly FOUR large, highly detailed drawings: two small worship buildings, each shown from the front and from the back. Attach sheet W3 (the red brick chapel) as the style reference and match its pixel size, outline color, shading and level of detail exactly.",
+      ["Row 1, column 1: FRONT view of a tiny prayer chapel, footprint 1x1 (a small square building, about one storey): cream plaster walls, a small slate-blue hip roof rising to a point with a small plain white cross on top, one tall narrow arched window on each visible wall, a light stone base.",
+       "Row 1, column 2: BACK view of exactly the same prayer chapel (turned 180 degrees).",
+       "Row 2, column 1: FRONT view of a dawn prayer chapel, footprint 2x1 (clearly twice as long as it is deep, about one storey): pale blue-grey plaster walls, a deep navy-blue hip roof with a small cross on the front end of the ridge, a row of small square windows with warm yellow panes (flat color, no glow), a light stone base.",
+       "Row 2, column 2: BACK view of exactly the same dawn prayer chapel (turned 180 degrees)."])
+
+hires('W5', '고화질·문 없음: 성경공부방·찬양실 (2x2)', (2, 2),
+      'W4와 같은 방식. 찬양실은 창에 무늬·글자가 나오지 않게 했다 (예전 시트 F에서 MUSIC 글씨가 나왔다).',
+      '성경공부방(bible, 2x1) 앞·뒤, 찬양실(praise, 2x2) 앞·뒤',
+      "It contains exactly FOUR large, highly detailed drawings: two worship buildings, each shown from the front and from the back. Attach sheet W3 (the red brick chapel) as the style reference and match its pixel size, outline color, shading and level of detail exactly.",
+      ["Row 1, column 1: FRONT view of a bible study house, footprint 2x1 (clearly twice as long as it is deep, about one storey): cream plaster walls with timber trim, a slate-blue hip roof, a long row of white-framed windows on the long wall, one small round window on the front end, a light stone base.",
+       "Row 1, column 2: BACK view of exactly the same bible study house (turned 180 degrees).",
+       "Row 2, column 1: FRONT view of a praise hall, footprint 2x2 (square, a little taller than one storey): pale lavender-cream walls, a purple-slate gable roof with a small plain cross on the front of the ridge, one big round window high on the front gable with plain light-blue glass and simple radial frames only (no pictures, no letters, no music notes), tall arched windows on the long wall, a light stone base.",
+       "Row 2, column 2: BACK view of exactly the same praise hall (turned 180 degrees): the rear gable has one small round window."])
+
+hires('W6', '고화질·문 없음: 선교관 (2x1)', (2, 1),
+      '선교관 하나만 앞·뒤로 크게 받는다 (W3처럼 가로로 넓은 그림). 지금 쓰는 선교관은 1024px 시트 E3 것이라 흐리다. 2층 건물이라 칸 높이를 넘지 않게 65% 제한을 넣었다.',
+      '선교관(mission, 3x2) 앞·뒤',
+      "It contains exactly TWO large, highly detailed drawings: the same mission house from the front and from the back. Attach sheet W3 (the red brick chapel) as the style reference and match its pixel size, outline color, shading and level of detail exactly.",
+      ["Column 1: FRONT view of a mission house, footprint 3x2, two storeys: red brick walls, white window frames on both storeys, a steep dark slate roof with two small dormer windows, a small plain cross on the front end of the ridge, a white flag pole with a blank white flag standing INSIDE the footprint at the front corner, a stone base.",
+       "Column 2: BACK view of exactly the same mission house (turned 180 degrees)."])
+
 # ---------------------------------------------------------------- 문서
-ORDER = [('S1', '소모임 운동 코트 7종 (지금 먼저)'),
+ORDER = [('R1', '수정 — 작은 예배실 문 지우기 (지금 먼저, 가장 쉬움)'),
+         ('R3', '수정 — 예배당 문 지우기 (지금 먼저)'),
+         ('R2', '수정 — 대예배당 문 지우기 (지금 먼저)'),
+         ('W4', '문 없음 — 기도실·새벽기도실 (지금 먼저)'),
+         ('W5', '문 없음 — 성경공부방·찬양실 (지금 먼저)'),
+         ('W6', '문 없음 — 선교관 (지금 먼저)'),
+         ('S1', '소모임 운동 코트 7종 (지금 먼저)'),
          ('S2', '소모임 취미 방 5종 앞·뒤 (지금 먼저)'),
          ('S3', '소모임 음악 방 3종 앞·뒤 (지금 먼저)'),
          ('W3', '고화질 — 예배당 뒷모습 다시 (지금 먼저)'),
@@ -344,6 +432,8 @@ def build_md():
            "- **글자는 그림에 넣지 않는다**: Gemini는 한글을 정확히 못 쓰고, 버튼 글씨는 바뀌기 때문에 모든 글자는 게임의 웹 글꼴로 쓴다. 제목도 엠블럼만 받고 글씨는 글꼴로 얹는다.",
            "- **방향**: 앞모습은 앞면이 오른쪽 아래, 뒷모습은 뒷면이 오른쪽 아래. 게임이 좌우 뒤집기로 네 방향을 만든다 (자세한 표는 `gemini-prompts.md`). 차·계단만 긴 쪽이 \"\\\\\".",
            "- **맨 오른쪽 아래 칸은 비운다** (Gemini 워터마크).",
+           "- **방문 건물에는 문을 그리지 않는다** (시트 R·W4 이후): 입구·출구는 건물 1층 둘레 어느 칸에나 붙는 작은 현관 건물(따로 받는다)이다. 그래서 건물 그림에는 문·계단·현관이 없고, 1층 벽 아랫부분이 비어 있고, 발자국(footprint) 밖으로 튀어나온 것이 없어야 한다. 이미 쓰는 고화질 그림(W1~W3)은 새로 그리지 않고 문만 지우는 수정 프롬프트(R1~R3)로 고친다.",
+           "- **받은 뒤 확인할 것 (문 없는 시트)**: ① 문·문틀·계단·현관이 어느 면에도 없는가 ② 벽 아래쪽에 화단·벤치 같은 것이 붙어 있지 않은가 ③ 앞·뒤가 같은 건물인가 ④ 종탑·십자가 끝이 칸 안에 있는가 ⑤ 이미지가 2000px 안팎인가 (수정 결과가 작게 오면 쓰지 않는다)",
            "- **해상도**: 모든 프롬프트는 \"가능한 가장 큰 해상도(2K 이상)로 만들라\"고 적는다. 프롬프트 문장으로는 픽셀 크기를 보장할 수 없다. 해상도는 도구 설정에서 고른다 (Google AI Studio에서 Nano Banana 계열의 이미지 크기 옵션을 확인하고, 앱에 옵션이 없으면 1K로 받는다). 칸 수를 줄이는 것이 화질에 더 큰 영향을 준다.", "",
            "## 받는 순서 (권장)"]
     for i, (k, why) in enumerate(ORDER, 1):
@@ -366,11 +456,12 @@ def build_html():
         secs.append('''  <section class="box" id="s%(k)s" aria-labelledby="h%(k)s">
     <div class="head"><h2 id="h%(k)s">시트 %(k)s · %(t)s</h2><span class="tag">%(g)s</span></div>
     <p class="note"><b>쓰는 곳</b> %(u)s</p>
-    <p class="note">%(n)s</p>
+    <p class="note">%(n)s</p>%(img)s
     <pre tabindex="0">%(p)s</pre>
     <button type="button" class="copy" data-copy>시트 %(k)s 프롬프트 복사</button>
   </section>''' % {'k': s['key'], 't': html.escape(s['title']), 'g': s['grid'], 'u': html.escape(s['uses']),
-                   'n': html.escape(s['note']), 'p': html.escape(s['prompt'])})
+                   'n': html.escape(s['note']), 'p': html.escape(s['prompt']),
+                   'img': ('\n    <a class="src" href="%s" download><img src="%s" alt="시트 %s에 첨부할 원본 그림" loading="lazy"><span>첨부할 그림 저장 (길게 눌러 저장)</span></a>' % (s['img'], s['img'], s['key'])) if s.get('img') else ''})
     order = ''.join('<li><a href="#s%s">시트 %s</a> <span>%s</span></li>' % (k, k, html.escape(w)) for k, w in ORDER)
     return '''<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -424,7 +515,7 @@ def build_html():
 
 
 if __name__ == '__main__':
-    SHEETS.sort(key=lambda x: {'S1': -4, 'S2': -3, 'S3': -2, 'W3': -1, 'W2': 0, 'W1': 1, 'E4': 2, 'E3': 3, 'E2': 4}.get(x['key'], 2))  # 지금 받을 시트를 맨 위에
+    SHEETS.sort(key=lambda x: {'R1': -10, 'R3': -9, 'R2': -8, 'W4': -7, 'W5': -6, 'W6': -5, 'S1': -4, 'S2': -3, 'S3': -2, 'W3': -1, 'W2': 0, 'W1': 1, 'E4': 2, 'E3': 3, 'E2': 4}.get(x['key'], 2))  # 지금 받을 시트를 맨 위에
     open(os.path.join(ROOT, 'docs/art/sheet-prompts.md'), 'w').write(build_md())
     open(os.path.join(ROOT, 'docs/art/gemini-prompts.html'), 'w').write(build_html())
     print('시트', len(SHEETS), '개:', ' '.join(s['key'] for s in SHEETS))

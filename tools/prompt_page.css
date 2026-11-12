@@ -49,3 +49,6 @@ button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 .order{margin:0;padding-left:22px;display:grid;gap:4px}
 .order a{color:var(--accent);font-weight:600}
 .order span{color:var(--muted);font-size:13.5px}
+.src{display:block;margin:8px 0 10px;text-decoration:none;color:inherit}
+.src img{display:block;width:100%;height:auto;border-radius:8px;border:1px solid var(--line,#ccc);background:#f0f}
+.src span{display:block;font-size:13px;margin-top:4px;opacity:.8}
