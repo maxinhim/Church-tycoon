@@ -121,3 +121,16 @@
 .sbulk{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 6px}
 .sbulk span{font-size:11.5px;color:var(--muted);margin-right:auto}
 .sbulk .btn{height:28px;font-size:11.5px;padding:0 10px}
+/* 성장 갈래: 기본(회색)·직분(초록)·교역(보라)·섬김(주황). 양육 중(d1~3)은 파랑 */
+.ppc.rank.d1 .evp,.ppc.rank.d2 .evp,.ppc.rank.d3 .evp,.rchip.t0{background:#e3f0fb;color:#1c5e96}
+.ppc.rank.d0 .evp{background:var(--chip);color:var(--muted)}
+.ppc.rank.tA .evp,.rchip.tA{background:#e6f6ea;color:#1f7a36}
+.ppc.rank.tB .evp,.rchip.tB{background:#ece3f8;color:#5f3d9c}
+.ppc.rank.tC .evp,.rchip.tC{background:#fdebd2;color:#9a5a08}
+.sopts{display:flex;flex-direction:column;gap:6px;width:100%}
+.sopt{display:flex;align-items:center;gap:8px;justify-content:space-between;border:1px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--card)}
+.sopt>div{min-width:0;font-size:12px}
+.sopt small{display:block;font-size:10.5px;color:var(--muted);line-height:1.35}
+.sopt small.bad{color:var(--bad)}
+.sopt .btn{flex:none;height:30px;font-size:12px}
+.sopt .rchip{vertical-align:1px}

@@ -72,12 +72,13 @@ function runBot(cfg) {
   function events(list) { Object.keys(S.ev).forEach(id => { if (evReady(id)) { claimEvent(id); stat.claims = (stat.claims || 0) + 1; } }); list.forEach(id => { if (EVENTS[id] && !evBlock(id) && S.money > evCost(EVENTS[id]) + RES) { if (runEvent(id) === '') stat.events++; } }); }
   function staffUp(keys) { keys.forEach(k => { const lv = S.staff[k] || 0; if (lv < 3 && (STAFF[k].goal || 0) <= S.goal && S.money > STAFF[k].costs[lv] + RES * 2) { if (hireTeam(k) === '') stat.staff++; } }); }
   // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계 교육을 시작하고, 남는 돈으로 몇 명을 심방한다
+  // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계(갈래는 은사에 따라)를 시작하고, 남는 돈으로 몇 명을 심방한다
   function people() {
-    (S.people || []).forEach(p => { if (p.tr && p.tr.ready && (p.tr.to < 5 || S.assoc.length < assocSlots())) { if (ppAppoint(p.id)) stat.appoint = (stat.appoint || 0) + 1; } });
-    const L = (S.people || []).filter(p => !p.tr).sort((x, y) => y.rank - x.rank || y.lv - x.lv);
-    L.forEach(p => { const st = ppStep(p); if (!st || p.rank >= 3) return; if (p.lv >= st.lv && S.money > st.cost + RES && ppTrain(p.id) === '') stat.train = (stat.train || 0) + 1; });
+    (S.people || []).forEach(p => { if (p.tr && p.tr.ready && (p.tr.to !== 'assoc' || S.assoc.length < assocSlots())) { if (ppAppoint(p.id)) stat.appoint = (stat.appoint || 0) + 1; } });
+    const L = (S.people || []).filter(p => !p.tr).sort((x, y) => ppDepth(y) - ppDepth(x) || y.lv - x.lv);
+    L.forEach(p => { const nx = ppNexts(p); if (!nx.length) return; const to = nx.length > 1 ? nx[p.seed % 3] : nx[0]; if (to === 'assoc') return; const st = PP_TREE[to]; if (p.lv >= st.lv && S.money > st.cost + RES && ppTrain(p.id, to) === '') stat.train = (stat.train || 0) + 1; });
     let n = Math.ceil(S.members * 0.1);
-    L.forEach(p => { if (n <= 0 || p.rank >= 3 || p.lv >= 6) return; if (S.money > PP_VISIT.cost + RES * 1.5 && !ppCareWhy(p, 'visit')) { ppCare(p.id, 'visit'); n--; stat.visits = (stat.visits || 0) + 1; } });
+    L.forEach(p => { if (n <= 0) return; if (S.money > PP_VISIT.cost + RES * 1.5 && !ppCareWhy(p, 'visit')) { ppCare(p.id, 'visit'); n--; stat.visits = (stat.visits || 0) + 1; } });
   }
   function pastoral() {
     people();
@@ -95,11 +96,11 @@ function runBot(cfg) {
     if (strat === 'deco') { decorate(3); return; }
     seats();
     if (strat === 'shop') { const id = best(d => d.income, d => d.cat === 'shop'); if (id) put(id); return; }
-    if (strat === 'spirit') { events(['communion', 'baptism', 'retreat', 'easter', 'thanks', 'christmas', 'revival']); staffUp(['praise', 'prayer', 'edu']); spiritBuild(); pastoral(); return; }
+    if (strat === 'spirit') { events(['communion', 'bible', 'creed', 'retreat', 'easter', 'thanks', 'christmas', 'revival']); staffUp(['praise', 'prayer', 'edu']); spiritBuild(); pastoral(); return; }
     // wish: 성도들의 바람부터 들어준다
     if (wishFirst && S.wish) { if (S.wish.t === 'event') { if (!evBlock(S.wish.id)) runEvent(S.wish.id); } else put(S.wish.id); }
     // balanced: 행사 → 목양 → 가장 모자란 항목 → 불편 → 꾸미기
-    events(['communion', 'baptism', 'smallgroup', 'service', 'bazaar', 'retreat', 'street', 'easter', 'vbs', 'thanks', 'christmas', 'revival']);
+    events(['communion', 'bible', 'creed', 'smallgroup', 'service', 'bazaar', 'retreat', 'street', 'easter', 'vbs', 'thanks', 'christmas', 'revival', 'training']);
     pastoral(); staffUp(['praise', 'care', 'prayer', 'evang', 'newcomer', 'edu', 'admin', 'media', 'mission']);
     for (let n = 0; n < (S.money > 30000 ? 5 : 2); n++) {
       const c = S.cov, items = [['seat', 'seats'], ['fel', 'fcap'], ['care', 'kcap'], ['comf', 'ccap'], ['park', 'park']].sort((a, b) => c[a[0]] - c[b[0]]);

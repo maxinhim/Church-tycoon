@@ -58,19 +58,41 @@ var GRIPE_SHOW=0.1;      // 챙길 일에는 방문자의 이 비율(최소 3명
 /* 달력: 한 달 5주, 한 해 12달 = 60주. 계절은 달로 나눈다 (봄 3~5, 여름 6~8, 가을 9~11, 겨울 12~2월). 처음 시작은 1월 1주 */
 var WEEKS_PER_MONTH=5,YEAR_WEEKS=60;
 /* 성도 한 사람 한 사람 (people.js)
-   · 호감 레벨 1~PP_LV_MAX. 다음 레벨까지 경험치 = PP_XP0 + PP_XP_K × 지금 레벨. 매주 예배에 나오며 PP_WEEK_XP(만족도 50 아래면 PP_WEEK_XP_LOW)씩 쌓이고,
-     심방(PP_VISIT)·선물(PP_GIFT)로 크게 오른다 (한 사람에게 cd주에 한 번)
-   · 단계(PP_STEPS): 새가족 → 세례교인 → 집사 → 장로(남)·권사(여) → 신학 수료 → 부교역자. 레벨(lv)이 되면 값(cost)을 내고 교육(dur주)을 시작하고, 다 차면 직접 임명한다
-   · 헌금: 한 사람의 주일 헌금은 레벨마다 +PP_GIVE_LV, 직분마다 매주 PP_GIVE_RANK만큼 더 (신학 수료 뒤 평신도로 남으면 가장 크다)
-   · 영성: (레벨−1) × PP_SPIRIT_LV + 직분 PP_SPIRIT_RANK 를 모두 더해 × PP_SPIRIT_K 만큼 말씀·기도·찬양 자리에 더한다
-   · 목양 수용력: 직분마다 PP_CAP_RANK
+   · 호감 레벨 1~PP_LV_MAX. 다음 레벨까지 경험치 = PP_XP0 + PP_XP_K × 지금 레벨 (Lv 70까지 약 1,400).
+     매주 예배에 나오며 PP_WEEK_XP(만족도 50 아래면 PP_WEEK_XP_LOW), 심방 PP_VISIT·선물 PP_GIFT(한 사람에게 cd주에 한 번), 교육 행사(모든 성도)로 오른다
+   · 성장 단계(PP_TREE): 새가족 → 세례 → 양육반 → 제자반 → 세 갈래
+       직분: 헌신성도 → 집사 → 장로(남)·권사(여)          (Lv 70)
+       교역: 소그룹 리더 → 공동체 리더 → 간사 → 신학교 입학 → (부교역자로 섭외)   (Lv 70)
+       섬김: 섬김이 → 사역팀장 → 사역부장 → 교회직원       (Lv 70)
+     단계마다 lv(필요 호감 레벨)·cost(값)·dur(교육 주)·give(매주 헌금 더)·sp(영성 자리)·cap(목양 수용력)·upk(운영비 −)·dec(노후 −)
+   · 헌금: 성도들의 평균 레벨마다 +PP_GIVE_LV. 영성 자리 = Σ((레벨−1) × PP_SPIRIT_LV + 단계 sp) × PP_SPIRIT_K
    · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자도 격려(ASSOC_CHEER)로 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
-var PP_LV_MAX=10,PP_XP0=6,PP_XP_K=4,PP_WEEK_XP=1,PP_WEEK_XP_LOW=.4;
-var PP_VISIT={cost:40,xp:8,cd:2},PP_GIFT={cost:120,xp:18,cd:4};
-var PP_STEPS=[{lv:2,cost:50,dur:2},{lv:3,cost:150,dur:3},{lv:5,cost:400,dur:4},{lv:7,cost:2500,dur:8},{lv:8,cost:1200,dur:3}];
-var PP_GIVE_LV=.015,PP_GIVE_RANK=[0,1,3,10,120];
-var PP_SPIRIT_LV=.05,PP_SPIRIT_RANK=[0,.3,.6,1,2],PP_SPIRIT_K=.15;
-var PP_CAP_RANK=[0,1.5,6,14,25];
+var PP_LV_MAX=99,PP_XP0=10,PP_XP_K=.3,PP_WEEK_XP=1.5,PP_WEEK_XP_LOW=.6;
+var PP_VISIT={cost:40,xp:15,cd:2},PP_GIFT={cost:120,xp:30,cd:4};
+var PP_TREE={
+  new:{n:'새가족',d:0,next:['bapt']},
+  bapt:{n:'세례교인',act:'세례',tr:'세례 교육',done:'세례 주기',lv:3,cost:50,dur:2,d:1,give:1,sp:.2,cap:1,next:['nurture']},
+  nurture:{n:'양육반 수료',act:'양육반',tr:'양육반',done:'양육반 수료',lv:8,cost:80,dur:3,d:2,give:1,sp:.3,cap:1,next:['disciple']},
+  disciple:{n:'제자반 수료',act:'제자반',tr:'제자반',done:'제자반 수료',lv:15,cost:150,dur:4,d:3,give:2,sp:.5,cap:2,next:['devoted','sgl','server']},
+  devoted:{n:'헌신성도',act:'헌신성도',tr:'헌신 훈련',done:'헌신성도 세우기',lv:25,cost:250,dur:4,d:4,t:'A',give:3,sp:.6,cap:3,next:['deacon']},
+  deacon:{n:'집사',act:'집사 임명',tr:'집사 교육',done:'집사 임명',lv:45,cost:500,dur:6,d:5,t:'A',give:6,sp:.8,cap:0,next:['elder']},
+  elder:{n:'장로',nf:'권사',act:'장로 임명',actf:'권사 임명',tr:'장로 교육',trf:'권사 교육',done:'장로 임명',donef:'권사 임명',lv:70,cost:1200,dur:10,d:6,t:'A',give:20,sp:1.2,cap:0,next:[]},
+  sgl:{n:'소그룹 리더',act:'소그룹 리더',tr:'리더 훈련',done:'소그룹 리더 세우기',lv:25,cost:250,dur:4,d:4,t:'B',give:2,sp:.8,cap:8,next:['cml']},
+  cml:{n:'공동체 리더',act:'공동체 리더',tr:'공동체 리더 훈련',done:'공동체 리더 세우기',lv:40,cost:450,dur:6,d:5,t:'B',give:3,sp:1,cap:15,next:['kanji']},
+  kanji:{n:'간사',act:'간사',tr:'간사 수련',done:'간사 임명',lv:55,cost:800,dur:8,d:6,t:'B',give:4,sp:1.3,cap:20,next:['seminary']},
+  seminary:{n:'신학 수료',act:'신학교 입학',tr:'신학교 수업',done:'졸업 축하',lv:70,cost:2500,dur:12,d:7,t:'B',give:120,sp:2,cap:25,next:['assoc']},
+  assoc:{n:'부교역자',act:'부교역자로 섭외',tr:'부교역자 수련',done:'부교역자 임명',lv:70,cost:1200,dur:3,d:8,t:'B',next:[]},
+  server:{n:'섬김이',act:'섬김이',tr:'섬김 훈련',done:'섬김이 세우기',lv:25,cost:200,dur:4,d:4,t:'C',give:2,sp:.4,cap:2,upk:.005,dec:.01,next:['tlead']},
+  tlead:{n:'사역팀장',act:'사역팀장',tr:'팀장 훈련',done:'사역팀장 임명',lv:40,cost:400,dur:6,d:5,t:'C',give:3,sp:.5,cap:4,upk:.01,dec:.02,next:['dlead']},
+  dlead:{n:'사역부장',act:'사역부장',tr:'부장 훈련',done:'사역부장 임명',lv:55,cost:700,dur:8,d:6,t:'C',give:5,sp:.6,cap:6,upk:.015,dec:.03,next:['cstaff']},
+  cstaff:{n:'교회직원',act:'교회직원 임명',tr:'직원 수습',done:'교회직원 임명',lv:70,cost:1500,dur:10,d:7,t:'C',give:8,sp:.8,cap:8,upk:.03,dec:.05,next:[]}
+};
+var PP_TRACK={A:{n:'직분',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'교역',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김'}};
+var PP_UPK_MAX=.25,PP_DEC_MAX=.4;
+var PP_GIVE_LV=.005;
+// 교육 행사: 보상 수령 때 모든 성도 경험치 + xp. 값 = base + 성도 × per
+var EDU_EV={bible:{base:150,per:2,xp:12},creed:{base:250,per:3,xp:20},training:{base:600,per:5,xp:40}};
+var PP_SPIRIT_LV=.01,PP_SPIRIT_K=.15;
 var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율
 /* 회전 시간과 대기줄

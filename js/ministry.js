@@ -126,9 +126,10 @@ function searchCands(){if(S.money<100)return '자금이 부족해요';S.money-=1
 var OFFICE={
   deacon:{name:'집사',desc:'목양 수용력 +6, 운영비 -1% (최대 -12%)'},
   kwonsa:{name:'권사',desc:'목양 수용력 +10, 만족 +0.4 (최대 +6)'},
-  elder:{name:'장로',desc:'목양 수용력 +18, 이탈 -2% (최대 -20%), 평판 +0.1/주'}
+  elder:{name:'장로',desc:'목양 수용력 +18, 이탈 -2% (최대 -20%), 평판 +0.1/주'},
+  cstaff:{name:'교회직원',desc:'운영비 −3%, 건물 노후 −5% (섬김 갈래 합쳐 최대 −25%·−40%)'}
 };
-function offTotal(s){s=s||S;return (s.off.deacon||0)+(s.off.kwonsa||0)+(s.off.elder||0);}
+function offTotal(s){s=s||S;return (s.off.deacon||0)+(s.off.kwonsa||0)+(s.off.elder||0)+(s.off.cstaff||0);}
 
 /* ---------- 특별행사 ----------
    행사 화면(screens.js)에서 고른다. 시작하면 값을 내고, 소요 시간(dur 주, 게임 속 시간) 동안 진행 효과(mods)가 적용된다.
@@ -139,9 +140,16 @@ function evNow(){return S.week+S.t/WEEK;}
 function rwMoney(v){v=Math.round(v);S.money+=v;S.weekInc+=v;return '자금 +'+fmt(v);}
 function rwRep(v){gainRep(v);return '평판 +'+v;}
 function rwMood(v){S.tempMood+=v;return '만족 +'+v;}
+function eduRw(k){var x=EDU_EV[k].xp,n=ppGainAll(x);return '모든 성도 경험치 +'+x+(n?' ('+n+'명 레벨 업)':'');}
 var EVENTS={
   smallgroup:{name:'소그룹 모임',ic:'🫖',col:'#6fa86a',cost:150,cd:2,dur:2,goal:0,desc:'가정과 교회에서 모여 삶을 나눠요',fx:'만족 +6, 이탈 -30%',rwt:'만족 +2',
     need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;},rw:function(){return [rwMood(2)];}},
+  bible:{name:'성경공부',ic:'📖',col:'#5a74b8',cost:EDU_EV.bible.base,cd:3,dur:1,goal:0,edu:'bible',desc:'함께 말씀을 읽고 나눠요',fx:'말씀 효과 +10%',rwt:'모든 성도 경험치 +'+EDU_EV.bible.xp,
+    costFn:function(){return EDU_EV.bible.base+S.members*EDU_EV.bible.per;},mods:function(m){m.word*=1.1;},rw:function(){return [eduRw('bible')];}},
+  creed:{name:'교리공부',ic:'📜',col:'#8a6a46',cost:EDU_EV.creed.base,cd:6,dur:2,goal:1,edu:'creed',desc:'신앙의 기초를 차근차근 배워요',fx:'말씀 효과 +10%',rwt:'모든 성도 경험치 +'+EDU_EV.creed.xp,
+    costFn:function(){return EDU_EV.creed.base+S.members*EDU_EV.creed.per;},mods:function(m){m.word*=1.1;},rw:function(){return [eduRw('creed')];}},
+  training:{name:'제자훈련 세미나',ic:'🎓',col:'#2f8f9d',cost:EDU_EV.training.base,cd:12,dur:3,goal:2,edu:'training',desc:'강사를 모시고 온 교회가 제자훈련을 받아요',fx:'말씀 효과 +15%, 만족 +2',rwt:'모든 성도 경험치 +'+EDU_EV.training.xp,
+    costFn:function(){return EDU_EV.training.base+S.members*EDU_EV.training.per;},mods:function(m){m.word*=1.15;m.mood+=2;},rw:function(){return [eduRw('training')];}},
   communion:{name:'성찬식',ic:'🍞',col:'#b0763f',cost:200,cd:4,dur:2,goal:0,desc:'떡과 잔을 나누며 은혜를 기억해요 (세례는 성도 화면에서 한 사람씩 베풀어요)',fx:'영성(성례) 크게 ↑, 만족 +4',rwt:'만족 +2',
     need:function(){return A.seats>=S.members*0.6?'':'좌석이 성도의 60% 이상 필요해요';},mods:function(m){m.mood+=4;},rw:function(){return [rwMood(2)];}},
   street:{name:'노방전도',ic:'📣',col:'#d98a3a',cost:250,cd:3,dur:2,goal:0,desc:'거리에서 이웃을 만나 교회를 소개해요',fx:'방문자 +40%',rwt:'평판 +1',mods:function(m){m.vis*=1.4;},rw:function(){return [rwRep(1)];}},
@@ -253,6 +261,8 @@ function refreshMods(){
   m.cap+=6*o.deacon+10*o.kwonsa+18*o.elder+PA.cap;
   m.offer*=ppGiveK();
   m.upkeep*=1-Math.min(0.12,0.01*o.deacon);
+  // 섬김 갈래(섬김이·사역팀장·사역부장·교회직원): 운영비·노후를 줄인다
+  m.upkeep*=1-PA.upk;m.decay*=1-PA.dec;
   part('권사',Math.min(6,0.4*o.kwonsa));
   m.loss*=1-Math.min(0.2,0.02*o.elder);
   m.rep+=Math.min(1,0.1*o.elder);

@@ -593,28 +593,44 @@ async function ministryChecks(browser, url) {
     S.members = 16; recalc();
     // 성도 한 사람 한 사람: 명단은 성도 수를 따르고, 심방 → 호감 레벨 → 교육 → 임명으로 세례·집사·장로/권사·신학 수료·부교역자까지
     { const P = S.people, pe = {}; o.pe = pe;
-      pe.roster = P.length === 16 && P.every(q => q.n && q.lv === 1 && q.rank === 0 && (q.g === 'm' || q.g === 'f')) && ppGiveK() === 1 && new Set(P.map(q => q.id)).size === 16;
-      const p = P[0], cash = () => S.money;
-      let m1 = cash(); const v1 = ppCare(p.id, 'visit'); pe.visit = v1 === '' && cash() === m1 - PP_VISIT.cost && p.xp === PP_VISIT.xp && /주 뒤/.test(ppCare(p.id, 'visit')) && cash() === m1 - PP_VISIT.cost;
-      pe.gate = /Lv 2/.test(ppTrainWhy(p)) && ppTrain(p.id) !== '';
-      m1 = cash(); const g1 = ppCare(p.id, 'gift'); pe.gift = g1 === '+' + p.lv && p.lv >= 2 && cash() === m1 - PP_GIFT.cost;
-      const step = (lv) => { p.lv = Math.max(p.lv, lv); const c0 = cash(), st = ppStep(p), w = ppTrain(p.id); const paid = w === '' && cash() === c0 - st.cost && !!p.tr && !p.tr.ready && ppAppoint(p.id) === null; p.tr.end = evNow() - .01; peopleTick(); const rd = p.tr.ready && ppReadyCount() === 1; const msg = ppAppoint(p.id); return paid && rd && !!msg; };
-      const cap1 = MOD.cap; pe.bapt = step(2) && p.rank === 1 && S.evW.baptism === S.week && PA.bapt === 1 && Math.abs(MOD.cap - cap1 - PP_CAP_RANK[1]) < .01;
-      const cap2 = MOD.cap; pe.deacon = step(3) && p.rank === 2 && S.off.deacon === 1 && Math.abs(MOD.cap - (cap2 - PP_CAP_RANK[1] + 6)) < .01 && PA.flat === PP_GIVE_RANK[2];
-      pe.elder = step(5) && p.rank === 3 && (p.g === 'm' ? S.off.elder === 1 && ppRankName(p) === '장로' : S.off.kwonsa === 1 && ppRankName(p) === '권사') && S.off.deacon === 0;
-      pe.grad = step(7) && p.rank === 4 && PA.flat === PP_GIVE_RANK[4] && PA.grad === 1 && ppGiveK() > 1;
-      // 부교역자로 섭외: 자리가 있어야 하고, 임명하면 성도 명단에서 빠져 별 5개 사역자가 된다
-      p.lv = 8; pe.slot = /자리가 없어요/.test(ppTrainWhy(p)); dismissAssoc(0); S.tempMood = 0;
-      const mem0 = S.members; pe.assoc = step(8) && S.assoc.length === 1 && S.assoc[0].home && S.assoc[0].skill === 5 && S.assoc[0].name === p.n && S.members === mem0 - 1 && S.people.length === mem0 - 1 && !ppById(p.id) && PA.flat === 0 && Math.abs(asSkill(S.assoc[0]) - 5 * ASSOC_HOME_K) < .01;
+      pe.roster = P.length === 16 && P.every(q => q.n && q.lv === 1 && q.node === 'new' && (q.g === 'm' || q.g === 'f')) && ppGiveK() === 1 && new Set(P.map(q => q.id)).size === 16;
+      const p = P[0], cash = () => S.money; p.g = 'm';
+      let m1 = cash(); const v1 = ppCare(p.id, 'visit'); pe.visit = v1.charAt(0) === '+' && cash() === m1 - PP_VISIT.cost && p.lv >= 2 && /주 뒤/.test(ppCare(p.id, 'visit')) && cash() === m1 - PP_VISIT.cost;
+      pe.gate = /Lv 3/.test(ppTrainWhy(p)) && ppTrain(p.id) !== '' && p.lv < 3;
+      m1 = cash(); const g1 = ppCare(p.id, 'gift'); pe.gift = g1 === '+' + p.lv && p.lv >= 3 && cash() === m1 - PP_GIFT.cost;
+      // 교육 → 게이지가 다 차면 직접 임명 (to: 고른 갈래)
+      const step = (to) => { const st = PP_TREE[to]; p.lv = Math.max(p.lv, st.lv); const c0 = cash(), w = ppTrain(p.id, to); const paid = w === '' && cash() === c0 - st.cost && !!p.tr && !p.tr.ready && ppAppoint(p.id) === null; p.tr.end = evNow() - .01; peopleTick(); const rd = p.tr.ready && ppReadyCount() === 1; const msg = ppAppoint(p.id); return paid && rd && !!msg; };
+      const cap1 = MOD.cap; pe.bapt = step('bapt') && p.node === 'bapt' && S.evW.baptism === S.week && PA.bapt === 1 && Math.abs(MOD.cap - cap1 - PP_TREE.bapt.cap) < .01;
+      pe.grow = step('nurture') && step('disciple') && p.node === 'disciple' && ppNexts(p).join() === 'devoted,sgl,server' && /이 성도의 다음 단계가 아니에요/.test(ppTrainWhy(p, 'deacon'));
+      // 마지막 단계는 모두 Lv 70부터
+      pe.last70 = ['elder', 'seminary', 'cstaff'].every(id => PP_TREE[id].lv === 70) && ['elder', 'assoc', 'cstaff'].every(id => !PP_TREE[id].next.length);
+      // 직분 갈래: 헌신성도 → 집사 → 장로(남)
+      const q = P[1]; q.node = 'disciple'; q.lv = 1; q.g = 'f'; const qid = q.id; const swap = () => { const k = p; return k; };
+      pe.deacon = step('devoted') && step('deacon') && p.node === 'deacon' && S.off.deacon === 1 && PA.flat >= PP_TREE.deacon.give;
+      pe.elder = step('elder') && p.node === 'elder' && S.off.elder === 1 && ppRankName(p) === '장로' && S.off.deacon === 0 && offTotal() === 1 && !ppNexts(p).length;
+      // 여성은 권사, 섬김 갈래 끝은 교회직원(직분자), 운영비·노후가 준다
+      q.node = 'deacon'; q.lv = 70; q.tr = null; recalc(); pe.kwonsa = (ppTrain(q.id, 'elder') === '') && nodeAct('elder', 'f') === '권사 임명' && (q.tr.end = evNow() - .01, peopleTick(), !!ppAppoint(q.id)) && ppRankName(q) === '권사' && S.off.kwonsa === 1;
+      const r2 = P[2]; r2.node = 'dlead'; r2.lv = 70; recalc(); const up0 = MOD.upkeep, dc0 = MOD.decay; const sw = ppTrain(r2.id, 'cstaff'); r2.tr.end = evNow() - .01; peopleTick(); ppAppoint(r2.id);
+      pe.cstaff = sw === '' && r2.node === 'cstaff' && S.off.cstaff === 1 && offTotal() === 3 && MOD.upkeep < up0 && MOD.decay < dc0;
+      // 교역 갈래: 신학교 → 부교역자로 섭외 (자리가 있어야 하고, 명단에서 빠져 별 5개 사역자가 된다)
+      const t3 = P[3]; t3.node = 'kanji'; t3.lv = 70; recalc(); const sOk = ppTrain(t3.id, 'seminary') === ''; t3.tr.end = evNow() - .01; peopleTick(); ppAppoint(t3.id);
+      pe.grad = sOk && t3.node === 'seminary' && PA.grad === 1 && PA.flat >= PP_TREE.seminary.give;
+      pe.slot = /자리가 없어요/.test(ppTrainWhy(t3, 'assoc')); dismissAssoc(0); S.tempMood = 0;
+      const mem0 = S.members, tname = t3.n, aOk = ppTrain(t3.id, 'assoc') === ''; t3.tr.end = evNow() - .01; peopleTick(); const am = ppAppoint(t3.id);
+      pe.assoc = aOk && !!am && S.assoc.length === 1 && S.assoc[0].home && S.assoc[0].skill === 5 && S.assoc[0].name === tname && S.members === mem0 - 1 && S.people.length === mem0 - 1 && !ppById(t3.id) && Math.abs(asSkill(S.assoc[0]) - 5 * ASSOC_HOME_K) < .01;
       // 부교역자 격려: 레벨이 오르면 실력이 커진다
       const a0 = S.assoc[0], sk0 = asSkill(a0); a0.xp = asNeed(1) - 1; m1 = cash(); pe.cheer = asCheer(0) === '+2' && cash() === m1 - ASSOC_CHEER.cost && asSkill(a0) > sk0 && /주 뒤/.test(asCheer(0));
+      // 교육 행사: 보상 수령 때 모든 성도 경험치
+      S.goal = Math.max(S.goal, 1); const xs = S.people.map(z => z.lv * 1000 + z.xp); S.ev.bible = { cd: 0 }; const be = runEvent('bible'); S.ev.bible.end = evNow() - .01; evTick(); const got = claimEvent('bible');
+      pe.edu = be === '' && !!got && /모든 성도 경험치/.test(got[0]) && S.people.every((z, i) => z.lv * 1000 + z.xp > xs[i]) && !!EVENTS.creed && !!EVENTS.training;
       // 성도가 줄면 마음이 덜 붙은 사람부터 떠나고, 한 주가 지나면 조금씩 정이 든다
-      const keep = S.people[1]; keep.rank = 2; keep.lv = 4; S.members = 6; recalc(); pe.shrink = S.people.length === 6 && !!ppById(keep.id) && S.off.deacon === 1;
-      const x0 = S.people[0].xp, l0 = S.people[0].lv; peopleWeek(); pe.week = S.people[0].xp > x0 || S.people[0].lv > l0;
-      pe.say = S.people.every(q => typeof ppThought(q) === 'string' && ppThought(q).length > 3) && /<svg/.test(portraitSvg(S.people[0]));
-      // 예전 저장(직분을 수로만 세던 때)은 사람에게 나눠 준다
-      S.people = undefined; S.members = 30; S.off = { deacon: 3, kwonsa: 1, elder: 2 }; recalc(); pe.legacy = S.people.length === 30 && S.off.deacon === 3 && S.off.kwonsa === 1 && S.off.elder === 2;
-      S.people = undefined; S.off = { deacon: 0, kwonsa: 0, elder: 0 }; S.assoc = []; S.members = 16; recalc(); }
+      const keep = S.people.find(z => z.node === 'elder'); S.members = 6; recalc(); pe.shrink = S.people.length === 6 && !!ppById(keep.id);
+      const x0 = S.people[S.people.length - 1].xp, l0 = S.people[S.people.length - 1].lv; peopleWeek(); pe.week = S.people[S.people.length - 1].xp > x0 || S.people[S.people.length - 1].lv > l0;
+      pe.say = S.people.every(z => typeof ppThought(z) === 'string' && ppThought(z).length > 3) && /<svg/.test(portraitSvg(S.people[0]));
+      // 예전 저장: rank(0~4)는 단계로, 수로만 세던 직분은 사람에게 나눠 준다
+      S.people = [{ id: 1, n: '가', g: 'm', seed: 1, lv: 5, xp: 0, rank: 2, gift: 'edu', jw: 0, vw: -99, gw: -99, tr: null }]; S.members = 1; S.ppId = 2; recalc(); pe.legacy = S.people[0].node === 'deacon' && S.people[0].rank === undefined && S.off.deacon === 1;
+      S.people = undefined; S.members = 30; S.off = { deacon: 3, kwonsa: 1, elder: 2 }; recalc(); pe.legacy = pe.legacy && S.people.length === 30 && S.off.deacon === 3 && S.off.kwonsa === 1 && S.off.elder === 2;
+      S.people = undefined; S.off = { deacon: 0, kwonsa: 0, elder: 0, cstaff: 0 }; S.assoc = []; S.members = 16; S.ev = {}; S.goal = 0; recalc(); }
     o.office = Object.keys(o.pe).every(k => o.pe[k]);
     // 행사: 비용·체력·재개 대기, 절기 제한
     S.members = 20; recalc();
@@ -658,8 +674,10 @@ async function ministryChecks(browser, url) {
   check(r.assoc && r.assocLimit, '부교역자: 청빙 비용·사례비·목양 수용력, 자리 수 제한');
   if (!r.office) console.log('PEOPLE', JSON.stringify(r.pe));
   check(r.pe.roster && r.pe.visit && r.pe.gift && r.pe.gate, '성도: 명단은 성도 수를 따르고, 심방·선물로 호감 레벨이 오르며 레벨이 돼야 다음 단계');
-  check(r.pe.bapt && r.pe.deacon && r.pe.elder && r.pe.grad, '성도: 교육(게이지)이 끝나면 직접 임명 — 세례·집사·장로/권사·신학 수료, 직분 수·헌금·목양 수용력에 반영');
-  check(r.pe.slot && r.pe.assoc && r.pe.cheer, '성도: 신학 수료 뒤 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자가 되고, 격려로 레벨이 오름');
+  check(r.pe.bapt && r.pe.grow && r.pe.last70, '성장 단계: 세례 → 양육반 → 제자반 뒤 세 갈래(직분·교역·섬김), 마지막 단계는 모두 Lv 70부터');
+  check(r.pe.deacon && r.pe.elder && r.pe.kwonsa && r.pe.cstaff, '성장 단계: 헌신성도 → 집사 → 장로(남)·권사(여), 섬김 끝 교회직원도 직분자이고 운영비·노후를 줄임');
+  check(r.pe.grad && r.pe.slot && r.pe.assoc && r.pe.cheer, '성장 단계: 소그룹 리더 … 간사 → 신학교 → 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자, 격려로 레벨이 오름');
+  check(r.pe.edu, '교육 행사: 성경공부·교리공부·제자훈련 세미나의 보상을 받으면 모든 성도 경험치가 오름');
   check(r.pe.shrink && r.pe.week && r.pe.say && r.pe.legacy, '성도: 줄면 마음이 덜 붙은 사람부터 떠나고, 주마다 정이 들며, 한마디·초상화가 있고, 예전 저장의 직분도 이어짐');
   check(r.event && r.season, '행사: 비용을 쓰고 효과가 나며, 다시 열기 대기와 절기 제한이 있음');
   check(r.dlgShown && r.dlg, '목회 고민: 카드가 뜨고, 고르면 효과가 나고 닫힘');
@@ -707,26 +725,30 @@ async function ministryChecks(browser, url) {
   const ppScr = await page.evaluate(() => { const o = {}; const cards = document.querySelectorAll('#scrBody .ppc');
     o.grid = !document.getElementById('scr').hidden && cards.length === S.people.length && cards.length === S.members && !!cards[0].querySelector('svg.pt') && !!cards[0].querySelector('.hlv') && /성도/.test(document.getElementById('scrTitle').textContent);
     cards[0].click(); const dl = document.getElementById('scrDlg'), id = +cards[0].dataset.v, p = ppById(id);
-    o.dlg = !dl.hidden && dl.textContent.includes(p.n) && /“.+”/.test(dl.textContent) && /매주 헌금/.test(dl.textContent) && !!dl.querySelector('[data-act="ppvisit"]') && !!dl.querySelector('[data-act="ppgift"]') && /다음 단계 · 세례/.test(dl.textContent) && dl.querySelector('[data-act="pptrain"]').disabled === (p.lv < 2 || S.money < PP_STEPS[0].cost); o.dbg = [dl.textContent.slice(0, 200)];
+    o.dlg = !dl.hidden && dl.textContent.includes(p.n) && /“.+”/.test(dl.textContent) && /매주 헌금/.test(dl.textContent) && !!dl.querySelector('[data-act="ppvisit"]') && !!dl.querySelector('[data-act="ppgift"]') && /다음 단계/.test(dl.textContent) && /세례/.test(dl.querySelector('.sopt').textContent) && dl.querySelector('[data-act="pptrain"]').disabled === (p.lv < PP_TREE.bapt.lv || S.money < PP_TREE.bapt.cost); o.dbg = [dl.textContent.slice(0, 200)];
     const m0 = S.money; dl.querySelector('[data-act="ppvisit"]').click(); o.visit = S.money === m0 - PP_VISIT.cost && document.querySelector('#scrDlg [data-act="ppvisit"]').disabled;
     // 레벨이 되면 교육 시작 → 카드 둘레 게이지 → 다 차면 '세례 주기'
-    p.lv = 2; renderScreen(); document.querySelector('#scrDlg [data-act="pptrain"]').click();
+    p.lv = PP_TREE.bapt.lv; renderScreen(); document.querySelector('#scrDlg [data-act="pptrain"]').click();
     const card = () => document.querySelector('#scrBody .ppc[data-v="' + id + '"]'), off = () => +card().querySelector('.rp').getAttribute('stroke-dashoffset');
     const d0 = off(); S.t += WEEK * .5; syncScreen(); o.gauge = card().classList.contains('run') && off() < d0 && /교육 중/.test(document.getElementById('scrDlg').textContent);
-    p.tr.end = evNow() - .01; peopleTick(); o.ready = card().classList.contains('ready') && /세례 주기/.test(card().textContent) && !document.getElementById('ppBadge').hidden && p.rank === 0;
-    document.querySelector('#scrDlg [data-act="ppappoint"]').click(); o.done = p.rank === 1 && document.getElementById('ppBadge').hidden && /세례교인/.test(card().textContent);
-    document.querySelector('#scrDlg [data-act="evclose"]').click(); document.querySelector('#scrTabs [data-v="bapt"]').click(); o.tab = document.querySelectorAll('#scrBody .ppc').length === 1;
+    p.tr.end = evNow() - .01; peopleTick(); o.ready = card().classList.contains('ready') && /세례 주기/.test(card().textContent) && !document.getElementById('ppBadge').hidden && p.node === 'new';
+    document.querySelector('#scrDlg [data-act="ppappoint"]').click(); o.done = p.node === 'bapt' && document.getElementById('ppBadge').hidden && /세례교인/.test(card().textContent);
+    document.querySelector('#scrDlg [data-act="evclose"]').click(); document.querySelector('#scrTabs [data-v="grow"]').click(); o.tab = document.querySelectorAll('#scrBody .ppc').length === 1;
+    // 목록 위 '모두 심방': 이 목록에서 할 수 있는 사람 모두 (대기 기간인 사람은 빼고)
+    const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
+    o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
+    o.bulk = nv > 3 && S.money === mb - nv * PP_VISIT.cost && S.people.every(q => !ppCareOk(q, 'visit')) && document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]').disabled && !!document.querySelector('#scrBody [data-act="bulk"][data-v="gift"]:not([disabled])'); S.lvl = lv1;
     return o; });
   await page.click('#scr [data-act="scrclose"]'); await page.click('#fab [data-fab="officers"]');
   const offScr = await page.evaluate(() => { const o = {};
-    o.empty = /아직 세워진 직분자가 없어요/.test(document.getElementById('scrBody').textContent);
-    const p = S.people[0]; p.rank = 2; p.lv = 3; recalc(); renderScreen(); o.list = document.querySelectorAll('#scrBody .ppc').length === 1 && /집사 1명/.test(document.getElementById('scrBody').textContent);
+    o.empty = /아직 이 갈래에 들어선 성도가 없어요/.test(document.getElementById('scrBody').textContent);
+    const p = S.people[0]; p.node = 'deacon'; p.lv = 45; recalc(); renderScreen(); o.list = document.querySelectorAll('#scrBody .ppc').length === 1 && /집사 1명/.test(document.getElementById('scrBody').textContent);
     S.assoc.push({ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }); recalc(); document.querySelector('#scrTabs [data-v="assoc"]').click();
     const ac = document.querySelector('#scrBody [data-act="asopen"]'); o.assoc = !!ac && /김시온/.test(ac.textContent); ac.click();
     const dl = document.getElementById('scrDlg'); o.asDlg = !dl.hidden && !!dl.querySelector('[data-act="ascheer"]') && !!dl.querySelector('[data-act="dismiss"]');
     dl.querySelector('[data-act="dismiss"]').click(); o.dismiss = S.assoc.length === 0 && document.getElementById('scrDlg').hidden;
     document.querySelector('#scrTabs [data-v="cands"]').click(); o.cands = !!document.querySelector('#scrBody [data-act="searchA"]');
-    p.rank = 0; p.lv = 1; S.people.forEach(q => { q.rank = 0; q.tr = null; }); S.tempMood = 0; recalc(); return o; });
+    p.lv = 1; S.people.forEach(q => { q.node = 'new'; q.tr = null; }); S.tempMood = 0; recalc(); return o; });
   await page.keyboard.press('Escape');
   const scrClosed = await page.evaluate(() => document.getElementById('scr').hidden && !UI.scr);
   await page.click('#fab [data-fab="build"]');
@@ -850,6 +872,7 @@ async function ministryChecks(browser, url) {
   check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(행사·사역자 탭), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
+  check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');
   check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
