@@ -461,7 +461,7 @@ def build_html():
     <button type="button" class="copy" data-copy>시트 %(k)s 프롬프트 복사</button>
   </section>''' % {'k': s['key'], 't': html.escape(s['title']), 'g': s['grid'], 'u': html.escape(s['uses']),
                    'n': html.escape(s['note']), 'p': html.escape(s['prompt']),
-                   'img': ('\n    <a class="src" href="%s" download><img src="%s" alt="시트 %s에 첨부할 원본 그림" loading="lazy"><span>첨부할 그림 저장 (길게 눌러 저장)</span></a>' % (s['img'], s['img'], s['key'])) if s.get('img') else ''})
+                   'img': ('\n    <a class="src" href="%s" target="_blank"><img src="%s" alt="시트 %s에 첨부할 원본 그림" loading="lazy"><span>첨부할 그림 — 길게 눌러 사진에 저장</span></a>' % (s['img'], s['img'], s['key'])) if s.get('img') else ''})
     order = ''.join('<li><a href="#s%s">시트 %s</a> <span>%s</span></li>' % (k, k, html.escape(w)) for k, w in ORDER)
     return '''<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
