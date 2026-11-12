@@ -225,7 +225,7 @@ function assocHtml(){
   if(!S.assoc.length)return h+'<p class="sempty">아직 함께 사역하는 부교역자가 없어요. 부교역자를 세우면 성도 돌봄을 맡길 수 있어요.</p>';
   return h+delegHtml()+'<div class="evg">'+S.assoc.map(function(a,i){
     return '<button class="evc ppc rank" data-act="asopen" data-v="'+i+'" aria-label="'+a.name+' '+a.title+'"><span class="evr">'+ringSvg(0)+'<span class="ppi">'+portraitSvg({seed:asSeed(a),g:a.g||(asSeed(a)%2?'m':'f')})+'</span>'+heartLv(a.lv||1)+'</span>'+
-      '<span class="evn">'+a.name+' '+a.title+'</span><span class="evp">'+FIELDS[a.field].name+' '+stars(a.skill)+' · 돌봄 '+asCare(a)+'명</span></button>';}).join('')+'</div>';
+      '<span class="evn">'+a.name+' '+a.title+'</span><span class="evp">'+FIELDS[a.field].name+' ★'+a.skill+' · 돌봄 '+asCare(a)+'명</span></button>';}).join('')+'</div>';
 }
 function lvBar(lv,xp,need,max){
   var full=lv>=max,p=full?100:Math.round(clamp(xp/need,0,1)*100);
@@ -260,7 +260,7 @@ function ppDlgHtml(p){
 }
 function asDlgHtml(i){
   var a=S.assoc[i],cw=asCheerWhy(a),k=asSkill(a);
-  var rows=[['분야',FIELDS[a.field].name+' '+stars(a.skill)+(a.home?' · 우리 교회에서 자란 사역자':'')],['효과',FIELDS[a.field].desc+' (별마다) · 목양 수용력 +35'],['지금 실력','별 '+(Math.round(k*10)/10)+'개만큼 일해요'],['사례비','주 '+fmt(a.pay)]];
+  var rows=[['분야',FIELDS[a.field].name+' '+stars(a.skill)+(a.home?' · 우리 교회에서 자란 사역자':'')],['성도 돌봄','맡기면 한 주 '+asCare(a)+'명'],['효과',FIELDS[a.field].desc+' (별마다) · 목양 수용력 +35'],['지금 실력','별 '+(Math.round(k*10)/10)+'개만큼 일해요'],['사례비','주 '+fmt(a.pay)]];
   return '<div class="sdlg" role="dialog" aria-label="'+a.name+' '+a.title+'"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
     '<div class="sdh"><span class="evr big">'+ringSvg(0)+'<span class="ppi">'+portraitSvg({seed:asSeed(a),g:a.g||(asSeed(a)%2?'m':'f')})+'</span></span>'+
     '<div class="sdt"><h3>'+a.name+' <span class="rchip r5">'+a.title+'</span></h3>'+lvBar(a.lv||1,a.xp||0,asNeed(a.lv||1),ASSOC_LV_MAX)+'<p>레벨마다 효과 +'+Math.round(ASSOC_LV_K*100)+'%</p></div></div>'+
