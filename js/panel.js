@@ -48,6 +48,8 @@ function openGroup(g){
   if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];}
   UI.sel=null;UI.selPiece=null;UI.selTile=null;
   sfx('page',.35);
+  // 건축 버튼으로 새로 열면 늘 분류 목록부터
+  if(g==='build')UI.bstep='cat';
   UI.tab=g==='minis'?(UI.minisTab||'events'):(g==='status'?(UI.statusTab||'status'):g);UI.fold=false;UI.confirmNew=false;
   renderPanel();
 }
@@ -66,7 +68,7 @@ function renderPanel(){
   $('#dtitle').textContent=GROUP_TITLE[g];
   var cs=UI.csub||'sport';
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
-    (t==='build'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
+    (t==='build'&&UI.bstep!=='cat'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
 }
@@ -81,10 +83,26 @@ function buildOrder(cat){
     return a.d.cost-b.d.cost||a.i-b.i;
   }).map(function(o){return o.d;});
 }
+/* 건축 패널은 두 단계: ① 분류 목록(타일) → ② 고른 분류의 건물 카드 한 줄(가로로 끌어 넘김, ‹ 뒤로로 ①).
+   짓다가 취소하면 ②로 돌아오고, 직전에 고른 카드가 보이게 그 자리로 넘겨 둔다 (UI.lastPick[분류]) */
+function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&(cat!=='club'||x.sub===(UI.csub||'sport'));})[0];return d?iconCanvas(d):null;}
 function renderBuild(){
-  var chips=CATS.map(function(c){return '<button class="chip'+(UI.cat===c[0]&&UI.tool!=='demolish'?' on':'')+'" data-act="cat" data-v="'+c[0]+'">'+c[1]+'</button>';}).join('')+
-    '<button class="chip warn'+(UI.tool==='demolish'?' on':'')+'" data-act="dem">철거</button>';
-  panel.innerHTML='<div class="chips">'+chips+'</div><div class="cards" id="cards"></div><div class="detail" id="detail"></div>';
+  panel.scrollTop=0;
+  if(UI.bstep==='cat'){
+    panel.innerHTML='<div class="btiles" id="btiles"></div>';
+    var bt=$('#btiles');
+    CATS.concat([['__dem','철거']]).forEach(function(c){
+      var el=document.createElement('button');el.className='btile'+(c[0]==='__dem'?' warn':'');
+      el.dataset.act=c[0]==='__dem'?'dem':'cat';if(c[0]!=='__dem')el.dataset.v=c[0];
+      var ic=c[0]==='__dem'?null:catIcon(c[0]);
+      if(ic)el.appendChild(ic);else el.insertAdjacentHTML('beforeend','<span class="bic" aria-hidden="true">'+(c[0]==='__dem'?'⚒':'')+'</span>');
+      el.insertAdjacentHTML('beforeend','<span class="nm">'+c[1]+'</span>');
+      bt.appendChild(el);
+    });
+    renderDetail();return;
+  }
+  var cname=UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]);
+  panel.innerHTML='<div class="bnav"><button class="bback" data-act="bback" aria-label="분류 목록으로">‹ 뒤로</button><b>'+cname+'</b></div><div class="cards" id="cards"></div><div class="detail" id="detail"></div>';
   var cards=$('#cards');
   if(UI.tool==='demolish'){cards.innerHTML='<p class="hint">철거할 건물을 지도에서 누르세요. 건축비의 절반이 돌아옵니다.</p>';}
   else{
@@ -98,8 +116,21 @@ function renderBuild(){
         '<span class="ef">'+(tg.length?tg.map(function(x){return '<i>'+x+'</i>';}).join(''):'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });
+    dragScroll(cards);
+    // 직전에 고른 카드가 보이게 (가운데 쯤으로)
+    var lp=UI.lastPick&&UI.lastPick[UI.cat],le=lp&&cards.querySelector('[data-v="'+lp+'"]');
+    if(le){le.classList.add('last');cards.scrollLeft=Math.max(0,le.offsetLeft-cards.offsetLeft-(cards.clientWidth-le.offsetWidth)/2);}
   }
   refreshCards();renderDetail();
+}
+// 마우스로도 가로로 끌어 넘긴다 (손가락은 기본 가로 스크롤). 끌었으면 그 클릭은 고르기로 치지 않는다
+function dragScroll(el){
+  var down=null,moved=false;
+  el.addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse'||e.button!==0)return;down={x:e.clientX,s:el.scrollLeft};moved=false;});
+  el.addEventListener('pointermove',function(e){if(!down)return;var dx=e.clientX-down.x;if(Math.abs(dx)>5)moved=true;if(moved){el.scrollLeft=down.s-dx;el.classList.add('dragging');}});
+  var up=function(){down=null;el.classList.remove('dragging');};
+  el.addEventListener('pointerup',up);el.addEventListener('pointerleave',up);
+  el.addEventListener('click',function(e){if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
 }
 function refreshCards(){
   var cs=document.querySelectorAll('#cards .card');

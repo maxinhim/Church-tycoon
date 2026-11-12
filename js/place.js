@@ -60,6 +60,7 @@ function placeWhy(d,x,y,face){
 }
 function startPlace(id){
   if(!isGateDef(D[id]))UI.gateFor=null;
+  UI.bstep='items';if(UI.cat)(UI.lastPick||(UI.lastPick={}))[UI.cat]=id;
   UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
