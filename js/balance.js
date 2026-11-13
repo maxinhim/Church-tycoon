@@ -8,7 +8,7 @@
 var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 
 /* 수입 */
-var VIS_RATE=0.7;        // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
+var VIS_RATE=0.85;        // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
 var SHOP_K=8;            // 한 번 살 때 = 건물 income × SHOP_K
 var SHOP_COST=0.25;      // 매장 재료비 비율 (판매 순간 빠진다)
 var OFFER_PER=30;        // 주일 헌금: 출석 한 명당
@@ -157,10 +157,10 @@ var TEAM_MAX=5,TALENT_PER_LV=1,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9];
      레벨마다 효과 +BLV_FX, 정원·좌석·수용 +BLV_CAP, 회전 속도 +BLV_ROT (한 명씩 건물)
    · 같은 기능의 기본(티어 1)·상위(티어 2) 건물: 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 6~7), 값은 티어 1의 Lv 10 누적 투자만큼 더 비싸다.
      티어 1은 티어 2가 열리기 전엔 TIER1_MAX개, 열린 뒤엔 TIER1_MAX_OPEN개까지 */
-var VIS_SPEED=.7;       // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
+var VIS_SPEED=.5;       // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
 var TEMPO_ROT=1.4;       // 건물 안에 머무는 시간 배율
 var VIS_PATIENCE=14;     // 문 앞 길에서 기다리는 한계(초). 넘으면 화남 표시·불만·다른 곳으로
-var ANGRY_T=2.2;         // 화남 표시가 떠 있는 시간(초)
+var ANGRY_T=9;           // 화남 표시가 떠 있는 시간(초). 이 동안 방문자를 누르면 불만 사유가 보인다
 var BATCH_ROT=.6;       // 일괄 가동 시간 = dur × STAY × TEMPO_ROT × BATCH_ROT
 var BATCH_PATIENCE=60;   // 일괄 가동 건물 안에서 정원이 차기를 기다리는 한계(초). 한 주(48초)보다 길어 늦어도 주일 예배는 드린다
 var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 정원 × BATCH_CAP0 × 레벨 배율 (작게 모여 자주 가동, 레벨이 오를수록 크게)
@@ -172,3 +172,10 @@ var TIER2_K=2.1,TIER1_MAX=1,TIER1_MAX_OPEN=3;
 var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
 // 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)
 var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop'];
+
+var VIS_LIFE=[110,50];     // 방문자가 머무는 시간(초): 최소, 더해지는 폭. 걸음이 느려진 만큼 길게
+var VIS_IDLE_LEAVE=.4;    // 들를 곳이 없을 때 바로 돌아가는 확률 (낮을수록 더 둘러보고 더 들른다)
+var VIS_STROLL=.3;        // 건물을 고르기 전에 길을 한 바퀴 거닐 확률 (곳곳의 길을 고루 다니게)
+var VIS_STROLL_MAX=3;     // 한 방문에서 거니는 최대 횟수
+var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은 길을 피하는 무게, 가까움을 따지는 무게
+var VIS_MAX=110;         // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)

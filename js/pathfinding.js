@@ -114,7 +114,30 @@ function doorNode(s,b){
   return pieceNodeAt(o.x,o.y,OPP[s.d],lv);
 }
 // 건물 문 앞 길 노드 (방문자가 서서 기다리고 드나드는 자리)
-function entNode(b){if(!b||!b.door)return -1;return doorNode(b.door.ent,b);}
+// 개방형 소품(식수대·쓰레기통·파라솔·정자 등 prop)은 문 방향이 없다: 둘레 어느 길 칸에서든 닿고 쓴다
+function isOpenDef(b){return !!b&&!!defOf(b).prop;}
+function openNodes(b){
+  var seen={},out=[];
+  bTiles(b).forEach(function(t){for(var d=0;d<4;d++){
+    var o=doorOut({x:t.x,y:t.y,d:d,l:0});
+    var inside=bTiles(b).some(function(q){return q.x===o.x&&q.y===o.y;});if(inside)continue;
+    var n=doorNode({x:t.x,y:t.y,d:d,l:0},b);if(n>=0&&!seen[n]){seen[n]=1;out.push(n);}
+  }});
+  return out;
+}
+// 건물에 닿는 길 노드 모두 (문 있는 건물은 문 앞 하나, 개방형 소품은 사방)
+function entNodes(b){
+  if(!b||!b.door)return [];
+  if(isOpenDef(b))return openNodes(b);
+  var n=doorNode(b.door.ent,b);return n>=0?[n]:[];
+}
+function entNode(b){
+  if(!b||!b.door)return -1;
+  if(isOpenDef(b)){var ns=openNodes(b),ok=ns.filter(function(n){return NAV.reach&&NAV.reach[n];});return ok.length?ok[0]:(ns.length?ns[0]:-1);}
+  return doorNode(b.door.ent,b);
+}
+// 이 노드에 서면 b에 닿는가
+function atEnt(b,m){return entNodes(b).indexOf(m)>=0;}
 /* 문 정리 → 입구 아치에서 닿는 곳 계산 → 건물마다 문 앞이 이어져 있는지 */
 function refreshNav(){
   computeWalk();
@@ -126,7 +149,7 @@ function refreshNav(){
   S.buildings.forEach(function(b){
     if(!b.door){b.acc=null;return;}
     var en=entNode(b),ex=en;
-    b.acc={ent:en>=0&&!!NAV.reach[en],ext:ex>=0&&!!NAV.reach[ex]};
+    b.acc={ent:entNodes(b).some(function(n){return !!NAV.reach[n];}),ext:false};b.acc.ext=b.acc.ent;
     b.acc.ok=b.acc.ent&&b.acc.ext;
   });
 }

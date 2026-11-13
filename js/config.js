@@ -12,14 +12,12 @@ var $=function(s){return document.querySelector(s);};
 var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
 // 일반 숫자 (점수·인원 등)
 var fmtN=function(n){return Math.round(n).toLocaleString('ko-KR');};
-/* 돈은 만원 단위다 (게임 속 1 = 1만원). 1만원 미만은 '1234만원', 1만(=1억원)부터는 '12억 3456만원'.
-   short를 주면 작은 글씨용 약식('1234만', '12억 3456만') */
-var fmt=function(n,short){
-  n=Math.round(n);var neg=n<0,a=Math.abs(n),u=short?'만':'만원',s;
+/* 돈은 만원 단위다 (게임 속 1 = 1만원). 1만원 미만은 '1234만원', 1만(=1억원)부터는 천만 단위에서 반올림한 '1.5억'.
+   short를 주면 1억 미만 작은 글씨용 약식('1234만') */
+var fmt=function(n,short){ n=Math.round(n);var neg=n<0,a=Math.abs(n),u=short?'만':'만원',s;
   if(a<10000)s=a.toLocaleString('ko-KR')+u;
-  else{var e=Math.floor(a/10000),m=a%10000;s=e.toLocaleString('ko-KR')+'억'+(m?' '+m+u:(short?'':'원'));}
-  return (neg?'-':'')+s;
-};
+  else{var e=Math.round(a/1000)/10;s=(e%1?e.toFixed(1):e.toLocaleString('ko-KR'))+'억';}   // 1억(=10000만원) 이상: 천만 단위에서 반올림 "1.5억"
+  return (neg?'-':'')+s; };
 var NEEDS=['word','fel','care','comf'];
 var NK={word:'말씀',fel:'교제',care:'돌봄',comf:'편의'};
 var NC={word:'#3f6fe0',fel:'#e8892c',care:'#d9467a',comf:'#1c9c8c'};

@@ -11,7 +11,7 @@ function spawnV(member){
   if(member)needs.word=8+Math.random()*10;
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
     member:!!member,wallet:Math.round(member?36+Math.random()*120:20+Math.random()*96),
-    life:55+Math.random()*30,speed:(1.9+Math.random()*0.7)*G*VIS_SPEED,ph:Math.random()*6.28,
+    life:VIS_LIFE[0]+Math.random()*VIS_LIFE[1],strolls:0,speed:(1.9+Math.random()*0.7)*G*VIS_SPEED,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
   gripeInit(V[V.length-1]);
@@ -26,13 +26,21 @@ function novelty(b){var age=b.bw==null?99:S.week-b.bw;return (age<6?4*(1-age/6):
 // 둘러볼 곳: 부지 안 바닥 노드 몇 개를 뽑아, 발길이 적고 너무 멀지 않은 곳
 function wanderGoal(v){
   var L=NAV.walk||[];if(!L.length)return -1;
-  var best=-1,bs=1e9;
-  for(var i=0;i<12;i++){
+  var best=-1,bs=1e9;v.seen=v.seen||{};
+  for(var i=0;i<24;i++){
     var n=L[(Math.random()*L.length)|0];if(n===v.node)continue;
-    var q=nodePos(n),sc=(TRAF[n]||0)*1.5+Math.hypot(q.x-v.x,q.y-v.y)*.12/G+Math.random()*2;
+    var q=nodePos(n),sc=(TRAF[n]||0)*STROLL_TRAF+(v.seen[n]?6:0)+Math.hypot(q.x-v.x,q.y-v.y)*STROLL_DIST/G+Math.random()*4;
     if(sc<bs){bs=sc;best=n;}
   }
+  if(best>=0)v.seen[best]=1;
   return best;
+}
+// 길을 거닌다: 곳곳의 길을 고루 다니게 건물을 고르기 전에 가끔 들른다
+function stroll(v){
+  var tg=wanderGoal(v);if(tg<0||!nodeOk(tg))return false;
+  var wp=navPath(v.node,function(m){return m===tg;});
+  if(!wp||!wp.length)return false;
+  v.path=wp;v.pi=0;v.target=0;v.want='';v.state='walk';v.strolls++;return true;
 }
 function placeAt(v,n){var p=nodePos(n);v.x=p.x;v.y=p.y;v.z=p.z;v.node=n;}
 function moveAlong(v,dt){
@@ -71,7 +79,7 @@ function enter(v,b){
 }
 // 기다리다 지쳐 돌아선다: 화남 표시·불만, 그 건물은 한동안 피한다
 function giveUp(v,b){
-  v.angry=ANGRY_T;v.annoy+=CROWD_ANNOY;addGripe('crowd',b?defOf(b).name:'');
+  v.annoy+=CROWD_ANNOY;addGripe('crowd',b?defOf(b).name:'');vexed(v,'crowd',b?defOf(b).name:'');
   if(b)v.blocked[b.id]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;
 }
 function finishVisit(v){
@@ -118,6 +126,7 @@ function decide(v){
   // 둘레를 둘러보고(삭막한지·쓰레기통), 급한 일(화장실·쉴 자리·마실 것)이 있으면 그것부터
   gripeLook(v);
   if(v.urge&&urgeGo(v))return;
+  if(v.strolls<VIS_STROLL_MAX&&Math.random()<VIS_STROLL&&stroll(v))return;
   // 가장 모자란 욕구부터 보되, 사람마다 조금씩 섞어 여러 종류의 건물을 고루 들른다
   var nr={};NEEDS.forEach(function(n){nr[n]=v.needs[n]+Math.random()*30;});
   var order=NEEDS.slice().sort(function(a,b){return nr[a]-nr[b];});
@@ -134,16 +143,14 @@ function decide(v){
     var cost=function(b){var d=defOf(b),cp=Math.max(1,bCap(b));return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5/bPerf(b)+(b.run>0?4:bMode(d)==='batch'?-b.inUse/cp*3:b.inUse/cp*4)+(wq[b.id]||0)*3-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
-      var b=cands[ci],tn=entNode(b),p=navPath(v.node,function(m){return m===tn;});
+      var b=cands[ci],es=entNodes(b).filter(function(n){return NAV.reach[n];}),p=es.length?navPath(v.node,function(m){return es.indexOf(m)>=0;}):null;
       if(p){v.path=p;v.pi=0;v.target=b.id;v.want=n;v.state='walk';if(!p.length)arrive(v);return;}
     }
   }
   // 할 일이 없으면 대부분 바로 돌아가고, 가끔만 둘러본다 (마당을 떠도는 사람을 줄인다)
   v.idleN++;
-  if(v.idleN>=2||Math.random()<0.75){goLeave(v);return;}
-  var tg=wanderGoal(v);if(tg<0||!nodeOk(tg)){v.t=0.5;return;}
-  var wp=navPath(v.node,function(m){return m===tg;});
-  if(wp&&wp.length){v.path=wp;v.pi=0;v.target=0;v.want='';v.state='walk';}else v.t=0.6;
+  if(v.idleN>=3||Math.random()<VIS_IDLE_LEAVE){goLeave(v);return;}
+  if(!stroll(v))v.t=0.6;
 }
 function stepV(v,dt){
   // 일괄 가동 건물 안에서 모이기를 기다리는 동안은 머무를 시간이 줄지 않는다

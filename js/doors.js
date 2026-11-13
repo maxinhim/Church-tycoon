@@ -51,7 +51,7 @@ function doorText(b){
 /* ---------- 문 그리기 ---------- */
 // 벽에 문을 그린다. 화면 앞쪽을 향한 벽에만 보인다. onlyTile이 있으면 그 칸의 문만
 function drawDoorsOn(b,onlyTile){
-  if(!b.door)return;
+  if(!b.door||defOf(b).prop)return;
   var ins=.1,same=sameSpot(b.door.ent,b.door.ext),barn=D[b.def].deco==='barn';
   [['ent',b.door.ent],['ext',b.door.ext]].forEach(function(it,i){
     var s=it[1];

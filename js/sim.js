@@ -11,7 +11,7 @@ function update(dt){
   if(S.open){
     var rate=VIS_RATE*(0.4+trustIdx()/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
     S.spawnAcc+=rate*dt;
-    while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<70)spawnV(false);}
+    while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<VIS_MAX)spawnV(false);}
     if(isSunday()){
       S.memAcc+=Math.min(S.members,A.seats)*0.25/(WEEK/7)*dt;
       while(S.memAcc>=1){S.memAcc-=1;if(V.length<90)spawnV(true);}

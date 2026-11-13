@@ -22,8 +22,15 @@ function onGhostTile(t){
   if(!UI.ghost||!UI.tool||!D[UI.tool]||isFloorDef(UI.tool)||isTerDef(UI.tool)||UI.tool==='path')return false;
   var d=faceDims(D[UI.tool],UI.face);return t.x>=UI.ghost.x&&t.x<UI.ghost.x+d.w&&t.y>=UI.ghost.y&&t.y<UI.ghost.y+d.h;
 }
+// 머리 위에 화남 표시가 떠 있는 방문자를 눌렀는지
+function pickAngry(px,py){
+  var best=null,bd=1.1*G;
+  V.forEach(function(v){if(!(v.angry>0)||v.dead)return;var w=toWorld(px,py,(v.z||0)+.9),d=Math.hypot(w[0]-v.x,w[1]-v.y);if(d<bd){bd=d;best=v;}});
+  return best;
+}
 function onTap(px,py){
   if(S.over)return;
+  if(!isPlacing()){var av=pickAngry(px,py);if(av){toast('😠 '+(av.why||'불만이 있어요'),3600);sfx('click',.4);return;}}
   // 교회 입구를 누르면 문 열기·닫기 카드. 다른 곳을 누르면 카드는 닫힌다
   var popOpen=!$('#gatePop').hidden;
   if(!isPlacing()&&gateHit(px,py)){if(popOpen)closeGatePop();else openGatePop();return;}

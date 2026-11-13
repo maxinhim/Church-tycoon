@@ -1179,6 +1179,11 @@ async function levelChecks(browser, url) {
       let n = 0; while (v.state === 'wait' && n < (VIS_PATIENCE + 2) * 10) { stepV(v, .1); n++; }
       soft = near && n >= (VIS_PATIENCE - .5) * 10 && v.state === 'idle' && v.angry > 0 && (S.grip.crowd || 0) > g0 && v.blocked[wc.id] > S.clock && !v.dead;
       wc.inUse = 0; V.length = 0; }
+    // 불만: 화남 표시가 뜨고 사유가 담기며, 머리 위를 누르면 알 수 있다. 큰 돈은 '1.5억', 개방형 소품은 문 방향이 없다
+    { spawnV(); const av = V[V.length - 1]; av.x = 20; av.y = 20; av.z = 0; vexed(av, 'wc'); const sp = toScreen(20, 20, .9), hit = pickAngry(sp[0], sp[1]);
+      o.angryTap = av.angry > 0 && /화장실/.test(av.why) && hit === av; V.length = 0; }
+    o.bigFmt = fmt(14500) === '1.5억' && fmt(10000) === '1억' && fmt(9999) === '9,999만원' && fmtS(9999) === '9,999만' && fmt(-24000) === '-2.4억';
+    o.openDef = isOpenDef({ def: 'drinkfount' }) && isOpenDef({ def: 'gazebo' }) && isOpenDef({ def: 'bin' }) && !isOpenDef({ def: 'room' });
     o.soft = soft && VIS_SPEED < 1 && TEMPO_ROT > 1;
     // 레벨: 카드에서 투자, BLV_XP번이면 한 단계. 효과·정원·좌석이 오르고 최대 Lv 10, 모습은 3단계
     { const c1 = investCost(room), m0 = S.money, perf0 = bPerf(room), cap0 = bCap(room), seat0 = agg().seats;
@@ -1210,6 +1215,7 @@ async function levelChecks(browser, url) {
   check(r.batch, '일괄 가동: 예배실은 정원이 찰 때까지 안에서 기다렸다가 한꺼번에 가동 후 함께 나오고, 가동 중엔 문 앞에서 기다림');
   check(r.sunday, '일괄 가동: 주일이 되면 정원이 덜 차도 가동하되, 같은 주 금·토에 가동했으면 건너뜀');
   check(r.single, '한 명씩: 매장·편의 시설은 정원 1명, 레벨이 오를수록 회전 시간이 짧아짐');
+  check(r.angryTap && r.bigFmt && r.openDef, '불만: 화남 표시 방문자를 누르면 사유가 뜨고, 1억 이상은 1.5억으로 표기, 개방형 소품은 문 방향이 없음');
   check(r.soft, '기다리기: 문 앞 길에서 기다리다 한계를 넘기면 화남 표시·불만을 남기고 다른 곳으로 (걸음은 느리게)');
   check(r.invest && r.levels, '건물 레벨: 카드에서 투자해 Lv 10까지, 효과·정원·좌석이 오르고 모습은 3단계');
   check(r.tier2 && r.tier1, '티어: 상위 시설은 티어 1 Lv 6~7 성능에 비싸고, 티어 1은 상위가 열리기 전엔 하나만');
@@ -1502,7 +1508,7 @@ async function gripeChecks(browser, url) {
     spawnV(false); const v7 = V[V.length - 1]; v7.urge = 'food'; const fb = urgeGo(v7);
     o.food = fb === true && GRIPES.food.ids.indexOf(bById(v7.target).def) >= 0;
     // 고루 쓰기: 같은 욕구를 채우는 두 건물 중 이번 주에 덜 쓰인 쪽을 고른다
-    const pick = () => { let a = 0; for (let i = 0; i < 12; i++) { spawnV(false); const w = V[V.length - 1]; w.wallet = 0; w.urge = ''; w.wcT = w.foodT = w.lonT = 1e9; NEEDS.forEach(n => { w.needs[n] = 99; }); w.needs.fel = 0; decide(w); if (w.target === cafe.id) a++; V.pop(); } return a; };
+    const pick = () => { let a = 0; for (let i = 0; i < 12; i++) { spawnV(false); const w = V[V.length - 1]; w.wallet = 0; w.urge = ''; w.wcT = w.foodT = w.lonT = 1e9; w.strolls = VIS_STROLL_MAX; NEEDS.forEach(n => { w.needs[n] = 99; }); w.needs.fel = 0; decide(w); if (w.target === cafe.id) a++; V.pop(); } return a; };
     club.weekUses = 60; cafe.weekUses = 0; club.inUse = cafe.inUse = 0; const toCafe = pick();
     club.weekUses = 0; cafe.weekUses = 60; const toCafe2 = pick(); club.weekUses = cafe.weekUses = 0;
     o.dbg = [toCafe, toCafe2, !!club, !!cafe && usable(cafe)];

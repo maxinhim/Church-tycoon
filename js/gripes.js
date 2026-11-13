@@ -52,6 +52,11 @@ function gripeInit(v){
   v.walked=0;v.legs=32+Math.random()*16;v.walkT=0;v.thirst=42+Math.random()*22;
   v.urge='';v.drank=false;v.trash=false;v.looks=0;v.nice=0;
 }
+// 불만이 생긴 방문자: 머리 위에 화남 표시를 띄우고(ANGRY_T초), 누르면 사유가 보인다
+function vexed(v,k,name){
+  var n=(GRIPES[k]&&GRIPES[k].n)||'불편을 겪은';
+  v.angry=ANGRY_T;v.why=(k==='crowd'&&name?name+' 앞에서 오래 기다리다 화가 났어요':n+' 방문자예요')+(GRIPES[k]&&GRIPES[k].fix?' · 해결: '+GRIPES[k].fix:'');
+}
 function addGripe(k,name){
   S.grip=S.grip||{};S.grip[k]=(S.grip[k]||0)+1;
   if(name){S.gripB=S.gripB||{};S.gripB[name]=(S.gripB[name]||0)+1;}
@@ -76,12 +81,12 @@ function urgeGo(v){
   var open=all.filter(function(b){return wxOpen(defOf(b))&&!(v.blocked[b.id]>S.clock);});
   open.sort(function(a,b){return Math.abs(a.x-v.x)+Math.abs(a.y-v.y)-Math.abs(b.x-v.x)-Math.abs(b.y-v.y);});
   for(var i=0;i<Math.min(3,open.length);i++){
-    var b=open[i],tn=entNode(b),p=navPath(v.node,function(m){return m===tn;});
+    var b=open[i],es=entNodes(b).filter(function(n){return NAV.reach[n];}),p=es.length?navPath(v.node,function(m){return es.indexOf(m)>=0;}):null;
     if(p&&(!g.near||p.length<=g.near)){v.path=p;v.pi=0;v.target=b.id;v.want=k==='lonely'?'fel':'comf';v.state='walk';if(!p.length)arrive(v);return true;}
   }
   // 비·눈으로 야외 자리만 닫혀 있으면 탓하지 않는다
   var wxOnly=all.length>0&&open.length===0&&all.some(function(b){return !wxOpen(defOf(b));});
-  if(!wxOnly){addGripe(k);v.annoy+=k==='wc'||k==='food'?1:0.5;}
+  if(!wxOnly){addGripe(k);vexed(v,k);v.annoy+=k==='wc'||k==='food'?1:0.5;}
   gripeDone(v,k);
   if(k==='wc'&&!wxOnly)v.life=Math.min(v.life,3);
   return false;
@@ -111,8 +116,8 @@ function gripeLook(v){
 function gripeLeave(v){
   if(v.wcT==null)return;
   S.gripN=(S.gripN||0)+1;
-  if(v.trash){addGripe('bin');v.annoy+=0.3;}
-  if(v.looks>=4&&v.nice/v.looks<0.2){addGripe('bare');v.annoy+=0.5;}
+  if(v.trash){addGripe('bin');vexed(v,'bin');v.annoy+=0.3;}
+  if(v.looks>=4&&v.nice/v.looks<0.2){addGripe('bare');vexed(v,'bare');v.annoy+=0.5;}
 }
 /* 주일 정산: 이번 주 불편을 지난주로 넘기고, 비율만큼 다음 주 만족도를 깎는다 */
 function gripeWeek(){
