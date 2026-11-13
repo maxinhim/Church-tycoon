@@ -5,14 +5,13 @@
      미리보기는 끌어서 옮기거나 지도를 눌러 옮긴다. 조경·꾸미기는 길처럼 화살표 쪽으로 한 칸씩 이어 짓는다
      (앞뒤가 뚜렷한 벤치 등은 화살표가 정면이고 옆으로 늘어선다).
    · 길: 커서 칸 둘레 화살표로 방향, ✓로 한 칸씩 잇는다. 종류·경사·높이는 아래 작은 띠에서.
-   · 칸 건물·바닥: 지도를 누르면 바로 지어진다. 띠에 되돌리기·완료만 둔다.
+   · 바닥: 지도를 누르면 바로 지어진다. 띠에 되돌리기·완료만 둔다.
    아래 띠(#pbar)는 이름·비용·효과, 지을 수 없으면 그 까닭을 보여 준다. */
 var REPEAT_CATS=['garden','deco'],LINE_KINDS=['fence','hedge'],FRONT_KINDS=['bench','picnic','board','bell','bikerack','arch'],plLock=0,plHtml='',PL_DIRNAME=['오른쪽 아래','왼쪽 아래','왼쪽 위','오른쪽 위'];
 function isPlacing(){return !UI.fold&&UI.tab==='build'&&!!UI.tool&&UI.tool!=='demolish'&&!UI.choose;}
 function placeKind(){
   if(!isPlacing())return '';
   if(UI.tool==='path')return 'path';
-  if(isRoomDef(UI.tool))return 'room';
   if(isFloorDef(UI.tool)||isTerDef(UI.tool))return 'floor';
   return D[UI.tool]?'bld':'';
 }
@@ -72,7 +71,7 @@ function startPlace(id){
     // 화면 가운데가 막혀 있으면 가장 가까운 빈자리에서 시작
     var d=D[id];
     // 사람이 다니는 바닥 위도 피한다 (그대로 ✓를 누르면 길이 끊기므로). 끌어서 바닥 위에 놓는 것은 막지 않는다
-    if(!isRoomDef(id)&&!isFloorDef(id)&&!isTerDef(id)&&(!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)||onFloorAt(d,UI.ghost.x,UI.ghost.y,UI.face))){
+    if(!isFloorDef(id)&&!isTerDef(id)&&(!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)||onFloorAt(d,UI.ghost.x,UI.ghost.y,UI.face))){
       var nf=plNear(d,UI.ghost.x,UI.ghost.y,10,true)||plNear(d,UI.ghost.x,UI.ghost.y,8);if(nf){UI.ghost.x=nf.x;UI.ghost.y=nf.y;}}
   }
   renderPanel();
@@ -133,12 +132,12 @@ function selExtend(d){
 // ▲▼ (v = +1 / -1)
 function plVert(v){
   var k=placeKind();
-  if(k==='path'){var c=UI.pc;if(c.k==='sky')return;c.slope=c.slope===v?0:v;renderDetail();return;}
+  if(k==='path'){var c=UI.pc;c.slope=c.slope===v?0:v;renderDetail();return;}
   if(k==='floor'&&isTerDef(UI.tool)){UI.tlv=clamp(UI.tlv+v,MINH,MAXH-1);renderDetail();return;}
   var t=selTarget();if(!t)return;
   if(t.p){
     var p=t.p,d=p.d==null?UI.fdir:p.d,pl=portLevel(p,d);if(pl===NOPORT)return;
-    var kk=p.k==='sky'?'stone':p.k;extStart('path');var c2=UI.pc;c2.k=kk;c2.dir=d;c2.x=p.x+DIRS[d][0];c2.y=p.y+DIRS[d][1];c2.l=pl;c2.slope=v;c2.hist=[];renderDetail();return;
+    var kk=p.k;extStart('path');var c2=UI.pc;c2.k=kk;c2.dir=d;c2.x=p.x+DIRS[d][0];c2.y=p.y+DIRS[d][1];c2.l=pl;c2.slope=v;c2.hist=[];renderDetail();return;
   }
   var h=th(t.x,t.y),rd=tslope(t.x,t.y),m0=S.money,keep=UI.undo;UI.undo=[];
   var w=rd>=0?rampAt(t.x,t.y,h+v,rd):terApply(t.x,t.y,'ter_set',h+v);
@@ -220,8 +219,8 @@ function syncPlace(){
     var on=!selM&&a.d===cur;el.classList.toggle('on',on);el.setAttribute('aria-pressed',String(on));
     el.setAttribute('aria-label',(line?'짓는 방향 ':'바라보는 방향 ')+PL_DIRNAME[worldToScreenDir(a.d)]);
   });
-  // ▲▼: 화살표들 오른쪽에 위아래로. 고른 칸, 땅 높이, 경사로 이어 짓기, 길(연결 다리 빼고)에서만
-  var terT=k==='floor'&&isTerDef(UI.tool),vOn=selM||(k==='path'&&UI.pc.k!=='sky')||(terT&&(UI.tool==='ter_set'||UI.rdir!=null));
+  // ▲▼: 화살표들 오른쪽에 위아래로. 고른 칸, 땅 높이, 경사로 이어 짓기, 길에서만
+  var terT=k==='floor'&&isTerDef(UI.tool),vOn=selM||k==='path'||(terT&&(UI.tool==='ter_set'||UI.rdir!=null));
   // 오른쪽에 자리가 모자라면 왼쪽에 둔다
   var maxX=-1e9,minX=1e9;bx.arr.forEach(function(a){maxX=Math.max(maxX,a.x);minX=Math.min(minX,a.x);});
   var vx=maxX+38>vw-26?minX-38:maxX+38;
@@ -386,32 +385,32 @@ function plOk0(){
 /* ---------- 지은 것 옮기기·돌리기 (무료) ----------
    짓기와 같은 미리보기로 자리와 방향을 고른다. 원래 건물은 그동안 숨기고, 겹침 검사에서도 빼 둔다.
    층·상태·이용 횟수는 그대로. 방향이 같으면 직접 고른 입구·출구도 함께 옮긴다. 칸 건물·길·바닥은 옮기지 않는다 */
-function canMove(b){return !!b&&!isRoom(b)&&!!D[b.def];}
+function canMove(b){return !!b&&!!D[b.def];}
 function movingId(){var b=UI.moving&&bById(UI.moving);return b&&UI.tool===b.def&&isPlacing()?b.id:0;}
 function startMove(b){
   if(!canMove(b))return;
   UI.tab='build';UI.fold=false;UI.tool=b.def;UI.face=b.face==null?2:b.face;UI.ghost={x:b.x,y:b.y};UI.moving=b.id;
-  UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.undo=[];UI.pc=null;
+  UI.sel=null;UI.selPiece=null;UI.undo=[];UI.pc=null;
   renderPanel();
 }
 function plMoveDone(){
   var b=bById(UI.moving),g=UI.ghost;if(!b||!g){endPlace();return;}
   var face=UI.face,why=placeWhy(D[b.def],g.x,g.y,face);
   if(why){toast(why,1600);sfx('error',.4);return;}
-  var f0=b.face==null?2:b.face,dx=g.x-b.x,dy=g.y-b.y,same=!dx&&!dy&&f0===face,links=(b.links||[]).length;
+  var f0=b.face==null?2:b.face,dx=g.x-b.x,dy=g.y-b.y,same=!dx&&!dy&&f0===face;
   if(!same){
     b.x=g.x;b.y=g.y;b.face=face;setPlaceLevel(b,D[b.def],g.x,g.y,face);
     rebuildOcc();
     releaseVisitors(b.id);structureChanged();plBuzz();sfx('place',.7);
   }
   UI.moving=null;UI.tool=null;UI.ghost=null;UI.fold=true;UI.sel=b.id;
-  var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(links&&!(b.links||[]).length?' · 연결 다리가 끊겼어요':'')+(needsDoor(b)&&!usable(b)?' · 문 앞까지 길을 이어 주세요':'');
+  var msg=same?'그대로 두었어요':D[b.def].name+'을(를) 옮겼어요'+(needsDoor(b)&&!usable(b)?' · 문 앞까지 길을 이어 주세요':'');
   toast(msg,1800);renderPanel();hud(true);
 }
 function plBuzz(){try{if(navigator.vibrate)navigator.vibrate(12);}catch(e){}}
 // 방금 지은 건물을 전액 돌려받고 없앤다. 같은 주 안에서만, 층을 올렸거나 이미 없으면 못 한다
 // 문이 열린 동안 마지막 예배 공간은 되돌리기로도 없앨 수 없다
-function canUnbuild(u){var b=u&&bById(u.bid);return !!b&&(b.floors||1)<=1&&u.w===S.week&&!lastHallWhy(b);}
+function canUnbuild(u){var b=u&&bById(u.bid);return !!b&&u.w===S.week&&!lastHallWhy(b);}
 function unbuild(u){
   if(!canUnbuild(u))return false;
   var b=bById(u.bid);
@@ -429,21 +428,14 @@ function renderPbar(){
     var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 건물이 바라볼 방향(정면·출입구)을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';
     h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
   }else if(k==='path'){
-    var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sky=c.k==='sky',sl=sky?0:c.slope;
+    var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sl=c.slope;
     // 화면을 가리지 않게 평소엔 작은 알약 하나(이름·값·경사·높이)만. 누르면 고르는 줄이 펼쳐지고, 고르면 다시 접힌다
     var lv=c.l>0?c.l+1+'층':(c.l<0?'지하 '+(-c.l)+'층':'땅');
-    if(!UI.pbarOpen)h='<button class="btn ppill" data-act="pbar" aria-expanded="false" aria-label="길 종류·경사·높이 고르기">'+(p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span>':'<b>길</b>')+(sky?'':' · '+(sl>0?'오르막':sl<0?'내리막':'평지'))+' · '+lv+' ⌄</button>';
+    if(!UI.pbarOpen)h='<button class="btn ppill" data-act="pbar" aria-expanded="false" aria-label="길 종류·경사·높이 고르기">'+(p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span>':'<b>길</b>')+' · '+(sl>0?'오르막':sl<0?'내리막':'평지')+' · '+lv+' ⌄</button>';
     else h='<div class="prow">'+
-      segBtns('pkind',c.k,[['stone','돌'],['wood','나무'],['brick','벽돌'],['marble','대리석'],['steel','철'],['arch','아치 다리'],['sky','연결 다리']])+
+      segBtns('pkind',c.k,[['stone','돌'],['wood','나무'],['brick','벽돌'],['marble','대리석'],['steel','철'],['arch','아치 다리']])+
       '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=MINH?' disabled':'')+'>▼</button><span class="lvl">'+lv+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
       (c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+'<button class="btn" data-act="pbar" aria-label="접기">⌃</button></div>';
-  }else if(k==='room'){
-    var rp=UI.ghost?tilePlan(UI.ghost.x,UI.ghost.y,UI.tool):null,line;
-    if(!rp)line='빈 땅을 누르면 칸이 생겨요. 이어 붙이면 하나의 '+d.rname+', 지은 칸을 다시 누르면 위층(최대 '+MROOM.maxF+'층)';
-    else if(!rp.ok)line=bad(rp.why);
-    else if(S.money<rp.cost)line=bad('자금이 부족해요');
-    else line=(rp.kind==='floor'?'누르면 위층을 올려요 · ':'누르면 칸을 지어요 · ')+fmt(rp.cost);
-    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span> · 위층 '+fmt(MROOM.floorCost)+'<br><span class="pt">'+line+'</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }else if(isTerDef(UI.tool)){
     // 지형은 띠 없이: 지도 위 화살표·▲▼·✓와 ✓ 옆 글씨(높이·값)만 (못 짓는 칸은 ✓를 누르면 이유)
     h='';

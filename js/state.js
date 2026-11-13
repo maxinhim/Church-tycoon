@@ -1,7 +1,7 @@
 'use strict';
 /* ---------- 상태 ---------- */
 var S,A,occ,V=[],F=[],ctx,cv,DPR=1,VW=0,VH=0;
-var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,selTile:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',statusTab:'status',lastBuilt:null,fdir:null,moving:null,tlv:1};
+var UI={tab:'build',cat:'worship',tool:null,ghost:null,sel:null,undo:[],face:2,pc:null,selPiece:null,speed:1,fold:true,confirmNew:false,minisTab:'events',statusTab:'status',lastBuilt:null,fdir:null,moving:null,tlv:1};
 var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 
 /* 시작 상태: 교회 문은 닫혀 있다. 첫 예배실과, 교회 입구에서 예배실 앞까지 보도블록이 깔려 있다.
@@ -45,7 +45,6 @@ function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===i
 function rebuildOcc(){
   occ=[];for(var y=0;y<ROWS;y++){occ.push(new Array(COLS).fill(0));}
   S.buildings.forEach(function(b){
-    if(isRoom(b)){b.tiles.forEach(function(t){occ[t.y][t.x]=b.id;});return;}
     var d=bDims(b);for(var j=0;j<d.h;j++)for(var i=0;i<d.w;i++)occ[b.y+j][b.x+i]=b.id;
   });
   rebuildDeck();

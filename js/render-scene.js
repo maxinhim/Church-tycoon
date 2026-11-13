@@ -57,7 +57,7 @@ function draw(){
   pitBuild();if(PIT.path){c.fillStyle='#4f3d2b';c.fill(PIT.path);}
   legacy(function(){drawOutTrees(true);});
   var sb=UI.sel?bById(UI.sel):null;
-  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&!isRoomDef(UI.tool)&&UI.tool!=='path'&&!isFloorDef(UI.tool)&&!isTerDef(UI.tool)?D[UI.tool]:null,gok=false;
+  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='path'&&!isFloorDef(UI.tool)&&!isTerDef(UI.tool)?D[UI.tool]:null,gok=false;
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
   var mvId=movingId();
   // 높인 땅·흙 경사로: 칸마다 흙 덩어리 하나
@@ -72,19 +72,13 @@ function draw(){
   });
   S.buildings.forEach(function(b){
     if(b.id===mvId)return;
-    if(isRoom(b)){
-      var map=roomMap(b);
-      var rz=bLevel(b)*LV,ft=frontTile(b);
-      b.tiles.forEach(function(t){var rt=rrect(t.x,t.y,t.x+1,t.y+1);rt.zb=rz;if(b.z==null&&piecesAt(t.x,t.y).some(function(p){return p.l>bLevel(b);}))rt.zt=rz+roomTop(t.f)-.02;rt.f=function(){atZ(rz,function(){drawRoomTile(b,t,map);if(t===ft)drawWear(b);});};if(rz<0){var f0=rt.f;rt.f=function(){pitClip(rt,f0);};}E.push(rt);});
-      return;
-    }
     var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bZ(b);
     r.zb=bz;if(b.z==null&&ceilOver(b)<99)r.zt=Math.min(bz+bHeight(b),ceilOver(b)*LV-.15);
     r.f=d.cell?function(){atZ(bz,function(){cellDraw(b,function(){drawEntity(b,0);});});}:function(){atZ(bz,function(){legacy(function(){var lb=legB(b);drawEntity(lb,d.kind==='lot'?Math.round(use*d.park):0);drawWear(lb);});});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
   });
   S.paths.forEach(function(p){
     var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;
-    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>pg?p.l*LV-.14:pg*LV;rp.zt=p.k==='sky'?p.l*LV+.72:((p.l===pg&&!p.s)?pg*LV:pieceTop(p)*LV);
+    var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>pg?p.l*LV-.14:pg*LV;rp.zt=((p.l===pg&&!p.s)?pg*LV:pieceTop(p)*LV);
     rp.f=pg<0||p.l<0?function(){pitClip(rp,function(){drawPiece(p);});}:function(){drawPiece(p);};E.push(rp);
   });
   V.forEach(function(v){
@@ -113,20 +107,18 @@ function draw(){
   sortEnt(E).forEach(function(e){e.f();});
   // 고른 건물·미리보기 바닥 표시는 그림 위에 얹는다 (높인 땅 위에서도 보이게)
   if(sb)atZ(bZ(sb),function(){
-    if(isRoom(sb))sb.tiles.forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.22)','#ffd23f',[6,4]);});
-    else{var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);}
+    var sd=bDims(sb);footprint(sb.x,sb.y,sd.w,sd.h,'rgba(255,210,63,.22)','#ffd23f',[6,4]);
   });
   var gz=gd&&UI.ghost?plLevelZ(gd,UI.ghost.x,UI.ghost.y,UI.face):0;
   if(gd){var gdm=faceDims(gd,UI.face);gok=canPlace(gd,UI.ghost.x,UI.ghost.y,UI.face)&&(movingId()||S.money>=gd.cost);atZ(gz,function(){footprint(UI.ghost.x,UI.ghost.y,gdm.w,gdm.h,gok?'rgba(60,210,110,.35)':'rgba(235,70,60,.42)',gok?'#2fd16f':'#ff5a4a');});}
   legacy(function(){drawOutTrees(false);});
   drawWxOverlay(c);
   drawMarkers(c);
-  if(isRoomDef(UI.tool))drawRoomGhost();
   if((isFloorDef(UI.tool)||isTerDef(UI.tool))&&UI.ghost)drawTerGhost();
   if(UI.tool==='path')drawPathGhost();
   if(gd){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);setPlaceLevel(gb,gd,gb.x,gb.y,gb.face);
-    if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
+    if(mvb){gb.id=mvb.id;gb.cond=mvb.cond;}
     ensureDoors(gb);
     atZ(gz,function(){c.globalAlpha=.78;if(gd.cell)cellDraw(gb,function(){drawEntity(gb,0);});else legacy(function(){drawEntity(legB(gb),Math.round(gd.park*.5));});c.globalAlpha=1;});
   }

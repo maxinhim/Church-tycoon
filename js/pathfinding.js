@@ -7,7 +7,7 @@
    노드: 땅 칸 = y*COLS+x, 높이가 있는 길 조각(다리·계단) = PN+조각 id (PN은 땅 칸 수보다 훨씬 큰 값).
    땅 높이의 평지 길은 땅 칸과 같은 노드로 본다.
    두 노드는 맞닿은 면의 높이(포트)가 같을 때만 이어진다. */
-var NAV={reach:{},badSky:{},all:false},WALK=null;
+var NAV={reach:{},all:false},WALK=null;
 function gid(x,y){return y*COLS+x;}
 // 그 칸에 선 건물의 바닥 높이(층). 건물이 없으면 땅 높이
 function cellLevel(x,y){var id=occ&&occ[y]&&occ[y][x],b=id&&bById(id);return b?bLevel(b):th(x,y);}
@@ -15,7 +15,7 @@ function gateNode(){return gid(ENT,ROWS-1);}
 var PN=100000;
 function isPieceNode(n){return n>=PN;}
 function nodePiece(n){return pieceById(n-PN);}
-function onGroundPiece(p){return p.k!=='sky'&&!p.s&&p.y<ROWS&&p.x<COLS&&p.l===th(p.x,p.y)&&!isRamp(p.x,p.y);}
+function onGroundPiece(p){return !p.s&&p.y<ROWS&&p.x<COLS&&p.l===th(p.x,p.y)&&!isRamp(p.x,p.y);}
 function flatPieceAt(x,y){return S.paths.some(function(p){return p.x===x&&p.y===y&&onGroundPiece(p);});}
 function computeWalk(){
   WALK=[];
@@ -46,8 +46,7 @@ function nodePos(n){
   if(!isPieceNode(n)){var gx=n%COLS+.5,gy=((n/COLS)|0)+.5;return {x:gx,y:gy,z:groundZ(gx,gy)};}
   var p=nodePiece(n);return {x:p.x+.5,y:p.y+.5,z:(p.l+.5*p.s)*LV};
 }
-// 연결 다리는 건물 안 통로라 바깥 길찾기에서 뺀다
-function isNodePiece(p){return p.k!=='sky'&&!onGroundPiece(p)&&!deckCovered(p);}
+function isNodePiece(p){return !onGroundPiece(p)&&!deckCovered(p);}
 // (x,y) 칸에서 d 방향 면이 lvl 높이로 열린 다리·계단 노드
 function pieceNodeAt(x,y,d,lvl){
   var ps=piecesAt(x,y);
@@ -120,7 +119,6 @@ function entNode(b){if(!b||!b.door)return -1;return doorNode(b.door.ent,b);}
 function refreshNav(){
   computeWalk();
   S.buildings.forEach(ensureDoors);
-  refreshLinks();
   // 이용 가능 여부는 문이 열려 있다고 보고 계산한다 (닫아 둔 동안 '?' 표시가 온 지도에 뜨지 않게)
   NAV.all=true;NAV.reach=navReach(gateNode());NAV.all=false;
   // 둘러볼 수 있는 곳: 입구에서 닿는 교회 부지 안의 바닥·길·데크 노드

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* 무작위 조작 테스트: 짓기·철거·길·지형·층 올리기·주 넘기기·저장/불러오기·행사를 무작위로 반복하며
+/* 무작위 조작 테스트: 짓기·철거·길·지형·주 넘기기·저장/불러오기·행사를 무작위로 반복하며
    오류·NaN·음수가 생기는지 본다. 쓰는 법: node tools/fuzz.js  (시드 6개 × 700번 조작, 1~2분) */
 const http=require('http'),fs=require('fs'),path=require('path');const ROOT=path.dirname(__dirname);
 const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.mp3':'audio/mpeg'};
@@ -20,10 +20,10 @@ const r=await p.evaluate(()=>{restart('easy');S.unlockAll=true;setGate(true);con
   try{
   if(o<4){const id=ids[ri(ids.length)],x=ri(COLS),y=ri(ROWS),f=ri(4);op='build '+id;if(S.money<5000)S.money+=50000;build(id,x,y,f);}
   else if(o===4&&S.buildings.length){const bb=S.buildings[ri(S.buildings.length)];op='dem '+bb.def;if(!lastHallWhy(bb))demolish(bb.id);}
-  else if(o===5){op='piece';addPiece({x:ri(COLS),y:ri(PZ),l:ri(3),s:ri(2),d:ri(4),k:['stone','wood','sky'][ri(3)]});}
+  else if(o===5){op='piece';addPiece({x:ri(COLS),y:ri(PZ),l:ri(3),s:ri(2),d:ri(4),k:['stone','wood','brick'][ri(3)]});}
   else if(o===6&&S.paths.length){op='rmpiece';const pc=S.paths[ri(S.paths.length)];if(!pieceDemWhy(pc))removePiece(pc.id,.5);}
   else if(o===7){op='ter';terApply(ri(COLS),ri(PZ),R()<.3?'ter_ramp':'ter_set',ri(4),ri(4));}
-  else if(o===8&&S.buildings.length){const bb=S.buildings[ri(S.buildings.length)];op='floor+ '+bb.def;if(canStack(bb))addFloor(bb);}
+  else if(o===8&&S.buildings.length){const bb=S.buildings[ri(S.buildings.length)];op='invest '+bb.def;if(hasLv(bb))investBld(bb);}
   else if(o===9){op='run';for(let k=0;k<120;k++)update(0.1);S.dlg=null;}
   else if(o===10){op='week';S.t=WEEK-.05;update(0.1);S.dlg=null;S.over=false;if(S.money<0)S.money=20000;}
   else if(o===11){op='saveload';save();const s2=load();s2.open=S.open;S=s2;V=[];rebuildOcc();recalc();levelTick(true);}

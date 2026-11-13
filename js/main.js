@@ -1,6 +1,6 @@
 'use strict';
 function restart(dk){
-  S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.selTile=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.lastBuilt=null;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
+  S=newState(dk||S.diff);V=[];F=[];CF=[];UI.tool=null;UI.ghost=null;UI.sel=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.face=2;UI.confirmNew=false;UI.lastBuilt=null;UI.tab='build';UI.cat='worship';UI.fold=true;ROT=0;
   $('#over').hidden=true;$('#dlg').hidden=true;refreshCands();rebuildOcc();recalc();S.lvl=null;levelTick(true);syncTabs();renderPanel();homeView();hud(true);syncSpeed();save();toast('새 교회를 시작합니다 · '+curDiff().name,2000);
 }
 /* 가로 전용: 세로일 때는 시뮬레이션을 멈추고 조작을 막는다 (안내 화면은 CSS #rotate) */

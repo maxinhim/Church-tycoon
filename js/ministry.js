@@ -13,10 +13,10 @@ var DIFF={
 function curDiff(){return DIFF[S.diff]||DIFF.normal;}
 
 function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
-// 목표를 n개 이루면 열리는 것들 (건물 id, 'sky'=연결 다리)
+// 목표를 n개 이루면 열리는 것들 (건물 id)
 var UNLOCK={
-  chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,mfel:1,mcomf:1,picnic:1,
-  dining:2,youth:2,elder:2,counsel:2,pantry:2,lounge:2,nurse:2,spire:2,mcare:2,study:2,gazebo:2,playground:2,shop:2,sky:2,
+  chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,picnic:1,
+  dining:2,youth:2,elder:2,counsel:2,pantry:2,lounge:2,nurse:2,spire:2,study:2,gazebo:2,playground:2,shop:2,
   badminton:1,jokgu:1,gateball:1,calli:1,art:1,
   hoops:2,craft:2,cook:2,band:2,choir:2,
   futsal:3,grand:3,clinic:3,dawn:3,mission:3,gym:3,foodbank:3,parktower:3,outdoor:3
@@ -49,7 +49,7 @@ function lvUnlockNames(L){var o=[];for(var id in LV_UNLOCK)if(LV_UNLOCK[id]===L&
 // 단계 n이 열릴 때 새로 열리는 것들의 이름
 function unlockNames(n){
   var out=[];
-  for(var id in UNLOCK)if(UNLOCK[id]===n)out.push(id==='sky'?'연결 다리':(D[id]?D[id].name:id));
+  for(var id in UNLOCK)if(UNLOCK[id]===n)out.push(D[id]?D[id].name:id);
   for(var k in STAFF)if((STAFF[k].goal||0)===n&&n>0)out.push(STAFF[k].name);
   for(var e in EVENTS)if((EVENTS[e].goal||0)===n&&n>0&&!EVENTS[e].hidden)out.push(EVENTS[e].name);
   return out;
@@ -296,7 +296,7 @@ function chooseDlg(i){
 }
 
 /* ---------- 건물 노후와 수리 ---------- */
-function maintainable(b){var k=D[b.def]&&D[b.def].kind;return k==='bld'||k==='mroom';}
+function maintainable(b){var k=D[b.def]&&D[b.def].kind;return k==='bld';}
 function condOf(b){return b.cond==null?100:b.cond;}
 /* 노후 단계: 지도에 보이는 표시와 효율이 함께 바뀐다
    80% 이하 거미줄·효율 90% → 70% 이하 하얀 연기·75% → 60% 이하 검은 연기·55% */

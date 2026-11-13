@@ -183,58 +183,29 @@ async function modularChecks(browser, url) {
   await page.goto(url); await skipSteps(page);
   const r = await page.evaluate(() => {
     window.__ct.init(); S.money = 99999; levelTick(true); S.unlockAll = true; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.dlg = null;
-    const rooms = () => S.buildings.filter(b => b.def === 'mroom');
-    // 왼쪽부터 5칸이 비어 있는 줄을 찾는다
-    let X = -1, Y = -1;
-    for (let y = 1; y < ROWS - 2 && X < 0; y++) for (let x = 0; x + 5 <= COLS; x++) {
-      let free = true; for (let i = 0; i < 5; i++) if (occ[y][x + i]) free = false;
-      if (free) { X = x; Y = y; break; }
-    }
     const o = {};
-    placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y);
-    o.merged = rooms().length === 1 && rooms()[0].tiles.length === 3;
-    placeTile(X + 1, Y);
-    // 계단·다리로 잇지 않은 2층은 좌석에 들어가지 않는다
-    // 위층은 1층 출입구만 있어도 바로 좌석에 들어간다
-    o.floor = tileOf(rooms()[0], X + 1, Y).f === 2 && defOf(rooms()[0]).seats === D.mroom.per.seats * 4;
-    for (let k = 0; k < 8; k++) placeTile(X + 1, Y);
-    o.maxFloor = tileOf(rooms()[0], X + 1, Y).f === 10 && !tilePlan(X + 1, Y).ok;
-    for (let k = 0; k < 9; k++) removeTile(X + 1, Y, 1);
-    o.floorDown = tileOf(rooms()[0], X + 1, Y).f === 1;
-    removeTile(X + 1, Y, 1);
-    o.split = rooms().length === 2;
-    placeTile(X + 1, Y);
-    o.rejoined = rooms().length === 1 && rooms()[0].tiles.length === 3;
-    const before = S.money; placeTile(X + 4, Y); placeTile(X + 3, Y);
-    o.joinTwo = rooms().length === 1 && rooms()[0].tiles.length === 5 && S.money === before - 2 * D.mroom.cost;
-    o.occ = [0, 1, 2, 3, 4].every(i => occ[Y][X + i] === rooms()[0].id);
-    // 방문자는 가까운 곳부터 가므로, 입구 근처의 기본 예배실을 치워 이 예배실을 쓰게 한다
+    // 층 올리기·칸 건물은 없다: 한 건물 = 한 정의, 키우는 것은 레벨. 예전 저장의 층·칸 값은 걷어 낸다
+    o.gone = typeof placeTile === 'undefined' && typeof addFloor === 'undefined' && typeof tilePlan === 'undefined' && !DEFS.some(d => d.kind === 'mroom') && !D.mroom && !S.buildings.some(b => b.floors || b.tiles);
+    // 방문자는 가까운 곳부터 가므로, 입구 근처의 기본 예배실을 치워 새 예배실을 쓰게 한다
     S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
+    let pr = null; for (let y = 4; y < PZ - 8 && !pr; y += 2) for (let x = 4; x < COLS - 10; x += 2) if (canPlace(D.room, x, y, 2) && !onFloorAt(D.room, x, y, 2)) { build('room', x, y, 2); pr = S.buildings[S.buildings.length - 1]; break; }
     // 방문자는 바닥·길 위로만 다니므로 입구까지 길을 잇고, 교회 문을 연다
-    o.gateless = !usable(rooms()[0]); recalc();
-    o.unlinked = o.gateless && !usable(rooms()[0]);
-    o.linkOk = linkDoor(rooms()[0]) === '' && usable(rooms()[0]);
+    recalc(); o.unlinked = !usable(pr);
+    o.linkOk = linkDoor(pr) === '' && usable(pr);
     S.open = true;
     for (let i = 0; i < 4000; i++) update(0.1);
-    o.used = rooms()[0].uses > 0;
+    o.used = pr.uses > 0;
     save();
-    const loaded = load().buildings.filter(b => b.def === 'mroom').map(b => JSON.stringify(b.tiles));
-    o.saveLoad = JSON.stringify(loaded) === JSON.stringify(rooms().map(b => JSON.stringify(b.tiles)));
+    const ld = load().buildings.find(b => b.id === pr.id); o.saveLoad = !!ld && ld.def === 'room' && ld.x === pr.x && ld.y === pr.y;
     for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
     window.__ct.setRot(0);
     return o;
   });
-  check(r.merged, '예배실 칸: 이어 지은 3칸이 하나의 예배실로 합쳐짐');
-  check(r.floor, '예배실 칸: 2층을 올리면 1층 출입구만으로 2층 좌석까지 쓰임');
-  check(r.maxFloor, '예배실 칸: 10층까지 쌓이고 그 위로는 못 올림');
-  check(r.floorDown, '예배실 칸: 위층부터 철거됨');
-  check(r.split, '예배실 칸: 가운데 칸을 지우면 두 예배실로 나뉨');
-  check(r.rejoined && r.joinTwo, '예배실 칸: 다시 이으면 하나로 합쳐짐');
-  check(r.occ, '예배실 칸: 점유 지도에 모든 칸이 등록됨');
-  check(r.unlinked && r.linkOk, '길 잇기: 바닥이 없으면 이용 불가, \'입구까지 길 잇기\'로 보도블록을 깔면 이용 가능');
-  check(r.used, '예배실 칸: 방문자가 실제로 이용함');
-  check(r.saveLoad, '예배실 칸: 저장 후 불러와도 칸·층이 유지됨');
-  check(errs.length === 0, '예배실 칸: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  check(r.gone, '층 올리기·칸 건물: 없음 (건물은 레벨로 키움)');
+  check(r.unlinked && r.linkOk, '길 잇기: 바닥이 없으면 이용 불가, \'문 앞까지 길 잇기\'로 보도블록을 깔면 이용 가능');
+  check(r.used, '예배실: 방문자가 실제로 이용함');
+  check(r.saveLoad, '예배실: 저장 후 불러와도 유지됨');
+  check(errs.length === 0, '건물 짓기: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
 
@@ -256,18 +227,18 @@ async function pathChecks(browser, url) {
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
     const starter = S.buildings.find(b => b.def === 'room');
     o.defaultDoor = !!(starter.door && starter.acc && starter.acc.ok);
-    // 3칸 예배실 + 가운데 앞쪽으로 계단 자리
+    // 기도실 + 앞쪽으로 계단 자리
     let X = -1, Y = -1;
     for (let y = 1; y < ROWS - 5 && X < 0; y++) for (let x = 0; x + 3 <= COLS; x++) {
-      if ([0, 1, 2].every(i => free(x + i, y)) && [1, 2, 3].every(k => free(x + 1, y + k))) { X = x; Y = y; break; }
+      if ([0, 1].every(i => [-1, 0].every(j => free(x + i, y + j))) && [1, 2, 3].every(k => free(x + 1, y + k))) { X = x; Y = y; break; }
     }
     o.found = X >= 0;
-    placeTile(X, Y); placeTile(X + 1, Y); placeTile(X + 2, Y); placeTile(X + 1, Y);
-    const room = S.buildings.find(b => b.def === 'mroom');
+    build('pray', X, Y - 1, 2);
+    const room = S.buildings[S.buildings.length - 1];
     // 잔디 칸에서 이미 닿는 바닥까지 보도블록을 깐다
     const connect = (x, y) => { const t = walkSearch(x, y, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc(); return !!t; };
     S.open = true; recalc(); linkDoor(room);
-    o.unconnected = room.acc.ok && defOf(room).seats === D.mroom.per.seats * 4;
+    o.unconnected = !!room.acc && room.acc.ok;
     // 땅에서 방 쪽(-y)으로 오르막 1칸, 이어서 평지 다리 1칸
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 2; UI.pc.l = 0; UI.pc.dir = 3; UI.pc.slope = 1;
     const b1 = pcBuild(); UI.pc.slope = 0; const b2 = pcBuild();
@@ -292,24 +263,24 @@ async function pathChecks(browser, url) {
     o.facing = !!fb && fb.face === 0 && bDims(fb).w === 4 && bDims(fb).h === 6 && !!fb.door &&
       [0, 1, 2, 3].every(i => [0, 1, 2, 3, 4, 5].every(j => occ[fb.y + j][fb.x + i] === fb.id));
     // 방문자가 쓰는 모든 건물에 정면 1층 가운데 문이 하나 있다
-    o.allDoors = S.buildings.filter(b => defOf(b).fill && !isRoom(b)).every(b => !!b.door && b.door.ent.d === (b.face == null ? 2 : b.face) && b.door.ent.l === 0 && sameSpot(b.door.ent, b.door.ext));
+    o.allDoors = S.buildings.filter(b => defOf(b).fill).every(b => !!b.door && b.door.ent.d === (b.face == null ? 2 : b.face) && b.door.ent.l === 0 && sameSpot(b.door.ent, b.door.ext));
     return o;
   });
   check(r.found, '길: 시험할 빈 자리를 찾음');
   check(r.defaultDoor, '문: 기본 예배실에 출입구가 있고 이용 가능');
-  check(r.unconnected, '길: 1층 출입구만 있어도 2층 좌석이 들어감');
+  check(r.unconnected, '길: 문 앞에 길을 이으면 이용할 수 있음');
   check(r.built, '길: 오르막·평지를 이어 지으면 높이가 올라가며 이어짐');
   check(r.undo, '길: 되돌리기로 마지막 조각과 커서가 돌아옴');
   check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
   check(r.ground, '길: 다리 아래와 철골 계단 밑 땅으로 걸어 다닐 수 있음');
-  check(r.connected, '문: 칸 건물도 1층 둘레의 문 하나로 길과 이어짐');
+  check(r.connected, '문: 정면 1층 문 하나가 길과 이어짐');
   check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
   check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 정면 1층 가운데 문 하나');
   check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
 
-// 건물 쌓기, 역할별 칸, 연결 다리 이동, 바닥 타일, 새 건물 전부 짓고 그리기
+// 바닥 타일, 새 건물 전부 짓고 그리기
 async function stackChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
   const page = await ctx.newPage();
@@ -325,42 +296,8 @@ async function stackChecks(browser, url) {
     window.__ct.init(); S.money = 999999; levelTick(true); S.unlockAll = true; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
-    // 완성품 건물 층 올리기
     let cell = null;
     for (let y = 0; y < ROWS - 3 && !cell; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.cell, x, y, 2)) { build('cell', x, y, 2); cell = S.buildings[S.buildings.length - 1]; break; }
-    for (let k = 0; k < 9; k++) addFloor(cell);
-    o.stack = cell.floors === 10 && defOf(cell).fcap === D.cell.fcap * 10 && addFloor(cell) !== '' && removeFloor(cell, .5) && cell.floors === 9;
-    o.noStackGarden = !canStack({ def: 'tree' });
-    // 역할이 다른 칸은 합쳐지지도, 쌓이지도 않는다
-    let X = -1, Y = -1;
-    for (let y = 4; y < ROWS - 6 && X < 0; y++) for (let x = 4; x + 9 <= COLS; x++) {
-      if ([-2, -1, 0, 1, 2, 3, 4, 5, 6].every(i => [-2, -1, 0, 1, 2, 3].every(j => free(x + i, y + j)))) { X = x; Y = y; break; }
-    }
-    placeTile(X, Y, 'mfel'); placeTile(X + 1, Y, 'mcare');
-    o.roles = S.buildings.filter(b => b.def === 'mfel').length === 1 && S.buildings.filter(b => b.def === 'mcare').length === 1 && !tilePlan(X + 1, Y, 'mfel').ok;
-    removeTile(X + 1, Y, 1);
-    // 교제실 두 채(2층)를 한 칸 띄우고 연결 다리로 잇는다
-    placeTile(X + 2, Y, 'mfel'); placeTile(X, Y, 'mfel'); placeTile(X + 2, Y, 'mfel');
-    const A = S.buildings.find(b => b.def === 'mfel' && b.tiles.some(t => t.x === X)), B = S.buildings.find(b => b.def === 'mfel' && b.tiles.some(t => t.x === X + 2));
-    UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky';
-    o.skyBuilt = pcBuild() === '' && S.paths.some(p => p.k === 'sky');
-    o.linked = A.links.indexOf(B.id) >= 0 && B.links.indexOf(A.id) >= 0;
-    o.skyNotNav = !NAV.reach[PN + S.paths.find(p => p.k === 'sky').id];
-    // A가 꽉 차면 다리를 건너 B로
-    recalc();
-    linkDoor(A); linkDoor(B);
-    A.inUse = bCap(A);
-    spawnV(); const v = V[V.length - 1]; v.target = A.id; arrive(v);
-    o.xferStart = v.state === 'xfer' && B.inUse === 1;
-    let maxZ = 0; for (let i = 0; i < 60 && v.state === 'xfer'; i++) { stepV(v, 0.1); maxZ = Math.max(maxZ, v.z); }
-    o.xferDone = v.state === 'inside' && v.inside === B.id && maxZ >= LV - 0.01;
-    A.inUse = 0;
-    // 역할이 다른 건물을 이으면 연결되지 않고 경고 표시
-    placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X, Y + 1, 'mcare'); placeTile(X, Y + 1, 'mcare');
-    UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 1; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky'; pcBuild();
-    const sk2 = S.paths.find(p => p.k === 'sky' && p.y === Y + 1);
-    o.badLink = !!sk2 && !!NAV.badSky[sk2.id];
-    o.skyRules = pieceFits({ x: X + 1, y: Y + 3, l: 0, s: 0, d: 0, k: 'sky' }) !== '' && pieceFits({ x: X + 1, y: Y + 3, l: 1, s: 1, d: 0, k: 'sky' }) !== '';
     // 바닥 타일
     let fx = -1, fy = -1;
     for (let y = 0; y < ROWS - 1 && fx < 0; y++) for (let x = 0; x < COLS; x++) if (free(x, y)) { fx = x; fy = y; break; }
@@ -373,7 +310,7 @@ async function stackChecks(browser, url) {
     o.floorBlocked = paintFloor(cell.x, cell.y, 'f_brick') !== '';
     paintFloor(fx, fy, 'f_wood');
     // 새로 넣은 건물·요소를 모두 지어 본다
-    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor' && !d.water && !d.retired);
+    const want = DEFS.filter(d => d.kind !== 'path' && d.kind !== 'floor' && !d.water && !d.retired);
     const missing = [];
     want.forEach(d => {
       if (S.buildings.some(b => b.def === d.id)) return;
@@ -382,7 +319,7 @@ async function stackChecks(browser, url) {
       if (!done) missing.push(d.id);
     });
     o.allBuilt = missing.length === 0 ? '' : missing.join(',');
-    o.noDoor = S.buildings.filter(b => needsDoor(b) && !isRoom(b) && !b.door).map(b => b.def + '@' + b.x + ',' + b.y).join(' ');
+    o.noDoor = S.buildings.filter(b => needsDoor(b) && !b.door).map(b => b.def + '@' + b.x + ',' + b.y).join(' ');
     o.allDoors = !o.noDoor;
     for (let i = 0; i < 1500; i++) update(0.1);
     for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
@@ -392,14 +329,6 @@ async function stackChecks(browser, url) {
     o.cats = CATS.length;
     return o;
   });
-  check(r.stack, '쌓기: 완성품 건물을 10층까지 올리고 수용 인원이 층수만큼 늘며, 위층 철거 가능');
-  check(r.noStackGarden, '쌓기: 조경 요소는 층을 올릴 수 없음');
-  check(r.roles, '칸 건물: 역할이 다른 칸은 합쳐지지도 쌓이지도 않음');
-  check(r.skyBuilt && r.linked, '연결 다리: 같은 역할 건물의 2층끼리 이으면 서로 연결됨');
-  check(r.skyNotNav, '연결 다리: 바깥 길찾기에는 들어가지 않음');
-  check(r.xferStart && r.xferDone, '연결 다리: 건물이 꽉 차면 방문자가 다리를 건너 옆 건물로 감');
-  check(r.badLink, '연결 다리: 역할이 다른 건물을 이으면 연결되지 않고 경고');
-  check(r.skyRules, '연결 다리: 땅 높이·경사로는 지을 수 없음');
   check(r.floorPaint && r.floorUndo && r.floorErase && r.floorBlocked, '바닥: 칠하기·되돌리기·지우기, 건물 위 금지, 분위기 반영, 걸을 수 있음');
   check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
   if (!r.allDoors) console.log('DBG', r.noDoor);
@@ -425,7 +354,7 @@ async function rulesChecks(browser, url) {
     const o = {};
     // 구역: 주차장은 주차 구역에만, 주차 구역엔 주차장만, 입구 보도는 비움
     o.zones = canPlace(D.lot, 1, PZ, 2) && !canPlace(D.lot, 1, 5, 2) && !canPlace(D.wc, 1, PZ, 2) && !canPlace(D.lots, ENT - 1, PZ, 2) &&
-      tilePlan(3, PZ).ok === false && paintFloor(3, PZ, 'f_block') !== '' && pieceFits({ x: 3, y: PZ, l: 0, s: 0, d: 0, k: 'stone' }) !== '';
+      !!zoneWhy(D.pray, 3, PZ, 2) && paintFloor(3, PZ, 'f_block') !== '' && pieceFits({ x: 3, y: PZ, l: 0, s: 0, d: 0, k: 'stone' }) !== '';
     // 걷기: 잔디는 못 걷고, 주차 구역은 걷고, 도로 줄은 입구 열만
     o.walk = !groundOk(2, 5) && groundOk(2, PZ + 1) && !groundOk(2, ROWS - 1) && groundOk(ENT, ROWS - 1) && groundOk(ENT, PZ - 1);
     // 시작은 문이 닫혀 있다: 방문자가 오지 않고, 주차 구역에서 부지로 들어오는 길이 막힌다
@@ -869,7 +798,6 @@ async function ministryChecks(browser, url) {
     document.querySelector('#place [data-pl="ok"]').click();
     return S.money === m0 && b.x === t.x && b.y === t.y && b.face === 0 && occ[a.y][a.x] !== b.id && occ[t.y][t.x] === b.id && UI.sel === b.id && !movingId() && document.getElementById('dock').hidden && !!document.querySelector('#selCard [data-act="move"]') ? 'ok' : 'move broke';
   });
-  const roomNoMove = await page.evaluate(() => { let r = S.buildings.find(b => isRoom(b)); if (!r) { S.money += 1000; for (let y = 16; y < PZ - 2 && !r; y++) for (let x = 2; x < COLS - 2 && !r; x++) if (tilePlan(x, y, 'mroom').ok && placeTile(x, y, 'mroom')) r = roomAt(x, y, 'mroom'); } UI.fold = true; UI.sel = r.id; renderPanel(); const none = !document.getElementById('selCard').hidden && !document.querySelector('#selCard [data-act="move"]'); UI.sel = null; renderPanel(); return none; });
   // 지은 것을 지도에서 누르면: 패널 대신 작은 카드, 철거는 두 번 눌러야
   const card = await page.evaluate(() => {
     const b = S.buildings.find(x => x.def === 'room'); UI.fold = false; UI.tab = 'status'; renderPanel();
@@ -932,7 +860,6 @@ async function ministryChecks(browser, url) {
   check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨·안내 띠를 띄우지 않음 (효과는 건축 카드에서만)');
   check(card === 'ok', '지은 것 누르기: 패널 대신 건물 위 작은 카드, 철거는 두 번 눌러야 (' + card + ')');
   check(moved === 'ok', '옮기기·돌리기: 지은 것을 무료로 다른 자리·방향으로 옮김, 취소하면 그대로 (' + moved + ')');
-  check(roomNoMove, '옮기기·돌리기: 칸 건물에는 옮기기 버튼이 없음');
   check(blockedTip, '지도에서 짓기: 못 짓는 자리에서 회색 ✓를 누르면 이유를 알려 줌');
   check(backToList && refunded, '지도에서 짓기: 큰 건물은 지은 뒤 패널 없이 건물 위 카드, 그 주에는 카드에서 전액 되돌리기');
   check(repeat, '지도에서 짓기: 조경은 길처럼 화살표 쪽으로 한 칸씩 이어 짓기, 되돌리면 전액 환불');
@@ -1046,11 +973,9 @@ async function waterChecks(browser, url) {
     for (let x = 2; x < 6; x++) for (let y = 2; y < 6; y++) terApply(x, y, 'ter_set', -10);
     o.pitBuild = build('room', 2, 2, 2);
     const pb = S.buildings.find(b => b.def === 'room' && b.x === 2 && b.y === 2);
-    let n = 0; while (pb && addFloor(pb) === '' && n < 40) n++;
-    o.floors20 = !!pb && pb.floors === 20;
-    o.raiseBlocked = /넘을/.test(terPlan(2, 2, 'ter_set', -9).why || '');
-    removeFloor(pb, 1);
-    o.raiseAfter = !terPlan(2, 2, 'ter_set', -9).why;
+    // 지하 10층 땅에 선 건물이 있어도 땅은 높일 수 있고(건물이 함께 올라감), 지하 아래로는 내릴 수 없다
+    o.floors20 = !!pb && !terPlan(2, 2, 'ter_set', -9).why && !!terPlan(2, 2, 'ter_set', -11).why;
+    o.raiseBlocked = true; o.raiseAfter = true;
     // 물: 웅덩이 전체, 바닥 타일 유지, 못 걷는 칸
     [[10, 5], [11, 5], [11, 6]].forEach(c => terApply(c[0], c[1], 'ter_set', -2));
     paintFloor(10, 5, 'f_brick'); paintFloor(9, 5, 'f_block'); paintFloor(12, 5, 'f_block');
@@ -1148,8 +1073,7 @@ async function waterChecks(browser, url) {
     return o;
   });
   check(r.dig && r.deep, '지하: 땅을 지하 10층까지 내릴 수 있고 그 아래는 막힘');
-  check(r.pitBuild && r.floors20, '지하: 지하 10층 땅의 건물은 20층까지 올라감');
-  check(r.raiseBlocked && r.raiseAfter, '지하: 건물이 한도에 닿으면 땅을 못 높이고, 층을 줄이면 높일 수 있음');
+  check(r.pitBuild && r.floors20, '지하: 지하 10층 땅에도 건물을 지을 수 있고, 땅을 높이면 건물이 함께 오름');
   check(r.fill && r.keepFloor, '물: 이어진 지하 칸 전체에 차고 바닥 타일은 남음');
   check(r.noWalk && r.noBuild && r.noTer && r.noPathIn, '물: 걷기·건물·바닥·지형·물속 길 금지');
   check(r.fount && r.drainBlocked, '물 분수: 물 위에만 놓이고, 있으면 물을 못 뺌');
@@ -1388,7 +1312,7 @@ async function terrainChecks(browser, url) {
   check(r.reach && r.climb, '지형: 방문자가 경사로로 고원 위 건물에 닿음');
   check(r.cliff && r.undo, '지형: 경사로가 없으면 절벽이라 못 오르고, 되돌리면 다시 닿음');
   check(r.bldUp, '지형: 땅을 높이면 건물(모든 칸)이 함께 오름');
-  check(r.cap, '지형: 땅 높이와 건물 층수를 합쳐 10층 제한');
+  check(r.cap, '지형: 땅은 9층 높이까지만 올릴 수 있음');
   check(r.stair && r.stairUp, '지형: 철골 계단으로 높인 땅에 오름' + (r.stair && r.stairUp ? '' : ' ' + r.dbg));
   check(r.pieceMoved, '지형: 땅에 놓인 길이 땅과 함께 움직임');
   check(r.pick, '지형: 화면에서 높인 땅의 윗면을 누르면 그 칸이 잡힘');
@@ -1432,14 +1356,13 @@ async function deckChecks(browser, url) {
     o.noDem = pieceDemWhy(piecesAt(24, 6)[0]) !== '' && !removePiece(piecesAt(24, 6)[0].id, .5);
     // 데크 아래 땅은 그대로 걸을 수 있다
     paintFloor(24, 7, 'f_block'); o.under = groundOk(24, 7) || !!S.floor['24,7'];
-    // 나무·칸 건물·바닥 타일도 데크 위에
+    // 나무·건물·바닥 타일도 데크 위에
     o.tree = build('tree', 26, 10, 2) && S.buildings.find(b => b.def === 'tree' && b.x === 26).z === 1;
-    o.room = placeTile(20, 6, 'mroom') && roomAt(20, 6).z === 1;
+    o.room = build('bench', 20, 6, 2) && S.buildings.find(b => b.def === 'bench' && b.x === 20 && b.y === 6).z === 1;
     const dp = piecesAt(21, 6)[0]; o.tile = paintFloor(21, 6, 'f_brick', dp.id) === '' && dp.f === 'f_brick' && floorUndo() && !dp.f;
     // 땅 높이 + 층수 10층 제한 (데크 높이 1 → 9층까지)
     build('pray', 22, 8, 2); const pr = S.buildings.find(b => b.def === 'pray' && b.z === 1);
-    for (let k = 0; k < 12; k++) addFloor(pr);
-    o.cap = !!pr && (pr.floors || 1) === 9;
+    o.cap = !!pr && pr.z === 1;
     // 옮기기: 데크에서 땅으로 옮기면 z가 사라진다
     const tr = S.buildings.find(b => b.def === 'tree' && b.x === 26);
     setPlaceLevel(tr, D.tree, 5, 3, 2); tr.x = 5; tr.y = 3; rebuildOcc(); o.moved = tr.z == null;
@@ -1482,8 +1405,8 @@ async function deckChecks(browser, url) {
   check(r.reach, '데크: 방문자가 계단·데크로 데크 위 건물에 닿음');
   check(r.covered && r.noDem, '데크: 건물 밑 데크는 걸을 수 없고, 철거하려 하면 막고 이유를 알려 줌');
   check(r.under, '데크: 데크 아래 땅에 바닥을 깔 수 있음');
-  check(r.tree && r.room && r.tile, '데크: 나무·칸 건물·바닥 타일도 데크 위에');
-  check(r.cap, '데크: 데크 높이와 층수를 합쳐 10층 제한');
+  check(r.tree && r.room && r.tile, '데크: 나무·건물·바닥 타일도 데크 위에');
+  check(r.cap, '데크: 데크 위에 지은 건물은 데크 높이에 섬');
   check(r.moved && r.saved, '데크: 땅으로 옮기면 데크 높이가 풀리고, 저장 후에도 유지');
   check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (걷어낸 반값을 뺀 값)');
   check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(걷어낸 반값을 뺀 값) 걷어낼 수 있음');
@@ -1522,7 +1445,7 @@ async function gripeChecks(browser, url) {
     // 새 교회: 만족도 항목이 모두 50% 안팎에서 시작하고, 전체도 45~55
     { const c = S.cov; o.start50 = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].every(k => c[k] >= 0.4 && c[k] <= 0.6) && S.mood >= 40 && S.mood <= 58 && BLD_SAT === 0.6 && MOOD_LEAVE === 45 && MOOD_GAIN === 50;
       o.start50d = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].map(k => k + Math.round(c[k] * 100)).join(' ') + ' mood' + Math.round(S.mood); }
-    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.room.cost === 1800 && D.chapel.cost > D.room.cost * 5 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && MROOM.floorCost === 250 && QID.g1.m === 800 && LOANS.big.amt === 40000;
+    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.room.cost === 1800 && D.chapel.cost > D.room.cost * 5 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && QID.g1.m === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
     o.props = ['bench', 'picnic', 'parasol', 'swing', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
     S.money = 999999; levelTick(true); S.unlockAll = true; recalc();
@@ -1579,7 +1502,7 @@ async function gripeChecks(browser, url) {
     o.spread = toCafe >= 9 && toCafe2 <= 3 && NEED_OK >= 85 && VIS_PATIENCE > 5 && CROWD_ANNOY > 0 && GRIPE_W.crowd >= 1;
     // 편의 시설도 정면 문 하나로 옆 길에서 바로 쓰고, 한 명씩 쓴다
     { const w2 = put('lounge'); recalc(); const lk = linkDoor(w2); recalc();
-      o.wcFree = (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && bCap(w2) === 1 && bMode(D.mcomf) === 'single';
+      o.wcFree = (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && bCap(w2) === 1 && bMode(D.wc) === 'single';
       o.wcDbg = [lk, usable(w2), JSON.stringify(w2.door), JSON.stringify(w2.acc)]; }
     o.fixes = gripeFixes(D.boardgame).includes('외로움') && gripeFixes(D.cell).includes('외로움') && gripeFixes(D.bakery).includes('배고픔') && gripeFixes(D.cafe).includes('목마름') && /외로움/.test(effText(D.futsal));
     // 소모임 분류: 제목 줄에 운동·취미·음악 칩, 고른 묶음만 목록에

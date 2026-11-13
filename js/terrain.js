@@ -22,12 +22,10 @@ function groundZ(wx,wy){
 // 건물이 서 있는 바닥 높이(층)
 function bLevel(b){
   if(b.z!=null)return b.z;
-  if(isRoom(b)&&b.tiles&&b.tiles.length)return th(b.tiles[0].x,b.tiles[0].y);
   return th(b.x,b.y);
 }
-function bTopFloors(b){return isRoom(b)?roomMaxF(b):(b.floors||1);}
+function bTopFloors(b){return 1;}
 // 건물 b의 (x,y) 칸에 l 높이(층)의 벽이 있는지
-function wallAt(b,x,y,l){var k=bLevel(b);return l>=k&&l<k+bFloorsAt(b,x,y);}
 // 화면 좌표에서 가장 위에 보이는 바닥 칸 (높인 땅 윗면·데크를 먼저 찾는다)
 function groundTile(px,py){return surfaceTile(px,py);}
 
@@ -62,14 +60,14 @@ function terPlan(x,y,id,lvl,dir){
     changed=true;
     cost+=dl>0?dl*TER_UP:(dl<0?-dl*TER_DOWN:TER_DOWN);
     // 땅에 놓인 길·계단은 함께 움직이고, 그 위의 다리는 그대로 둔다 (땅에 묻히면 안 됨)
-    var ps=piecesAt(c.x,c.y),rest=ps.filter(function(p){return p.l===h&&p.k!=='sky';}),stay=ps.filter(function(p){return rest.indexOf(p)<0;});
+    var ps=piecesAt(c.x,c.y),rest=ps.filter(function(p){return p.l===h;}),stay=ps.filter(function(p){return rest.indexOf(p)<0;});
     rest.forEach(function(p){
       var nl=p.l+dl;
       if(nl+p.s>MAXH){why='길·계단이 '+MAXH+'층보다 높아져요';return;}
       if(stay.some(function(q){return !(nl>=q.l+q.s+1||q.l>=nl+p.s+1);})){why='위에 다리가 있어 이 높이로는 바꿀 수 없어요';return;}
       moves.push({p:p,l:nl});
     });
-    if(!why&&stay.some(function(q){return q.l<lvl+(q.k==='sky'?1:0);}))why='다리·계단 밑이라 이 높이로는 바꿀 수 없어요';
+    if(!why&&stay.some(function(q){return q.l<lvl+0;}))why='다리·계단 밑이라 이 높이로는 바꿀 수 없어요';
   });
   if(why)return {why:why};
   if(!changed)return {why:'이미 그 높이예요'};
@@ -123,7 +121,7 @@ function terChanged(cells){
   cells.forEach(function(c){hit[gid(c.x,c.y)]=1;piecesAt(c.x,c.y).forEach(function(p){hit[PN+p.id]=1;});});
   waterFix();rebuildOcc();recalc();
   V.forEach(function(v){
-    if(v.state==='inside'||v.state==='xfer')return;
+    if(v.state==='inside')return;
     var on=!!hit[v.node],via=v.path&&v.path.some(function(q){return hit[q.n];});
     if(!on&&!via)return;
     if(nodeOk(v.node))placeAt(v,v.node);

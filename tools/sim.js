@@ -35,7 +35,6 @@ function runBot(cfg) {
   const failed = (id, why) => { const k = id + ':' + why; stat.fail[k] = (stat.fail[k] || 0) + 1; };
   function put(id) {
     const d = D[id]; if (!d || isLocked(id) || tierWhy(id) || S.money < d.cost + (strat === 'deco' ? 0 : 0)) return false;
-    if (isRoomDef(id)) return false;
     const okN = () => S.buildings.filter(b => b.door && usable(b)).length, dm = faceDims(d, 2);
     let tries = 0;
     for (const c of cells) {
@@ -58,7 +57,7 @@ function runBot(cfg) {
   function best(val, filter) {
     // 값 대비 효과가 가장 좋은 것의 절반 이상이면, 그중 효과가 가장 큰(=큰 건물) 것을 고른다
     const L = [];
-    DEFS.forEach(d => { if (isLocked(d.id) || d.cost <= 0 || d.cost > S.money - RES || isRoomDef(d.id) || d.kind === 'floor' || d.kind === 'terrain' || d.kind === 'path') return;
+    DEFS.forEach(d => { if (isLocked(d.id) || d.cost <= 0 || d.cost > S.money - RES || d.kind === 'floor' || d.kind === 'terrain' || d.kind === 'path') return;
       if (filter && !filter(d)) return; const v = val(d); if (v > 0) L.push({ id: d.id, v, r: v / d.cost }); });
     if (!L.length) return null;
     const top = Math.max(...L.map(o => o.r)); return L.filter(o => o.r >= top * 0.5).sort((x, y) => y.v - x.v)[0].id;

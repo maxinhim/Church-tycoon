@@ -13,7 +13,7 @@
    다음 주 성도 만족도가 내려간다(최대 8, 불편마다 무게가 다르다). 현황 › 챙길 일에 무엇이 모자란지 보인다. */
 // s: 건물 설명에 붙는 짧은 이름 (이 건물이 무엇을 풀어 주는지)
 var GRIPES={
-  wc:{s:'화장실',n:'화장실을 못 찾은',fix:'화장실·편의실 칸',ids:['wc','mcomf']},
+  wc:{s:'화장실',n:'화장실을 못 찾은',fix:'화장실',ids:['wc','wc2']},
   food:{s:'배고픔',n:'배가 고파도 먹을 곳이 없던',fix:'매점·빵집·식당·카페',ids:['shop','bakery','dining','cafe','grill','market','cook']},
   drink:{s:'목마름',n:'목이 말라도 마실 곳이 없던',fix:'식수대·자판기·커피 카트·카페',ids:['drinkfount','vending','coffeecart','cafe','shop','books','bakery'],near:24*G},
   lonely:{s:'외로움',n:'어울릴 곳이 없어 외로웠던',fix:'소모임(운동·취미·음악)·소그룹실·청년부실',ids:['cell','youth'],cat:'club'},

@@ -41,7 +41,6 @@ function drawSpr(id,cx,cy,n,sid,mir){
 function drawSprEntity(b){
   var d=D[b.def],id=d.spr||b.def,im=sprOf(id);if(!im)return false;
   // 층을 올린 건물은 그림을 쌓을 수 없어 지금처럼 코드로 그린다
-  if((b.floors||1)>1)return false;
   var sd=SPR_DATA[id],turn=!!(d.dir||sd.back),dir=turn&&b.face!=null?worldToScreenDir(b.face):0,mir=false;
   if(turn){
     mir=(dir%2===1)!==!!sd.fl;

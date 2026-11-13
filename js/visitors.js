@@ -4,8 +4,7 @@
    문 앞이 입구 아치에서 닿지 않는 건물은 고르지 않는다. 들어갈 수 없으면(정원이 찼거나 일괄 가동 중) 문 앞 길에서
    VIS_PATIENCE초까지 기다리고, 넘으면 머리 위에 화남 표시를 띄우고 불만이 쌓인 채 다른 곳으로 간다.
    예배·교제 건물(일괄 가동)은 안에서 정원이 차기를 기다렸다가 함께 나온다(bldlv.js).
-   연결 다리로 이어진 같은 역할 건물은 한 묶음: 들어간 건물이 꽉 차면 다리를 건너 옆 건물로 가고,
-   자기 출구가 막혀 있어도 묶음의 다른 출구로 나올 수 있다. */
+   */
 // member: 주일에 예배하러 오는 성도 (정착 판정 없음, 말씀이 가장 급하다). wallet: 매장에서 쓸 수 있는 돈
 function spawnV(member){
   var needs={};NEEDS.forEach(function(n){needs[n]=22+Math.random()*34;});
@@ -50,24 +49,10 @@ function moveAlong(v,dt){
 function usable(b){return !!(b&&b.acc&&b.acc.ent);}
 // 지금 들어갈 수 있는지: 일괄 가동 중이면 못 들어가고, 아니면 정원까지
 function canEnter(b){return !!b&&!(b.run>0)&&b.inUse<bCap(b);}
-function linkWithSpace(b){
-  var ids=b.links||[];
-  for(var i=0;i<ids.length;i++){var o=bById(ids[i]);if(o&&canEnter(o))return o;}
-  return null;
-}
-// 꽉 찬 건물 안에서 연결 다리를 건너 옆 건물로. 자리는 미리 잡아 둔다
-function startXfer(v,from,to){
-  var r=skyRoute(from,to);if(!r)return false;
-  to.inUse++;
-  v.state='xfer';v.target=to.id;v.path=r;v.pi=1;
-  v.x=r[0].x;v.y=r[0].y;v.z=r[0].z;v.node=r[0].n;
-  return true;
-}
-// 나올 곳: 자기 문 앞 → 묶음 건물의 문 앞 → 입구 아치
+// 나올 곳: 자기 문 앞 → 입구 아치
 function exitNodeFor(b){
   if(!b)return gateNode();
-  var cand=[b].concat((b.links||[]).map(bById).filter(Boolean));
-  for(var i=0;i<cand.length;i++){var n=entNode(cand[i]);if(n>=0&&NAV.reach[n])return n;}
+  var n=entNode(b);if(n>=0&&NAV.reach[n])return n;
   return gateNode();
 }
 // 문 앞에서 기다리기: 겹쳐 보이지 않게 조금씩 비켜 선다
@@ -77,7 +62,7 @@ function arrive(v){
   var b=bById(v.target);
   if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
   if(canEnter(b))enter(v,b);
-  else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt)))startWait(v);}
+  else startWait(v);
 }
 function enter(v,b){
   b.inUse++;v.inside=b.id;v.uk=bPerf(b);v.state='inside';
@@ -181,12 +166,7 @@ function stepV(v,dt){
     var b=bById(v.target);
     if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
     if(canEnter(b)){enter(v,b);return;}
-    var alt=linkWithSpace(b);if(alt&&startXfer(v,b,alt))return;
     v.wait-=dt;if(v.wait<=0){placeAt(v,v.node);giveUp(v,b);}
-  }else if(v.state==='xfer'){
-    var to=bById(v.target),r2=moveAlong(v,dt);
-    if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}
-    if(r2===true){to.inUse--;enter(v,to);}
   }else if(v.state==='inside'){
     // 일괄 가동 건물: 가동이 끝나면 건물이 내보낸다. 정원이 차지 않아 너무 오래 기다리면 화가 나 나온다
     v.t-=dt;

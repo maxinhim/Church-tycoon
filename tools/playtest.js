@@ -62,7 +62,7 @@ const RULES = [
     await page.waitForTimeout(120);
     // 카드: 바라는 것부터, 없으면 그 분류에서 살 수 있는 가장 싼 것 (목록 맨 앞)
     const pick = await page.evaluate(({ ids }) => {
-      const cs = [...document.querySelectorAll('#cards .card')].filter(c => !isRoomDef(c.dataset.v)), ok = c => !c.classList.contains('poor') && !c.classList.contains('lock');   // 칸 건물은 누를 때마다 지어져서 이 봇은 다루지 않는다
+      const cs = [...document.querySelectorAll('#cards .card')], ok = c => !c.classList.contains('poor') && !c.classList.contains('lock');   // 칸 건물은 누를 때마다 지어져서 이 봇은 다루지 않는다
       let c = null; (ids || []).some(id => (c = cs.find(x => x.dataset.v === id && ok(x))));
       const locked = (ids || []).filter(id => { const x = cs.find(y => y.dataset.v === id); return x && x.classList.contains('lock'); });
       const poor = (ids || []).filter(id => { const x = cs.find(y => y.dataset.v === id); return x && x.classList.contains('poor') && !x.classList.contains('lock'); });

@@ -14,7 +14,9 @@ function load(){
       for(var k in n){if(o[k]===undefined)o[k]=n[k];}
       // 없어진 바닥(예전 대기줄 타일 등)·입구·출구 건물은 걷어 낸다
       for(var fk in o.floor||{})if(!D[o.floor[fk]])delete o.floor[fk];delete o.qprev;
-      o.buildings=o.buildings.filter(function(b){return D[b.def]&&(!isRoomDef(b.def)||(b.tiles&&b.tiles.length));});o.buildings.forEach(function(b){b.inUse=0;});
+      o.buildings=o.buildings.filter(function(b){return D[b.def];});o.buildings.forEach(function(b){b.inUse=0;delete b.floors;delete b.tiles;delete b.links;});
+      // 층 올리기·칸 건물·연결 다리는 없어졌다: 연결 다리 조각은 걷어 낸다 (칸 건물 정의는 위에서 걸러진다)
+      if(o.paths)o.paths=o.paths.filter(function(p){return p.k!=='sky';});
       ['staff','off'].forEach(function(k2){for(var q in n[k2])if(o[k2][q]===undefined)o[k2][q]=n[k2][q];});
       return o;}
   }catch(e){}

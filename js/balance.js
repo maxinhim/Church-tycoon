@@ -171,4 +171,4 @@ var TIER2_K=2.1,TIER1_MAX=1,TIER1_MAX_OPEN=3;
 // 같은 기능의 [티어 1, 티어 2]
 var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
 // 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)
-var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop','mcomf'];
+var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop'];

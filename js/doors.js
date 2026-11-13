@@ -1,16 +1,15 @@
 'use strict';
 /* ---------- 문 (입구·출구) ----------
    방문자가 쓰는 건물(이용 효과가 있는 건물)은 문이 하나다: 건물이 바라보는 방향(b.face, 0~3) 정면 1층의 가운데 칸.
-   문 앞 길 칸 하나가 길찾기와 이어지는 자리다(doorNode). 칸 건물(예배실 칸 등)은 길에 닿는 1층 둘레 칸에 문을 단다.
+   문 앞 길 칸 하나가 길찾기와 이어지는 자리다(doorNode).
    문: {x,y,d,l}  (x,y)=건물 칸, d=문이 바깥으로 향하는 방향(DIRS 순서), l=층(0이 1층). b.door = {ent, ext} (같은 자리) */
 var OPP=[1,0,3,2];
 function faceDims(d,face){var w=d.w/U,h=d.h/U;return (face===0||face===1)?{w:h,h:w}:{w:w,h:h};}
-function bDims(b){if(isRoom(b)){var r=roomDef(b);return {w:r.w,h:r.h};}return faceDims(D[b.def],b.face);}
+function bDims(b){return faceDims(D[b.def],b.face);}
 function needsDoor(b){return !!defOf(b).fill;}
 function bTiles(b){
-  if(isRoom(b))return b.tiles;
   var dm=bDims(b),out=[];
-  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)out.push({x:b.x+i,y:b.y+j,f:b.floors||1});
+  for(var j=0;j<dm.h;j++)for(var i=0;i<dm.w;i++)out.push({x:b.x+i,y:b.y+j,f:1});
   return out;
 }
 function doorOut(s){return {x:s.x+DIRS[s.d][0],y:s.y+DIRS[s.d][1],l:s.l};}
@@ -40,13 +39,7 @@ function frontDoor(b){
 }
 function ensureDoors(b){
   if(!needsDoor(b)){if(b.door)delete b.door;return;}
-  var pick=null;
-  if(isRoom(b)){
-    // 칸 건물: 1층 둘레에서 바로 옆이 걷는 길인 자리 (입구에서 닿는 길이면 더 좋다)
-    var sp=doorSpots(b).filter(function(s){return s.l===0;}),best=-1;
-    sp.forEach(function(s){var n=doorNode(s,b);if(n<0)return;var v=NAV.reach&&NAV.reach[n]?10:5;if(v>best){best=v;pick=s;}});
-    pick=pick||sp[0];
-  }else pick=frontDoor(b);
+  var pick=frontDoor(b);
   pick=pick||{x:b.x,y:b.y,d:b.face==null?2:b.face,l:0};
   b.door={ent:pick,ext:{x:pick.x,y:pick.y,d:pick.d,l:pick.l}};
 }
@@ -59,7 +52,7 @@ function doorText(b){
 // 벽에 문을 그린다. 화면 앞쪽을 향한 벽에만 보인다. onlyTile이 있으면 그 칸의 문만
 function drawDoorsOn(b,onlyTile){
   if(!b.door)return;
-  var ins=isRoom(b)?.09:.1,same=sameSpot(b.door.ent,b.door.ext),barn=!isRoom(b)&&D[b.def].deco==='barn';
+  var ins=.1,same=sameSpot(b.door.ent,b.door.ext),barn=D[b.def].deco==='barn';
   [['ent',b.door.ent],['ext',b.door.ext]].forEach(function(it,i){
     var s=it[1];
     if(same&&i===1)return;

@@ -4,13 +4,12 @@
    l = 아래쪽 높이(층 단위, 0=땅), s = 0 평지 / 1 경사(한 칸에 한 층 오름),
    d = 경사가 올라가는 방향(DIRS 순서), k = 종류(PATHK).
    계단은 아래가 빈 철골 계단이라 계단 밑과 다리 아래 땅을 그대로 걸을 수 있다.
-   연결 다리(k='sky')는 같은 역할 건물의 위층끼리 잇는 실내 통로로, 바깥 길찾기에는 들어가지 않는다. */
+   */
 var LV=.9,MAXL=10;
 var PATHK={stone:{name:'돌길',col:'#d6c6a6',edge:'#9c8664',cost:20,sn:'돌계단',sc:'#8f8676',side:'#b3a283'},wood:{name:'나무 데크',col:'#b98c58',edge:'#7a5530',cost:30,sn:'나무 계단',sc:'#7a5530',side:'#8d6339'},
   brick:{name:'벽돌길',col:'#b9694e',edge:'#7c3f2c',cost:28,sn:'벽돌 계단',sc:'#8a4a36',side:'#9a5540'},marble:{name:'대리석 길',col:'#efece4',edge:'#a9a59b',cost:40,sn:'대리석 계단',sc:'#bdb8ad',side:'#d2cec4',beauty:.3},
   steel:{name:'철판 길',col:'#aeb7bf',edge:'#58626d',cost:25,sn:'철골 계단',sc:'#58626d',side:'#7d8791'},
-  arch:{name:'아치 다리',col:'#e6dccb',edge:'#8f7b5e',cost:45,beauty:.6},
-  sky:{name:'연결 다리',col:'#c9d6df',edge:'#5f7a8f',cost:60}};
+  arch:{name:"아치 다리",col:"#e6dccb",edge:"#8f7b5e",cost:45,beauty:.6}};
 var SCREEN_DIRS=[[1,0],[0,1],[-1,0],[0,-1]]; // 화면 기준 ↘ ↙ ↖ ↗ (회전된 좌표)
 
 function piecesAt(x,y){return S.paths.filter(function(p){return p.x===x&&p.y===y;});}
@@ -20,7 +19,7 @@ function pieceTop(p){return p.l+p.s;}
 function portLevel(p,d){if(!p.s)return p.l;if(d===p.d)return p.l+1;if(d===OPP[p.d])return p.l;return NOPORT;}
 function pieceUp(p){return p.y<ROWS&&p.x<COLS&&p.l>th(p.x,p.y);}
 function pieceCost(p){return p.s?45+(pieceUp(p)?15:0):PATHK[p.k].cost+(pieceUp(p)?15:0);}
-function pieceName(p){return p.k==='sky'?'연결 다리':(p.s?(PATHK[p.k].sn||'철골 계단'):PATHK[p.k].name+(pieceUp(p)&&p.k!=='arch'?' 다리':''));}
+function pieceName(p){return (p.s?(PATHK[p.k].sn||'철골 계단'):PATHK[p.k].name+(pieceUp(p)&&p.k!=='arch'?' 다리':''));}
 // p 위치의 표면 높이(층 단위가 아니라 z)
 function pieceH(p,wx,wy){
   if(!p.s)return p.l*LV;
@@ -34,8 +33,6 @@ function pieceFits(p){
   if(p.l<0&&isWater(p.x,p.y))return '물속에는 길을 놓을 수 없어요. 땅 높이의 다리로 건너세요';
   if(isRamp(p.x,p.y))return '흙 경사로 위에는 길을 놓을 수 없어요';
   if(pieceTop(p)>MAXL)return MAXL+'층 높이보다 높게는 지을 수 없어요';
-  if(p.k==='sky'&&p.s)return '연결 다리는 평지로만 지을 수 있어요';
-  if(p.k==='sky'&&p.l<th(p.x,p.y)+1)return '연결 다리는 땅보다 한 층 위부터 지을 수 있어요';
   if(occ[p.y][p.x])return '건물이 있어요';
   var ps=piecesAt(p.x,p.y);
   for(var i=0;i<ps.length;i++){
@@ -70,7 +67,6 @@ function newCursor(){return {x:null,y:null,l:0,dir:screenToWorldDir(3),slope:0,k
 // 커서에서 다음에 지을 조각
 function pcPiece(){
   var c=UI.pc;if(!c||c.x==null)return null;
-  if(c.k==='sky')return {x:c.x,y:c.y,l:c.l,s:0,d:c.dir,k:c.k};
   if(c.slope>0)return {x:c.x,y:c.y,l:c.l,s:1,d:c.dir,k:c.k};
   if(c.slope<0)return {x:c.x,y:c.y,l:c.l-1,s:1,d:OPP[c.dir],k:c.k};
   return {x:c.x,y:c.y,l:c.l,s:0,d:c.dir,k:c.k};
@@ -80,7 +76,7 @@ function pcBuild(){
   var why=addPiece(p);if(why)return why;
   var c=UI.pc;
   c.hist.push({x:c.x,y:c.y,l:c.l,id:p.id});
-  c.x+=DIRS[c.dir][0];c.y+=DIRS[c.dir][1];if(c.k!=='sky')c.l+=c.slope;
+  c.x+=DIRS[c.dir][0];c.y+=DIRS[c.dir][1];c.l+=c.slope;
   return '';
 }
 function pcUndo(){
@@ -122,7 +118,6 @@ function pieceLinked(p,d){
   });
 }
 function drawPiece(p,tint){
-  if(p.k==='sky'){drawSkyPiece(p,tint);return;}
   if(p.s){drawStair(p,tint);return;}
   var K=PATHK[p.k],top=tint||K.col,edge=tint?'rgba(255,255,255,.8)':K.edge,c=PJ.c;
   var g=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0,gz=g*LV,lift=(!p.s&&p.l===g)?.012:0,deck=.12;
@@ -233,87 +228,4 @@ function drawStair(p,tint){
     c.moveTo(s1[0],s1[1]);c.lineTo(t1[0],t1[1]);c.lineTo(t2[0],t2[1]);c.lineTo(s2[0],s2[1]);
   });
   c.stroke();
-}
-// 연결 다리: 기둥 위 바닥판, 유리 벽, 얇은 지붕틀
-function drawSkyPiece(p,tint){
-  var z=p.l*LV,c=PJ.c,cx=p.x+.5,cy=p.y+.5;
-  box(rrect(cx-.08,cy-.08,cx+.08,cy+.08),th(p.x,p.y)*LV,z-.13,tint||'#9aa6b0');
-  box(rrect(p.x,p.y,p.x+1,p.y+1),z-.13,z,tint||'#8e9aa4',tint||'#d5dde3');
-  var open=function(e){
-    var nx=p.x+DIRS[e][0],ny=p.y+DIRS[e][1];
-    if(piecesAt(nx,ny).some(function(q){return q.k==='sky'&&q.l===p.l;}))return true;
-    if(nx>=0&&ny>=0&&nx<COLS&&ny<ROWS&&occ[ny][nx]){var b=bById(occ[ny][nx]);if(b&&wallAt(b,nx,ny,p.l))return true;}
-    return false;
-  };
-  var E=[[[p.x+1,p.y],[p.x+1,p.y+1]],[[p.x,p.y],[p.x,p.y+1]],[[p.x,p.y+1],[p.x+1,p.y+1]],[[p.x,p.y],[p.x+1,p.y]]];
-  var glass=tint?'rgba(255,255,255,.25)':'rgba(150,195,225,.32)',frame=tint||'#5f7a8f';
-  for(var e=0;e<4;e++){
-    if(open(e))continue;
-    var r1=rotPt(E[e][0][0],E[e][0][1]),r2=rotPt(E[e][1][0],E[e][1][1]);
-    quad([[r1[0],r1[1],z],[r2[0],r2[1],z],[r2[0],r2[1],z+.66],[r1[0],r1[1],z+.66]],glass,frame);
-  }
-  var R=[[p.x,p.y],[p.x+1,p.y],[p.x+1,p.y+1],[p.x,p.y+1]].map(function(w){var r=rotPt(w[0],w[1]);return [r[0],r[1],z+.7];});
-  quad(R,tint?'rgba(255,255,255,.15)':'rgba(95,122,143,.22)',frame);
-  if(NAV.badSky&&NAV.badSky[p.id]&&!tint){var m=rotPt(cx,cy),q=P(m[0],m[1],z+.9),s=Math.max(.7,PJ.s);c.fillStyle='#d6453a';c.font='700 '+(12*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('!',q[0],q[1]);}
-}
-
-/* ---------- 연결 다리로 이어진 같은 역할 건물 ---------- */
-function skyNext(p){
-  var out=[];
-  for(var e=0;e<4;e++)piecesAt(p.x+DIRS[e][0],p.y+DIRS[e][1]).forEach(function(q){if(q.k==='sky'&&q.l===p.l)out.push(q);});
-  return out;
-}
-// p 옆에 b의 벽이 그 높이로 있으면 그 방향들
-function skyAttach(p,b){
-  var out=[];
-  for(var e=0;e<4;e++){
-    var nx=p.x+DIRS[e][0],ny=p.y+DIRS[e][1];
-    if(nx<0||ny<0||nx>=COLS||ny>=ROWS)continue;
-    if(occ[ny][nx]===b.id&&wallAt(b,nx,ny,p.l))out.push(e);
-  }
-  return out;
-}
-// 연결 다리 묶음마다 닿은 건물들을 찾고, 모두 같은 역할이면 서로 잇는다
-function refreshLinks(){
-  NAV.badSky={};
-  S.buildings.forEach(function(b){b.links=[];});
-  var seen={};
-  S.paths.forEach(function(p0){
-    if(p0.k!=='sky'||seen[p0.id])return;
-    var comp=[],q=[p0];seen[p0.id]=1;
-    while(q.length){var p=q.pop();comp.push(p);skyNext(p).forEach(function(r){if(!seen[r.id]){seen[r.id]=1;q.push(r);}});}
-    var att=[];
-    comp.forEach(function(p){
-      for(var e=0;e<4;e++){
-        var nx=p.x+DIRS[e][0],ny=p.y+DIRS[e][1];
-        if(nx<0||ny<0||nx>=COLS||ny>=ROWS||!occ[ny][nx])continue;
-        var b=bById(occ[ny][nx]);
-        if(b&&wallAt(b,nx,ny,p.l)&&att.indexOf(b)<0)att.push(b);
-      }
-    });
-    if(att.length<2)return;
-    var role=D[att[0].def].cat;
-    if(!att.every(function(b){return D[b.def].cat===role;})){comp.forEach(function(p){NAV.badSky[p.id]=1;});return;}
-    att.forEach(function(b){att.forEach(function(o){if(o!==b&&b.links.indexOf(o.id)<0)b.links.push(o.id);});});
-  });
-}
-// A에서 B까지 연결 다리 위 이동 경로 (벽 → 다리 칸들 → 벽)
-function skyRoute(A,B){
-  var starts=S.paths.filter(function(p){return p.k==='sky'&&skyAttach(p,A).length;});
-  var prev={},q=starts.slice(),seen={},end=null;
-  starts.forEach(function(p){seen[p.id]=1;});
-  for(var i=0;i<q.length&&!end;i++){
-    var p=q[i];
-    if(skyAttach(p,B).length){end=p;break;}
-    skyNext(p).forEach(function(r){if(!seen[r.id]){seen[r.id]=1;prev[r.id]=p;q.push(r);}});
-  }
-  if(!end)return null;
-  var chain=[],c=end;
-  while(c){chain.push(c);c=prev[c.id];}
-  chain.reverse();
-  var z=chain[0].l*LV,out=[],e0=skyAttach(chain[0],A)[0],e1=skyAttach(end,B)[0];
-  out.push({x:chain[0].x+.5+DIRS[e0][0]*.5,y:chain[0].y+.5+DIRS[e0][1]*.5,z:z,n:PN+chain[0].id});
-  chain.forEach(function(p){out.push({x:p.x+.5,y:p.y+.5,z:z,n:PN+p.id});});
-  out.push({x:end.x+.5+DIRS[e1][0]*.5,y:end.y+.5+DIRS[e1][1]*.5,z:z,n:PN+end.id});
-  return out;
 }

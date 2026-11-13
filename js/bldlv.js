@@ -25,8 +25,8 @@ function bMode(d){
   if(d.cat==='shop'||d.cat==='comfort')return 'single';
   return 'multi';
 }
-// 레벨이 있는 건물: 이용 효과가 있는 건물(칸 건물 제외)
-function hasLv(b){var d=defOf(b);return !!(d&&d.fill)&&!isRoom(b);}
+// 레벨이 있는 건물: 이용 효과가 있는 건물
+function hasLv(b){var d=defOf(b);return !!(d&&d.fill);}
 function bLv(b){return hasLv(b)?Math.max(1,Math.min(BLV_MAX,b.lv||1)):1;}
 function tierK(b){var d=defOf(b);return d&&d.tier===2?TIER2_K:1;}
 function bStage(b){var l=bLv(b);return l<=3?1:l<=6?2:3;}

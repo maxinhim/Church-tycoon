@@ -16,14 +16,14 @@ function drawParts(parts){
 }
 function drawBld(b){
   // 층을 올린 건물은 층마다 한 층 높이(LV)로 쌓고, 지붕은 맨 위에
-  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,fl=b.floors||1,H1=fl>1?LV:d.H,H=fl>1?fl*LV:d.H,s=PJ.s;
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,H1=d.H,H=d.H,s=PJ.s;
   box(rrect(x+.03,y+.03,x+w-.03,y+h-.03),0,.05,'#cfc8b8');
   var r=rrect(x+.1,y+.1,x+w-.1,y+h-.1);
   // 용마루: 긴 쪽을 따라. 정사각형이면 정면에서 뒤로 (박공 끝이 정면을 보게) — 정면을 돌리면 지붕도 돈다
   var worldX=w!==h?w>h:(b.face===0||b.face===1),alongX=worldX!==(ROT%2===1);
   var main=function(){
     box(r,.05,H,d.wall,d.roof==='flat'?shade(d.roofc,1.05):null);
-    for(var fk=0;fk<fl;fk++){
+    for(var fk=0;fk<1;fk++){
       feats(r,H1,d,fk*H1);
       if(fk>0){fr('L',r,r.x0,r.x1,fk*H1+.02,fk*H1+.07,shade(d.wall,.8));fr('R',r,r.y0,r.y1,fk*H1+.02,fk*H1+.07,shade(d.wall,.64));}
     }
@@ -136,7 +136,7 @@ function drawSpire(b){
   var ap=hip(r,1.95,.8,d.roofc);cross(ap[0],ap[1],ap[2],1.05);
 }
 /* 건물 레벨에 따른 모습 3단계 (bldlv.js bStage): Lv 1~3 천막·가건물, 4~6 보통 건물, 7~10 큰 시설(금빛 테두리·깃발) */
-function lvLook(b){var d=D[b.def];return !!(b.id&&d&&d.fill&&!d.cell&&d.kind!=='mroom'&&typeof hasLv==='function'&&hasLv(b));}
+function lvLook(b){var d=D[b.def];return !!(b.id&&d&&d.fill&&!d.cell&&typeof hasLv==='function'&&hasLv(b));}
 function drawEntity(b,cars){
   if(lvLook(b)&&bStage(b)===1){drawTent(b);return;}
   drawEntity0(b,cars);
@@ -159,7 +159,7 @@ function drawTent(b){
   if(d.cat==='worship'){quad([[cx-.015,cy,top],[cx+.015,cy,top],[cx+.015,cy,top+.26],[cx-.015,cy,top+.26]],'#f4efe6',EDGE);quad([[cx-.08,cy,top+.17],[cx+.08,cy,top+.17],[cx+.08,cy,top+.2],[cx-.08,cy,top+.2]],'#f4efe6',EDGE);}
 }
 function drawGrand(b){
-  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,H=(b.floors||1)>1?b.floors*LV:heightOfDef(d);
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,H=heightOfDef(d);
   var r=rrect(x+.04,y+.04,x+w-.04,y+h-.04),g='#f2c230';
   quad([[r.x0,r.y0,.07],[r.x1,r.y0,.07],[r.x1,r.y1,.07],[r.x0,r.y1,.07]],null,g);
   var px=r.x0+.12,py=r.y0+.12;
@@ -169,7 +169,6 @@ function drawGrand(b){
 function drawEntity0(b,cars){
   var k=D[b.def].kind;
   if(drawSprEntity(b))return;
-  if(k==='mroom'){drawRoom(b);return;}
   if(k==='path'){drawPiece({x:b.x,y:b.y,l:0,s:1,d:3,k:'stone'});return;}
   if(k==='floor'){drawFloorTile(b.def,b.x,b.y);return;}
   if(k==='terrain'){drawTerIcon(b);return;}
@@ -590,12 +589,10 @@ function drawRoadGap(){var y=ROWS-1;box(rrect(ENT-.04,y-.05,ENT+.06,y+.05),0,.7,
 /* ---------- 낡은 건물 표시 (상태 단계별) ----------
    1: 앞 모서리 처마 밑 거미줄 / 2: 지붕에서 하얀 연기 / 3: 검은 연기 (거미줄도 함께).
    연기는 몇 덩이만 천천히 올라가 화면을 많이 가리지 않는다 */
-function frontTile(b){var best=null,bk=-1e9;b.tiles.forEach(function(t){var r=rrect(t.x,t.y,t.x+1,t.y+1),k=r.x1+r.y1;if(k>bk){bk=k;best=t;}});return best;}
 function drawWear(b){
   var st=wearStage(b);if(!st)return;
   var c=PJ.c,s=PJ.s,r,top,wall;
-  if(isRoom(b)){var t=frontTile(b);r=rrect(t.x,t.y,t.x+1,t.y+1);top=roomTop(t.f);wall=top*.85;}
-  else{var dm=bDims(b);r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h);top=bHeight(b);wall=Math.min(top*.7,(D[b.def].H||1)*(b.floors||1)*.9);}
+  var dm=bDims(b);r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h);top=bHeight(b);wall=Math.min(top*.7,(D[b.def].H||1)*.9);
   // 거미줄: 화면 앞쪽 모서리 벽 윗부분에 부채꼴
   var q=P(r.x1,r.y1,wall),R=Math.max(5,11*s);
   c.save();c.strokeStyle='rgba(250,250,250,.85)';c.lineWidth=Math.max(.6,.8*s);c.beginPath();

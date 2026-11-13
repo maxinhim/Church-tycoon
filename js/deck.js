@@ -1,12 +1,12 @@
 'use strict';
 /* ---------- 데크 위에 짓기 ----------
-   철골 계단·다리로 만든 평평한 위층 길 조각(데크)도 땅처럼 쓴다: 건물·조경·꾸밈·칸 건물·바닥 타일을 올릴 수 있다.
+   철골 계단·다리로 만든 평평한 위층 길 조각(데크)도 땅처럼 쓴다: 건물·조경·꾸밈·바닥 타일을 올릴 수 있다.
    · 데크 위 건물은 b.z(층)에 선다. 땅 위 건물은 b.z가 없고 그 칸의 땅 높이에 선다
    · 건물이 올라간 데크 조각은 걸을 수 없고, 철거할 수 없다(위의 것을 먼저 치운다)
    · 데크 밑의 땅은 그대로 걸어 다닐 수 있다
    · 바닥 타일은 데크 조각에 칠한다(p.f) */
 var DECK={cov:{},up:null};
-function isDeckPiece(p){return p.k!=='sky'&&!p.s&&p.x<COLS&&p.y<ROWS&&p.l>th(p.x,p.y);}
+function isDeckPiece(p){return !p.s&&p.x<COLS&&p.y<ROWS&&p.l>th(p.x,p.y);}
 function deckAt(x,y){var best=null;piecesAt(x,y).forEach(function(p){if(isDeckPiece(p)&&(!best||p.l>best.l))best=p;});return best;}
 // rebuildOcc 끝에서: 데크 위 건물 칸과 그 밑 데크 조각을 기록한다
 function rebuildDeck(){
@@ -16,7 +16,7 @@ function rebuildDeck(){
     bTiles(b).forEach(function(t){
       if(t.y<0||t.x<0||t.y>=ROWS||t.x>=COLS)return;
       DECK.up[t.y][t.x]=1;
-      piecesAt(t.x,t.y).forEach(function(p){if(p.l===b.z&&!p.s&&p.k!=='sky')DECK.cov[p.id]=b.id;});
+      piecesAt(t.x,t.y).forEach(function(p){if(p.l===b.z&&!p.s&&1)DECK.cov[p.id]=b.id;});
     });
   });
 }

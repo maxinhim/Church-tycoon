@@ -2,7 +2,7 @@
 /* ---------- 지은 것을 눌렀을 때 뜨는 작은 카드 ----------
    건축 패널을 열지 않고, 누른 건물 바로 위에 이름·한 줄 상태와 버튼 몇 개만 띄운다 (화면을 덜 가리게).
    · 첫 줄 버튼: 옮기기·돌리기, 그때 필요한 일(길 잇기·되돌리기·수리), '⋯'(나머지 펼치기)
-   · 펼치면: 효과, 층 올리기·내리기, 입구·출구 옮기기, 칸 철거, 철거
+   · 펼치면: 효과, 레벨 투자, 옮기기·돌리기, 철거
    · 철거는 두 번 눌러야 한다 (작은 카드에서 잘못 눌러도 바로 사라지지 않게)
    지도 빈 곳을 누르거나 Esc를 누르면 닫힌다. 버튼 동작은 패널과 같은 onPanel로 처리한다. */
 var scHtml='',scKey='',scMore=false,scArm=0;
@@ -23,7 +23,7 @@ function renderSelCard(){
   if(key!==scKey){scKey=key;scMore=false;scArm=0;}
   var h='',row='',more='';
   if(UI.sel){
-    var b=bById(UI.sel),bd=defOf(b),fl=b.floors||1,st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
+    var b=bById(UI.sel),bd=defOf(b);
     var sub=[],md=bMode(bd);
     if(bd.cap)sub.push((md==='batch'?(b.run>0?'가동 중 ':'모이는 중 '):'이용 ')+b.inUse+'/'+bCap(b)+'명');
     if(b.door&&bd.cap)sub.push((md==='batch'?'가동 ':'회전 ')+rotTime(b).toFixed(1)+'초');
@@ -32,7 +32,7 @@ function renderSelCard(){
     if(b.door&&!usable(b))warn='문 앞까지 길이 없어 이용 못 해요';
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     var lvTag=hasLv(b)?'<i class="blv">Lv '+bLv(b)+'</i>'+(bd.tier===2?'<i class="btr">상위</i>':''):'';
-    h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+lvTag+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
+    h='<div class="sct"><b>'+bd.name+'</b>'+lvTag+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
     // 레벨 올리기: 투자 게이지와 버튼
     if(hasLv(b)&&bLv(b)<BLV_MAX){
       var iw=investWhy(b);
@@ -50,13 +50,11 @@ function renderSelCard(){
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
     var mb='';
-    if(canStack(b)){if(fl<maxFloors(b))mb+=scBtn('floorup','층 올리기 '+fmt(floorCostOf(b)));if(fl>1)mb+=scBtn('floordown','위층 철거 +'+fmt(floorCostOf(b)*0.5));}
-    if(st)mb+=scBtn('demtile',(st.f>1?'이 칸 '+st.f+'층':'이 칸')+' 철거 +'+fmt((st.f>1?MROOM.floorCost:D[b.def].cost)*0.5));
-    mb+=scDem(isRoom(b)?'전체 철거':'철거',bd.cost*0.5);
+    mb+=scDem('철거',bd.cost*0.5);
     more+='<div class="scb">'+mb+'</div>';
   }else if(UI.selPiece){
-    var p=pieceById(UI.selPiece),sw=p.k==='sky'&&NAV.badSky[p.id],dk=isDeckPiece(p)&&!deckCovered(p);
-    h='<div class="sct"><b>'+pieceName(p)+(p.f&&D[p.f]?' · '+D[p.f].name:'')+'</b><span>높이 '+p.l+(p.s?'→'+(p.l+1):'')+'</span></div>'+(sw?'<div class="scw">역할이 다른 건물을 이어 방문자가 건너지 않아요</div>':'');
+    var p=pieceById(UI.selPiece),dk=isDeckPiece(p)&&!deckCovered(p);
+    h='<div class="sct"><b>'+pieceName(p)+(p.f&&D[p.f]?' · '+D[p.f].name:'')+'</b><span>높이 '+p.l+(p.s?'→'+(p.l+1):'')+'</span></div>';
     // 데크에는 바닥 타일을 바로 깔거나 바꿀 수 있다
     if(dk)row+=scBtn('choose',p.f?'바닥 바꾸기':'바닥 깔기','pri','fswap','이 데크에 깔 바닥 고르기');
     if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmt(Math.floor(D[p.f].cost*.5)),'','f_erase');
@@ -113,7 +111,7 @@ function syncSelCard(){
   el.style.setProperty('--ax',Math.round(clamp(top[0]-(x-w/2),14,w-14))+'px');
   el.style.transform='translate('+Math.round(x-w/2)+'px,'+Math.round(y)+'px)';
 }
-function closeSelCard(){UI.sel=null;UI.selPiece=null;UI.selTile=null;UI.selFloor=null;renderSelCard();}
+function closeSelCard(){UI.sel=null;UI.selPiece=null;UI.selFloor=null;renderSelCard();}
 function setupSelCard(){
   var el=$('#selCard');
   el.addEventListener('click',function(e){
