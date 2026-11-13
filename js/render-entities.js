@@ -217,7 +217,8 @@ function drawRoadCar(e){
 /* 교회 입구: 주차 구역과 부지 사이 울타리의 ENT 칸. 문이 닫혀 있으면 철문이 가로막고, 열면 양쪽으로 젖혀진다 */
 function drawArch(){
   var y=PZ,s=PJ.s;
-  if(drawGateSpr()){archName();return;}
+  if(entrStyled()){drawArchStyled();drawEntrBanner();archName();return;}
+  if(drawGateSpr()){drawEntrBanner();archName();return;}
   box(rrect(ENT-.04,y-.06,ENT+.08,y+.06),0,1.25,'#f1ece2');
   box(rrect(ENT+.92,y-.06,ENT+1.04,y+.06),0,1.25,'#f1ece2');
   if(S.open){
@@ -232,6 +233,7 @@ function drawArch(){
 }
 // 입구 아치 위 교회 이름
 function archName(){
+  if(entrBanner())return;   // 현수막을 걸었으면 이름 대신 현수막 글씨 (entrance.js)
   var s=PJ.s,m=rotPt(ENT+.5,PZ);
   if(s>.42){var q=P(m[0],m[1],1.1),c=PJ.c;c.font='600 '+(8*s)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
     c.lineWidth=2.5;c.strokeStyle='rgba(20,30,60,.8)';c.strokeText(S.name,q[0],q[1]+10*s);c.fillStyle='#fff';c.fillText(S.name,q[0],q[1]+10*s);}

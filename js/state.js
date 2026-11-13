@@ -82,4 +82,4 @@ function calcMood(){
   var mood=MOOD_ITEMS*items+Math.min(BONUS_MAX,pos)+neg;
   return {sp:sp,mood:clamp(mood,0,100),items:items,bonus:Math.min(BONUS_MAX,pos),bonusRaw:pos,malus:neg,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
 }
-function recalc(){syncPeople();fitMgrs();refreshNav();fitTalents();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;S.ind=calcInd(m);}
+function recalc(){syncPeople();fitMgrs();entrFit();refreshNav();fitTalents();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;S.ind=calcInd(m);}

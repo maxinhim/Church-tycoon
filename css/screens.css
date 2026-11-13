@@ -278,3 +278,18 @@
 @media (max-height:340px){.hc p{font-size:10px}.hc .ppi{width:40px;height:40px}}
 .mgrw{display:flex;flex-direction:column;align-items:center}
 .mgrx{border:0;background:transparent;color:var(--muted);font-size:10.5px;text-decoration:underline;padding:0 4px;cursor:pointer}
+
+/* 교회 입구 화면: 레벨·모양·현수막 */
+.entlv{justify-content:space-between;margin:4px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.entlv span{font-size:12px;color:var(--ink)}
+.entlv em{font-style:normal;font-size:11.5px;color:var(--muted)}
+.entg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:6px}
+.entc{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px 8px;text-align:center}
+.entc.on{box-shadow:0 0 0 2px #e3b23a inset;background:#fff8e4}
+.entc b{font-size:13px}
+.entc small{font-size:10.5px;color:var(--muted);line-height:1.35}
+.entc em{font-style:normal;font-size:11.5px;font-weight:700;color:#8a5a00}
+.entc .btn{width:100%;height:30px;font-size:12px}
+.enti{font-size:26px;line-height:1}
+.banp{display:block;width:100%;border-radius:8px;background:var(--c);color:#fff;font-weight:700;font-size:12px;padding:8px 6px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
+#gatePop .btn{padding:0 10px}

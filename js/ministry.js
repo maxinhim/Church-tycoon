@@ -16,7 +16,7 @@ function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 // 목표를 n개 이루면 열리는 것들 (건물 id)
 var UNLOCK={
   chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,picnic:1,
-  dining:2,youth:2,elder:2,counsel:2,pantry:2,lounge:2,nurse:2,spire:2,study:2,gazebo:2,playground:2,shop:2,
+  dining:2,youth:2,elder:2,counsel:2,lounge:2,nurse:2,spire:2,study:2,gazebo:2,playground:2,
   badminton:1,jokgu:1,gateball:1,calli:1,art:1,
   hoops:2,craft:2,cook:2,band:2,choir:2,
   futsal:3,grand:3,clinic:3,dawn:3,mission:3,gym:3,foodbank:3,parktower:3,outdoor:3
@@ -227,7 +227,7 @@ function activeEvents(){return Object.keys(S.ev).filter(function(id){return EVEN
 var MOD={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
 function refreshMods(){
   var st=teamEff(),m={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
-  m.vis*=(1+0.2*st.evang)*(1+0.12*st.media)*(1+0.06*st.edu);
+  m.vis*=(1+0.2*st.evang)*(1+0.12*st.media)*(1+0.06*st.edu)*entrVis();
   m.join*=(1+0.1*st.evang)*(1+0.12*st.newcomer);
   // 만족도에 더하고 빼는 것들을 이름과 함께 남겨 현황에서 설명한다
   var mp=[],part=function(n,v){if(Math.abs(v)>=0.05)mp.push([n,v]);m.mood+=v;};

@@ -38,3 +38,5 @@
 - 대예배당(`main`, `b.fixed`)은 새 게임에서 지도 가운데에 서 있고 문 앞에서 입구까지 길이 깔려 있다(`MAIN_AT`·`MAIN_PATH_Y`, state.js). 담임목사가 맡고, 철거·이동·건축 목록에 없다(`hidden`). 예전 '대예배당'(`grand`)은 '대성전'
 - 건물 관리자(`js/managers.js`, 수치는 `MGR_*`·`HIRE_*`): 추가 예배당은 부교역자, 교제 건물은 직분자·리더, 매장은 직원이 `b.mgr`로 배치돼야 가동한다(`bOpen` = 길 `usable` + 관리자 `staffed`; 수용도 치지 않음). 인력은 교회에서 기른 사람('in', 성능 높음, 금빛 테두리)과 외부 청빙('ex', `S.hires`·청빙 부교역자, 푸른 테두리). 건물을 맡은 사람은 성도 돌봄 맡기기에서 빠진다. 화면은 선택 카드 '👤 관리자' → `#scr`의 `mgr` 화면(`mgrHtml`) → 외부 청빙 창(`hireDlgHtml`: 후보 3명·다시 뽑기 `HIRE_REROLL`, 처음 `HIRE_EARLY`번은 값싼 별 1개 후보 보장). 봇·도구는 `autoStaff`를 부르고, 시험은 기본으로 `S.freeMgr`(관리자 없이 가동)이며 `__CT_MGR`을 켜면 실제 규칙
 - 관리자가 있는 건물과 대예배당은 지붕 없는 단면으로 그린다(`cutOn`·`drawCutaway`, render-entities.js): 기능별 내부, 관리자(발밑 고리 색 = 출신), 가동 중이면 이용자와 번갈아 뜨는 말풍선
+- 교회 입구(`js/entrance.js`, `S.entr`): 레벨 1~ENT_MAX(올리면 방문자 `ENT_VIS`씩), 모양 5종(`ENT_STYLES`, 사서 끼움, 그림은 `drawArchStyled`), 현수막 5종(`ENT_BANNERS`, 사서 걸면 아치 위 글씨와 `ENT_BAN_VIS`). 입구 카드의 '꾸미기'(#gpDeco)나 입구 화면(`#scr`의 `gate`, `entrHtml`)에서 고친다. 수치는 `balance.js` ENT_*
+- 대예배당의 성능·정원은 `MAIN_K`배(bldlv.js `mainK`). 시작 때 기능별 1티어(방·소그룹실·매장·돌봄(아이·유아)·편의·소모임·주차)는 처음부터 열려 있다(UNLOCK에 없음)

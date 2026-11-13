@@ -812,7 +812,7 @@ async function ministryChecks(browser, url) {
   // 지은 것을 지도에서 누르면: 패널 대신 작은 카드, 철거는 두 번 눌러야
   const card = await page.evaluate(() => {
     const b = S.buildings.find(x => x.def === 'main'); UI.fold = false; UI.tab = 'status'; renderPanel();
-    const dm = bDims(b), m = rotPt(b.x + dm.w / 2, b.y + dm.h / 2), q = toScreen(m[0], m[1], .3); onTap(q[0], q[1]);
+    const dm = bDims(b), m = rotPt(b.x + dm.w / 2, b.y + dm.h / 2), q = toScreen(m[0], m[1], .3); V.forEach(v => { v.angry = 0; }); onTap(q[0], q[1]);
     if (UI.sel !== b.id) return 'not picked';
     syncSelCard(); const el = document.getElementById('selCard');
     if (!document.getElementById('dock').hidden || el.hidden) return 'dock or no card';
@@ -1140,6 +1140,41 @@ async function startTerrainChecks(browser, url) {
   await ctx.close();
 }
 
+// 시작 밸런스: 대예배당이 같은 예배당보다 훨씬 강하고, 기능별 1티어가 처음부터 하나씩 열려 있다. 교회 입구는 레벨·모양·현수막
+async function entranceChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; window.__CT_MGR = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    const o = {}; window.__ct.init(); S.dlg = null; S.unlockAll = false; S.lvl = 1; S.money = 20000; recalc();
+    const mn = S.buildings.find(x => x.def === 'main');
+    o.mainStrong = bCapK(mn) === MAIN_K && bPerf(mn) > bPerf({ def: 'room', lv: 1, id: 0, x: 0, y: 0 }) * 1.5 && bCap(mn) > bCap({ def: 'room', lv: 1, id: 0, x: 0, y: 0, face: 2 }) * 1.5;
+    const cats = ['worship', 'fellow', 'shop', 'care', 'comfort', 'club', 'park'];
+    o.tier1 = cats.every(c => DEFS.some(d => d.cat === c && !d.retired && !d.hidden && d.tier !== 2 && !isLocked(d.id))) && !isLocked('shop') && !isLocked('room') && !isLocked('cell') && !isLocked('wc');
+    o.enter0 = (recalc(), S.entr.lv === 1 && S.entr.st === 'basic' && entrVis() === 1);
+    S.money = 99999; const m0 = S.money, v0 = MOD.vis;
+    o.up = entrUp() === '' && S.entr.lv === 2 && S.money === m0 - ENT_LV_COST[2] && MOD.vis > v0 && entrVis() > 1 && entrUpWhy() === '' && (S.entr.lv = ENT_MAX, entrUpWhy()) === '최고 레벨이에요';
+    S.entr.lv = 1; S.money = 99999; const m1 = S.money;
+    o.style = entrStyle('stone') === '' && S.entr.st === 'stone' && S.money === m1 - ENT_STYLE_COST.stone && entrStyle('stone') === '' && S.money === m1 - ENT_STYLE_COST.stone && entrStyle('nope') !== '';
+    S.money = 0; o.poor = entrStyle('garden') === '자금이 부족해요' && entrUpWhy() === '자금이 부족해요';
+    S.money = 99999; const m2 = S.money;
+    o.ban = entrBanner_(0) === '' && S.entr.ban === 0 && S.money === m2 - ENT_BANNER_COST[0] && entrVis() > 1 && !!entrBanner() && entrBanner().n === ENT_BANNERS[0].n;
+    entrBannerOff(); o.banoff = entrBanner() === null && entrBanner_(0) === '' && S.money === m2 - ENT_BANNER_COST[0];
+    closeScreen(); openScreen('gate'); renderScreen(); o.scr = /교회 입구/.test(document.getElementById('scrTitle').textContent) && /레벨 올리기/.test(document.getElementById('scrBody').textContent);
+    document.querySelector('#scrTabs [data-v="sty"]').click(); o.tabSty = document.querySelectorAll('#scrBody .entc').length === ENT_STYLES.length;
+    document.querySelector('#scrTabs [data-v="ban"]').click(); o.tabBan = document.querySelectorAll('#scrBody .entc').length === ENT_BANNERS.length;
+    document.querySelector('#scrBody [data-act="entban"]').click(); o.clickBan = S.entr.ban === 0 || S.entr.ban === 1;
+    closeScreen(); S.entr.ban = 2; draw(); S.entr.st = 'garden'; draw(); S.entr.st = 'basic'; draw(); o.draw = true;
+    return o; });
+  check(r.mainStrong, '대예배당: 같은 예배당보다 성능·정원이 크게(MAIN_K) 시작');
+  check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
+  check(r.enter0 && r.up && r.style && r.poor, '교회 입구: 기본 Lv 1, 레벨을 올리면 방문자 증가, 모양은 사서 끼움, 자금 부족이면 안 됨');
+  check(r.ban && r.banoff && r.scr && r.tabSty && r.tabBan && r.clickBan && r.draw, '교회 입구: 현수막은 사서 걸고 떼며, 입구 화면 탭·그림에 오류 없음');
+  check(errs.length === 0, '교회 입구·시작 밸런스: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
 // 대예배당 고정 배치, 건물 관리자(배치·외부 청빙·성도 돌봄과 둘 중 하나), 내부 투시 그리기
 async function mgrChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
@@ -1515,7 +1550,8 @@ async function gripeChecks(browser, url) {
     S.buildings = keepB; rebuildOcc(); recalc(); setGate(true); o.hall = o.hall && S.open; UI.sel = null;
     // 가격: 기능 건물 1.5배, 꾸미기는 그대로, 초기 자금 두 배
     // 새 교회: 만족도 항목이 모두 50% 안팎에서 시작하고, 전체도 45~55
-    { const c = S.cov; o.start50 = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].every(k => c[k] >= 0.4 && c[k] <= 0.6) && S.mood >= 40 && S.mood <= 58 && BLD_SAT === 0.6 && MOOD_LEAVE === 45 && MOOD_GAIN === 50;
+    // 대예배당(MAIN_K배 좌석)이 있어 좌석은 높게 시작하고, 나머지 항목은 여전히 50% 안팎
+    { const c = S.cov; o.start50 = ['spirit', 'past', 'fel', 'park', 'care', 'comf'].every(k => c[k] >= 0.4 && c[k] <= 0.6) && c.seat >= 0.9 && S.mood >= 40 && S.mood <= 90 && BLD_SAT === 0.6 && MOOD_LEAVE === 45 && MOOD_GAIN === 50;
       o.start50d = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].map(k => k + Math.round(c[k] * 100)).join(' ') + ' mood' + Math.round(S.mood); }
     o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.room.cost === 1800 && D.chapel.cost > D.room.cost * 5 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && QID.g1.m === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
@@ -1903,6 +1939,7 @@ async function earlyChecks(browser, url) {
     await pathChecks(browser, url);
     await stackChecks(browser, url);
     await mgrChecks(browser, url);
+    await entranceChecks(browser, url);
     await ministryChecks(browser, url);
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);

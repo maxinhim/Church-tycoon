@@ -199,3 +199,12 @@ var MGR_NEED={worship:'pastor',fellow:'leader',shop:'staff'};
 var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['server','tlead','dlead','cstaff'];
 var MGR_IN_K=1.3,MGR_PLV_K=.004,MGR_LV_K=.04,MGR_EX_K0=.7,MGR_EX_STEP=.08;
 var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
+
+/* 대예배당(`main`, 시작 건물): 같은 예배당보다 성능(효과·정원·좌석)이 MAIN_K배 */
+var MAIN_K=2.5;
+/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX. 레벨마다 방문자 ENT_VIS. 레벨업 값은 도달하는 레벨별(ENT_LV_COST[목표 레벨]).
+   모양(ENT_STYLE_COST)은 한 번 사면 계속 쓴다. 현수막(ENT_BANNER_COST, 목록 순서)은 사서 걸면 방문자 ENT_BAN_VIS */
+var ENT_MAX=5,ENT_VIS=0.06,ENT_BAN_VIS=0.02;
+var ENT_LV_COST=[0,0,200,500,1000,2000];
+var ENT_STYLE_COST={basic:0,stone:300,wood:500,glass:800,garden:1200};
+var ENT_BANNER_COST=[150,250,350,500,700];

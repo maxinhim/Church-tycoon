@@ -31,9 +31,10 @@ function bLv(b){return hasLv(b)?Math.max(1,Math.min(BLV_MAX,b.lv||1)):1;}
 function tierK(b){var d=defOf(b);return d&&d.tier===2?TIER2_K:1;}
 function bStage(b){var l=bLv(b);return l<=3?1:l<=6?2:3;}
 // 한 번 이용할 때 효과 배율
-function bPerf(b){return hasLv(b)?tierK(b)*(1+BLV_FX*(bLv(b)-1))*mgrK(b):1;}
+function mainK(b){return b&&b.fixed?MAIN_K:1;}
+function bPerf(b){return hasLv(b)?tierK(b)*mainK(b)*(1+BLV_FX*(bLv(b)-1))*mgrK(b):1;}
 // 정원·좌석·수용 배율
-function bCapK(b){return hasLv(b)?tierK(b)*(1+BLV_CAP*(bLv(b)-1)):1;}
+function bCapK(b){return hasLv(b)?tierK(b)*mainK(b)*(1+BLV_CAP*(bLv(b)-1)):1;}
 function bCap(b){
   var d=defOf(b),m=bMode(d);if(!d.cap)return 0;
   if(m==='single')return 1;
