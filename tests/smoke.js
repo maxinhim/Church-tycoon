@@ -573,7 +573,7 @@ async function ministryChecks(browser, url) {
     window.__ct.init();
     const o = {};
     o.normalStart = S.diff === 'normal' && S.money === DIFF.normal.money;
-    o.locked = isLocked('chapel') && hireTeam('admin') !== '';
+    o.locked = isLocked('chapel') && teamAdd('admin', 1) !== '';
     // 퀘스트(성장 목표) 달성: 자금·사역 경험·신뢰·축하 카드. 주중(월요일)에도 조건을 채우면 바로 (주일 정산을 기다리지 않음). 건물은 교회 Level로 열린다
     ['f1', 'f2', 'f3', 'f4', 'f5', 'f6'].forEach(id => { S.qd[id] = 1; });
     const m0 = S.money, r0 = S.rep, x0 = S.qxp || 0, wk0 = S.week; S.t = 1; S.members = 12; recalc(); S.goalAcc = 0; update(0.6);
@@ -587,7 +587,7 @@ async function ministryChecks(browser, url) {
     o.noStamina = S.stam === undefined && typeof restWeek === 'undefined';
     // 사역팀·부교역자·직분자
     const cap0 = MOD.cap;
-    o.team = hireTeam('evang') === '' && S.staff.evang === 1 && MOD.vis > 1;
+    { const mt = S.money; o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); }
     refreshCands(); const fee = S.cands[0].fee, mA = S.money;
     o.assoc = hireAssoc(0) === '' && S.assoc.length === 1 && S.money === mA - fee && MOD.cap >= cap0 + 35 && assocPay() > 0;
     o.assocLimit = hireAssoc(0) !== '';
@@ -768,7 +768,7 @@ async function ministryChecks(browser, url) {
     S.ev.smallgroup = { cd: 0, left: 2 }; o.old = evRunning('smallgroup') === false && (evState('smallgroup'), evRunning('smallgroup')) && S.ev.smallgroup.left === undefined;
     S.ev = {}; recalc(); renderScreen(); return o; });
   await page.click('#scr [data-act="scrtab"][data-v="staff"]');
-  const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && /목양 수용력/.test(document.getElementById('scrBody').textContent) && !!document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]'));
+  const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && document.querySelectorAll('#scrBody .teamc').length === Object.keys(STAFF).length && /달란트/.test(document.getElementById('scrBody').textContent) && !document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]'));
   await page.keyboard.press('Escape');
   // 성도 화면: 성도마다 이름·초상화 카드, 누르면 세부 정보(한마디·호감·심방·다음 단계)
   await page.evaluate(() => { S.members = 8; recalc(); });   // 손대지 않은 30주 뒤라 성도가 거의 없으니 다시 채운다
@@ -1892,6 +1892,39 @@ async function earlyChecks(browser, url) {
       const q0 = document.querySelectorAll('#scrBody .qrow').length; S.qd.f1 = 1; renderScreen(); const q1 = document.querySelectorAll('#scrBody .qrow').length;
       ni.quest = q0 === 1 && /교회 문 열기/.test(document.getElementById('scrBody').textContent) && q1 === 1 && /마친 퀘스트 1 \/ /.test(document.getElementById('scrBody').textContent); closeScreen();
       QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.qxp = 0; S.il = {}; recalc(); indTick(true);
+      // 사역팀·달란트: 사역 경험 Lv 1당 1개. 넣고 빼고 옮기고 모두 빼고, 최대 5단계, 값·사례비 없음, 단계가 오를수록 효과 증가폭이 줄어듦
+      { const nt = {}; o.nt = nt; for (const k in STAFF) S.staff[k] = 0; S.unlockAll = true; S.il = {}; S.qxp = 0; recalc(); indTick(true);
+        nt.base = talentTotal() === S.il.xp.lv * TALENT_PER_LV && talentFree() === talentTotal();
+        S.qxp = 1500; recalc(); indTick(); const tot = talentTotal(), v0 = MOD.vis, m0 = S.money;
+        nt.total = tot === S.il.xp.lv * TALENT_PER_LV && tot >= 8 && talentFree() === tot;
+        nt.add = teamAdd('evang', 1) === '' && S.staff.evang === 1 && talentFree() === tot - 1 && MOD.vis > v0 && S.money === m0 && typeof teamPay === 'undefined';
+        for (let i = 2; i <= TEAM_MAX; i++) teamAdd('evang', 1);
+        nt.max = S.staff.evang === TEAM_MAX && /최대/.test(teamAdd('evang', 1)) && talentFree() === tot - TEAM_MAX;
+        let dim = true; for (let l = 1; l <= TEAM_MAX; l++) { const d = teamUnits(l) - teamUnits(l - 1); if (!(d > 0) || (l > 1 && !(d < teamUnits(l - 1) - teamUnits(l - 2)))) dim = false; }
+        nt.curve = dim && teamUnits(0) === 0 && teamEff().evang === teamUnits(S.staff.evang) && STAFF.evang.fx(2).every(t => /[+−]/.test(t));
+        // 옮기기: 한 팀에서 빼서 다른 팀에 넣는다
+        const off0 = MOD.offer; nt.move = teamAdd('evang', -1) === '' && S.staff.evang === TEAM_MAX - 1 && teamAdd('praise', 1) === '' && MOD.offer > off0 && talentFree() === tot - TEAM_MAX;
+        nt.sub = /없어요/.test(teamAdd('prayer', -1));
+        // 모자라면 못 넣음, 잠긴 팀은 못 넣음
+        const keep = {}; for (const k in S.staff) keep[k] = S.staff[k]; for (const k in S.staff) S.staff[k] = 0; S.il.xp.lv = 1; S.qxp = 0; recalc(); const w1 = teamAdd('care', 1), w2 = teamAdd('edu', 1);
+        S.unlockAll = false; S.lvl = 1; const w3 = teamAdd('admin', 1); S.unlockAll = true; nt.poor = w1 === '' && /남은 달란트/.test(w2) && S.staff.edu === 0 && /Lv \d/.test(w3);
+        // 달란트가 모자라게 되면(옛 저장) 가장 높은 팀부터 줄인다
+        for (const k in S.staff) S.staff[k] = 0; S.staff.evang = 5; S.staff.praise = 3; S.il.xp.lv = 4; recalc(); nt.fit = talentUsed() === 4 && S.staff.evang === 3 && S.staff.praise === 1 || talentUsed() === 4 && S.staff.evang + S.staff.praise === 4;
+        S.il.xp.lv = 20; recalc(); const n = teamReset(); nt.reset = n === 4 && talentUsed() === 0 && MOD.vis === 1;
+        // 화면: 원형 카드 아홉 개, 누르면 정보 창, 넣기·빼기·모두 빼기
+        S.il = {}; S.qxp = 1500; recalc(); indTick(true); for (const k in STAFF) S.staff[k] = 0; recalc(); openScreen('events', 'staff');
+        const cs = document.querySelectorAll('#scrBody .teamc'), bar = document.querySelector('#scrBody .sbulk').textContent;
+        cs[0].click(); const dl = document.getElementById('scrDlg'); const dlg0 = !dl.hidden && /전도팀/.test(dl.textContent) && /다음 단계/.test(dl.textContent);
+        document.querySelector('#scrDlg [data-act="tmadd"]').click(); document.querySelector('#scrDlg [data-act="tmadd"]').click(); const two = S.staff.evang === 2 && !document.getElementById('scrDlg').hidden && /Lv 2/.test(document.getElementById('scrDlg').textContent);
+        document.querySelector('#scrDlg [data-act="tmsub"]').click(); const one = S.staff.evang === 1;
+        document.querySelector('#scrDlg [data-act="evclose"]').click(); const reset = document.querySelector('#scrBody [data-act="tmreset"]'); reset.click();
+        nt.ui = cs.length === 9 && /달란트 \d+ \/ \d+/.test(bar) && dlg0 && two && one && S.staff.evang === 0 && talentUsed() === 0 && /달란트/.test(document.getElementById('scrBody').textContent); closeScreen();
+        for (const k in STAFF) S.staff[k] = 0; recalc();
+        // 지표 보상 모두 받기: 받을 수 있는 보상이 둘 이상이면 한 번에
+        S.il = {}; S.qxp = 0; recalc(); indTick(true); S.il.xp.lv = 4; S.il.sp.lv = 3; S.il.conv.lv = 2; recalc();
+        const cnt = indReadyCount(), sum = indReward('xp') + indReward('sp') + indReward('conv'), mm = S.money; openGroup('status'); const ba = document.querySelector('#scrBody [data-act="inclaimall"]'); if (ba) ba.click();
+        nt.claimAll = cnt === 3 && !!ba && S.money === mm + sum && indReadyCount() === 0 && !document.querySelector('#scrBody [data-act="inclaimall"]') && claimAllInd().n === 0; closeScreen();
+        S.il = {}; S.qxp = 0; recalc(); indTick(true); }
       // 주마다 심방 활동은 식는다
       S.tv = 10; S.t = WEEK - 0.05; S.open = true; update(0.1); ni.decay = Math.abs(S.tv - 10 * TRUST_VIS_DECAY) < 0.5 || S.tv < 10; }
     // 길과 지형은 한 분류, 지형을 지을 때 안내 글 띠가 없음
@@ -1942,6 +1975,13 @@ async function earlyChecks(browser, url) {
   check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 띠 없이 지도 위 ▲▼와 ✓ 옆 높이 글씨만');
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
   check(r.fixdoor, '입구·출구 건물: 빠지면 카드에 이유와 짓기 버튼, 누르면 길 쪽 자리에 미리보기, 모양을 골라 ✓로 지음');
+  { const nt = (r.ni && r.ni.nt) || r.nt || {};
+    check(nt.base && nt.total && nt.add, '달란트: 사역 경험 Lv 1당 1개, 사역팀에 넣으면 효과가 생기고 자금·사례비는 안 듦');
+    check(nt.max && nt.curve && nt.move && nt.sub, '사역팀: 최대 5단계, 단계가 오를수록 증가폭이 줄고, 한 팀에서 빼 다른 팀으로 옮길 수 있음');
+    check(nt.poor && nt.fit && nt.reset, '사역팀: 달란트가 모자라면 못 넣고(잠긴 팀도), 모자라게 되면 높은 팀부터 줄이고, 모두 뺄 수 있음');
+    check(nt.ui, '사역팀 탭: 원형 카드, 누르면 정보 창에서 달란트 넣기·빼기, 모두 빼기');
+    check(nt.claimAll, '현황: 지표 보상을 모두 받기 버튼으로 한꺼번에 받음');
+    if (!(nt.base && nt.total && nt.add && nt.max && nt.curve && nt.move && nt.sub && nt.poor && nt.fit && nt.reset && nt.ui && nt.claimAll)) console.log('NT', JSON.stringify(nt)); }
   { const n = r.ni || {};
     check(n.sum && n.curve, '현황 지표: 다섯 점수의 합이 교회 점수, 지표 레벨 문턱이 맞음');
     check(n.trust, '신뢰도: 평판·성도 호감·직분자·심방이 점수에 들고, 방문자·신용 한도는 평판 대신 신뢰도 지수를 따름');

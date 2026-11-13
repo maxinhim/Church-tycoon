@@ -70,12 +70,19 @@ function indTick(quiet){
     // 처음 만든 상태(새 교회·예전 저장)는 지금 레벨까지 보상받은 것으로 쳐 준다
     if(quiet||s.fresh){s.lv=Math.max(s.lv,L);if(s.fresh){s.cl=s.lv;delete s.fresh;}return;}
     if(L>s.lv){
-      s.lv=L;
-      toast(d.n+' Lv '+L+'! 현황에서 보상을 받으세요 · +'+fmt(indReward(d.k)),2800);sfx('bell',.5,0);
+      var prev=s.lv;s.lv=L;
+      toast(d.n+' Lv '+L+'! 현황에서 보상을 받으세요 · +'+fmt(indReward(d.k))+(d.k==='xp'?' · 달란트 +'+TALENT_PER_LV*(L-prev):''),2800);sfx('bell',.5,0);
       var el=document.querySelector('#inds [data-ind="'+d.k+'"]');
       if(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
     }
   });
+  if(fitTalents())recalc();
+}
+// 받을 수 있는 보상을 모두 한꺼번에 받는다: {n: 받은 지표 수, g: 받은 자금 합}
+function claimAllInd(){
+  var o={n:0,g:0};
+  IND.forEach(function(d){if(indReady(d.k)){var g=claimInd(d.k);if(g){o.n++;o.g+=g;}}});
+  return o;
 }
 function claimInd(k){
   if(!indReady(k))return 0;
@@ -110,7 +117,7 @@ function indWhy(k){
     L.push('신뢰도 지수 '+Math.round(trustIdx())+'/100 → 방문자 수·방문자 헌금·신용 한도');
   }else if(k==='xp'){
     L.push('퀘스트를 마칠 때마다 사역 경험이 쌓여요 · 지금 '+(S.qxp||0));
-    L.push('퀘스트 탭에서 보상을 받으면 경험치가 올라요');
+    L.push('사역 경험 Lv 1당 달란트 '+TALENT_PER_LV+'개 → 지금 '+talentTotal()+'개 (남은 '+talentFree()+'개). 행사 › 사역팀에서 나눠 써요');
   }
   return L;
 }

@@ -1,6 +1,6 @@
 'use strict';
 /* ---------- 목회 운영 ----------
-   난이도 · 목표와 보상(잠금 해제) · 사역팀 · 부교역자 청빙 · 직분자 임명 · 목양 수용력
+   난이도 · 잠금 해제 · 부교역자 청빙 · 직분자 임명 · 목양 수용력
    · 특별행사 · 목회 고민거리(선택 카드) · 건물 노후와 수리.
    여기서 계산한 효과는 MOD에 모이고, 시뮬레이션·만족도·방문자가 MOD를 읽는다. */
 
@@ -55,27 +55,6 @@ function unlockNames(n){
 }
 // 교회 Level L에 열리는 단계의 이름들
 function tierNames(L){var out=[];for(var t=1;t<LV_TIER.length;t++)if(LV_TIER[t]===L)out=out.concat(unlockNames(t));return out;}
-
-/* ---------- 사역팀 ---------- */
-var STAFF={
-  evang:{name:'전도팀',desc:'방문자 +20%, 정착률 +10% (단계마다)',week:70,costs:[400,900,1600],goal:0},
-  praise:{name:'찬양팀',desc:'헌금 +12%, 말씀 효과 +6%, 만족 +2 (단계마다)',week:55,costs:[350,800,1500],goal:0},
-  care:{name:'돌봄팀',desc:'돌봄 효과 +15%, 목양 수용력 +8, 만족 +1 (단계마다)',week:60,costs:[380,850,1500],goal:0},
-  newcomer:{name:'새가족팀',desc:'정착률 +12%, 이탈 -5% (단계마다)',week:50,costs:[300,700,1300],goal:1},
-  edu:{name:'교육팀',desc:'돌봄 효과 +12%, 가족 방문자 +6% (단계마다)',week:60,costs:[400,900,1600],goal:1},
-  prayer:{name:'중보기도팀',desc:'만족 +2, 이탈 -4% (단계마다)',week:30,costs:[250,600,1100],goal:1},
-  admin:{name:'관리팀',desc:'건물 노후 -20%, 운영비 -4% (단계마다)',week:65,costs:[450,1000,1800],goal:2},
-  media:{name:'미디어팀',desc:'방문자 +12%, 평판 +0.2/주 (단계마다)',week:75,costs:[500,1100,2000],goal:2},
-  mission:{name:'선교팀',desc:'평판 +0.5/주, 지역 봉사 효과 +50% (단계마다)',week:70,costs:[500,1200,2200],goal:3}
-};
-function teamPay(){var t=0;for(var k in STAFF)t+=STAFF[k].week*(S.staff[k]||0);return t;}
-function hireTeam(k){
-  var s=STAFF[k],lv=S.staff[k]||0;
-  if(!tierOk(s.goal||0))return lockText(s.goal)+' 꾸릴 수 있어요';
-  if(lv>=3)return '이미 최대 단계예요';
-  if(S.money<s.costs[lv])return '자금이 부족해요';
-  S.money-=s.costs[lv];S.staff[k]=lv+1;recalc();save();return '';
-}
 
 /* ---------- 부교역자 청빙 ---------- */
 var FIELDS={
@@ -142,7 +121,7 @@ var EVENTS={
   bazaar:{name:'바자회',ic:'🛍️',col:'#c9627a',cost:300,cd:8,dur:3/7,goal:1,desc:'물건을 모아 팔고 수익으로 이웃을 도와요',fx:'',rwt:'수익 600 + 성도×12, 평판 +2',
     rw:function(){return [rwMoney(600+S.members*12),rwRep(2)];}},
   service:{name:'지역 봉사의 날',ic:'🧹',col:'#4f9a83',cost:400,cd:6,dur:3/7,goal:1,desc:'동네를 청소하고 이웃을 섬겨요',fx:'',rwt:'평판 +6 (선교팀 단계마다 +50%)',
-    rw:function(){return [rwRep(Math.round(6*(1+0.5*S.staff.mission)))];}},
+    rw:function(){return [rwRep(Math.round(6*(1+0.5*teamEff().mission)))];}},
   retreat:{name:'수련회',ic:'⛺',col:'#5c8a48',cost:1500,cd:12,dur:3,goal:2,desc:'온 교회가 함께 떠나 말씀과 쉼을 누려요 (비용 1,500 + 성도×15)',fx:'영성(성례) ↑, 만족 +12, 이탈 -50%',rwt:'만족 +3',
     costFn:function(){return 1500+S.members*15;},mods:function(m){m.mood+=12;m.loss*=0.5;},rw:function(){return [rwMood(3)];}},
   revival:{name:'부흥회',ic:'🔥',col:'#d65a4a',cost:3000,cd:16,dur:1,goal:3,desc:'강사를 모시고 온 동네를 초청해요',fx:'방문자 +120%, 정착률 +50%',rwt:'평판 +3',
@@ -230,16 +209,16 @@ function activeEvents(){return Object.keys(S.ev).filter(function(id){return EVEN
 /* ---------- 목양 수용력과 각종 효과를 MOD로 모은다 ---------- */
 var MOD={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
 function refreshMods(){
-  var st=S.staff,m={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
+  var st=teamEff(),m={vis:1,join:1,mood:0,loss:1,offer:1,rep:0,word:1,care:1,upkeep:1,decay:1,cap:25};
   m.vis*=(1+0.2*st.evang)*(1+0.12*st.media)*(1+0.06*st.edu);
   m.join*=(1+0.1*st.evang)*(1+0.12*st.newcomer);
   // 만족도에 더하고 빼는 것들을 이름과 함께 남겨 현황에서 설명한다
   var mp=[],part=function(n,v){if(Math.abs(v)>=0.05)mp.push([n,v]);m.mood+=v;};
-  part('사역팀 (찬양·돌봄·중보기도)',2*st.praise+st.care+2*st.prayer);
+  part('사역팀 (찬양·돌봄·중보기도)',st.praise+.5*st.care+st.prayer);
   m.offer*=1+0.12*st.praise;m.word*=1+0.06*st.praise;
   m.care*=(1+0.15*st.care)*(1+0.12*st.edu);
   m.cap+=8*st.care;m.loss*=1-0.04*st.prayer;
-  m.decay*=1-0.2*st.admin;m.upkeep*=1-0.04*st.admin;m.loss*=1-0.05*st.newcomer;
+  m.decay*=Math.max(.2,1-0.2*st.admin);m.upkeep*=1-0.04*st.admin;m.loss*=1-0.05*st.newcomer;
   m.rep+=0.2*st.media+0.5*st.mission;
   S.assoc.forEach(function(a){
     m.cap+=35;var k=asSkill(a);

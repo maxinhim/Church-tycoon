@@ -113,7 +113,7 @@ function rcptWhy(r,k){
     L.push('출석이 많을수록 한 사람당 효과가 줄어요 (÷ '+(1+r.attend/500).toFixed(2)+')');
     if(x.ppK&&Math.abs(x.ppK-1)>.004)L.push('사역 보정에는 성도들의 평균 호감 레벨 '+pct(x.ppK)+'이 들어 있어요');
     if(x.ppFlat)L.push('+ 직분자·신학 수료 성도의 헌금 '+fmt(x.ppFlat));
-    L.push('늘리려면: 좌석(예배당), 만족도, 재정·목양 사역팀');
+    L.push('늘리려면: 좌석(예배당), 만족도, 찬양 사역팀');
   }else if(k==='online'){L.push('교회 문을 닫은 주일에는 온라인 헌금만 들어와요: 성도 '+x.m+'명 × 1.2');L.push('문을 열면 주일 헌금으로 바뀌어요');}
   else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × '+VIS_GIVE+' × 신뢰도 보정 '+pct(0.5+x.rep/100)+' (신뢰도 지수 '+x.rep+')');}
   else if(k==='shop'){L.push('방문자가 주중에 매장(카페·식당·빵집·서점 등)에서 산 금액의 합계예요');L.push('이 중 '+pct(x.shopRate)+'는 팔 때마다 재료비로 바로 나가요');}
@@ -125,7 +125,7 @@ function rcptWhy(r,k){
     L.push('낡은 건물은 유지비가 최대 60%까지 늘어나요');
     if(x.upTop&&x.upTop.length)L.push('유지비가 큰 건물: '+x.upTop.map(function(o){return o.n+' '+fmt(o.u)+(o.w?' ('+WEAR_NAME[o.w]+')':'');}).join(', '));
   }
-  else if(k==='pay'){L.push('사역팀 '+fmt(x.team)+' + 부교역자 '+fmt(x.assoc));L.push('행사 › 사역자 탭에서 단계를 낮추거나 사임시키면 줄어요');}
+  else if(k==='pay'){L.push('부교역자 '+fmt(x.assoc)+' (사역팀은 달란트로 꾸려서 사례비가 없어요)');L.push('직분자 › 부교역자 탭에서 사임시키면 줄어요');}
   else if(k==='supply'){L.push('매장 판매 '+fmt(r.shop)+' × '+pct(x.shopRate)+' — 판 만큼 재료를 다시 사 와요');}
   else if(k==='loan'){L.push((x.loans.length?x.loans.map(function(l){return l.n+' 주 '+fmt(l.p);}).join(', '):'대출 상환')+' (원금과 이자를 나눠 갚아요)');L.push('남은 원금은 아래에서 한 번에 갚을 수 있어요');}
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');

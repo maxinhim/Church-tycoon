@@ -32,7 +32,7 @@ var QUESTS=[
   {id:'u3',g:'guide',after:'f6',n:'주차장 짓기',d:'도로 위 주차 구역에 주차장을 지어 편의를 높여요',need:function(){return !isLocked('lot');},ok:function(){return hasCat('park');},m:250,xp:6},
   {id:'u4',g:'guide',after:'f6',n:'돌봄 공간 짓기',d:'돌봄실이나 유아방으로 성도 가정을 돌봐요',ok:function(){return hasCat('care');},need:function(){return !isLocked('nursery');},m:250,xp:6},
   {id:'u5',g:'guide',after:'f6',n:'소모임 열기',d:'건축 › 소모임에서 운동·취미·음악 모임 하나를 시작해요',ok:function(){return hasCat('club');},m:200,xp:6},
-  {id:'u6',g:'guide',after:'f6',n:'사역팀 꾸리기',d:'행사 › 사역팀에서 첫 사역팀을 꾸려요',ok:function(){for(var k in S.staff)if(S.staff[k]>0)return true;return false;},m:200,xp:8},
+  {id:'u6',g:'guide',after:'f6',n:'사역팀 꾸리기',d:'행사 › 사역팀에서 달란트를 넣어 첫 사역팀을 꾸려요',ok:function(){for(var k in S.staff)if(S.staff[k]>0)return true;return false;},m:200,xp:8},
   {id:'u7',g:'guide',after:'f6',n:'첫 세례 주기',d:'성도 화면에서 세례 교육을 마친 성도에게 세례를 줘요',ok:function(){return (S.people||[]).some(function(p){return p.node!=='new';});},m:200,xp:8},
   {id:'u8',g:'guide',after:'g1',n:'성도의 고민 들어 주기',d:'성도 화면 › 고민에서 한 성도의 사연을 들어 주고 풀어 줘요',ok:function(){return (S.careDone||0)>=1;},m:300,xp:10},
   {id:'u9',g:'guide',after:'g1',n:'매장 열기',d:'카페·서점 같은 매장을 지어 수익을 만들어요',need:function(){return !isLocked('shop');},ok:function(){return hasCat('shop');},m:300,xp:8},

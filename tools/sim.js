@@ -70,7 +70,8 @@ function runBot(cfg) {
   function decorate(n) { for (let i = 0; i < n; i++) { const L = decoIds(); if (!L.length) return; L.sort((a, b) => b.beauty / b.cost - a.beauty / a.cost); put(L[(decoN++) % Math.min(6, L.length)].id); } }
   function seats() { if (S.members > A.seats * 0.85) { const id = best(d => d.seats, d => HALLS.indexOf(d.id) >= 0); if (id) put(id); } }
   function events(list) { Object.keys(S.ev).forEach(id => { if (evReady(id)) { claimEvent(id); stat.claims = (stat.claims || 0) + 1; } }); list.forEach(id => { if (EVENTS[id] && !evBlock(id) && S.money > evCost(EVENTS[id]) + RES) { if (runEvent(id) === '') stat.events++; } }); }
-  function staffUp(keys) { keys.forEach(k => { const lv = S.staff[k] || 0; if (lv < 3 && tierOk(STAFF[k].goal || 0) && S.money > STAFF[k].costs[lv] + RES * 2) { if (hireTeam(k) === '') stat.staff++; } }); }
+  // 달란트를 우선순위 팀부터 고르게(가장 낮은 단계부터) 넣는다
+  function staffUp(keys) { for (let g = 0; g < 40 && talentFree() > 0; g++) { const ok = keys.filter(k => tierOk(STAFF[k].goal || 0) && (S.staff[k] || 0) < TEAM_MAX).sort((a, b) => (S.staff[a] || 0) - (S.staff[b] || 0)); if (!ok.length || teamAdd(ok[0], 1) !== '') break; stat.staff++; } }
   // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계 교육을 시작하고, 남는 돈으로 몇 명을 심방한다
   // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계(갈래는 은사에 따라)를 시작하고, 남는 돈으로 몇 명을 심방한다
   function people() {
@@ -107,7 +108,7 @@ function runBot(cfg) {
     if (wishFirst && S.wish) { if (S.wish.t === 'event') { if (!evBlock(S.wish.id)) runEvent(S.wish.id); } else put(S.wish.id); }
     // balanced: 행사 → 목양 → 가장 모자란 항목 → 불편 → 꾸미기
     events(['communion', 'bible', 'creed', 'smallgroup', 'service', 'bazaar', 'retreat', 'street', 'easter', 'vbs', 'thanks', 'christmas', 'revival', 'training']);
-    pastoral(); staffUp(['praise', 'care', 'prayer', 'evang', 'newcomer', 'edu', 'admin', 'media', 'mission']);
+    pastoral(); staffUp(['evang', 'praise', 'newcomer', 'care', 'prayer', 'edu', 'admin', 'media', 'mission']);
     for (let n = 0; n < (S.money > 30000 ? 5 : 2); n++) {
       const c = S.cov, items = [['seat', 'seats'], ['fel', 'fcap'], ['care', 'kcap'], ['comf', 'ccap'], ['park', 'park']].sort((a, b) => c[a[0]] - c[b[0]]);
       if (c.spirit < c[items[0][0]]) spiritBuild();
@@ -128,7 +129,7 @@ function runBot(cfg) {
       spirit: Math.round(c.spirit * 100), seat: Math.round(c.seat * 100), past: Math.round(c.past * 100), fel: Math.round(c.fel * 100), park: Math.round(c.park * 100), care: Math.round(c.care * 100), comf: Math.round(c.comf * 100),
       rep: Math.round(trustIdx()), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: qCount(), il: IND.map(d => ilState()[d.k].lv).join('/'), net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length, sc: scoreParts() });
   }
-  stat.wishOk = S.wishOk; stat.wishFail = S.wishFail;
+  stat.wishOk = S.wishOk; stat.wishFail = S.wishFail; stat.staffLv = JSON.stringify(S.staff); stat.talents = talentTotal();
   return { rows, over: !!S.over, stat };
 }
 

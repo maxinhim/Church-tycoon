@@ -65,8 +65,8 @@ function renderScreen(){
   $('#scrMoney').textContent=fmt(S.money);
   var body=$('#scrBody'),top=body.scrollTop;
   if(UI.scr==='events'&&UI.scrTab==='staff'){
-    // 사역팀·목양 수용력은 줄 목록으로
-    body.className='sbody list';var keep=panel;panel=body;renderStaff('teams');panel=keep;
+    // 사역팀: 원형 카드 + 달란트
+    body.className='sbody';body.innerHTML=teamsHtml();
   }else if(UI.scr==='officers'&&UI.scrTab==='cands'){
     body.className='sbody list';var keep2=panel;panel=body;renderStaff('cands');panel=keep2;
   }else if(UI.scr==='status'){renderStatusScreen(body);
@@ -76,7 +76,7 @@ function renderScreen(){
     body.className='sbody';
     var ids=Object.keys(EVENTS).filter(function(id){return !EVENTS[id].hidden;});
     var nr=evReadyCount();
-    body.innerHTML=(nr?'<div class="sbulk"><span>보상을 기다리는 행사 '+nr+'개</span><button class="btn pri big claim" data-act="evclaimall">모두 보상 수령 · '+nr+'개</button></div>':'')+'<p class="shint">행사를 시작하면 둘레의 초록 게이지가 차올라요. 다 차면 <b>보상 수령</b>을 눌러 마무리하세요. 오래 열지 않으면 공동체가 침체돼요.</p><div class="evg">'+ids.map(evCardHtml).join('')+'</div>';
+    body.innerHTML=(nr?'<div class="sbulk"><span>보상을 기다리는 행사 '+nr+'개</span><button class="btn pri claim" data-act="evclaimall">모두 보상 수령 · '+nr+'개</button></div>':'')+'<p class="shint">행사를 시작하면 둘레의 초록 게이지가 차올라요. 다 차면 <b>보상 수령</b>을 눌러 마무리하세요. 오래 열지 않으면 공동체가 침체돼요.</p><div class="evg">'+ids.map(evCardHtml).join('')+'</div>';
   }
   body.scrollTop=top;
   var dl=$('#scrDlg');
@@ -85,6 +85,7 @@ function renderScreen(){
   else if(sel&&sel.t==='pp'&&ppById(sel.id))dh=ppDlgHtml(ppById(sel.id));
   else if(sel&&sel.t==='as'&&S.assoc[sel.id])dh=asDlgHtml(sel.id);
   else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
+  else if(sel&&sel.t==='tm'&&STAFF[sel.id])dh=teamDlgHtml(sel.id);
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
 }
@@ -125,6 +126,7 @@ function scrClick(e){
   // 정보 창 바깥(어두운 곳)을 누르면 닫는다
   if(!el){if(e.target.id==='scrDlg'){UI.scrSel=null;renderScreen();}return;}
   if(scrStatusClick(el.dataset.act,el.dataset.v,el))return;
+  if(scrTeamClick(el.dataset.act,el.dataset.v))return;
   if(scrPeopleClick(el.dataset.act,el.dataset.v,el))return;
   var a=el.dataset.act,v=el.dataset.v;
   if(a==='scrclose'){closeScreen();return;}

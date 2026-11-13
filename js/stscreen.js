@@ -65,12 +65,19 @@ function renderStatusScreen(body){
   if(UI.scrTab==='quest'){body.className='sbody list';body.innerHTML='<div class="staff">'+questHtml()+'</div>';return;}
   if(UI.scrTab==='week'){body.className='sbody list';body.innerHTML=weekHtml();return;}
   body.className='sbody';
-  body.innerHTML=churchSumHtml()+'<div class="evg indg">'+IND.map(function(d){return indCardHtml(d.k);}).join('')+'</div>';
+  var nr=indReadyCount(),rw=0;IND.forEach(function(d){if(indReady(d.k))rw+=indReward(d.k);});
+  body.innerHTML=churchSumHtml()+(nr?'<div class="sbulk"><span>받을 보상 '+nr+'개 · 자금 +'+fmt(rw)+'</span><button class="btn pri claim" data-act="inclaimall">모두 보상 받기</button></div>':'')+'<div class="evg indg">'+IND.map(function(d){return indCardHtml(d.k);}).join('')+'</div>';
 }
 function scrStatusClick(a,v,el){
   if(a==='inopen'){UI.scrSel={t:'in',id:v};UI.mexp=null;sfx('click',.4);renderScreen();return true;}
   if(a==='inclose'){UI.scrSel=null;renderScreen();return true;}
   if(a==='mexp'){UI.mexp=UI.mexp===v?null:v;renderScreen();return true;}
+  if(a==='inclaimall'){
+    var all=claimAllInd();
+    if(all.n){scrToast('지표 보상 '+all.n+'개 · 자금 +'+fmt(all.g),2600);setTimeout(function(){sfx('join',.6,0);},180);UI.scrSel=null;}
+    else{scrToast('받을 보상이 없어요',1600);sfx('error',.4);}
+    renderScreen();hud(true);return true;
+  }
   if(a==='inclaim'){
     var g=claimInd(v);
     if(g){scrToast(INDK[v].n+' 보상 +'+fmt(g),2400);setTimeout(function(){sfx('join',.6,0);},180);}
