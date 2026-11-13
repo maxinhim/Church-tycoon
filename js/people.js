@@ -87,37 +87,44 @@ function peopleWeek(){
   (S.assoc||[]).forEach(function(a){asGain(a,.5);});
   delegWeek();
 }
-/* 부교역자에게 성도 돌봄 맡기기 (balance.js ASSOC_CARE*) */
+/* 부교역자·소그룹 리더에게 성도 돌봄 맡기기 (balance.js ASSOC_CARE*·LEAD_*·DELEG_*) */
 function delegState(){return S.deleg||(S.deleg={on:false,lv:DELEG_LV0,last:null});}
 function asCare(a){return Math.round(ASSOC_CARE0+ASSOC_CARE_K*asSkill(a));}
-function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+asCare(a);},0);}
+function leaders(){return (S.people||[]).filter(function(p){return LEAD_NODES.indexOf(p.node)>=0;});}
+function leadCare(p){return Math.max(1,Math.round((PP_TREE[p.node].cap||0)*LEAD_CARE_K));}
+function leadCap(){return leaders().reduce(function(t,p){return t+leadCare(p);},0);}
+function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+asCare(a);},0)+leadCap();}
+// 맡길 수 있는 일꾼이 있는지 (부교역자나 소그룹 리더)
+function delegHelpers(){return (S.assoc||[]).length+leaders().length;}
 function delegPool(){var L=delegState().lv;return (S.people||[]).filter(function(p){return p.lv<L;});}
 function delegWeek(){
   var d=delegState();d.last=null;
-  if(!d.on||!S.assoc.length)return;
+  if(!d.on||!delegHelpers())return;
   var cap=delegCap(),n=0,cost=0,up=0;
   delegPool().sort(function(a,b){return a.lv-b.lv||a.vw-b.vw;}).forEach(function(p){
     if(n>=cap)return;var did=false;
-    ['visit','gift'].forEach(function(k){var c=k==='gift'?PP_GIFT:PP_VISIT;if(ppCareWhy(p,k)||S.money-c.cost<ASSOC_CARE_RES)return;var r=ppCare(p.id,k);did=true;cost+=c.cost;if(r)up++;});
+    ['visit','gift'].forEach(function(k){if(ppCareWhy(p,k,true)||S.money-ppCareCost(k,true)<ASSOC_CARE_RES)return;var c0=ppCareCost(k,true),r=ppCare(p.id,k,true);did=true;cost+=c0;if(r)up++;});
     if(did)n++;
   });
   d.last={n:n,cost:cost,up:up,w:S.week};
-  if(n)addLog('부교역자들이 성도 '+n+'명을 돌봤어요 · '+fmt(cost));
+  if(n)addLog('부교역자·소그룹 리더들이 성도 '+n+'명을 돌봤어요 · '+fmt(cost));
 }
 /* 심방·선물 */
-function ppCareWhy(p,kind){
+// cheap: 부교역자·리더가 맡아 할 때는 값이 DELEG_COST_K배, 경험치가 DELEG_XP_K배
+function ppCareCost(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.cost*DELEG_COST_K):c.cost;}
+function ppCareXp(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.xp*DELEG_XP_K):c.xp;}
+function ppCareWhy(p,kind,cheap){
   var c=kind==='gift'?PP_GIFT:PP_VISIT,last=kind==='gift'?p.gw:p.vw;
   if(p.lv>=PP_LV_MAX)return '이미 가장 깊은 사이예요';
   if(S.week-last<c.cd)return (c.cd-(S.week-last))+'주 뒤에 다시 할 수 있어요';
-  if(S.money<c.cost)return '자금이 부족해요';
+  if(S.money<ppCareCost(kind,cheap))return '자금이 부족해요';
   return '';
 }
-function ppCare(id,kind){
+function ppCare(id,kind,cheap){
   var p=ppById(id);if(!p)return '성도를 찾을 수 없어요';
-  var why=ppCareWhy(p,kind);if(why)return why;
-  var c=kind==='gift'?PP_GIFT:PP_VISIT;
-  S.money-=c.cost;if(kind==='gift')p.gw=S.week;else p.vw=S.week;
-  var up=ppGain(p,c.xp);trustAct(kind==='gift'?2:1);recalc();save();
+  var why=ppCareWhy(p,kind,cheap);if(why)return why;
+  S.money-=ppCareCost(kind,cheap);if(kind==='gift')p.gw=S.week;else p.vw=S.week;
+  var up=ppGain(p,ppCareXp(kind,cheap));trustAct((kind==='gift'?2:1)*(cheap?.5:1));recalc();save();
   return up?'+'+p.lv:'';   // '+레벨'이면 레벨이 올랐다
 }
 // 일괄 심방·선물: 지금 할 수 있는 사람(대기 기간·최고 레벨이 아닌)만, 자금이 되는 만큼 앞에서부터

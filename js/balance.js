@@ -95,11 +95,15 @@ var PP_GIVE_LV=.005;
 var EDU_EV={bible:{base:150,per:2,xp:12},creed:{base:250,per:3,xp:20},training:{base:600,per:5,xp:40}};
 var PP_SPIRIT_LV=.01,PP_SPIRIT_K=.15;
 /* 성도의 고민·갈등 (concerns.js): 매주 min(CARE_P_MAX, 성도 × CARE_P_PER) 확률로 하나 생긴다 (동시에 CARE_MAX개까지, 성도 CARE_MIN_MEM명부터)
-   지혜로운 선택 CARE_GOOD · 보통 CARE_OK · 돈으로만 CARE_MONEY(값 CARE_COST) 경험치. CARE_DUE주 안에 고르지 않으면 레벨 −2, CARE_LEAVE 확률로 떠남, 만족 −CARE_IGNORE_MOOD */
-var CARE_P_PER=.01,CARE_P_MAX=.45,CARE_MAX=3,CARE_MIN_MEM=6,CARE_GOOD=60,CARE_OK=25,CARE_MONEY=10,CARE_COST=300,CARE_DUE=3,CARE_LEAVE=.3,CARE_IGNORE_MOOD=1.5;
+   사연마다 정답은 하나: 고르면 호감 경험치 CARE_GOOD(갈등이면 두 사람 모두). 오답 셋은 레벨이 내려가고(데이터에 선택지별로) 떠날 수도 있다.
+   돈이 드는 오답의 값은 CARE_COST(·2), 선물 값은 PP_GIFT.cost. CARE_DUE주 안에 고르지 않으면 레벨 −2, CARE_LEAVE 확률로 떠남, 만족 −CARE_IGNORE_MOOD */
+var CARE_P_PER=.01,CARE_P_MAX=.45,CARE_MAX=3,CARE_MIN_MEM=6,CARE_GOOD=60,CARE_COST=300,CARE_DUE=3,CARE_LEAVE=.3,CARE_IGNORE_MOOD=1.5;
 /* 부교역자에게 성도 돌봄 맡기기: 매주 부교역자 한 사람이 (ASSOC_CARE0 + ASSOC_CARE_K × 실력)명을 심방하고, 선물 때가 된 사람에게는 선물도 한다.
    맡길 성도는 호감 Lv(S.deleg.lv) 아래인 사람만, 레벨이 낮은 순으로. 교회 자금이 ASSOC_CARE_RES 아래로 내려가면 멈춘다 */
 var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
+/* 소그룹 리더(소그룹 리더·공동체 리더·간사·신학교 입학)도 성도 돌봄을 맡는다: 한 주에 단계의 목양 수용력(cap) × LEAD_CARE_K명.
+   맡아서 하는 심방·선물은 값이 DELEG_COST_K배, 호감 경험치가 DELEG_XP_K배 (직접 하는 것보다 싸고 효과는 조금 작다) */
+var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
 var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율
 /* 회전 시간과 대기줄

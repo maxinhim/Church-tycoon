@@ -82,7 +82,7 @@ function runBot(cfg) {
   }
   // 고민·갈등: 할 수 있는 선택 가운데 가장 좋은 것(설명에 조건이 붙은 것 → 무료 보통 → 돈) — 사람이 하듯 대체로 지혜롭게
   function cares() {
-    (S.cares || []).slice().forEach(c => { const o = CARES[c.k].o; let pick = -1; [0, 1, 2].forEach(i => { if (pick < 0 && o[i] && !careWhy(c, i)) pick = i; }); if (pick >= 0 && careChoose(c.id, pick) != null) stat.cares = (stat.cares || 0) + 1; });
+    (S.cares || []).slice().forEach(c => { /* 사람처럼: 10번 중 6번은 정답, 아니면 아무거나 */ const best = careBest(c); let pick = Math.random() < .6 ? best : Math.floor(Math.random() * 4); if (careWhy(c, pick)) pick = best; if (careChoose(c.id, pick) != null) stat.cares = (stat.cares || 0) + 1; });
   }
   function pastoral() {
     cares(); people();

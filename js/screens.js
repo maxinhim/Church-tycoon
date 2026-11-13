@@ -71,11 +71,12 @@ function renderScreen(){
     body.className='sbody list';var keep2=panel;panel=body;renderStaff('cands');panel=keep2;
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
-  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=bulkBar()+(UI.scrTab==='assoc'?assocHtml():officersHtml());}
+  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=bulkBar()+(UI.scrTab==='assoc'?assocHtml():(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml());}
   else if(UI.scr==='events'){
     body.className='sbody';
     var ids=Object.keys(EVENTS).filter(function(id){return !EVENTS[id].hidden;});
-    body.innerHTML='<p class="shint">행사를 시작하면 둘레의 초록 게이지가 차올라요. 다 차면 <b>보상 수령</b>을 눌러 마무리하세요. 오래 열지 않으면 공동체가 침체돼요.</p><div class="evg">'+ids.map(evCardHtml).join('')+'</div>';
+    var nr=evReadyCount();
+    body.innerHTML=(nr?'<div class="sbulk"><span>보상을 기다리는 행사 '+nr+'개</span><button class="btn pri big claim" data-act="evclaimall">모두 보상 수령 · '+nr+'개</button></div>':'')+'<p class="shint">행사를 시작하면 둘레의 초록 게이지가 차올라요. 다 차면 <b>보상 수령</b>을 눌러 마무리하세요. 오래 열지 않으면 공동체가 침체돼요.</p><div class="evg">'+ids.map(evCardHtml).join('')+'</div>';
   }
   body.scrollTop=top;
   var dl=$('#scrDlg');
@@ -134,6 +135,12 @@ function scrClick(e){
     var why=runEvent(v);
     if(why){scrToast(why,2000);sfx('error',.4);}
     else{sfx('coins',.55,0);scrToast(EVENTS[v].name+'을(를) 시작했어요 · '+durText(EVENTS[v].dur)+' 뒤 보상을 받을 수 있어요',2600);F.push({x:entC(),y:PZ-2.5,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
+    renderScreen();hud(true);return;
+  }
+  if(a==='evclaimall'){
+    var all=claimAllEvents();
+    if(all.n){sfx('coins',.7,0);setTimeout(function(){sfx('join',.6,0);},180);scrToast('행사 '+all.n+'개 마무리 · '+(all.got.join(' · ')||'수고했어요'),3400);UI.scrSel=null;}
+    else{scrToast('받을 보상이 없어요',1600);sfx('error',.4);}
     renderScreen();hud(true);return;
   }
   if(a==='evclaim'){
@@ -222,14 +229,15 @@ function asSeed(a){if(a.seed)return a.seed;var s=7;for(var i=0;i<a.name.length;i
 // 부교역자 탭 맨 위: 성도 돌봄 맡기기 (켜고 끄기, 맡길 호감 Lv)
 function delegHtml(){
   var d=delegState(),cap=delegCap(),pool=delegPool().length,L=d.lv;
-  return '<div class="sdeleg"><div><b>성도 돌봄 맡기기</b><small>부교역자가 매주 호감 Lv '+L+' 아래 성도를 심방하고 선물해요 · 한 주 '+cap+'명까지 · 자금 '+fmt(ASSOC_CARE_RES)+' 아래면 멈춤'+
+  var who=[S.assoc.length?'부교역자 '+S.assoc.length+'명':'',leaders().length?'소그룹 리더 '+leaders().length+'명':''].filter(Boolean).join('·');
+  return '<div class="sdeleg"><div><b>성도 돌봄 맡기기</b><small>'+who+'이 매주 호감 Lv '+L+' 아래 성도를 심방하고 선물해요 · 한 주 '+cap+'명까지 · 값 '+Math.round(DELEG_COST_K*100)+'%·호감 '+Math.round(DELEG_XP_K*100)+'% · 자금 '+fmt(ASSOC_CARE_RES)+' 아래면 멈춤'+
     (d.last&&d.last.w===S.week-1?' · 지난주 '+d.last.n+'명 '+fmt(d.last.cost):'')+'</small></div>'+
     '<div class="sdc"><button class="btn sm" data-act="delegLv" data-v="-1"'+(L<=DELEG_STEP?' disabled':'')+' aria-label="맡길 레벨 낮추기">−</button><span>Lv '+L+' 아래 · '+pool+'명</span><button class="btn sm" data-act="delegLv" data-v="1"'+(L>=PP_LV_MAX?' disabled':'')+' aria-label="맡길 레벨 높이기">+</button>'+
     '<button class="btn'+(d.on?' pri':'')+'" data-act="deleg" aria-pressed="'+d.on+'">'+(d.on?'맡기는 중':'맡기기')+'</button></div></div>';
 }
 function assocHtml(){
   var h='<p class="shint">함께 사역하는 부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 사례비 주 '+fmt(assocPay())+'. 눌러서 격려하면 레벨이 오르고 효과가 커져요. 새 사역자는 <b>청빙</b> 탭이나, 성도를 신학교에 보내 얻어요.</p>';
-  if(!S.assoc.length)return h+'<p class="sempty">아직 함께 사역하는 부교역자가 없어요. 부교역자를 세우면 성도 돌봄을 맡길 수 있어요.</p>';
+  if(!S.assoc.length)return h+(leaders().length?delegHtml():'')+'<p class="sempty">아직 함께 사역하는 부교역자가 없어요. 부교역자나 소그룹 리더를 세우면 성도 돌봄을 맡길 수 있어요.</p>';
   return h+delegHtml()+'<div class="evg">'+S.assoc.map(function(a,i){
     return '<button class="evc ppc rank" data-act="asopen" data-v="'+i+'" aria-label="'+a.name+' '+a.title+'"><span class="evr">'+ringSvg(0)+'<span class="ppi">'+portraitSvg({seed:asSeed(a),g:a.g||(asSeed(a)%2?'m':'f')})+'</span>'+heartLv(a.lv||1)+'</span>'+
       '<span class="evn">'+a.name+' '+a.title+'</span><span class="evp">'+FIELDS[a.field].name+' ★'+a.skill+' · 돌봄 '+asCare(a)+'명</span></button>';}).join('')+'</div>';
@@ -288,10 +296,10 @@ function scrPeopleClick(a,v,el){
   if(a==='carepick'){
     var cr=careChoose(+v,+el.dataset.i);
     if(cr==null){scrToast('지금은 고를 수 없어요',1800);sfx('error',.4);}
-    else{sfx(/멀어|떠났|상처|서운|무거|나빠/.test(cr)?'error':'join',.6,0);scrToast(cr,3400);if(UI.scrSel&&UI.scrSel.t==='pp'&&!ppById(UI.scrSel.id))UI.scrSel=null;}
+    else{sfx(careLastOk?'join':'error',.6,0);scrToast(cr,3400);if(UI.scrSel&&UI.scrSel.t==='pp'&&!ppById(UI.scrSel.id))UI.scrSel=null;}
     renderScreen();hud(true);return true;
   }
-  if(a==='deleg'){var d=delegState();d.on=!d.on;sfx('click',.4);scrToast(d.on?'부교역자들이 매주 호감 Lv '+d.lv+' 아래 성도를 돌봐요 (한 주 '+delegCap()+'명까지)':'성도 돌봄 맡기기를 껐어요',2400);save();renderScreen();return true;}
+  if(a==='deleg'){var d=delegState();d.on=!d.on;sfx('click',.4);scrToast(d.on?'부교역자·소그룹 리더가 매주 호감 Lv '+d.lv+' 아래 성도를 돌봐요 (한 주 '+delegCap()+'명까지)':'성도 돌봄 맡기기를 껐어요',2400);save();renderScreen();return true;}
   if(a==='delegLv'){var d2=delegState();d2.lv=clamp(d2.lv+(+v)*DELEG_STEP,DELEG_STEP,PP_LV_MAX);save();renderScreen();return true;}
   if(a==='ppmore'){UI.ppMore=(UI.ppMore||PP_PAGE)+PP_PAGE;renderScreen();return true;}
   if(a==='ppvisit'||a==='ppgift'){

@@ -145,15 +145,17 @@
 /* 고민·갈등 */
 .pcare{position:absolute;left:-3px;top:-3px;font-size:15px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
 @media (prefers-reduced-motion:no-preference){.pcare{animation:evpulse 1.4s ease-in-out infinite}}
-.scare{margin:9px 0 0;border:1px solid #f0c27a;background:#fff8ec;border-radius:12px;padding:8px 10px}
+.scare{margin:9px 0 0;border:1px solid color-mix(in srgb,#e3a043 70%,var(--line));background:color-mix(in srgb,#f0b04a 16%,var(--card));color:var(--ink);border-radius:12px;padding:8px 10px}
 .sct2{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12.5px}
-.sct2 span{font-size:10.5px;color:#a0600a}
+.sct2{color:var(--ink)}
+.sct2 span{font-size:10.5px;color:#c2570a;font-weight:600}
 .scare>p{margin:4px 0 7px;font-size:12px;line-height:1.45;color:var(--ink)}
 .scopts{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.scopts .btn{height:auto;min-height:34px;padding:5px 8px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:1px;font-weight:500;font-size:11.5px;line-height:1.3;background:var(--card)}
+.scopts .btn{height:auto;min-height:34px;padding:5px 8px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:1px;font-weight:500;font-size:11.5px;line-height:1.3;background:var(--card);color:var(--ink)}
 .scopts .btn b{font-weight:600}
 .scopts .btn small{font-size:10px;color:var(--muted)}
 .scopts .btn small.bad{color:var(--bad)}
+.scopts .btn:not(:disabled):active{background:var(--chip)}
 @media (max-width:520px){.scopts{grid-template-columns:1fr}}
 
 /* ---------- 현황 화면 ---------- */

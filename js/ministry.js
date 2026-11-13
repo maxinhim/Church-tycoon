@@ -217,6 +217,12 @@ function claimEvent(id){
   addLog(e.name+' 마무리 · '+(got.join(', ')||'보상 없음'));recalc();save();
   return got;
 }
+// 보상을 기다리는 행사를 한꺼번에 수령한다: {n: 받은 행사 수, got: 받은 것들의 글 목록}
+function claimAllEvents(){
+  var o={n:0,got:[]};
+  Object.keys(S.ev).forEach(function(id){if(!evReady(id)||!EVENTS[id]||EVENTS[id].hidden)return;var g=claimEvent(id);if(g){o.n++;o.got=o.got.concat(g);}});
+  return o;
+}
 function evReadyCount(){var n=0;for(var id in S.ev)if(evReady(id)&&EVENTS[id]&&!EVENTS[id].hidden)n++;return n;}
 function evIdleWeeks(){return S.week<8?0:S.week-(S.lastEv||0);}
 function activeEvents(){return Object.keys(S.ev).filter(function(id){return EVENTS[id]&&evRunning(id);});}

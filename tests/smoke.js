@@ -625,29 +625,44 @@ async function ministryChecks(browser, url) {
       { const d = delegState(); d.lv = 10; S.people.forEach(z => { z.vw = -99; z.gw = -99; }); const low = delegPool().length; S.money = 99999; delegWeek(); const off = d.last === null;
         d.on = true; const cap = delegCap(); const m2 = cash(); delegWeek(); const did = d.last.n, spent = m2 - cash();
         S.people.forEach(z => { z.vw = -99; z.gw = -99; }); S.money = ASSOC_CARE_RES + 10; delegWeek(); const stop = d.last.n === 0;
-        pe.deleg = off && cap === asCare(S.assoc[0]) && cap >= ASSOC_CARE0 && did === Math.min(cap, low) && spent === did * (PP_VISIT.cost + PP_GIFT.cost) && stop; d.on = false; S.money = 99999; }
+        pe.deleg = off && cap === asCare(S.assoc[0]) && cap >= ASSOC_CARE0 && did === Math.min(cap, low) && spent === did * (ppCareCost('visit', true) + ppCareCost('gift', true)) && ppCareCost('visit', true) < PP_VISIT.cost && ppCareCost('gift', true) < PP_GIFT.cost && ppCareXp('visit', true) < PP_VISIT.xp && ppCareXp('gift', true) < PP_GIFT.xp && stop; d.on = false; S.money = 99999; }
+      // 소그룹 리더도 돌봄을 맡는다: 부교역자 없이도, 리더 단계의 목양 수용력만큼, 싼 값에
+      { const P = S.people, keepA = S.assoc, n0 = P[0].node, n1 = P[1].node, lv0 = P.map(z => z.lv); S.assoc = []; P[0].node = 'sgl'; P[1].node = 'cml'; const d = delegState(); d.on = true; d.lv = 10; P.forEach(z => { z.vw = -99; z.gw = -99; z.lv = 1; }); S.money = 99999; recalc();
+        const cap2 = delegCap(), exp = leadCare(P[0]) + leadCare(P[1]), low = delegPool().length, m2 = cash(); delegWeek(); const did = d.last.n, sp = m2 - cash();
+        pe.lead = cap2 === exp && exp === Math.round(PP_TREE.sgl.cap * LEAD_CARE_K) + Math.round(PP_TREE.cml.cap * LEAD_CARE_K) && delegHelpers() === 2 && did === Math.min(cap2, low) && sp === did * (ppCareCost('visit', true) + ppCareCost('gift', true)) && P[2].lv > 1 && /소그룹 리더/.test(delegHtml());
+        P[0].node = n0; P[1].node = n1; P.forEach((z, i) => { z.lv = lv0[i]; }); S.assoc = keepA; d.on = false; S.money = 99999; recalc(); }
       // 교육 행사: 보상 수령 때 모든 성도 경험치
       S.unlockAll = true; const xs = S.people.map(z => z.lv * 1000 + z.xp); S.ev.bible = { cd: 0 }; const be = runEvent('bible'); S.ev.bible.end = evNow() - .01; evTick(); const got = claimEvent('bible');
       pe.edu = be === '' && !!got && /모든 성도 경험치/.test(got[0]) && S.people.every((z, i) => z.lv * 1000 + z.xp > xs[i]) && !!EVENTS.creed && !!EVENTS.training;
-      // 고민·갈등: 생기면 알림, 교회가 갖춘 것을 잇는 선택은 조건이 있고 효과가 크며, 돈만 쓰면 어중간, 다그치면 마음이 멀어지고, 오래 두면 멀어짐
+      // 고민·갈등: 생기면 알림. 사연마다 정답은 하나(자금이 안 들고 늘 고를 수 있음), 나머지 셋은 불이익(레벨 −, 떠날 수도). 선택에 따라 결과 글이 다름
       { const ce = {}; pe.ce = ce; S.cares = []; S.careId = 1; const rnd = Math.random; Math.random = () => 0; caresWeek(); Math.random = rnd;
-        ce.made = S.cares.length === 1 && !!CARES[S.cares[0].k];
-        const P2 = S.people; S.cares = [{ id: 50, k: 'marriage', a: P2[0].id, b: 0, w: S.week }];
-        const pa = P2[0]; pa.lv = 10; pa.xp = 0; const hasCounsel = careHas(['counsel']);
-        ce.gate = !hasCounsel && /상담실/.test(careWhy(S.cares[0], 0)) && careChoose(50, 0) === null && S.cares.length === 1;
-        const m0 = cash(), xl = pa.lv; const r3 = careChoose(50, 2); ce.money = /호감 \+/.test(r3) && cash() === m0 - PP_VISIT.cost && S.cares.length === 0;
-        S.cares = [{ id: 51, k: 'doubt', a: pa.id, b: 0, w: S.week }]; const lv1 = pa.lv; const rnd2 = Math.random; Math.random = () => .99; const r4 = careChoose(51, 3); Math.random = rnd2; ce.bad = /멀어/.test(r4) && pa.lv === lv1 - 2;
-        // 지혜로운 선택: 부교역자가 있으면 1:1 양육
-        S.cares = [{ id: 52, k: 'doubt', a: pa.id, b: 0, w: S.week }]; const x0 = pa.lv * 1000 + pa.xp; ce.wise = careWhy(S.cares[0], 1) === '' && /호감 \+35/.test(careChoose(52, 1)) && pa.lv * 1000 + pa.xp > x0;
-        // 갈등: 두 사람 모두에게
-        const pb = P2[1]; S.cares = [{ id: 53, k: 'seat', a: pa.id, b: pb.id, w: S.week }]; const b0 = pb.lv * 1000 + pb.xp; const r5 = careChoose(53, 1); ce.pair = r5.split('호감 +').length === 3 && pb.lv * 1000 + pb.xp > b0;
+        ce.made = S.cares.length === 1 && !!CARES[S.cares[0].k] && S.cares[0].v >= 0;
+        // 모든 사연: 선택지 넷, 정답 정확히 하나, 정답은 돈이 안 듦, 오답은 모두 불이익(레벨이나 분위기)
+        ce.data = true; for (const k in CARES) { const t = CARES[k]; if (t.s.length < 2) ce.data = false; t.s.forEach(sc => { const ok = sc.o.filter(o => o.ok), bad = sc.o.filter(o => !o.ok);
+          if (sc.o.length !== 4 || ok.length !== 1 || ok[0].cost || !sc.x || !ok[0].r || !bad.every(o => o.r && (Array.isArray(o.lv) ? o.lv.some(v => v > 0) : o.lv > 0))) ce.data = false; if (t.pair && !bad.every(o => Array.isArray(o.lv))) ce.data = false; }); }
+        const P2 = S.people, pa = P2[0], pb = P2[1]; pa.lv = 10; pa.xp = 0; pb.lv = 10; pb.xp = 0; S.money = 99999;
+        // 정답: 경험치 크게, 자금은 그대로, 풀림
+        S.cares = [{ id: 50, k: 'marriage', v: 0, a: pa.id, b: 0, w: S.week }]; const best = careBest(S.cares[0]), m0 = cash(), x0 = pa.lv * 1000 + pa.xp;
+        ce.wise = careWhy(S.cares[0], best) === '' && /호감 \+60/.test(careChoose(50, best)) && careLastOk === true && cash() === m0 && pa.lv * 1000 + pa.xp > x0 && S.cares.length === 0;
+        // 오답 셋: 모두 레벨이 내려가고(떠날 확률은 막고 확인), 선택마다 결과 글이 다름
+        const texts = new Set(), rnd2 = Math.random; Math.random = () => .99; ce.bad = true;
+        for (let i = 0; i < 4; i++) { if (i === careBest({ k: 'marriage', v: 0 })) continue; pa.lv = 10; S.cares = [{ id: 51, k: 'marriage', v: 0, a: pa.id, b: 0, w: S.week }]; const r4 = careChoose(51, i); texts.add(r4); if (!(/멀어/.test(r4) && pa.lv < 10 && careLastOk === false)) ce.bad = false; }
+        Math.random = rnd2; ce.texts = texts.size === 3;
+        // 돈이 드는 오답: 자금이 나가고 불이익, 모자라면 못 고름
+        S.cares = [{ id: 52, k: 'job', v: 0, a: pa.id, b: 0, w: S.week }]; const pi = careScn(S.cares[0]).o.findIndex(o => o.cost > 0), cost = careScn(S.cares[0]).o[pi].cost; pa.lv = 10; const m1 = cash(); const rnd4 = Math.random; Math.random = () => .99; const r6 = careChoose(52, pi); Math.random = rnd4;
+        ce.money = cost > 0 && cash() === m1 - cost && /멀어/.test(r6) && pa.lv === 9;
+        S.cares = [{ id: 56, k: 'job', v: 0, a: pa.id, b: 0, w: S.week }]; S.money = cost - 1; ce.poor = careWhy(S.cares[0], pi) === '자금이 부족해요' && careChoose(56, pi) === null && careWhy(S.cares[0], careBest(S.cares[0])) === ''; S.money = 99999;
+        // 갈등: 정답은 두 사람 모두 경험치, 오답은 두 사람 가운데 상처받는 쪽이 있음
+        pa.lv = 10; pb.lv = 10; pb.xp = 0; S.cares = [{ id: 53, k: 'seat', v: 1, a: pa.id, b: pb.id, w: S.week }]; const b0 = pb.lv * 1000 + pb.xp; const r5 = careChoose(53, careBest(S.cares[0])); ce.pair = r5.split('호감 +').length === 3 && pb.lv * 1000 + pb.xp > b0;
+        S.cares = [{ id: 57, k: 'seat', v: 0, a: pa.id, b: pb.id, w: S.week }]; pa.lv = 10; pb.lv = 10; const sc57 = careScn(S.cares[0]), wi = sc57.o.findIndex(o => !o.ok && o.lv[1] > 0); const rnd5 = Math.random; Math.random = () => .99; careChoose(57, wi); Math.random = rnd5; ce.pair = ce.pair && pb.lv < 10;
         // 오래 두면: 레벨 −2, 만족 −
-        S.cares = [{ id: 54, k: 'lonely', a: pb.id, b: 0, w: S.week - CARE_DUE }]; const lv2 = pb.lv, tm = S.tempMood; const rnd3 = Math.random; Math.random = () => .99; caresWeek(); Math.random = rnd3;
+        pb.lv = 10; S.cares = [{ id: 54, k: 'lonely', v: 0, a: pb.id, b: 0, w: S.week - CARE_DUE }]; const lv2 = pb.lv, tm = S.tempMood; const rnd3 = Math.random; Math.random = () => .99; caresWeek(); Math.random = rnd3;
         ce.due = S.cares.every(c => c.id !== 54) && pb.lv === Math.max(1, lv2 - 2) && S.tempMood < tm;
         // 선택지 순서는 사건마다 섞이지만 같은 사건은 늘 같다
         const o1 = careOrder({ id: 7, k: 'job' }).join(), o2 = careOrder({ id: 8, k: 'job' }).join(), o3 = careOrder({ id: 9, k: 'job' }).join();
         ce.shuffle = o1 === careOrder({ id: 7, k: 'job' }).join() && (o1 !== o2 || o2 !== o3);
-        ce.block = /<button[^>]*data-act="carepick"/.test(concernBlock((S.cares = [{ id: 55, k: 'job', a: pa.id, b: 0, w: S.week }], pa))) && !concernBlock(P2[3]);
+        ce.block = /<button[^>]*data-act="carepick"/.test(concernBlock((S.cares = [{ id: 55, k: 'job', v: 1, a: pa.id, b: 0, w: S.week }], pa))) && !concernBlock(P2[3]) && /이력서는 이미 수십 곳/.test(concernBlock(pa)) && !/자금 0/.test(concernBlock(pa));
+        // 글씨가 배경에 묻히지 않게: 고민 칸 글씨 색이 칸 배경과 충분히 다름 (어두운 화면에서도)
         S.cares = []; S.tempMood = 0; }
       // 성도가 줄면 마음이 덜 붙은 사람부터 떠나고, 한 주가 지나면 조금씩 정이 든다
       const keep = S.people.find(z => z.node === 'elder'); S.members = 6; recalc(); pe.shrink = S.people.length === 6 && !!ppById(keep.id);
@@ -704,8 +719,9 @@ async function ministryChecks(browser, url) {
   check(r.pe.deacon && r.pe.elder && r.pe.kwonsa && r.pe.cstaff, '성장 단계: 헌신성도 → 집사 → 장로(남)·권사(여), 섬김 끝 교회직원도 직분자이고 운영비·노후를 줄임');
   check(r.pe.grad && r.pe.slot && r.pe.assoc && r.pe.cheer, '성장 단계: 소그룹 리더 … 간사 → 신학교 → 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자, 격려로 레벨이 오름');
   check(r.pe.deleg, '부교역자: 성도 돌봄을 맡기면 매주 능력만큼 호감 Lv 아래 성도를 심방·선물하고, 자금이 바닥 가까우면 멈춤');
+  check(r.pe.lead, '소그룹 리더: 부교역자 없이도 리더 단계만큼 성도 돌봄을 맡고, 값은 절반·호감은 75%');
   if (!Object.values(r.pe.ce || {}).every(Boolean)) console.log('CARE', JSON.stringify(r.pe.ce));
-  check(r.pe.ce.made && r.pe.ce.gate && r.pe.ce.money && r.pe.ce.bad && r.pe.ce.wise, '고민: 교회가 갖춘 것을 잇는 지혜로운 선택은 조건이 있고 효과가 크며, 돈만 쓰면 어중간, 다그치면 마음이 멀어짐');
+  check(r.pe.ce.made && r.pe.ce.data && r.pe.ce.wise && r.pe.ce.bad && r.pe.ce.texts && r.pe.ce.money && r.pe.ce.poor, '고민: 사연마다 정답은 하나(자금 불필요)이고 나머지 셋은 불이익, 선택마다 결과 글이 다름, 돈이 드는 오답은 자금이 나감');
   check(r.pe.ce.pair && r.pe.ce.due && r.pe.ce.shuffle && r.pe.ce.block, '갈등: 두 성도 모두에게 결과, 기한을 넘기면 마음이 멀어짐, 선택지 순서는 사건마다 섞임');
   check(r.pe.edu, '교육 행사: 성경공부·교리공부·제자훈련 세미나의 보상을 받으면 모든 성도 경험치가 오름');
   check(r.pe.shrink && r.pe.week && r.pe.say && r.pe.legacy, '성도: 줄면 마음이 덜 붙은 사람부터 떠나고, 주마다 정이 들며, 한마디·초상화가 있고, 예전 저장의 직분도 이어짐');
@@ -744,6 +760,10 @@ async function ministryChecks(browser, url) {
     // 바자회: 돈은 시작할 때가 아니라 보상 수령 때 들어온다
     S.unlockAll = true; const m1 = S.money; runEvent('bazaar'); const paid = S.money === m1 - EVENTS.bazaar.cost; S.ev.bazaar.end = evNow() - .01; evTick(); const m2 = S.money; const got = claimEvent('bazaar');
     o.bazaar = paid && S.money === m2 + 600 + S.members * 12 && got.length === 2;
+    // 모두 보상 수령: 끝난 행사가 둘 이상이면 한 번에, 없으면 막대가 안 보임
+    { S.ev.bible = { cd: 0 }; S.ev.communion = { cd: 0 }; runEvent('bible'); runEvent('communion'); S.ev.bible.end = S.ev.communion.end = evNow() - .01; evTick();
+      const nr = evReadyCount(), bar = document.querySelector('#scrBody [data-act="evclaimall"]'), m3 = S.money; if (bar) bar.click();
+      o.claimAll = nr === 2 && !!bar && evReadyCount() === 0 && S.ev.bible.cd === EVENTS.bible.cd && S.ev.communion.cd === EVENTS.communion.cd && !document.querySelector('#scrBody [data-act="evclaimall"]') && claimAllEvents().n === 0 && S.money !== m3 - 1e9; }
     // 예전 저장(남은 주 left)은 진행 중으로 이어진다
     S.ev.smallgroup = { cd: 0, left: 2 }; o.old = evRunning('smallgroup') === false && (evState('smallgroup'), evRunning('smallgroup')) && S.ev.smallgroup.left === undefined;
     S.ev = {}; recalc(); renderScreen(); return o; });
@@ -916,6 +936,7 @@ async function ministryChecks(browser, url) {
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');
   check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
   check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');
+  check(evFlow.claimAll, '행사 화면: 끝난 행사가 여럿이면 모두 보상 수령 버튼으로 한꺼번에 받음');
   check(evFlow.claimBtn && evFlow.claimed && evFlow.bazaar && evFlow.old, '행사 화면: 보상 수령을 눌러야 보상을 받고 그때부터 쉬는 기간, 예전 저장도 이어짐');
   check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개, 건물은 안내 띠 없음');
   check(btnPos, '지도에서 짓기: ✓는 왼쪽 위, ✕는 오른쪽 위 (미리보기보다 위)');
