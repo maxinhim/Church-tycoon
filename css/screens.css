@@ -197,3 +197,51 @@
 .teamc.run .evp{background:#e6f6ea;color:#1f7a36}
 .teamc.wait .evp{color:var(--muted)}
 .teamc.wait .evi{filter:saturate(.6) brightness(.97)}
+
+/* 고민 선택 결과 창 */
+.cres{width:min(380px,100%)}
+.crh{display:flex;gap:10px;align-items:center;padding-right:28px}
+.crh b{display:block;font-family:var(--f-display);font-size:16px}
+.crh small{color:var(--muted);font-size:11px}
+.cri{font-size:34px;line-height:1}
+.cres.ok .crh b{color:var(--good)} .cres.no .crh b{color:var(--bad)}
+.crp{margin:8px 0 2px;font-size:12px;color:var(--muted)}
+.crs{margin:0 0 6px;font-size:13px;line-height:1.45}
+.cre{list-style:none;margin:6px 0;padding:0;display:grid;gap:4px}
+.cre li{display:flex;gap:8px;align-items:center;border-radius:9px;padding:5px 9px;font-size:12.5px;font-weight:600}
+.cre li.g{background:color-mix(in srgb,var(--good) 16%,var(--card));color:var(--ink)} .cre li.b{background:color-mix(in srgb,var(--bad) 16%,var(--card));color:var(--ink)}
+.cre li.g i{color:var(--good)} .cre li.b i{color:var(--bad)}
+.crc{display:flex;gap:6px;flex-wrap:wrap}
+.crc span{border-radius:999px;padding:2px 10px;font-size:11.5px;font-weight:700;background:var(--chip)}
+.crc .g{color:var(--good)} .crc .b{color:var(--bad)}
+
+/* 정보 창 아래: 금액 + 실행 */
+.sdb .runc{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:14px;margin-right:10px;color:#8a5a00}
+.sdb .btn.big{min-width:120px}
+
+/* 사역팀: 달란트 보석 */
+.gem{width:18px;height:18px;flex:none;color:var(--muted)}
+.gem.big{width:34px;height:34px;filter:drop-shadow(0 2px 3px rgba(150,100,0,.45))}
+.tbar{align-items:center;gap:10px}
+.tpurse{display:inline-flex;align-items:center;gap:6px;padding:3px 12px 3px 8px;border-radius:999px;background:var(--chip);margin-right:auto}
+.tpurse b{font-size:20px;font-variant-numeric:tabular-nums}
+.tpurse small{color:var(--muted);font-size:11px}
+.tpurse.has{background:#fff3cf;box-shadow:0 0 0 1px #e3b23a inset}
+.tpurse.has b{color:#8a5a00}
+:root[data-theme="dark"] .tpurse.has{background:#4a3a14} :root[data-theme="dark"] .tpurse.has b{color:#ffd98a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tpurse.has{background:#4a3a14}:root:not([data-theme="light"]) .tpurse.has b{color:#ffd98a}}
+.tinfo{font-size:11px;color:var(--muted)}
+.tmg{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:12px 8px}
+.teamc{cursor:default;padding:4px 2px 4px}
+.teamc .tmi{border:0;background:transparent;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink)}
+.tgems{display:flex;gap:1px;margin-top:2px}
+.tpm{display:flex;gap:10px;margin-top:3px}
+.tb{width:28px;height:24px;border-radius:8px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:800 16px/1 sans-serif;padding:0}
+.tb.pl:not(:disabled){background:#f6c427;border-color:#c98a0a;color:#5a3d00}
+.tb:disabled{opacity:.35}
+@media (max-height:340px){.tmg{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px 4px}.gem{width:15px;height:15px}}
+
+.sbulk .bic{position:relative;width:34px;height:34px;border-radius:50%;border:1px solid var(--line,#0002);background:var(--card,#fff);font-size:17px;line-height:1;filter:grayscale(1);opacity:.55;cursor:pointer;padding:0}
+.sbulk .bic.on{filter:none;opacity:1;background:#fff3cf;box-shadow:0 0 0 2px #e3b23a inset}
+.sbulk .bic i{position:absolute;right:-4px;top:-4px;min-width:16px;height:16px;border-radius:8px;background:#d83a34;color:#fff;font:700 10px/16px system-ui;font-style:normal;text-align:center;padding:0 3px}
+.sbulk .bic:disabled{cursor:default}

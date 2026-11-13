@@ -8,18 +8,18 @@ function indCardHtml(k){
   var d=INDK[k],g=indProg(k),rdy=indReady(k);
   return '<button class="evc indc'+(rdy?' ready':'')+'" data-act="inopen" data-v="'+k+'" data-ind="'+k+'" aria-label="'+d.n+' 레벨 '+g.lv+(rdy?', 보상 받기 가능':'')+'">'+
     '<span class="evr">'+ringSvg(g.p)+'<span class="evi" style="--c:'+d.col+'">'+indIcon(k,'indbig')+'</span></span>'+
-    '<span class="evn">'+d.n+' <b class="inlv">Lv '+g.lv+'</b></span><span class="evp" data-evp>'+(rdy?'보상 받기':'점수 '+fmt(g.sc))+'</span></button>';
+    '<span class="evn">'+d.n+' <b class="inlv">Lv '+g.lv+'</b></span><span class="evp" data-evp>'+(rdy?'보상 받기':'점수 '+fmtN(g.sc))+'</span></button>';
 }
 // 위쪽 한 줄: 교회 Level과 합계 점수, 다음 Level까지
 function churchSumHtml(){
   var L=S.lvl||1,p=scoreParts(),lo=lvNeed(L),hi=lvNeed(L+1),pr=L>=LV_MAX?1:clamp((p.total-lo)/Math.max(1,hi-lo),0,1);
   var nu='';for(var k=L+1;k<=LV_MAX&&!nu;k++){var n=lvUnlockNames(k).concat(tierNames(k));if(n.length)nu='Lv '+k+'에 '+n.slice(0,3).join(', ')+(n.length>3?' 외 '+(n.length-3):'')+' 열려요';}
   return '<div class="stsum"><b class="stlv">교회 Lv '+L+'</b><div class="bar"><i style="width:'+Math.round(pr*100)+'%"></i></div>'+
-    '<span>지표 점수 합 '+fmt(p.total)+(L<LV_MAX?' · 다음 Lv까지 '+fmt(Math.max(0,Math.ceil(hi-p.total))):'')+'</span>'+(nu?'<span class="stnu">'+nu+'</span>':'')+'</div>';
+    '<span>지표 점수 합 '+fmtN(p.total)+(L<LV_MAX?' · 다음 Lv까지 '+fmtN(Math.max(0,Math.ceil(hi-p.total))):'')+'</span>'+(nu?'<span class="stnu">'+nu+'</span>':'')+'</div>';
 }
 function indDlgHtml(k){
   var d=INDK[k],g=indProg(k),rdy=indReady(k),open=UI.mexp;
-  var rows=[['점수',fmt(g.sc)],['다음 레벨',g.lv>=IND_MAX?'최고 레벨':'Lv '+(g.lv+1)+' · 점수 '+fmt(Math.ceil(g.hi))+' (남은 '+fmt(Math.max(0,Math.ceil(g.hi-g.sc)))+')'],
+  var rows=[['점수',fmtN(g.sc)],['다음 레벨',g.lv>=IND_MAX?'최고 레벨':'Lv '+(g.lv+1)+' · 점수 '+fmtN(Math.ceil(g.hi))+' (남은 '+fmtN(Math.max(0,Math.ceil(g.hi-g.sc)))+')'],
     ['레벨 보상',rdy?'자금 +'+fmt(indReward(k)):(g.lv<IND_MAX?'Lv '+(g.lv+1)+'이 되면 자금 +'+fmt(indGift(g.lv+1)):'—')]];
   var items=IND_ITEMS[k].map(function(r){
     var v=covPct(r[0]),on=open===r[0],col=v<50?'var(--bad)':v<80?'var(--gold)':'var(--good)';
@@ -50,20 +50,10 @@ function questHtml(){
   h+='<div class="sec">마친 퀘스트 '+dn.length+' / '+QUESTS.length+'</div>'+(dn.length?'<div class="qdone">'+dn.map(function(q){return '<span>'+q.n+'</span>';}).join('')+'</div>':'<p class="hint">아직 없어요.</p>');
   return h;
 }
-function weekHtml(){
-  var h=statusSummary()+'<div class="sec">이번 주</div><div class="legend"><span>지금 교회 마당에 '+V.length+'명</span></div>';
-  h+='<div class="legend" style="margin-top:6px">'+NEEDS.map(function(n){return '<span><i style="background:'+NC[n]+'"></i>'+NK[n]+'</span>';}).join('')+'<span>머리 위 점은 방문자가 찾는 것</span></div>';
-  var rp=needRepair(),rc=rp.reduce(function(t,b){return t+repairCost(b);},0);
-  if(rp.length)h+='<div class="btns"><button class="btn pri" data-act="repairAll"'+(S.money<rc?' disabled':'')+'>낡은 건물 '+rp.length+'곳 모두 수리 · '+fmt(rc)+'</button></div>';
-  h+='<div class="sec">주간 수입과 지출</div>'+chart();
-  h+='<div class="sec">소식</div><ul class="log">'+(S.log.length?S.log.map(function(l){return '<li>'+dateText(l.w,true)+' · '+l.msg+'</li>';}).join(''):'<li>아직 소식이 없어요. 한 주가 지나면 기록됩니다.</li>')+'</ul>';
-  return '<div class="staff">'+h+'</div>';
-}
 // renderScreen에서 부른다: 현황 화면의 가운데
 function renderStatusScreen(body){
   if(UI.scrTab==='fin'){body.className='sbody list';var keep=panel;panel=body;renderFinance();panel=keep;return;}
   if(UI.scrTab==='quest'){body.className='sbody list';body.innerHTML='<div class="staff">'+questHtml()+'</div>';return;}
-  if(UI.scrTab==='week'){body.className='sbody list';body.innerHTML=weekHtml();return;}
   body.className='sbody';
   var nr=indReadyCount(),rw=0;IND.forEach(function(d){if(indReady(d.k))rw+=indReward(d.k);});
   body.innerHTML=churchSumHtml()+(nr?'<div class="sbulk"><span>받을 보상 '+nr+'개 · 자금 +'+fmt(rw)+'</span><button class="btn pri claim" data-act="inclaimall">모두 보상 받기</button></div>':'')+'<div class="evg indg">'+IND.map(function(d){return indCardHtml(d.k);}).join('')+'</div>';

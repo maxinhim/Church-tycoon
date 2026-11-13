@@ -40,10 +40,9 @@ h1{font-size:12.5px}
 .tools{gap:6px}
 .tools button{width:34px;height:34px;border-radius:10px}
 .tools svg{width:17px;height:17px}
-#status{padding:3px 10px;gap:1px 12px;border-radius:10px}
-.stat .k{font-size:8.5px}
-.stat b{font-size:11.5px}
-.stat small{font-size:9px}
+.pill{height:22px;padding:0 10px 0 28px;margin-left:13px}
+.pill .pic{width:30px;height:30px;left:-14px;margin-top:-16px}
+.pill b{font-size:12.5px}
 #fab{gap:8px}
 .fab{gap:2px}
 .fab .fc{width:38px;height:38px}

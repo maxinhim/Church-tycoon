@@ -331,7 +331,6 @@ async function stackChecks(browser, url) {
   });
   check(r.floorPaint && r.floorUndo && r.floorErase && r.floorBlocked, '바닥: 칠하기·되돌리기·지우기, 건물 위 금지, 분위기 반영, 걸을 수 있음');
   check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
-  if (!r.allDoors) console.log('DBG', r.noDoor);
   check(r.allDoors, '문: 새 건물에도 모두 정면 문이 있음');
   check(errs.length === 0, '새 건물·요소: 시뮬레이션·4방향 그리기·패널 ' + r.cats + '개 분류 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -703,6 +702,13 @@ async function ministryChecks(browser, url) {
     const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
     o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
     o.bulk = nv >= 2 && S.money === mb - nv * PP_VISIT.cost && S.people.every(q => !ppCareOk(q, 'visit')) && document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]').disabled && !!document.querySelector('#scrBody [data-act="bulk"][data-v="gift"]:not([disabled])'); S.lvl = lv1;
+    // 낮은 레벨부터: 자금이 한 명 몫뿐이면 호감 레벨이 가장 낮은 사람만 심방, 단계 단추는 같은 규칙
+    { S.people.forEach(q => { q.vw = -99; q.gw = -99; q.tr = null; q.node = 'new'; }); const sp = S.people.slice().sort((x, y) => x.lv - y.lv || x.id - y.id); sp.forEach((q, i) => { q.lv = 1 + i; });
+      S.money = PP_VISIT.cost; const lowId = sp[0].id; ppCareAll(S.people, 'visit'); const lowVisited = ppById(lowId).vw === S.week && S.people.filter(q => q.vw === S.week).length === 1;
+      sp.forEach(q => { q.lv = PP_TREE.bapt.lv; }); S.money = PP_TREE.bapt.cost; const r1 = ppTrainAll(S.people, 'bapt'); const trained = S.people.filter(q => q.tr).length === 1 && r1.poor >= 1;
+      S.money = 99999; sp.forEach(q => { if (!q.tr) q.tr = null; }); const r2 = ppTrainAll(S.people, 'bapt'); S.people.forEach(q => { if (q.tr) { q.tr.ready = true; } }); recalc(); document.querySelector('#scrTabs [data-v="all"]').click();
+      const gb = document.querySelector('#scrBody [data-act="bulkgrow"][data-k="ap"]'), ic = document.querySelector('#scrBody .bic[data-v="gift"]'); const nb = S.people.length; if (gb) gb.click();
+      o.bulkLow = lowVisited && trained && !!gb && !!ic && S.people.every(q => q.node === 'bapt' && !q.tr) && r2.done >= 1 && nb >= 2; }
     // 고민 탭: 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림 (행사 버튼 배지에도 셈)
     { const q = S.people[1]; S.cares = [{ id: 90, k: 'lonely', a: q.id, b: 0, w: S.week }]; syncEvBadge(); document.querySelector('#scrTabs [data-v="care"]').click();
       const cs = document.querySelectorAll('#scrBody .ppc'); o.care = cs.length === 1 && !!cs[0].querySelector('.pcare') && !document.getElementById('ppBadge').hidden;
@@ -844,6 +850,7 @@ async function ministryChecks(browser, url) {
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
   check(ppScr.care, '성도 화면: 고민 탭에 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림');
+  check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');
@@ -871,7 +878,7 @@ async function ministryChecks(browser, url) {
     const small = document.querySelector('#cards .card canvas').getBoundingClientRect().width < 60;
     S.money += 5000; startPlace('pray'); let m0 = S.money, n0 = F.length;
     for (let y = 18; y < ROWS - 2 && !UI.ghost.ok; y++) for (let x = 8; x < COLS - 8; x++) if (canPlace(D.pray, x, y, UI.face)) { UI.ghost = { x, y, ok: 1 }; break; }
-    delete UI.ghost.ok; plLock = 0; plOk(); const fx = F.slice(n0).some(f => f.text === '-' + fmt(m0 - S.money) && m0 > S.money);
+    delete UI.ghost.ok; plLock = 0; plOk(); const fx = F.slice(n0).some(f => f.text === '-' + fmtS(m0 - S.money) && m0 > S.money);
     endPlace(); const pb = S.buildings.filter(b => b.def === 'pray').pop(); if (pb) demolish(pb.id); UI.fold = false; UI.sel = null; UI.lastBuilt = null; renderPanel();
     return /\+/.test(txt) && txt.length > 8 && small && fx;
   });
@@ -1594,7 +1601,6 @@ async function gripeChecks(browser, url) {
   check(r.ids, '건물 정의: id가 겹치지 않음');
   check(r.hall, '예배 공간: 없으면 문을 못 열고, 문이 열린 동안 마지막 예배 공간은 철거 못 함');
   check(r.lonely0 && r.lonely1 && r.food, '불편: 외로운 방문자는 소모임을, 배고픈 방문자는 먹을 곳을 찾아가고, 없으면 불편');
-  if (!(r.lonely0 && r.lonely1 && r.food && r.spread)) console.log('DBG', JSON.stringify([r.lonely0, r.lonely1, r.food, r.spread, r.dbg]));
   check(r.spread, '방문자: 이번 주에 덜 쓰인 건물을 골라 고루 쓰고, 꽉 차서 오래 기다리면 크게 불만');
   check(r.fixes, '불편: 건물 설명에 무엇을 풀어 주는지 보임 (외로움·배고픔·목마름)');
   check(r.club, '소모임: 운동·취미·음악 칩이 제목 줄에, 고른 묶음만 목록에 (체육관은 운동으로)');
@@ -1722,12 +1728,12 @@ async function earlyChecks(browser, url) {
         S.il.xp.lv = 20; recalc(); const n = teamReset(); nt.reset = n === 4 && talentUsed() === 0 && MOD.vis === 1;
         // 화면: 원형 카드 아홉 개, 누르면 정보 창, 넣기·빼기·모두 빼기
         S.il = {}; S.qxp = 1500; recalc(); indTick(true); for (const k in STAFF) S.staff[k] = 0; recalc(); openScreen('events', 'staff');
-        const cs = document.querySelectorAll('#scrBody .teamc'), bar = document.querySelector('#scrBody .sbulk').textContent;
-        cs[0].click(); const dl = document.getElementById('scrDlg'); const dlg0 = !dl.hidden && /전도팀/.test(dl.textContent) && /다음 단계/.test(dl.textContent);
+        const cs = document.querySelectorAll('#scrBody .teamc'), bar = document.querySelector('#scrBody .tbar').textContent;
+        cs[0].querySelector('.tmi').click(); const dl = document.getElementById('scrDlg'); const dlg0 = !dl.hidden && /전도팀/.test(dl.textContent) && /다음 단계/.test(dl.textContent);
         document.querySelector('#scrDlg [data-act="tmadd"]').click(); document.querySelector('#scrDlg [data-act="tmadd"]').click(); const two = S.staff.evang === 2 && !document.getElementById('scrDlg').hidden && /Lv 2/.test(document.getElementById('scrDlg').textContent);
         document.querySelector('#scrDlg [data-act="tmsub"]').click(); const one = S.staff.evang === 1;
         document.querySelector('#scrDlg [data-act="evclose"]').click(); const reset = document.querySelector('#scrBody [data-act="tmreset"]'); reset.click();
-        nt.ui = cs.length === 9 && /달란트 \d+ \/ \d+/.test(bar) && dlg0 && two && one && S.staff.evang === 0 && talentUsed() === 0 && /달란트/.test(document.getElementById('scrBody').textContent); closeScreen();
+        nt.ui = cs.length === 9 && /×\d+\s*\/\s*\d+/.test(bar) && dlg0 && two && one && S.staff.evang === 0 && talentUsed() === 0 && /달란트/.test(document.getElementById('scrBody').textContent); closeScreen();
         for (const k in STAFF) S.staff[k] = 0; recalc();
         // 지표 보상 모두 받기: 받을 수 있는 보상이 둘 이상이면 한 번에
         S.il = {}; S.qxp = 0; recalc(); indTick(true); S.il.xp.lv = 4; S.il.sp.lv = 3; S.il.conv.lv = 2; recalc();
@@ -1801,7 +1807,6 @@ async function earlyChecks(browser, url) {
     check(n.quest, '퀘스트 탭: 지금 할 수 있는 퀘스트만 보이고, 마치면 마친 목록으로');
     check(n.decay, '심방 활동은 주마다 식음');
     if (!(n.sum && n.curve && n.trust && n.build && n.claim && n.chips && n.ui && n.quest && n.decay)) console.log('NI', JSON.stringify(n)); }
-  if (!r.fixdoor) console.log('DBG', JSON.stringify(r.fd));
   check(r.autoDoor, '문: 지을 때 고른 방향(정면)에 문이 남');
   check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
   check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');

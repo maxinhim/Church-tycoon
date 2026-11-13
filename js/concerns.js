@@ -200,7 +200,7 @@ function caresWeek(){
 // 선택지가 지금 안 되는 까닭 ('' = 할 수 있음). 정답은 자금이 들지 않아 늘 고를 수 있다
 function careWhy(c,i){var o=careScn(c).o[i];return o&&o.cost&&S.money<o.cost?'자금이 부족해요':'';}
 // 마지막으로 고른 것이 정답이었는지 (화면이 소리를 고를 때 쓴다)
-var careLastOk=false;
+var careLastOk=false,careRes=null;
 // 고르면 결과 글을 돌려준다 (못 고르면 null). 정답은 두 사람(갈등이면) 모두 호감이 크게 오르고,
 // 오답은 레벨이 내려가고 떠날 수도 있다
 function careChoose(id,i){
@@ -215,11 +215,23 @@ function careChoose(id,i){
     S.tempMood-=o.mood||0;
     if(la)parts.push(careHit(a,-la,ea));if(lb)parts.push(careHit(b,-lb,eb));
   }
-  parts.push(careText(c,o.r));
+  var story=careText(c,o.r),eff=parts.filter(Boolean);
+  parts.push(story);
   careLastOk=!!o.ok;
+  // 결과 창에 보여 줄 내용: 무엇을 골랐고, 누구에게 어떤 영향이 있었는지
+  careRes={ok:!!o.ok,t:t.t,pick:careText(c,o.l),story:story,eff:eff,cost:o.cost||0,mood:(o.ok?1:-(o.mood||0)),w:t.pair?'갈등':'고민'};
   S.cares=S.cares.filter(function(q){return q!==c;});S.careDone=(S.careDone||0)+1;if(o.ok)S.careGood=(S.careGood||0)+1;
   addLog(t.t+' · '+careText(c,o.l)+(o.ok?'':' (잘못된 선택)'));recalc();save();
   return parts.filter(Boolean).join(' · ');
+}
+// 선택 결과 창
+function careResHtml(){
+  var r=careRes;if(!r)return '';
+  var rows=r.eff.map(function(t){var good=/호감 \+/.test(t);return '<li class="'+(good?'g':'b')+'"><i aria-hidden="true">'+(good?'▲':'▼')+'</i>'+t+'</li>';}).join('');
+  var chips=[];if(r.cost)chips.push('<span class="b">자금 −'+fmt(r.cost)+'</span>');if(r.mood)chips.push('<span class="'+(r.mood>0?'g':'b')+'">교회 분위기 '+(r.mood>0?'+':'−')+Math.abs(r.mood)+'</span>');
+  return '<div class="sdlg cres '+(r.ok?'ok':'no')+'" role="dialog" aria-label="선택 결과"><div class="crh"><span class="cri">'+(r.ok?'👍':'😔')+'</span><div><b>'+(r.ok?'지혜로운 선택이었어요':'아쉬운 선택이었어요')+'</b><small>'+r.w+' · '+r.t+'</small></div></div>'+
+    '<p class="crp">“'+r.pick+'”</p><p class="crs">'+r.story+'</p>'+(rows?'<ul class="cre">'+rows+'</ul>':'')+(chips.length?'<div class="crc">'+chips.join('')+'</div>':'')+
+    '<div class="sdb"><button class="btn pri big" data-act="evclose">확인</button></div></div>';
 }
 // 세부 정보 창에 넣는 고민 칸
 function concernBlock(p){

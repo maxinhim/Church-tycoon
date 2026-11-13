@@ -15,11 +15,11 @@ function hud(force){
   var now=performance.now();
   if(!force&&now-lastHud<250)return;lastHud=now;
   var vm=$('#vMoney');vm.textContent=fmt(S.money);vm.className=S.money<0?'neg':'';
-  $('#vMem').innerHTML=S.members+' <small>명</small>';
+  $('#vMem').textContent=fmtN(S.members)+'명';
   var dt=debt();$('#sDebt').hidden=dt<1;if(dt>=1)$('#vDebt').textContent=fmt(dt);
   syncClock();levelTick();syncScreen();
   $('#cname').textContent=S.name;
-  questTick();syncInds();
+  questTick();syncInds();syncAlert();
   if(UI.tab==='build'&&!UI.fold){refreshCards();if(isPlacing())renderPbar();}
 }
 // 오른쪽 위 시계: 연·주, 요일 칸(지난 날은 흐리게, 오늘은 강조), 주일 정산까지 남은 날

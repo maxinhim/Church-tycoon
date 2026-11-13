@@ -247,9 +247,9 @@ function syncPlace(){
   ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
   // 바닥 타일: ✓ 왼쪽에 한 칸 값(바꾸면 바꾸는 값)
   var pr=root.querySelector('.ppr'),fc=tf?floorCostAt():(terT?terCostAt():null);pr.hidden=fc==null;
-  if(fc!=null){var t=fc.pre!=null?[fc.pre,fc.none?'':fmt(fc.c)].filter(Boolean).join(' · '):(fc.swap?'바꾸기 ':'')+(fc.c<0?'+':'')+fmt(Math.abs(fc.c));pr.hidden=!t;if(pr.textContent!==t)pr.textContent=t;pr.classList.toggle('off',!can);
+  if(fc!=null){var t=fc.pre!=null?[fc.pre,fc.none?'':fmtS(fc.c)].filter(Boolean).join(' · '):(fc.swap?'바꾸기 ':'')+(fc.c<0?'+':'')+fmtS(Math.abs(fc.c));pr.hidden=!t;if(pr.textContent!==t)pr.textContent=t;pr.classList.toggle('off',!can);
     pr.style.transform='translate('+Math.round(Math.max(60,cl(mid-half,22,vw-22)-23))+'px,'+Math.round(cl(top,22,vh-22))+'px) translate(-100%,-50%)';}
-  ok.setAttribute('aria-label',fc!=null?(can?(fc.swap?'바꾸기':'깔기')+' '+fmt(Math.abs(fc.c))+', 다음 칸으로':'여기에는 깔 수 없어요'):line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmt(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
+  ok.setAttribute('aria-label',fc!=null?(can?(fc.swap?'바꾸기':'깔기')+' '+fmtS(Math.abs(fc.c))+', 다음 칸으로':'여기에는 깔 수 없어요'):line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmtS(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
 }
 // 지형 미리보기 칸을 바꾸는 값 (이어 짓기면 높이 + 바닥). 못 바꾸는 칸이면 값 없음. 땅 높이는 지을 높이도 함께 보여 준다
 function terCostAt(){
@@ -343,7 +343,7 @@ function spendPos(){
 function spendFx(m0,pos){
   var d=m0-S.money;if(!(d>0)||!pos)return;
   sfx('coins',.55,120);
-  F.push({x:pos.x,y:pos.y,z:pos.z+.35,t:1.3,d:1.3,text:'-'+fmt(d),col:'#ffb4a0'});
+  F.push({x:pos.x,y:pos.y,z:pos.z+.35,t:1.3,d:1.3,text:'-'+fmtS(d),col:'#ffb4a0'});
 }
 function plOk(){
   var m0=S.money,pos=spendPos();plOk0();spendFx(m0,pos);
@@ -426,12 +426,12 @@ function renderPbar(){
   if(k==='bld'){
     var g=UI.ghost,why=g?placeWhy(d,g.x,g.y,UI.face):'지도를 눌러 자리를 고르세요';
     var tip=faceMatters(d)?'끌어서 옮기고, 화살표로 건물이 바라볼 방향(정면·출입구)을 고르세요':'끌어서 옮기거나 지도를 눌러 자리를 고르세요';
-    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmt(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
+    h='<div class="ptx"><b>'+d.name+'</b> <span class="pc">'+fmtS(d.cost)+'</span>'+(why?' · '+bad(why):'')+'<br><span class="pt">'+(UI.undo.length?'이어서 ✓를 누르면 옆자리에 또 지어요':tip)+'</span></div>'+(undo?'<div class="btns">'+undo+'</div>':'');
   }else if(k==='path'){
     var c=UI.pc,p=pcPiece(),pw=plPathWhy(),sl=c.slope;
     // 화면을 가리지 않게 평소엔 작은 알약 하나(이름·값·경사·높이)만. 누르면 고르는 줄이 펼쳐지고, 고르면 다시 접힌다
     var lv=c.l>0?c.l+1+'층':(c.l<0?'지하 '+(-c.l)+'층':'땅');
-    if(!UI.pbarOpen)h='<button class="btn ppill" data-act="pbar" aria-expanded="false" aria-label="길 종류·경사·높이 고르기">'+(p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmt(pieceCost(p))+'</span>':'<b>길</b>')+' · '+(sl>0?'오르막':sl<0?'내리막':'평지')+' · '+lv+' ⌄</button>';
+    if(!UI.pbarOpen)h='<button class="btn ppill" data-act="pbar" aria-expanded="false" aria-label="길 종류·경사·높이 고르기">'+(p?'<b>'+pieceName(p)+'</b> <span class="pc'+(pw?' off':'')+'">'+fmtS(pieceCost(p))+'</span>':'<b>길</b>')+' · '+(sl>0?'오르막':sl<0?'내리막':'평지')+' · '+lv+' ⌄</button>';
     else h='<div class="prow">'+
       segBtns('pkind',c.k,[['stone','돌'],['wood','나무'],['brick','벽돌'],['marble','대리석'],['steel','철'],['arch','아치 다리']])+
       '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=MINH?' disabled':'')+'>▼</button><span class="lvl">'+lv+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
@@ -443,7 +443,7 @@ function renderPbar(){
   }else{
     var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool,UI.ghost.pid):'';
     var fsl=UI.ghost&&floorSlot(UI.ghost.x,UI.ghost.y,UI.ghost.pid),fpv=fsl&&fsl.get(),fnc=fpv&&fpv!==UI.tool&&d.cost?floorSwapCost(fpv,UI.tool):null;
-    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">'+(fnc!=null?'바꾸기 '+(fnc<0?'+':'')+fmt(Math.abs(fnc)):'한 칸 '+fmt(d.cost))+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">'+(fnc!=null?'바꾸기 '+(fnc<0?'+':'')+fmtS(Math.abs(fnc)):'한 칸 '+fmtS(d.cost))+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)
   if(h!==plHtml){el.innerHTML=h;plHtml=h;}

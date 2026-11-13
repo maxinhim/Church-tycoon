@@ -68,12 +68,31 @@ function qbar(label,v){
   var p=Math.round(clamp(v,0,1)*100);
   return '<span>'+label+'</span><div class="bar"><i style="width:'+p+'%;background:'+(p<60?'var(--bad)':p<90?'var(--gold)':'var(--good)')+'"></i></div><span class="v">'+p+'%</span>';
 }
-function statusSummary(){
-  var c=S.cov||{},net=lastNet(S),w=warnings(),act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
-  return '<div class="qnums"><div><span>성도 만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
-    '<div><span>이번 주 방문</span><b>'+S.visitsWeek+'</b></div><div><span>새 성도</span><b>'+S.joinedWeek+'</b></div></div>'+
+/* ---------- 챙길 일 알림 ----------
+   지도 한쪽(맨 아래 왼쪽, 자금·성도 위)에 눈에 띄는 빨간 '!'가 떠 있다 (챙길 일이 있을 때만).
+   누르면 작은 카드가 떠서 챙길 일 목록과 '모두 수리'가 나온다. 게임은 멈추지 않는다 */
+function alertCount(){return warnings().length;}
+function alertHtml(){
+  var w=warnings(),rp=needRepair(),rc=rp.reduce(function(t,b){return t+repairCost(b);},0),act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
+  return '<div class="alh"><b>챙길 일 '+w.length+'</b><button class="alx" data-act="alertclose" aria-label="닫기">✕</button></div>'+
+    (w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>')+
     (act.length?'<div class="qev">'+act.map(function(id){return '<span>'+EVENTS[id].name+' · '+evLeftText(id)+'</span>';}).join('')+'</div>':'')+
-    '<div class="sec">챙길 일</div>'+(w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>');
+    (rp.length?'<button class="btn pri alrep" data-act="repairAll"'+(S.money<rc?' disabled':'')+'>낡은 건물 '+rp.length+'곳 모두 수리 · '+fmt(rc)+'</button>':'');
+}
+function syncAlert(){
+  var b=$('#alert'),n=alertCount(),card=$('#alertCard');if(!b)return;
+  b.hidden=!n;$('#alN').textContent=n;
+  if(!n)UI.alertOpen=false;
+  card.hidden=!(UI.alertOpen&&!UI.scr);
+  if(!card.hidden){var h=alertHtml();if(card.dataset.h!==h){card.dataset.h=h;card.innerHTML=h;}}
+}
+function setupAlert(){
+  $('#alert').addEventListener('click',function(){UI.alertOpen=!UI.alertOpen;sfx('click',.4);syncAlert();});
+  $('#alertCard').addEventListener('click',function(e){
+    var el=e.target.closest('[data-act]');if(!el)return;
+    if(el.dataset.act==='alertclose'){UI.alertOpen=false;syncAlert();return;}
+    if(el.dataset.act==='repairAll'){var w=repairAll();toast(w||'낡은 건물을 모두 고쳤어요',1600);sfx(w?'error':'build',.5);hud(true);syncAlert();}
+  });
 }
 
 /* ---------- 목회 고민거리 카드 ---------- */

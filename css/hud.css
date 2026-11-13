@@ -99,12 +99,15 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 #toast{position:absolute;left:54px;top:4px;width:max-content;max-width:calc(100% - 54px);background:rgba(12,22,30,.9);color:#fff;padding:7px 12px;border-radius:10px;font-size:12.5px;text-align:center;pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.3)}
 
 /* 아래 작은 상태줄 */
-#status{display:grid;grid-auto-flow:column;grid-auto-columns:auto;gap:2px 16px;padding:4px 12px;border-radius:12px}
-.stat{min-width:0}
-.stat .k{display:block;font-size:9.5px;color:var(--muted);letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat b{display:block;font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stat b.neg{color:var(--bad)}
-.stat small{font-weight:400;color:var(--muted);font-size:10px}
+/* 자금·성도 수: 그림 아이콘 + 값 알약 */
+#status{display:flex;gap:10px;align-items:flex-end;background:none;border:0;box-shadow:none;pointer-events:none}
+.pill{position:relative;display:flex;align-items:center;height:26px;padding:0 12px 0 34px;margin-left:16px;border-radius:9px;background:linear-gradient(180deg,#fbf0dc,#efdcb8);border:1.5px solid #c9a96a;box-shadow:0 2px 0 rgba(120,80,20,.35),0 3px 8px rgba(0,0,0,.18);color:#7a1f14;pointer-events:auto}
+.pill .pic{position:absolute;left:-17px;top:50%;width:36px;height:36px;margin-top:-19px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.pill b{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.01em}
+.pill b.neg{color:#c0261b}
+.pill.mem{color:#1f3f7a}
+.pill.debt{background:linear-gradient(180deg,#fbe3de,#efc0b6);border-color:#c97a6a;padding-left:12px;margin-left:0}
+.pill .k{font-size:10px;margin-right:6px;font-weight:700;opacity:.8}
 
 /* 동그란 기능 버튼 */
 .fab{border:0;background:transparent;padding:0;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:auto;color:var(--ink)}
@@ -208,3 +211,17 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 .sclv{display:flex;align-items:center;gap:6px;padding:0 2px;font-size:10.5px;color:var(--muted)}
 .sclv .bar{flex:1;height:5px;min-width:60px}
 .sclv .bar i{background:#f2b632}
+
+/* 챙길 일 '!' 알림: 맨 아래 왼쪽, 자금·성도 줄 위. 빨갛고 크게 */
+.alertb{position:fixed;left:14px;bottom:54px;z-index:5;width:48px;height:48px;border-radius:50%;border:3px solid #fff;background:radial-gradient(circle at 35% 30%,#ff7a6b,#d6261a 70%);color:#fff;box-shadow:0 0 0 3px #c0261b,0 4px 12px rgba(0,0,0,.45);pointer-events:auto;cursor:pointer;display:grid;place-items:center;padding:0}
+.alertb[hidden]{display:none}
+.alertb .ex{font:900 30px/1 var(--f-display);text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.alertb .aln{position:absolute;right:-6px;top:-6px;min-width:20px;height:20px;border-radius:10px;background:#fff;color:#c0261b;font:800 11px/20px sans-serif;font-style:normal;text-align:center;border:2px solid #c0261b}
+@media (prefers-reduced-motion:no-preference){.alertb{animation:alPulse 1.4s ease-in-out infinite}}
+@keyframes alPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 3px #c0261b,0 0 0 3px rgba(214,38,26,.0),0 4px 12px rgba(0,0,0,.45)}50%{transform:scale(1.1);box-shadow:0 0 0 3px #c0261b,0 0 0 11px rgba(214,38,26,.28),0 4px 12px rgba(0,0,0,.45)}}
+#alertCard{position:fixed;left:14px;bottom:108px;z-index:5;width:min(300px,calc(100vw - 28px));max-height:56vh;overflow-y:auto;padding:8px 12px 10px;font-size:12px}
+#alertCard[hidden]{display:none}
+.alh{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.alh b{font-size:13px;color:#c0261b}
+.alx{border:0;background:transparent;font-size:15px;color:var(--muted);padding:2px 6px;cursor:pointer}
+.alrep{margin-top:8px;width:100%}

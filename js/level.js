@@ -33,7 +33,7 @@ function syncLevel(pop){
 function levelInfo(){
   var p=scoreParts(),L=S.lvl||1,nx=L<LV_MAX?Math.max(0,Math.ceil(lvNeed(L+1)-p.total)):0;
   var nu='';for(var k=L+1;k<=LV_MAX&&!nu;k++){var n=lvUnlockNames(k).concat(tierNames(k));if(n.length)nu=' · Lv '+k+'에 '+n.slice(0,4).join(', ')+(n.length>4?' 외':'')+' 열림';}
-  toast('교회 Lv '+L+' · 지표 점수 합 '+fmt(p.total)+(L<LV_MAX?' · 다음 레벨까지 '+fmt(nx)+nu:' · 최고 레벨'),4200);
+  toast('교회 Lv '+L+' · 지표 점수 합 '+fmtN(p.total)+(L<LV_MAX?' · 다음 레벨까지 '+fmtN(nx)+nu:' · 최고 레벨'),4200);
 }
 /* ---------- 레벨 업 축하: 큰 배지 + 빛 + 폭죽 (게임은 멈추지 않고, 누르면 바로 닫힌다) ---------- */
 var lvTimer=0;

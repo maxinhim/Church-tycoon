@@ -65,20 +65,29 @@ function teamAdd(k,d){
 function teamReset(){var n=0;for(var k in STAFF){n+=S.staff[k]||0;S.staff[k]=0;}if(n){recalc();save();}return n;}
 
 /* ---------- 사역팀 탭 (행사 화면) ---------- */
+// 황금 보석 (filled=false면 빈 자리)
+function gemSvg(filled,cls){
+  var id='g'+(gemSvg.n=(gemSvg.n||0)+1);
+  if(!filled)return '<svg class="gem e '+(cls||'')+'" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 6-8 12L4 9z" fill="rgba(0,0,0,.06)" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2.5 2" stroke-linejoin="round"/></svg>';
+  return '<svg class="gem f '+(cls||'')+'" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3a8"/><stop offset=".5" stop-color="#f6c427"/><stop offset="1" stop-color="#c98a0a"/></linearGradient></defs>'+
+    '<path d="M12 2.5l8.5 6.3L12 21.5 3.5 8.8z" fill="url(#'+id+')" stroke="#9a6406" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.5 8.8h17M8.2 8.8L12 2.5l3.8 6.3M8.2 8.8L12 21.5l3.8-12.7" fill="none" stroke="#fff6c2" stroke-opacity=".8" stroke-width=".8" stroke-linejoin="round"/></svg>';
+}
 function teamCardHtml(k){
-  var t=STAFF[k],lv=S.staff[k]||0,lk=!tierOk(t.goal||0),pips='';
-  for(var i=1;i<=TEAM_MAX;i++)pips+=i<=lv?'●':'○';
-  var cls=lk?'lock':(lv?'run':'wait'),ln=lk?'Lv '+LV_TIER[t.goal]+' 후':pips;
-  return '<button class="evc teamc '+cls+'" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+(lk?', 잠김':', '+lv+'단계')+'">'+
+  var t=STAFF[k],lv=S.staff[k]||0,lk=!tierOk(t.goal||0),gems='';
+  for(var i=1;i<=TEAM_MAX;i++)gems+=gemSvg(i<=lv);
+  var cls=lk?'lock':(lv?'run':'wait'),canAdd=!teamAddWhy(k),canSub=lv>0;
+  return '<div class="evc teamc '+cls+'"><button class="tmi" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+' 정보">'+
     '<span class="evr">'+ringSvg(lv/TEAM_MAX)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span>'+(lk?'<span class="evlk" aria-hidden="true">🔒</span>':'')+'</span>'+
-    '<span class="evn">'+t.name+'</span><span class="evp">'+ln+'</span></button>';
+    '<span class="evn">'+t.name+'</span></button>'+
+    (lk?'<span class="evp">Lv '+LV_TIER[t.goal]+' 후</span>':'<div class="tgems" role="img" aria-label="달란트 '+lv+' / '+TEAM_MAX+'">'+gems+'</div>'+
+    '<div class="tpm"><button class="tb" data-act="tmsub" data-v="'+k+'"'+(canSub?'':' disabled')+' aria-label="'+t.name+' 달란트 빼기">−</button><button class="tb pl" data-act="tmadd" data-v="'+k+'"'+(canAdd?'':' disabled')+' aria-label="'+t.name+' 달란트 넣기">+</button></div>')+'</div>';
 }
 function teamsHtml(){
   var tot=talentTotal(),used=talentUsed(),free=tot-used;
-  return '<div class="sbulk"><span><b class="tal'+(free>0?' has':'')+'">달란트 '+free+' / '+tot+'</b> · 사역 경험 Lv 1당 1개 · 목양 수용력 '+S.members+' / '+Math.round(MOD.cap)+'명</span>'+
+  return '<div class="sbulk tbar"><span class="tpurse'+(free>0?' has':'')+'" role="img" aria-label="남은 달란트 '+free+'개">'+gemSvg(true,'big')+'<b>×'+free+'</b><small>/ '+tot+'</small></span>'+
+    '<span class="tinfo">달란트 · 사역 경험 Lv 1당 1개 · 목양 수용력 '+S.members+' / '+Math.round(MOD.cap)+'명</span>'+
     '<button class="btn" data-act="tmreset"'+(used?'':' disabled')+'>모두 빼기</button></div>'+
-    '<p class="shint">팀을 눌러 달란트를 넣고 빼요. 값은 들지 않으니 언제든 다른 팀으로 옮길 수 있어요. 단계가 오를수록 늘어나는 효과는 조금씩 줄어요.</p>'+
-    '<div class="evg">'+Object.keys(STAFF).map(teamCardHtml).join('')+'</div>';
+    '<div class="evg tmg">'+Object.keys(STAFF).map(teamCardHtml).join('')+'</div>';
 }
 function teamDlgHtml(k){
   var t=STAFF[k],lv=S.staff[k]||0,lk=!tierOk(t.goal||0),free=talentFree();

@@ -129,14 +129,28 @@ function ppCare(id,kind,cheap){
 }
 // 일괄 심방·선물: 지금 할 수 있는 사람(대기 기간·최고 레벨이 아닌)만, 자금이 되는 만큼 앞에서부터
 function ppCareOk(p,kind){var w=ppCareWhy(p,kind);return !w||w==='자금이 부족해요';}
+function byLow(a,b){return (a.lv||1)-(b.lv||1)||(a.id||0)-(b.id||0);}
 function ppCareAll(list,kind){
   var c=kind==='gift'?PP_GIFT:PP_VISIT,o={done:0,poor:0,up:0};
-  list.forEach(function(p){if(!ppCareOk(p,kind))return;if(S.money<c.cost){o.poor++;return;}var r=ppCare(p.id,kind);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
+  list.slice().sort(byLow).forEach(function(p){if(!ppCareOk(p,kind))return;if(S.money<c.cost){o.poor++;return;}var r=ppCare(p.id,kind);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
   return o;
 }
 function asCheerAll(){
   var o={done:0,poor:0,up:0};
-  S.assoc.forEach(function(a,i){var w=asCheerWhy(a);if(w&&w!=='자금이 부족해요')return;if(S.money<ASSOC_CHEER.cost){o.poor++;return;}var r=asCheer(i);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
+  S.assoc.map(function(a,i){return {a:a,i:i,lv:a.lv||1,id:i};}).sort(byLow).forEach(function(x){var w=asCheerWhy(x.a);if(w&&w!=='자금이 부족해요')return;if(S.money<ASSOC_CHEER.cost){o.poor++;return;}var r=asCheer(x.i);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
+  return o;
+}
+// 일괄 성장: 갈래가 하나뿐인 성도의 다음 단계 교육 시작(자금이 되는 만큼, 호감 레벨 낮은 사람부터), 교육이 끝난 성도 임명
+function ppSoleNext(p){var n=ppNexts(p);return n.length===1?n[0]:null;}
+function ppTrainOk(p,to){var w=ppTrainWhy(p,to);return !w||w==='자금이 부족해요';}
+function ppTrainAll(list,to){
+  var o={done:0,poor:0};
+  list.filter(function(p){return !p.tr&&ppSoleNext(p)===to&&ppTrainOk(p,to);}).sort(byLow).forEach(function(p){if(ppTrain(p.id,to)==='')o.done++;else o.poor++;});
+  return o;
+}
+function ppAppointAll(list,to){
+  var o={done:0,poor:0};
+  list.filter(function(p){return p.tr&&p.tr.ready&&p.tr.to===to;}).sort(byLow).forEach(function(p){if(ppAppoint(p.id))o.done++;else o.poor++;});
   return o;
 }
 /* 다음 단계: 갈래가 여럿이면 하나를 고른다. 교육을 시작하고(값), 다 차면 임명한다 */

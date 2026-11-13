@@ -135,8 +135,8 @@ function renderChooser(){
     el.appendChild(iconCanvas(d,.6));
     var poor=it.cost>0&&S.money<it.cost;if(poor)el.classList.add('poor');
     var tg=effTags(d);
-    el.setAttribute('aria-label',(it.name||d.name)+', '+(it.cost<0?'환불 ':'')+fmt(Math.abs(it.cost)));
-    el.insertAdjacentHTML('beforeend','<span class="nm">'+(it.name||d.name)+'</span><span class="pr">'+(it.cost<0?'+':'')+fmt(Math.abs(it.cost))+'</span>'+
+    el.setAttribute('aria-label',(it.name||d.name)+', '+(it.cost<0?'환불 ':'')+fmtS(Math.abs(it.cost)));
+    el.insertAdjacentHTML('beforeend','<span class="nm">'+(it.name||d.name)+'</span><span class="pr">'+(it.cost<0?'+':'')+fmtS(Math.abs(it.cost))+'</span>'+
       '<span class="ef">'+(tg.length?'<i>'+tg[0]+'</i>':'<i>'+(d.short||'')+'</i>')+'</span>');
     if(it.id===cx.cur)el.classList.add('last');
     cards.appendChild(el);
@@ -174,7 +174,7 @@ function renderBuild(){
       var lk=isLocked(d.id);if(lk)el.classList.add('lock');
       var tg=effTags(d);
       el.setAttribute('aria-label',d.name+', '+(lk?'잠김':fmt(d.cost))+'. '+effText(d));
-      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?lockLabel(d.id,true):fmt(d.cost)+(d.up?'<small> · 주 '+d.up+'</small>':''))+'</span>'+
+      el.insertAdjacentHTML('beforeend','<span class="nm">'+d.name+'</span><span class="pr">'+(lk?lockLabel(d.id,true):fmtS(d.cost)+(d.up?'<small> · 주 '+d.up+'</small>':''))+'</span>'+
         '<span class="ef">'+(tg.length?'<i>'+tg[0]+'</i>':'<i>'+(d.short||'')+'</i>')+'</span>');
       cards.appendChild(el);
     });
@@ -321,19 +321,21 @@ function moodWhy(k){
   if(w)L.unshift('만족도 비중 '+Math.round(w*100)+'%');
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');
 }
+// 주간 수입(파랑)·지출(회색)을 점 그래프로: 최근 12주, 점 사이를 가는 선으로 이은다
 function chart(){
   var hs=S.hist;
   if(!hs.length)return '<p class="hint" style="padding:2px 0">첫 주일이 지나면 표시됩니다.</p>';
-  var W=300,H=96,pad=18,mx=1;
+  var W=300,H=70,px=14,py=8,mx=1,n=Math.max(hs.length,2);
   hs.forEach(function(x){mx=Math.max(mx,x.inc,x.exp);});
-  var bw=(W-pad)/Math.max(hs.length,6),svg='<svg viewBox="0 0 '+W+' '+(H+14)+'" width="100%" role="img" aria-label="주간 수입과 지출 막대그래프">';
-  svg+='<line x1="'+pad+'" y1="'+H+'" x2="'+W+'" y2="'+H+'" stroke="var(--line)"/><text x="0" y="10" font-size="9">'+fmt(mx)+'</text><text x="0" y="'+H+'" font-size="9">0</text>';
-  hs.forEach(function(x,i){
-    var x0=pad+i*bw+bw*0.1,w=bw*0.38,hi=x.inc/mx*(H-14),he=x.exp/mx*(H-14);
-    svg+='<rect x="'+x0.toFixed(1)+'" y="'+(H-hi).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+hi.toFixed(1)+'" fill="var(--accent)"/>';
-    svg+='<rect x="'+(x0+w+1).toFixed(1)+'" y="'+(H-he).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+he.toFixed(1)+'" fill="var(--muted)" opacity=".55"/>';
+  var X=function(i){return px+(W-2*px)*i/(n-1);},Y=function(v){return py+(H-2*py)*(1-v/mx);};
+  var svg='<svg viewBox="0 0 '+W+' '+(H+16)+'" width="100%" role="img" aria-label="주간 수입과 지출 점 그래프">';
+  svg+='<line x1="'+px+'" y1="'+Y(0)+'" x2="'+(W-px)+'" y2="'+Y(0)+'" stroke="var(--line)"/>';
+  [['inc','var(--accent)',1],['exp','var(--muted)',.8]].forEach(function(sr){
+    var pts=hs.map(function(x,i){return X(i).toFixed(1)+','+Y(x[sr[0]]).toFixed(1);});
+    svg+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+sr[1]+'" stroke-width="1.2" opacity=".5"/>';
+    hs.forEach(function(x,i){svg+='<circle cx="'+X(i).toFixed(1)+'" cy="'+Y(x[sr[0]]).toFixed(1)+'" r="'+(i===hs.length-1?3.6:2.6)+'" fill="'+sr[1]+'" opacity="'+sr[2]+'"/>';});
   });
-  svg+='<text x="'+pad+'" y="'+(H+11)+'" font-size="9">파랑 수입 · 회색 지출 (최근 '+hs.length+'주)</text></svg>';
+  svg+='<text x="2" y="9" font-size="8.5" fill="var(--muted)">'+fmtS(mx)+'</text><text x="'+px+'" y="'+(H+12)+'" font-size="9" fill="var(--muted)">● 파랑 수입 · ● 회색 지출 (최근 '+hs.length+'주)</text></svg>';
   return svg;
 }
 function renderMenu(){
@@ -355,6 +357,7 @@ function renderMenu(){
 function renderFinance(){
   var h='<div class="staff">';
   h+='<div class="qnums"><div><span>자금</span><b class="'+(S.money<0?'neg':'')+'">'+fmt(S.money)+'</b></div><div><span>빚</span><b>'+fmt(debt())+'</b></div><div><span>신용 한도</span><b>'+fmt(creditLimit())+'</b></div><div><span>이번 주 매장</span><b class="pos">+'+fmt(S.weekShop)+'</b></div></div>';
+  h+='<div class="sec">주간 수입과 지출</div>'+chart();
   h+='<div class="sec">지난 주일 정산</div>'+(S.rcpt?'<div class="rcpt">'+rcptHtml(S.rcpt,true)+'</div>':'<p class="hint">첫 주일이 지나면 정산 내역이 보여요. 헌금은 출석(좌석 안의 성도)과 만족도에 따라 들어와요.</p>');
   h+='<div class="sec">받은 대출</div>';
   if(!S.loans.length)h+='<p class="hint">받은 대출이 없어요.</p>';
@@ -368,6 +371,7 @@ function renderFinance(){
     var L=LOANS[k],why=loanBlock(k),pay=loanPayment(L.amt,L.rate,L.weeks);
     h+=srow(L.name+' '+fmt(L.amt),L.weeks+'주 동안 주 '+fmt(pay)+' · 모두 '+fmt(pay*L.weeks),L.desc+(why?'<br>'+bad(why):''),'<button class="btn pri" data-act="borrow" data-v="'+k+'"'+(why?' disabled':'')+'>빌리기</button>');
   });
+  h+='<div class="sec">소식</div><ul class="log">'+(S.log.length?S.log.map(function(l){return '<li>'+dateText(l.w,true)+' · '+l.msg+'</li>';}).join(''):'<li>아직 소식이 없어요. 한 주가 지나면 기록됩니다.</li>')+'</ul>';
   h+='</div>';
   panel.innerHTML=h;
 }

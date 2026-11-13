@@ -9,7 +9,7 @@
 var SCREENS={
   events:{title:'행사',tabs:[['events','행사'],['staff','사역팀']]},
   people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
-  status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['week','이번 주'],['fin','재정']]},
+  status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'직분자',tabs:[['off','직분'],['B','교역'],['C','섬김'],['assoc','부교역자'],['cands','청빙']]}
 };
 var PP_PAGE=60;
@@ -42,13 +42,14 @@ function evCardHtml(id){
 }
 function evDlgHtml(id){
   var e=EVENTS[id],st=evState(id),why=evBlock(id),run=evRunning(id),rdy=evReady(id),p=evProg(id);
-  var rows=[['비용',fmt(evCost(e))],['소요 시간',durText(e.dur)]];
+  var rows=[['소요 시간',durText(e.dur)]];
   if(e.fx)rows.push(['진행 중 효과',e.fx]);
   if(e.rwt)rows.push(['마무리 보상',e.rwt]);
   rows.push(['다시 열기','보상을 받고 '+e.cd+'주 뒤'+(e.season?' · '+evSeasonText(e)+'에만':'')]);
+  var cost='<span class="runc"><i class="coin" aria-hidden="true"></i>'+fmt(evCost(e))+'</span>';
   var btn=rdy?'<button class="btn pri big claim" data-act="evclaim" data-v="'+id+'">보상 수령</button>':
     run?'<button class="btn big" disabled data-evleft>진행 중 · '+evLeftText(id)+' 남음</button>':
-    '<button class="btn pri big" data-act="evstart" data-v="'+id+'"'+(why?' disabled':'')+'>행사 시작 · '+fmt(evCost(e))+'</button>';
+    cost+'<button class="btn pri big" data-act="evstart" data-v="'+id+'"'+(why?' disabled':'')+'>실행</button>';
   return '<div class="sdlg" role="dialog" aria-label="'+e.name+'"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
     '<div class="sdh"><span class="evr big'+(run&&e.fx?' fx':'')+'" data-ev="'+id+'">'+ringSvg(p)+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span></span>'+
     '<div class="sdt"><h3>'+e.name+'</h3><p>'+e.desc+'</p>'+(run&&e.fx?'<p class="fxon">🔥 지금 효과가 적용되고 있어요</p>':'')+'</div></div>'+
@@ -85,6 +86,7 @@ function renderScreen(){
   else if(sel&&sel.t==='pp'&&ppById(sel.id))dh=ppDlgHtml(ppById(sel.id));
   else if(sel&&sel.t==='as'&&S.assoc[sel.id])dh=asDlgHtml(sel.id);
   else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
+  else if(sel&&sel.t==='cr'&&careRes)dh=careResHtml();
   else if(sel&&sel.t==='tm'&&STAFF[sel.id])dh=teamDlgHtml(sel.id);
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
@@ -156,7 +158,7 @@ function scrClick(e){
 }
 function setupScreens(){
   $('#scr').addEventListener('click',scrClick);
-  setupStatusUI();
+  setupStatusUI();setupAlert();
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&UI.scr){if(UI.scrSel){UI.scrSel=null;renderScreen();}else closeScreen();}});
 }
 
@@ -193,9 +195,16 @@ function bulkBar(){
   }
   var L=scrPeople();if(!L.length)return '';
   var nv=L.filter(function(p){return ppCareOk(p,'visit');}).length,ng=L.filter(function(p){return ppCareOk(p,'gift');}).length;
+  var gr={};   // 일괄 성장 단추: 다음 단계마다 하나
+  L.forEach(function(p){
+    if(p.tr&&p.tr.ready){var g=gr['a'+p.tr.to]||(gr['a'+p.tr.to]={k:'ap',to:p.tr.to,n:0,lv:p.lv,g:p.g});g.n++;g.lv=Math.min(g.lv,p.lv);}
+    else if(!p.tr){var to=ppSoleNext(p);if(to&&ppTrainOk(p,to)){var h=gr['t'+to]||(gr['t'+to]={k:'tr',to:to,n:0,lv:p.lv,g:p.g});h.n++;h.lv=Math.min(h.lv,p.lv);}}
+  });
+  var gh=Object.keys(gr).map(function(k){var x=gr[k],tr=x.k==='tr';
+    return '<button class="btn'+(tr?' pri':' pri claim')+'" data-act="bulkgrow" data-k="'+x.k+'" data-to="'+x.to+'">전체 '+(tr?nodeTr(x.to,x.g)+' 시작':nodeDone(x.to,x.g))+' · '+x.n+'명'+(tr?' · '+fmt(x.n*PP_TREE[x.to].cost):'')+'</button>';}).join('');
   return '<div class="sbulk"><span>이 목록 '+L.length+'명</span>'+
-    '<button class="btn'+(nv?' pri':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+'>모두 심방 · '+nv+'명 · '+fmt(nv*PP_VISIT.cost)+'</button>'+
-    '<button class="btn'+(ng?' pri':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+'>모두 선물 · '+ng+'명 · '+fmt(ng*PP_GIFT.cost)+'</button></div>';
+    '<button class="bic'+(nv?' on':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+' aria-label="모두 심방 '+nv+'명, '+fmt(nv*PP_VISIT.cost)+'" title="모두 심방 · '+fmt(PP_VISIT.cost)+'씩">💬'+(nv?'<i>'+nv+'</i>':'')+'</button>'+
+    '<button class="bic'+(ng?' on':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+' aria-label="모두 선물 '+ng+'명, '+fmt(ng*PP_GIFT.cost)+'" title="모두 선물 · '+fmt(PP_GIFT.cost)+'씩">🎁'+(ng?'<i>'+ng+'</i>':'')+'</button>'+gh+'</div>';
 }
 function peopleHtml(){
   var all=(S.people||[]),tab=UI.scrTab,L=scrPeople();
@@ -295,10 +304,16 @@ function scrPeopleClick(a,v,el){
     else{sfx('coins',.6,0);if(o.up)setTimeout(function(){sfx('join',.6,0);},160);scrToast(o.done+'명에게 '+nm+'했어요'+(o.up?' · '+o.up+'명 레벨 업':'')+(o.poor?' · '+o.poor+'명은 자금이 모자라 다음에':''),2800);}
     renderScreen();hud(true);return true;
   }
+  if(a==='bulkgrow'){
+    var to=el.dataset.to,tr=el.dataset.k==='tr',o2=tr?ppTrainAll(scrPeople(),to):ppAppointAll(scrPeople(),to),g0=scrPeople()[0];
+    if(!o2.done){scrToast(o2.poor?(tr?'자금이 모자라요':'자리가 없어요'):'할 수 있는 사람이 없어요',2000);sfx('error',.4);}
+    else{sfx(tr?'coins':'bell',.6,0);if(!tr)setTimeout(function(){sfx('join',.6,0);},180);scrToast(o2.done+'명 '+(tr?nodeTr(to,'m')+' 시작':nodeDone(to,'m'))+(o2.poor?' · '+o2.poor+'명은 '+(tr?'자금이 모자라 다음에':'자리가 없어요'):'')+' (낮은 레벨부터)',2800);}
+    renderScreen();hud(true);return true;
+  }
   if(a==='carepick'){
     var cr=careChoose(+v,+el.dataset.i);
     if(cr==null){scrToast('지금은 고를 수 없어요',1800);sfx('error',.4);}
-    else{sfx(careLastOk?'join':'error',.6,0);scrToast(cr,3400);if(UI.scrSel&&UI.scrSel.t==='pp'&&!ppById(UI.scrSel.id))UI.scrSel=null;}
+    else{sfx(careLastOk?'join':'error',.6,0);UI.scrSel={t:'cr'};}
     renderScreen();hud(true);return true;
   }
   if(a==='deleg'){var d=delegState();d.on=!d.on;sfx('click',.4);scrToast(d.on?'부교역자·소그룹 리더가 매주 호감 Lv '+d.lv+' 아래 성도를 돌봐요 (한 주 '+delegCap()+'명까지)':'성도 돌봄 맡기기를 껐어요',2400);save();renderScreen();return true;}

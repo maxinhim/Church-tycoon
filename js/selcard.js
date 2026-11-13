@@ -12,7 +12,7 @@ function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI
 function scBtn(act,label,cls,v,aria){return '<button class="btn sm'+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v!=null?' data-v="'+v+'"':'')+(aria?' aria-label="'+aria+'"':'')+'>'+label+'</button>';}
 function scDem(label,cost){
   var armed=performance.now()<scArm;
-  return scBtn('scdem',armed?'정말 철거? +'+fmt(cost):label+' +'+fmt(cost),'bad');
+  return scBtn('scdem',armed?'정말 철거? +'+fmtS(cost):label+' +'+fmtS(cost),'bad');
 }
 function renderSelCard(){
   var el=$('#selCard');if(!el)return;
@@ -37,15 +37,15 @@ function renderSelCard(){
     if(hasLv(b)&&bLv(b)<BLV_MAX){
       var iw=investWhy(b);
       h+='<div class="sclv"><span class="bar"><i style="width:'+Math.round((b.bx||0)/BLV_XP*100)+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
-      row+=scBtn('invest','투자 '+fmt(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmt(investCost(b)));
+      row+=scBtn('invest','투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
     }
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
     if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');}
     if(lk)row+=scBtn('link','길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
-    var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmt(lb.cost));
-    if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmt(repairCost(b)));
+    var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmtS(lb.cost));
+    if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmtS(repairCost(b)));
     // 길 잇기를 누르면: 어떤 바닥으로 이을지 고르는 줄 (칸 수 × 한 칸 값)
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
@@ -57,13 +57,13 @@ function renderSelCard(){
     h='<div class="sct"><b>'+pieceName(p)+(p.f&&D[p.f]?' · '+D[p.f].name:'')+'</b><span>높이 '+p.l+(p.s?'→'+(p.l+1):'')+'</span></div>';
     // 데크에는 바닥 타일을 바로 깔거나 바꿀 수 있다
     if(dk)row+=scBtn('choose',p.f?'바닥 바꾸기':'바닥 깔기','pri','fswap','이 데크에 깔 바닥 고르기');
-    if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmt(Math.floor(D[p.f].cost*.5)),'','f_erase');
+    if(dk&&p.f)row+=scBtn('fswap','바닥 걷기 +'+fmtS(Math.floor(D[p.f].cost*.5)),'','f_erase');
     row+=scDem('철거',pieceCost(p)*0.5);
   }else if(isWater(UI.selFloor.x,UI.selFloor.y)){
     // 물: 다리 놓기·물 분수·물 빼기
     var wf=UI.selFloor,wn=poolCells(wf.x,wf.y).filter(function(q){return isWater(q.x,q.y);}).length;
     h='<div class="sct"><b>물</b><span>'+wn+'칸 · 다리로 건너요</span></div>';
-    row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기')+scBtn('wfount','물 분수 '+fmt(D.wfount.cost),'',null,'이 칸에 물 분수 놓기')+scBtn('wdrain','물 빼기','',null,'이 웅덩이의 물을 모두 빼기');
+    row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기')+scBtn('wfount','물 분수 '+fmtS(D.wfount.cost),'',null,'이 칸에 물 분수 놓기')+scBtn('wdrain','물 빼기','',null,'이 웅덩이의 물을 모두 빼기');
   }else{
     // 빈 땅·바닥 칸: 바닥 깔기·바꾸기, 땅 높이기·낮추기, 경사로를 바로 고른다
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
@@ -73,10 +73,10 @@ function renderSelCard(){
     var face=cellHasFace(sf.x,sf.y);
     if(face)row+=scBtn('choose','벽 타일','','wswap','이 칸에 맞닿은 옆면(벽) 타일 고르기');
     var up=terPlan(sf.x,sf.y,'ter_set',gh+1),dn=gh>MINH||isRamp(sf.x,sf.y)?terPlan(sf.x,sf.y,'ter_set',isRamp(sf.x,sf.y)?gh:gh-1):null;
-    if(!up.why)row+=scBtn('gter','땅 높이기 '+fmt(up.cost),'',gh+1,'땅을 한 층 높이기 '+fmt(up.cost));
-    if(dn&&!dn.why)row+=scBtn('gter',(isRamp(sf.x,sf.y)?'평평하게 ':'땅 낮추기 ')+fmt(dn.cost),'',isRamp(sf.x,sf.y)?gh:gh-1);
+    if(!up.why)row+=scBtn('gter','땅 높이기 '+fmtS(up.cost),'',gh+1,'땅을 한 층 높이기 '+fmtS(up.cost));
+    if(dn&&!dn.why)row+=scBtn('gter',(isRamp(sf.x,sf.y)?'평평하게 ':'땅 낮추기 ')+fmtS(dn.cost),'',isRamp(sf.x,sf.y)?gh:gh-1);
     row+=scBtn('gramp','경사로…','',null,'이 칸에서 흙 경사로 짓기 (방향을 고른 뒤 ✓)');
-    if(gh<0){var wp=waterPlan(sf.x,sf.y);row+=scBtn('wfill','물 채우기'+(wp.why?'':' '+fmt(wp.cost)),'',null,'이어진 지하 칸 전체에 물 채우기');}
+    if(gh<0){var wp=waterPlan(sf.x,sf.y);row+=scBtn('wfill','물 채우기'+(wp.why?'':' '+fmtS(wp.cost)),'',null,'이어진 지하 칸 전체에 물 채우기');}
     if(cur)row+=scDem('철거',Math.floor(D[cur].cost*.5));
   }
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
