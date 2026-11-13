@@ -28,8 +28,10 @@ function renderSelCard(){
     if(bd.cap)sub.push((md==='batch'?(b.run>0?'가동 중 ':'모이는 중 '):'이용 ')+b.inUse+'/'+bCap(b)+'명');
     if(b.door&&bd.cap)sub.push((md==='batch'?'가동 ':'회전 ')+rotTime(b).toFixed(1)+'초');
     if(maintainable(b))sub.push('상태 '+Math.round(condOf(b))+'%'+(wearStage(b)?' · 효율 '+Math.round(condFactor(b)*100)+'%':''));
-    var warn='';
+    var warn='',mr=mgrRole(b),mw=mgrOf(b);
+    if(b.fixed)sub.push('👤 담임목사');else if(mr&&mw)sub.push('👤 '+mw.name);
     if(b.door&&!usable(b))warn='문 앞까지 길이 없어 이용 못 해요';
+    else if(mr&&!staffed(b))warn='👤 관리자 필요 · '+MGR_ROLE[mr].who+' 배치해야 가동해요';
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     var lvTag=hasLv(b)?'<i class="blv">Lv '+bLv(b)+'</i>'+(bd.tier===2?'<i class="btr">상위</i>':''):'';
     h='<div class="sct"><b>'+bd.name+'</b>'+lvTag+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
@@ -39,6 +41,7 @@ function renderSelCard(){
       h+='<div class="sclv"><span class="bar"><i style="width:'+Math.round((b.bx||0)/BLV_XP*100)+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
       row+=scBtn('invest','투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
     }
+    if(mr&&!S.freeMgr)row+=scBtn('mgr',mw?'👤 관리자':'👤 관리자 필요',mw?'':'pri',null,mw?'관리자 바꾸기':'관리자 배치·청빙');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
@@ -50,7 +53,7 @@ function renderSelCard(){
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
     var mb='';
-    mb+=scDem('철거',bd.cost*0.5);
+    if(!b.fixed)mb+=scDem('철거',bd.cost*0.5);
     more+='<div class="scb">'+mb+'</div>';
   }else if(UI.selPiece){
     var p=pieceById(UI.selPiece),dk=isDeckPiece(p)&&!deckCovered(p);

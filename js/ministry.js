@@ -74,7 +74,7 @@ function makeCand(){
 }
 function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
 function assocSlots(){return Math.min(5,1+Math.floor(S.members/50));}
-function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0);}
+function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}
 function hireAssoc(i){
   var c=S.cands[i];if(!c)return '후보가 없어요';
   if(S.assoc.length>=assocSlots())return '지금 성도 수로는 '+assocSlots()+'명까지 청빙할 수 있어요';

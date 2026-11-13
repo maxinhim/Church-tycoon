@@ -11,7 +11,7 @@ function staleWeeks(){return Math.max(0,S.week-(S.lastNew||0)-STALE_AFTER);}
 function stalePen(){return Math.min(STALE_MAX,staleWeeks()*STALE_STEP);}
 function countDef(id){var n=0;S.buildings.forEach(function(b){if(b.def===id)n++;});return n;}
 // 바랄 만한 건물: 잠기지 않았고, 값이 너무 비싸지 않고, 바닥이 아닌 것
-function wishable(d){return !isLocked(d.id)&&d.cost>0&&d.cost<=Math.max(3000,S.money*1.5)&&d.kind!=='floor'&&d.kind!=='terrain'&&d.kind!=='path';}
+function wishable(d){return !d.hidden&&!isLocked(d.id)&&d.cost>0&&d.cost<=Math.max(3000,S.money*1.5)&&d.kind!=='floor'&&d.kind!=='terrain'&&d.kind!=='path';}
 var WISH_ITEM={fel:['fcap','함께 모일 곳'],care:['kcap','돌봄 공간'],comf:['ccap','편의 시설'],park:['park','주차 자리'],seat:['seats','예배 자리']};
 // 받침이 있으면 '이', 없으면 '가'
 function iga(w){var c=w.charCodeAt(w.length-1);return w+(c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28?'이':'가');}

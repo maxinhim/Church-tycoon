@@ -203,3 +203,7 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 #panel.build .cinfo{border-left:3px solid var(--accent);padding-left:6px}
 @media (prefers-reduced-motion:no-preference){#panel.build .card.focus{animation:cfocus .22s ease-out}}
 @keyframes cfocus{from{transform:translateY(0) scale(.96)}to{transform:translateY(-2px) scale(1)}}
+
+/* 건축 분류의 기능별 묶음 아이콘 칩 */
+.subtabs .csb{display:inline-flex;align-items:center;gap:3px;padding:0 9px 0 6px}
+.subtabs .csb i{font-style:normal;font-size:14px;line-height:1}

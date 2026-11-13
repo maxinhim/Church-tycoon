@@ -92,8 +92,8 @@ function delegState(){return S.deleg||(S.deleg={on:false,lv:DELEG_LV0,last:null}
 function asCare(a){return Math.round(ASSOC_CARE0+ASSOC_CARE_K*asSkill(a));}
 function leaders(){return (S.people||[]).filter(function(p){return LEAD_NODES.indexOf(p.node)>=0;});}
 function leadCare(p){return Math.max(1,Math.round((PP_TREE[p.node].cap||0)*LEAD_CARE_K));}
-function leadCap(){return leaders().reduce(function(t,p){return t+leadCare(p);},0);}
-function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+asCare(a);},0)+leadCap();}
+function leadCap(){return leaders().filter(function(p){return !mgrAt('p'+p.id);}).reduce(function(t,p){return t+leadCare(p);},0);}
+function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+(a.uid&&mgrAt('a'+a.uid)?0:asCare(a));},0)+leadCap();}
 // 맡길 수 있는 일꾼이 있는지 (부교역자나 소그룹 리더)
 function delegHelpers(){return (S.assoc||[]).length+leaders().length;}
 function delegPool(){var L=delegState().lv;return (S.people||[]).filter(function(p){return p.lv<L;});}

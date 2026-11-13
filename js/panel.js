@@ -37,7 +37,16 @@ function effText(d){
 var GROUP_TITLE={build:'건축',minis:'행사',status:'현황',menu:'메뉴'};
 var SUBTABS={minis:[['events','행사'],['staff','사역자']]};
 // 건축 › 소모임의 하위 묶음: 제목 줄 빈자리에 칩으로 (창 높이가 늘지 않게)
-var CLUB_SUBS=[['sport','운동'],['hobby','취미'],['music','음악']];
+var CLUB_SUBS=[['sport','운동','⚽'],['hobby','취미','🎨'],['music','음악','🎵']];
+// 기능이 섞인 분류는 기능별 하위 묶음(아이콘 칩)으로 나눈다. 건물의 묶음은 d.sub (buildings.js SUB_OF)
+var CAT_SUBS={club:CLUB_SUBS,
+  worship:[['service','예배','⛪'],['pray','기도·말씀','🙏']],
+  fellow:[['group','소그룹','🫂'],['hall','친교','🍽️']],
+  shop:[['food','먹거리','🍙'],['cafe','카페','☕'],['book','서점','📚']],
+  care:[['kids','아이','🧸'],['neighbor','이웃 섬김','🤲'],['mind','상담·어르신','💬']],
+  comfort:[['toilet','화장실','🚻'],['rest','쉼터','🪑'],['etc','기타','🗑️']]};
+function curSub(cat){var L=CAT_SUBS[cat];if(!L)return null;for(var i=0;i<L.length;i++)if(L[i][0]===UI.csub)return UI.csub;return L[0][0];}
+function inSub(d,cat){var cs=curSub(cat);return !cs||(d.sub||CAT_SUBS[cat][0][0])===cs;}
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
 function openGroup(g){
   UI.lastBuilt=null;
@@ -75,9 +84,9 @@ function renderPanel(){
   else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]));
   else dt.textContent=GROUP_TITLE[g];
   $('#dock').classList.toggle('bmode',t==='build');
-  var cs=UI.csub||'sport';
+  var cs=curSub(UI.cat);
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
-    (t==='build'&&!UI.choose&&UI.bstep!=='cat'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
+    (t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else renderMenu();
 }
@@ -85,8 +94,7 @@ function renderPanel(){
    지우기 같은 도구(값 0)는 맨 뒤. 분류를 열 때만 정렬한다 (자금이 바뀌어도 누르는 도중 카드가 움직이지 않게) */
 function buildOrder(cat){
   var can=function(d){return !isLocked(d.id)&&S.money>=d.cost;};
-  var cs=UI.csub||'sport';
-  return DEFS.filter(function(d){return d.cat===cat&&!d.retired&&(cat!=='club'||d.sub===cs);}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
+  return DEFS.filter(function(d){return d.cat===cat&&!d.retired&&!d.hidden&&inSub(d,cat);}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
     var ta=a.d.cost?0:1,tb=b.d.cost?0:1;if(ta!==tb)return ta-tb;
     var ca=can(a.d)?0:1,cb=can(b.d)?0:1;if(ca!==cb)return ca-cb;
     return a.d.cost-b.d.cost||a.i-b.i;
@@ -147,7 +155,7 @@ function renderChooser(){
 }
 /* 건축 패널은 두 단계: ① 분류 목록(타일) → ② 고른 분류의 건물 카드 한 줄(가로로 끌어 넘김, ‹ 뒤로로 ①).
    짓다가 취소하면 ②로 돌아오고, 직전에 고른 카드가 보이게 그 자리로 넘겨 둔다 (UI.lastPick[분류]) */
-function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&(cat!=='club'||x.sub===(UI.csub||'sport'));})[0];return d?iconCanvas(d):null;}
+function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&!x.hidden&&!x.retired;})[0];return d?iconCanvas(d):null;}
 function renderBuild(){
   panel.scrollTop=0;
   if(UI.choose){renderChooser();return;}

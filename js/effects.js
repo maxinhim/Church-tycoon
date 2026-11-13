@@ -58,6 +58,7 @@ function warnings(){
   if(staleWeeks()>0)w.push('매너리즘: 새로 한 일 없이 '+(S.week-(S.lastNew||0))+'주째예요. 새 건물·꾸미기나 다른 행사를 해 보세요');
   var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');
   var un=S.buildings.filter(function(b){return needsDoor(b)&&!usable(b);});if(un.length)w.push('이용할 수 없는 건물: '+defOf(un[0]).name+(un.length>1?' 외 '+(un.length-1)+'곳':'')+' · 건물을 눌러 길을 이어 주세요');
+  var um=unstaffed();if(um.length)w.push('👤 관리자가 없는 건물: '+defOf(um[0]).name+(um.length>1?' 외 '+(um.length-1)+'곳':'')+' · 건물을 눌러 관리자를 배치하세요');
   if(c.park<0.7&&!isLocked('lot'))w.push('주차가 모자라 방문자가 줄어요');
   // 방문자가 실제로 겪은 불편 (무엇을 지으면 되는지까지)
   gripeList().slice(0,5).forEach(function(g){w.push(g.t);});

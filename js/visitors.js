@@ -68,7 +68,7 @@ function startWait(v){v.state='wait';v.wait=VIS_PATIENCE;var j=.32*G;v.x+=(Math.
 function arrive(v){
   if(!v.target){v.state='idle';v.t=0.8+Math.random();return;}
   var b=bById(v.target);
-  if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
+  if(!bOpen(b)){v.state='idle';v.t=0.2;v.target=0;return;}
   if(canEnter(b))enter(v,b);
   else startWait(v);
 }
@@ -133,7 +133,7 @@ function decide(v){
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
     if(v.needs[n]>=NEED_OK)continue;
-    var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&usable(b)&&!(v.blocked[b.id]>S.clock)&&wxOpen(d);});
+    var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&bOpen(b)&&!(v.blocked[b.id]>S.clock)&&wxOpen(d);});
     // 지갑에 돈이 있으면 매장에 조금 더 끌린다
     // 모든 건물을 골고루: 거리보다 '이번 주에 얼마나 쓰였나(자리 대비)'와 '지금 붐비나'를 더 크게 본다.
     // 새 건물에는 조금만 더 끌리고, 사람마다 조금씩 다르게 고른다
@@ -171,7 +171,7 @@ function stepV(v,dt){
   }else if(v.state==='wait'){
     // 문 앞 길에서 기다린다. 자리가 나면 들어가고, 한계를 넘으면 화가 나 돌아선다
     var b=bById(v.target);
-    if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
+    if(!bOpen(b)){v.state='idle';v.t=0.2;v.target=0;return;}
     if(canEnter(b)){enter(v,b);return;}
     v.wait-=dt;if(v.wait<=0){placeAt(v,v.node);giveUp(v,b);}
   }else if(v.state==='inside'){

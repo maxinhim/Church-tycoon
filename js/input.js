@@ -126,6 +126,7 @@ function onPanel0(e){
   else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
   else if(a==='pslope'){UI.pc.slope=+v;UI.pbarOpen=false;renderDetail();}
+  else if(a==='mgr'){var mb0=UI.sel;if(mb0&&mgrRole(bById(mb0))){openScreen('mgr');UI.mgrB=mb0;renderScreen();}}
   else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){investBld(ib);if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==(il0<=3?1:il0<=6?2:3)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
   else if(a==='pkind'){UI.pc.k=v;UI.pbarOpen=false;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}

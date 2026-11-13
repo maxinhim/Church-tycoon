@@ -7,7 +7,8 @@ var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 /* 시작 상태: 교회 문은 닫혀 있다. 첫 예배실과, 교회 입구에서 예배실 앞까지 보도블록이 깔려 있다.
    방문자는 바닥·길 위로만 다니므로 새 건물은 입구까지 바닥을 이어야 쓸 수 있다 */
 var START_TREES=[[10,20],[21,21],[18,22],[3,4],[6,13],[26,6],[29,16],[4,25],[13,9],[19,3],[8,2],[24,12],[2,18],[30,22],[11,25],[20,25]];
-var START_FLOOR=[[15,26],[15,25],[14,24],[15,24],[16,24]];
+// 대예배당(지도 가운데, 정면이 입구 쪽) 자리와, 그 문 앞에서 교회 입구까지 이어 둔 길(칸 좌표: 열 ENT~ENT+EW-1)
+var MAIN_AT={x:28,y:28},MAIN_PATH_Y=[32,PZ-1];
 /* 시작 지형: 지형 기능이 있다는 것이 한눈에 보이게 언덕 둘, 물이 찬 연못 하나, 마른 도랑 하나를 둔다.
    교회·입구 길·시작 나무와 겹치지 않는 자리. 테스트(__CT_TEST)에서는 평지로 시작한다(__CT_TERRAIN을 켜면 지형 포함) */
 function startTerrain(){
@@ -27,10 +28,10 @@ function startTerrain(){
 }
 function newState(dk){
   dk=DIFF[dk]?dk:'normal';
-  var bs=[{id:1,def:'room',x:14*G,y:22*G,face:2,inUse:0,uses:0}],fl={};
+  var bs=[{id:1,def:'main',x:MAIN_AT.x,y:MAIN_AT.y,face:2,inUse:0,uses:0,fixed:true}],fl={};
   START_TREES.forEach(function(t,i){bs.push({id:i+2,def:'tree',x:t[0]*G,y:t[1]*G,inUse:0,uses:0});});
   // 예전 칸 좌표로 적어 둔 시작 바닥: 한 칸마다 G×G칸을 깐다
-  START_FLOOR.forEach(function(t){for(var j=0;j<G;j++)for(var i=0;i<G;i++)fl[(t[0]*G+i)+','+(t[1]*G+j)]='f_block';});
+  for(var fy=MAIN_PATH_Y[0];fy<=MAIN_PATH_Y[1];fy++)for(var fx=ENT;fx<ENT+EW;fx++)fl[fx+','+fy]='f_block';
   var st=startTerrain();
   return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,open:false,loans:[],wx:{cur:'sun',next:'cloud',day:0,clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1},rcpt:null,weekShop:0,weekSup:0,weekGive:0,memAcc:0,
     buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:st.hgt,slp:st.slp,water:st.water,wall:{},
@@ -39,7 +40,8 @@ function newState(dk){
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
     hist:[],log:[],over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
     grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{communion:-2},lvl:null,
-    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:3,qd:{},qb:{},qxp:0,tv:0,il:{},ind:null,careDone:0,cares:[],careId:1};
+    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:3,qd:{},qb:{},qxp:0,tv:0,il:{},ind:null,careDone:0,cares:[],careId:1,hrV:1,hires:[],hireId:1,hireN:0,hcand:{},
+    freeMgr:typeof window!=='undefined'&&!!window.__CT_TEST&&!window.__CT_MGR};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
@@ -53,7 +55,7 @@ function rebuildOcc(){
 function agg(){
   var a={seats:0,fcap:0,ccap:0,kcap:0,park:0,beauty:0,vis:0,up:0,rep:0};
   // 낡은 건물(상태 60% 미만)은 수용 효과가 줄어든다
-  S.buildings.forEach(function(b){var d=defOf(b),k=condFactor(b)*bCapK(b);a.seats+=d.seats*k;a.fcap+=d.fcap*k;a.ccap+=d.ccap*k;a.kcap+=d.kcap*k;a.park+=d.park*k;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);a.rep+=d.rep;});
+  S.buildings.forEach(function(b){var d=defOf(b),k=staffed(b)?condFactor(b)*bCapK(b):0;a.seats+=d.seats*k;a.fcap+=d.fcap*k;a.ccap+=d.ccap*k;a.kcap+=d.kcap*k;a.park+=d.park*k;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);a.rep+=d.rep;});
   ['seats','fcap','ccap','kcap','park'].forEach(function(k){a[k]=Math.round(a[k]);});
   for(var fk in S.floor){var fd=D[S.floor[fk]];if(fd)a.beauty+=fd.beauty||0;}
   S.paths.forEach(function(p){var pd=p.f&&D[p.f];if(pd)a.beauty+=pd.beauty||0;if(PATHK[p.k])a.beauty+=PATHK[p.k].beauty||0;});
@@ -80,4 +82,4 @@ function calcMood(){
   var mood=MOOD_ITEMS*items+Math.min(BONUS_MAX,pos)+neg;
   return {sp:sp,mood:clamp(mood,0,100),items:items,bonus:Math.min(BONUS_MAX,pos),bonusRaw:pos,malus:neg,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
 }
-function recalc(){syncPeople();refreshNav();fitTalents();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;S.ind=calcInd(m);}
+function recalc(){syncPeople();fitMgrs();refreshNav();fitTalents();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;S.ind=calcInd(m);}

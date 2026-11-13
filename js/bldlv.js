@@ -31,7 +31,7 @@ function bLv(b){return hasLv(b)?Math.max(1,Math.min(BLV_MAX,b.lv||1)):1;}
 function tierK(b){var d=defOf(b);return d&&d.tier===2?TIER2_K:1;}
 function bStage(b){var l=bLv(b);return l<=3?1:l<=6?2:3;}
 // 한 번 이용할 때 효과 배율
-function bPerf(b){return hasLv(b)?tierK(b)*(1+BLV_FX*(bLv(b)-1)):1;}
+function bPerf(b){return hasLv(b)?tierK(b)*(1+BLV_FX*(bLv(b)-1))*mgrK(b):1;}
 // 정원·좌석·수용 배율
 function bCapK(b){return hasLv(b)?tierK(b)*(1+BLV_CAP*(bLv(b)-1)):1;}
 function bCap(b){
@@ -43,7 +43,7 @@ function bCap(b){
 function rotTime(b){
   var d=defOf(b),m=bMode(d),t=d.dur*STAY*TEMPO_ROT;
   if(m==='batch')return t*BATCH_ROT;
-  if(m==='single')return t*SINGLE_ROT/(tierK(b)*(1+BLV_ROT*(bLv(b)-1)));
+  if(m==='single')return t*SINGLE_ROT/(tierK(b)*(1+BLV_ROT*(bLv(b)-1))*mgrK(b));
   return t;
 }
 /* 레벨 올리기: 한 번 투자 값, 투자 */

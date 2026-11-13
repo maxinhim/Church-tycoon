@@ -225,7 +225,7 @@ async function pathChecks(browser, url) {
     window.__ct.init(); S.money = 99999; levelTick(true); S.unlockAll = true; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.dlg = null;
     const o = {};
     const free = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS - 1 && !occ[y][x] && !piecesAt(x, y).length;
-    const starter = S.buildings.find(b => b.def === 'room');
+    const starter = S.buildings.find(b => b.def === 'main');
     o.defaultDoor = !!(starter.door && starter.acc && starter.acc.ok);
     // 기도실 + 앞쪽으로 계단 자리
     let X = -1, Y = -1;
@@ -357,7 +357,7 @@ async function rulesChecks(browser, url) {
     // 걷기: 잔디는 못 걷고, 주차 구역은 걷고, 도로 줄은 입구 열만
     o.walk = !groundOk(2, 5) && groundOk(2, PZ + 1) && !groundOk(2, ROWS - 1) && groundOk(ENT, ROWS - 1) && groundOk(ENT, PZ - 1);
     // 시작은 문이 닫혀 있다: 방문자가 오지 않고, 주차 구역에서 부지로 들어오는 길이 막힌다
-    const starter = S.buildings.find(b => b.def === 'room');
+    const starter = S.buildings.find(b => b.def === 'main');
     o.closedStart = S.open === false && usable(starter);
     for (let i = 0; i < WEEK * 5; i++) update(0.1);
     const g = gid(ENT, PZ - 1);
@@ -596,7 +596,7 @@ async function ministryChecks(browser, url) {
     o.dlgShown = !document.getElementById('dlg').hidden;
     o.dlg = chooseDlg(0) === '' && S.dlg === null && S.money === mz - 300;
     // 노후와 수리
-    const room = S.buildings.find(b => b.def === 'room'); room.cond = 20; recalc();
+    const room = S.buildings.find(b => b.def === 'main'); room.cond = 20; recalc();
     const seatsWorn = A.seats;
     o.worn = condFactor(room) < 1 && needRepair().indexOf(room) >= 0;
     o.repair = repair(room) === '' && room.cond === 100 && A.seats > seatsWorn;
@@ -811,13 +811,17 @@ async function ministryChecks(browser, url) {
   });
   // 지은 것을 지도에서 누르면: 패널 대신 작은 카드, 철거는 두 번 눌러야
   const card = await page.evaluate(() => {
-    const b = S.buildings.find(x => x.def === 'room'); UI.fold = false; UI.tab = 'status'; renderPanel();
+    const b = S.buildings.find(x => x.def === 'main'); UI.fold = false; UI.tab = 'status'; renderPanel();
     const dm = bDims(b), m = rotPt(b.x + dm.w / 2, b.y + dm.h / 2), q = toScreen(m[0], m[1], .3); onTap(q[0], q[1]);
     if (UI.sel !== b.id) return 'not picked';
     syncSelCard(); const el = document.getElementById('selCard');
     if (!document.getElementById('dock').hidden || el.hidden) return 'dock or no card';
     const r = el.getBoundingClientRect(); if (r.width > 320 || r.height > 120) return 'too big ' + Math.round(r.width) + 'x' + Math.round(r.height);
     el.querySelector('[data-act="scmore"]').click();
+    // 대예배당은 철거·이동 단추가 없고, 함수를 직접 불러도 그대로다
+    if (el.querySelector('[data-act="scdem"]') || el.querySelector('[data-act="move"]') || canMove(b)) return 'main chapel has demolish/move';
+    demolish(b.id); if (!bById(b.id) || !b.fixed) return 'main chapel demolished';
+    const tr = S.buildings.find(x => x.def === 'tree'); UI.sel = tr.id; renderSelCard(); el.querySelector('[data-act="scmore"]').click();
     const n0 = S.buildings.length; el.querySelector('[data-act="scdem"]').click();
     if (S.buildings.length !== n0 || !/정말/.test(el.textContent)) return 'one tap demolished';
     closeSelCard(); return el.hidden ? 'ok' : 'not closed';
@@ -1121,7 +1125,7 @@ async function startTerrainChecks(browser, url) {
     o.shapes = hs.some(h => h >= 2) && hs.some(h => h < 0) && Object.keys(S.slp).length >= 2 && Object.keys(S.water).length > 5;
     o.water = Object.keys(S.water).every(k => { const a = k.split(',').map(Number); return th(a[0], a[1]) < 0 && !cellSubWhy(a[0], a[1]); });
     o.clear = S.buildings.every(b => bTiles(b).every(t => !th(t.x, t.y) && !isRamp(t.x, t.y))) && Object.keys(S.floor).every(k => !S.hgt[k]);
-    S.open = true; recalc(); const room = S.buildings.find(b => b.def === 'room');
+    S.open = true; recalc(); const room = S.buildings.find(b => b.def === 'main');
     o.reach = usable(room);
     // 언덕 꼭대기에 경사로로 걸어 오를 수 있다
     paintFloor(14, 20, 'f_block'); paintFloor(14, 18, 'f_block'); paintFloor(14, 16, 'f_block'); recalc();
@@ -1136,6 +1140,55 @@ async function startTerrainChecks(browser, url) {
   await ctx.close();
 }
 
+// 대예배당 고정 배치, 건물 관리자(배치·외부 청빙·성도 돌봄과 둘 중 하나), 내부 투시 그리기
+async function mgrChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; window.__CT_MGR = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} });
+  await page.goto(url);
+  const r = await page.evaluate(() => {
+    const o = {}; window.__ct.init(); S.dlg = null; showDlg(); S.money = 99999; S.unlockAll = true; S.open = true; recalc();
+    const mn = S.buildings[0], md = bDims(mn);
+    let pathOk = true; for (let y = mn.y + md.h; y < PZ; y++) for (let x = ENT; x < ENT + EW; x++) if (S.floor[x + ',' + y] !== 'f_block') pathOk = false;
+    o.main = mn.def === 'main' && mn.fixed === true && Math.abs(mn.x + md.w / 2 - COLS / 2) <= 2 && Math.abs(mn.y + md.h / 2 - (ROWS - RD) / 2) <= 3 && pathOk && usable(mn) && bOpen(mn) && !S.freeMgr && !mgrRole(mn) && mgrOf(mn).name === '담임목사' && !DEFS.some(d => d.id === 'main' && !d.hidden) && !build('main', 2, 2, 2);
+    const put = id => { build(id, id === 'shop' ? 36 : id === 'cell' ? 20 : 38, id === 'room' ? 22 : 34, 2); const b = S.buildings[S.buildings.length - 1]; const lp = linkPlan(b); if (lp && !lp.why) lp.tiles.forEach(t => { S.floor[t.x + ',' + t.y] = 'f_block'; }); recalc(); return b; };
+    const c0 = A.ccap, shop = put('shop'), cell = put('cell'), room = put('room');
+    o.need = mgrRole(shop) === 'staff' && mgrRole(cell) === 'leader' && mgrRole(room) === 'pastor' && !mgrRole({ def: 'wc' }) && !mgrRole({ def: 'kids' }) && unstaffed().length === 3 && usable(shop) && !bOpen(shop) && !staffed(cell) && A.ccap === c0 && warnings().some(w => /관리자가 없는 건물/.test(w));
+    // 선택 카드 → 관리자 화면 → 외부 청빙 창
+    UI.sel = shop.id; renderSelCard(); const sc = document.getElementById('selCard'); o.card = /관리자 필요/.test(sc.textContent); sc.querySelector('[data-act="mgr"]').click();
+    o.scr = UI.scr === 'mgr' && UI.mgrB === shop.id && /없음/.test(document.getElementById('scrBody').textContent); document.querySelector('#scrBody [data-act="hireopen"]').click();
+    const dl = document.getElementById('scrDlg'), cheap = (HIRE_PAY0 + HIRE_PAY_K) * HIRE_FEE_K, hc = () => [...dl.querySelectorAll('.hc')];
+    o.dlg = !dl.hidden && hc().length === 3 && hc().every(c => !!c.querySelector('svg') && c.querySelector('p').textContent.length > 10 && !!c.querySelector('.hst')) && hireCands('staff')[0].skill === 1 && hireCands('staff')[0].fee === cheap;
+    const m0 = S.money, before = JSON.stringify(hireCands('staff')); dl.querySelector('[data-act="hirereroll"]').click();
+    o.reroll = S.money === m0 - HIRE_REROLL && HIRE_REROLL > cheap * 4 && JSON.stringify(hireCands('staff')) !== before && hireCands('staff').some(c => c.skill === 1);
+    const m1 = S.money, pay0 = assocPay(); dl.querySelector('[data-act="hiretake"]').click();
+    o.hire = S.hires.length === 1 && shop.mgr === 'h' + S.hires[0].id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + S.hires[0].pay && dl.hidden && mgrOf(shop).src === 'ex';
+    // 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르다
+    const p1 = S.people[0], p2 = S.people[1]; p1.node = 'server'; p1.lv = 30; p2.node = 'sgl'; p2.lv = 30; recalc(); renderScreen();
+    const cards = [...document.querySelectorAll('#scrBody .mgrc')], pool = mgrPool('staff'), inn = pool.find(w => w.src === 'in'), ex = pool.find(w => w.src === 'ex');
+    o.pool = cards.length === 2 && !!document.querySelector('#scrBody .mgrc.in') && !!document.querySelector('#scrBody .mgrc.ex') && inn.k > exK(5) && ex.k === exK(1) && getComputedStyle(document.querySelector('#scrBody .mgrc.in .ppi')).boxShadow !== getComputedStyle(document.querySelector('#scrBody .mgrc.ex .ppi')).boxShadow;
+    const rt0 = rotTime(shop); document.querySelector('#scrBody .mgrc.in').click(); o.swap = shop.mgr === 'p' + p1.id && rotTime(shop) < rt0 && mgrAt('h' + S.hires[0].id) === 0;
+    // 건물을 맡으면 성도 돌봄(자동 심방)에서 빠진다
+    const cap0 = delegCap(); mgrSet(cell.id, 'p' + p2.id); const cap1 = delegCap(); mgrClear(cell.id); o.excl = cap0 > 0 && cap1 === cap0 - leadCare(p2) && delegCap() === cap0 && mgrSet(cell.id, 'p' + p1.id) !== '' ;
+    mgrSet(cell.id, 'p' + p2.id); p2.node = 'new'; recalc(); o.fit = !cell.mgr && !staffed(cell);
+    // 내부 투시: 관리자가 있는 건물과 대예배당만, 그려도 오류가 없다
+    closeScreen(); shop.inUse = 1; o.cut = cutOn(shop) && cutOn(mn) && !cutOn(cell) && !cutOn(room) && !cutOn({ def: 'shop', id: shop.id, x: 0, y: 0 }); draw(); shop.inUse = 0;
+    // 봇용 자동 배치, 예전 저장은 자원봉사자로 이어진다
+    o.auto = autoStaff(0) >= 1 && staffed(cell);
+    delete S.hrV; room.mgr = undefined; delete room.mgr; recalc(); o.old = room.mgr === 'v' && bOpen(room) && mgrOf(room).name === '자원봉사자';
+    return o; });
+  check(r.main, '대예배당: 지도 가운데에 고정으로 서 있고(목록에 없음) 문 앞에서 입구까지 길이 이어져 바로 가동');
+  check(r.need, '관리자: 추가 예배당·교제 공간·매장은 관리자가 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
+  check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 외부 청빙 창에 후보 3명(얼굴·별·사연), 초반엔 값싼 별 1개 후보가 반드시');
+  check(r.reroll && r.hire, '외부 청빙: 다시 뽑기는 큰돈이 들고, 청빙하면 바로 배치되어 가동·주급 지출');
+  check(r.pool && r.swap, '관리자: 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르며, 바꿔 배치하면 회전이 빨라짐');
+  check(r.excl && r.fit, '관리자: 건물을 맡은 리더는 성도 돌봄에서 빠지고(한 사람 한 건물), 자격을 잃으면 건물에서 빠짐');
+  check(r.cut && r.auto && r.old, '내부 투시: 관리자가 있는 건물만 단면으로 그리고 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
+  if (!Object.values(r).every(Boolean)) console.log('MGR', JSON.stringify(r));
+  check(errs.length === 0, '관리자: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
 async function levelChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
   const page = await ctx.newPage();
@@ -1148,7 +1201,7 @@ async function levelChecks(browser, url) {
     const o = {};
     const put = (id, face) => { const d = D[id]; for (let y = 4; y < PZ - 8; y += 2) for (let x = 4; x < COLS - 10; x += 2) if (canPlace(d, x, y, face) && !onFloorAt(d, x, y, face)) { if (build(id, x, y, face)) { const b = S.buildings[S.buildings.length - 1]; recalc(); linkDoor(b); recalc(); if (usable(b)) return b; demolish(b.id); recalc(); } } return null; };
     // 대기줄·입구·출구 건물은 없다: 시작 예배실은 정면 문 하나로 바로 쓴다
-    const room = S.buildings.find(b => b.def === 'room');
+    const room = S.buildings.find(b => b.def === 'main');
     o.start = usable(room) && !!room.door && room.door.ent.d === room.face && typeof gatesOf === 'undefined' && typeof qLen === 'undefined' && !DEFS.some(d => d.kind === 'gate' || d.queue) && !CATS.some(c => c[0] === 'gate');
     // 문은 정면 1층 가운데 한 칸, 방향을 돌리면 문도 돈다
     const pr = put('pray', 2);
@@ -1205,7 +1258,7 @@ async function levelChecks(browser, url) {
       const ch = { def: 'chapel', lv: 1, id: 0 }, r6 = { def: 'room', lv: 6, id: 0 }, r7 = { def: 'room', lv: 7, id: 0 }, r10 = { def: 'room', lv: 10, id: 0 }, c10 = { def: 'chapel', lv: 10, id: 0 };
       o.tier2 = D.chapel.tier === 2 && D.chapel.t1 === 'room' && D.room.tier === 1 && Math.abs(D.chapel.cost - D.room.cost * (1 + inv)) <= 10 && D.chapel.cost > D.room.cost * 5 &&
         bPerf(ch) >= bPerf(r6) && bPerf(ch) <= bPerf(r7) + 1e-9 && bPerf(c10) > bPerf(r10) * 1.5 && D.chapel.seats === D.room.seats && TIER_PAIRS.every(p => D[p[0]] && D[p[1]] && D[p[1]].tier === 2);
-      S.unlockAll = false; S.lvl = 1; const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 2, 2, 2);
+      S.unlockAll = false; S.lvl = 1; if (!S.buildings.some(b => b.def === 'room')) build('room', 2, 6, 2); const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 2, 2, 2);
       S.unlockAll = true; o.tier1 = isLocked('chapel') === false && /1개까지/.test(lockedWhy) && !again && S.buildings.length === nb && tierWhy('room') === ''; }
     // 매장·편의 종류는 기능별로 줄였다: 더 짓지 않는 것은 목록에 없고 지을 수 없다
     { UI.tab = 'build'; UI.fold = false; UI.bstep = 'items'; UI.cat = 'shop'; renderBuild(); const shopCards = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.v); closeDock();
@@ -1532,7 +1585,15 @@ async function gripeChecks(browser, url) {
     document.querySelector('#subtabs [data-act="csub"][data-v="music"]').click();
     const music = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.v);
     o.club = o.club && subs === 'sport,hobby,music' && sport.includes('futsal') && sport.includes('gym') && !sport.includes('choir') && music.length === 3 && music.includes('choir');
-    UI.cat = 'worship'; renderPanel(); o.club = o.club && !document.querySelector('#subtabs [data-act="csub"]');
+    { UI.cat = 'worship'; UI.csub = null; renderPanel(); const wsub = [...document.querySelectorAll('#subtabs [data-act="csub"]')];
+    const ids = () => [...document.querySelectorAll('#cards [data-v]')].map(c => c.dataset.v);
+    const wo1 = ids(); wsub[1].click(); const wo2 = ids();
+    UI.cat = 'shop'; renderPanel(); const ssub = [...document.querySelectorAll('#subtabs [data-act="csub"]')].map(x => x.dataset.v).join(); const sh1 = ids();
+    document.querySelector('#subtabs [data-act="csub"][data-v="cafe"]').click(); const sh2 = ids();
+    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray' && wsub.every(x => !!x.querySelector('i') && x.querySelector('i').textContent.length > 0) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
+      ssub === 'food,cafe,book' && sh1.includes('shop') && !sh1.includes('coffeecart') && sh2.includes('coffeecart') && !sh2.includes('shop') && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(c => DEFS.filter(d => d.cat === c && !d.hidden).every(d => CAT_SUBS[c].some(x => x[0] === d.sub)));
+    }
+    UI.cat = 'path'; renderPanel(); o.club = o.club && !document.querySelector('#subtabs [data-act="csub"]');
     UI.fold = true; renderPanel();
     // 현황 화면: 지표 다섯 카드, 카드를 누르면 정보 창, 항목을 누르면 계산 방식이 펼쳐진다
     openGroup('status'); const cards = document.querySelectorAll('#scrBody .indc').length;
@@ -1615,6 +1676,7 @@ async function gripeChecks(browser, url) {
   check(r.lonely0 && r.lonely1 && r.food, '불편: 외로운 방문자는 소모임을, 배고픈 방문자는 먹을 곳을 찾아가고, 없으면 불편');
   check(r.spread, '방문자: 이번 주에 덜 쓰인 건물을 골라 고루 쓰고, 꽉 차서 오래 기다리면 크게 불만');
   check(r.fixes, '불편: 건물 설명에 무엇을 풀어 주는지 보임 (외로움·배고픔·목마름)');
+  check(r.subs, '건축 분류: 예배·교제·매장·돌봄·편의도 기능별 아이콘 칩으로 나뉘고, 고른 묶음의 건물만 목록에 (대예배당은 목록에 없음)');
   check(r.club, '소모임: 운동·취미·음악 칩이 제목 줄에, 고른 묶음만 목록에 (체육관은 운동으로)');
   check(errs.length === 0, '불편: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -1840,6 +1902,7 @@ async function earlyChecks(browser, url) {
     await modularChecks(browser, url);
     await pathChecks(browser, url);
     await stackChecks(browser, url);
+    await mgrChecks(browser, url);
     await ministryChecks(browser, url);
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);

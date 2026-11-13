@@ -385,7 +385,7 @@ function plOk0(){
 /* ---------- 지은 것 옮기기·돌리기 (무료) ----------
    짓기와 같은 미리보기로 자리와 방향을 고른다. 원래 건물은 그동안 숨기고, 겹침 검사에서도 빼 둔다.
    층·상태·이용 횟수는 그대로. 방향이 같으면 직접 고른 입구·출구도 함께 옮긴다. 칸 건물·길·바닥은 옮기지 않는다 */
-function canMove(b){return !!b&&!!D[b.def];}
+function canMove(b){return !!b&&!!D[b.def]&&!b.fixed;}
 function movingId(){var b=UI.moving&&bById(UI.moving);return b&&UI.tool===b.def&&isPlacing()?b.id:0;}
 function startMove(b){
   if(!canMove(b))return;

@@ -77,7 +77,7 @@ function gripeTick(v,dt,walkedNow){
 // 갈 곳을 고를 때: 급한 일이 있으면 그 시설부터 찾아간다. 못 찾으면 불편을 겪고 넘어간다 (true = 길을 잡았다)
 function urgeGo(v){
   var k=v.urge,g=GRIPES[k];if(!k||!g)return false;
-  var all=S.buildings.filter(function(b){return gripeFits(g,defOf(b))&&usable(b);});
+  var all=S.buildings.filter(function(b){return gripeFits(g,defOf(b))&&bOpen(b);});
   var open=all.filter(function(b){return wxOpen(defOf(b))&&!(v.blocked[b.id]>S.clock);});
   open.sort(function(a,b){return Math.abs(a.x-v.x)+Math.abs(a.y-v.y)-Math.abs(b.x-v.x)-Math.abs(b.y-v.y);});
   for(var i=0;i<Math.min(3,open.length);i++){

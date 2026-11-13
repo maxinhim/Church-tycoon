@@ -84,6 +84,7 @@ function runBot(cfg) {
   }
   function pastoral() {
     cares(); people();
+    if (typeof autoStaff === 'function') stat.staffed = (stat.staffed || 0) + autoStaff(RES);
     if (S.members <= MOD.cap * 0.9) return;
     if (S.assoc.length < assocSlots() && S.cands.length) { let bi = 0; S.cands.forEach((c, i) => { if (c.skill > S.cands[bi].skill) bi = i; }); if (S.money > S.cands[bi].fee + RES * 2 && hireAssoc(bi) === '') stat.staff++; }
   }
@@ -145,7 +146,7 @@ function runBot(cfg) {
     const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } }), page = await ctx.newPage();
     const errs = []; page.on('pageerror', e => errs.push(e.message));
     await page.addInitScript(seed => { let s = seed; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-      window.__CT_TEST = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
+      window.__CT_TEST = true; window.__CT_MGR = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
     await page.goto(url); await page.evaluate(() => window.__ct.init());
     out[strat] = await page.evaluate(runBot, { strat, weeks: WEEKS, diff: DIFFK });
     out[strat].errs = errs; await ctx.close();

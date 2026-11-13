@@ -18,8 +18,10 @@ function mk(id,name,cat,w,h,cost,up,kind,wall,roofc,o){
   DEFS.push(d); return d;
 }
 mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.95,roof:'gable',rh:.55,deco:'crossRidge',seats:24,fill:{word:48},cap:10,dur:5,desc:'작고 따뜻한 첫 예배 공간'});
+// 처음부터 지도 가운데에 서 있는 본당: 담임목사가 맡고, 철거·이동할 수 없다 (목록에 없다). 성능은 작은 예배실과 같고 레벨로 키운다
+mk('main','대예배당','worship',3,2,900,8,'bld','#efe8da','#3f5ea3',{hidden:true,H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:24,fill:{word:48},cap:10,dur:5,desc:'교회의 중심. 담임목사가 맡는 본당이라 옮기거나 철거할 수 없어요'});
 mk('chapel','예배당','worship',3,2,2800,24,'bld','#efe8da','#3f5ea3',{H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:70,fill:{word:60,fel:8},cap:28,dur:6,desc:'종탑이 있는 주일예배 공간'});
-mk('grand','대예배당','worship',4,3,7600,60,'bld','#f2ece0','#34508f',{H:1.5,roof:'gable',rh:.95,deco:'tower',towerH:3.0,stained:1,seats:190,fill:{word:70,fel:10},cap:70,dur:7,desc:'수백 명이 모이는 큰 예배당'});
+mk('grand','대성전','worship',4,3,7600,60,'bld','#f2ece0','#34508f',{H:1.5,roof:'gable',rh:.95,deco:'tower',towerH:3.0,stained:1,seats:190,fill:{word:70,fel:10},cap:70,dur:7,desc:'수백 명이 모이는 큰 예배당'});
 mk('pray','기도실','worship',1,1,420,3,'bld','#ece5d6','#6a7fb0',{H:.8,roof:'hip',rh:.55,deco:'crossApex',seats:4,fill:{word:28,comf:12},cap:2,dur:4,desc:'조용히 머무는 작은 기도 공간'});
 mk('bible','성경공부방','worship',2,1,600,6,'bld','#ece5d6','#5a74b8',{H:.8,roof:'hip',rh:.45,seats:10,fill:{word:36,fel:10},cap:6,dur:5,desc:'말씀을 함께 읽고 나누는 방'});
 mk('praise','찬양실','worship',2,2,1500,16,'bld','#efe6f2','#7a5bb5',{H:1.0,roof:'gable',rh:.55,deco:'crossRidge',stained:1,seats:30,fill:{word:44,comf:8},cap:12,dur:5,desc:'찬양과 기도로 채워지는 공간'});
@@ -154,6 +156,13 @@ DEFS.forEach(function(d){if(PRICY_CATS.indexOf(d.cat)>=0&&!d.prop)d.cost=Math.ro
 var COURT_H={pingpong:.5,fitness:1.2,badminton:.9,jokgu:.5,gateball:.4,hoops:1.7,futsal:.8};
 DEFS.forEach(function(d){if(d.kind==='court')d.hgt=COURT_H[d.court];});
 var D={}; DEFS.forEach(function(d){D[d.id]=d;});
+// 건축 목록의 기능별 하위 묶음 (panel.js CAT_SUBS)
+var SUB_OF={room:'service',chapel:'service',grand:'service',outdoor:'service',praise:'service',pray:'pray',bible:'pray',dawn:'pray',mission:'pray',
+  cell:'group',youth:'group',hall:'hall',
+  shop:'food',dining:'food',bakery:'food',market:'food',cafe:'cafe',coffeecart:'cafe',vending:'cafe',books:'book',bookstore:'book',flowercart:'book',
+  kids:'kids',nursery:'kids',study:'kids',playground:'kids',pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
+  wc:'toilet',wc2:'toilet',bench:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
+for(var sk in SUB_OF)if(D[sk])D[sk].sub=SUB_OF[sk];
 // 한 칸짜리 소품은 그림을 절반 크기로 그리므로 높이도 절반 (입구·출구는 제 높이)
 function heightOf(id){var d=D[id];return heightOfDef(d)*(d.cell&&d.kind!=='gate'?CELL_K:1);}
 function heightOfDef(d){

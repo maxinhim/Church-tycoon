@@ -255,3 +255,26 @@
 .evq-b .evi{font-size:17px}
 .evq-b b{font-size:11.5px;font-weight:600}
 .evq-b small{font-size:10.5px;color:var(--muted)}
+
+/* 관리자 배치: 기른 사람(금빛)·청빙한 사람(푸른빛) 테두리 */
+.mgrh span{color:var(--ink)}.mgrh em{color:var(--bad);font-style:normal;font-weight:700}
+.mk{display:inline-block;width:11px;height:11px;border-radius:50%;margin:0 4px 0 2px;vertical-align:-1px;border:3px solid #e3a521}
+.mk.ex{border-color:#3f7fd6;margin-left:8px}
+.mgrc .ppi{box-shadow:0 2px 5px rgba(0,0,0,.22),0 0 0 4px #e3a521}
+.mgrc.ex .ppi{box-shadow:0 2px 5px rgba(0,0,0,.22),0 0 0 4px #3f7fd6}
+.mgrc small{font-size:10.5px;color:var(--muted)}
+.mgrc.here .evp{background:#37b24d;color:#fff}
+.mgrc.here small{color:#1f7a36;font-weight:700}
+.sdlg.hire{width:min(640px,100%)}
+.hcs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.hc{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:8px 8px 9px;text-align:center}
+.hc .ppi{width:54px;height:54px;flex:none;box-shadow:0 2px 5px rgba(0,0,0,.22),0 0 0 3px #3f7fd6}
+.hc b{font-size:13px}
+.hst{color:#e3a521;font-size:12px;letter-spacing:1px}.hst i{font-style:normal;color:var(--line)}
+.hk{font-size:11px;font-weight:600}
+.hc p{margin:2px 0;font-size:11px;line-height:1.4;color:var(--muted);flex:1}
+.hc small{font-size:10.5px;color:var(--muted)}
+.hc .btn{height:30px;font-size:12px;width:100%}
+@media (max-height:340px){.hc p{font-size:10px}.hc .ppi{width:40px;height:40px}}
+.mgrw{display:flex;flex-direction:column;align-items:center}
+.mgrx{border:0;background:transparent;color:var(--muted);font-size:10.5px;text-decoration:underline;padding:0 4px;cursor:pointer}

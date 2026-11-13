@@ -5,9 +5,9 @@
    · 영성(성도 만족도의 한 항목, 비중 25%) = 말씀 30% + 기도 20% + 찬양 20% + 성례 30%
      - 말씀·기도·찬양: 그 일을 하는 건물 자리 + 사역팀·부교역자 ÷ 성도 수에 맞는 필요 (성도가 늘수록 기대치도 오른다)
      - 성례: 최근에 연 성찬식·세례식·수련회·절기 예배. 시간이 지나면 줄어들어 꾸준히 열어야 한다 */
-var HALLS=['room','chapel','grand','outdoor'];
+var HALLS=['main','room','chapel','grand','outdoor'];
 function isHall(b){return !!b&&HALLS.indexOf(b.def)>=0;}
-function hallsReach(){return S.buildings.some(function(b){return isHall(b)&&usable(b);});}
+function hallsReach(){return S.buildings.some(function(b){return isHall(b)&&bOpen(b);});}
 // 문을 열 수 없으면 이유
 function gateWhy(){
   if(S.open)return '';

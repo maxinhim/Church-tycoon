@@ -146,9 +146,12 @@ function drawMarkers(c){
   var mv=movingId();
   S.buildings.forEach(function(b){
     if(b.id===mv)return;
-    var bad=needsDoor(b)&&!usable(b);
-    if(!bad)return;
+    var bad=needsDoor(b)&&!usable(b),nom=!bad&&!staffed(b);
+    if(!bad&&!nom)return;
     var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bLevel(b)*LV+bHeight(b)+.35);
+    // 관리자가 없는 건물: 주황 동그라미에 사람 표시
+    if(nom){c.fillStyle='#e08a1e';c.strokeStyle='#fff';c.lineWidth=1.5;c.beginPath();c.arc(q[0],q[1],7.5*s,0,6.283);c.fill();c.stroke();
+      c.fillStyle='#fff';c.beginPath();c.arc(q[0],q[1]-2.2*s,2.3*s,0,6.283);c.fill();c.beginPath();c.arc(q[0],q[1]+4.6*s,4.2*s,3.4,6.02);c.fill();return;}
     c.fillStyle='#d6453a';c.strokeStyle='#fff';c.lineWidth=1.5;
     c.beginPath();c.arc(q[0],q[1],7*s,0,6.283);c.fill();c.stroke();
     c.fillStyle='#fff';c.font='800 '+(9*s)+'px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText('?',q[0],q[1]+.5);

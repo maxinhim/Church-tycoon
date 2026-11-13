@@ -30,7 +30,7 @@ function bump(){
 function build(id,x,y,face){
   if(D[id]&&D[id].kind==='floor')return !paintFloor(x,y,id);
   var d=D[id];if(face==null)face=2;
-  if(S.money<d.cost||!canPlace(d,x,y,face)||tierWhy(id)||d.retired)return false;
+  if(S.money<d.cost||!canPlace(d,x,y,face)||tierWhy(id)||d.retired||d.hidden)return false;
   S.money-=d.cost;
   var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0,bw:S.week};setPlaceLevel(nb,d,x,y,face);
   S.buildings.push(nb);addFresh(d.beauty);noteNew();
@@ -38,7 +38,7 @@ function build(id,x,y,face){
   save();return true;
 }
 function demolish(id){
-  var b=bById(id);if(!b)return;
+  var b=bById(id);if(!b||b.fixed)return;
   var d=defOf(b);
   S.money+=Math.floor(d.cost*0.5);
   S.buildings=S.buildings.filter(function(x){return x.id!==id;});

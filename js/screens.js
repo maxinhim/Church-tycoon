@@ -10,7 +10,8 @@ var SCREENS={
   events:{title:'행사',tabs:[['events','행사'],['staff','사역팀']]},
   people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
-  officers:{title:'직분자',tabs:[['off','직분'],['B','교역'],['C','섬김'],['assoc','부교역자'],['cands','청빙']]}
+  officers:{title:'직분자',tabs:[['off','직분'],['B','교역'],['C','섬김'],['assoc','부교역자'],['cands','청빙']]},
+  mgr:{title:'관리자 배치',tabs:[['pool','인력']]}
 };
 var PP_PAGE=60;
 var RING_C=2*Math.PI*46;
@@ -73,6 +74,7 @@ function renderScreen(){
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
   else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='assoc'?assocHtml():(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml());}
+  else if(UI.scr==='mgr'){body.className='sbody';body.innerHTML=mgrHtml();}
   else if(UI.scr==='events'){
     body.className='sbody';
     var ids=Object.keys(EVENTS).filter(function(id){return !EVENTS[id].hidden;});
@@ -88,6 +90,7 @@ function renderScreen(){
   else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
   else if(sel&&sel.t==='cr'&&careRes)dh=careResHtml();
   else if(sel&&sel.t==='tm'&&STAFF[sel.id])dh=teamDlgHtml(sel.id);
+  else if(sel&&sel.t==='hire'&&UI.scr==='mgr'&&mgrScrB())dh=hireDlgHtml();
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
 }
@@ -141,6 +144,7 @@ function scrClick(e){
     else{sfx('coins',.55,0);scrToast(EVENTS[v].name+'을(를) 시작했어요 · '+durText(EVENTS[v].dur)+' 뒤 보상을 받을 수 있어요',2600);F.push({x:entC(),y:PZ-2.5,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
     renderScreen();hud(true);return;
   }
+  if(scrMgrClick(a,v))return;
   if(a==='evquick'){
     if(evReady(v)){var gq=claimEvent(v);if(gq){sfx('coins',.7,0);scrToast(EVENTS[v].name+' 마무리 · '+(gq.join(' · ')||'수고했어요'),3000);}}
     else if(evRunning(v)){scrToast(EVENTS[v].name+' 진행 중 · '+evLeftText(v)+' 남음',1600);}
@@ -357,4 +361,48 @@ function scrPeopleClick(a,v,el){
     renderScreen();hud(true);return true;
   }
   return false;
+}
+
+/* ---------- 관리자 배치 화면 (managers.js) ----------
+   선택 카드의 '👤 관리자'로 연다 (UI.mgrB = 건물 id). 이 건물을 맡을 수 있는 사람들을 카드로 보여 주고, 누르면 배치·해제한다.
+   교회에서 기른 사람은 금빛 테두리, 밖에서 청빙한 사람은 푸른 테두리. 한켠의 '외부 청빙'은 후보 3명 창(다시 뽑기는 큰돈) */
+function mgrScrB(){var b=UI.mgrB&&bById(UI.mgrB);return b&&mgrRole(b)?b:null;}
+function kText(k){return '성능 ×'+(Math.round(k*100)/100).toFixed(2);}
+function mgrHtml(){
+  var b=mgrScrB();if(!b)return '<p class="sempty">관리자를 둘 건물을 지도에서 골라 주세요.</p>';
+  var r=mgrRole(b),R=MGR_ROLE[r],cur=mgrOf(b),L=mgrPool(r),dg=delegState().on;
+  var h='<div class="sbulk mgrh"><span><b>'+defOf(b).name+'</b> · '+R.sub+' 맡아야 가동해요 · 지금: '+(cur?cur.name+' ('+kText(cur.k)+')':'<em>없음</em>')+'</span>'+
+    (cur?'<button class="btn" data-act="mgrclear">관리자 빼기</button>':'')+'<button class="btn pri" data-act="hireopen">＋ 외부 청빙</button></div>'+
+    '<p class="shint"><i class="mk in"></i>교회에서 기른 사람(성능이 높아요) · <i class="mk ex"></i>밖에서 청빙한 사람. 건물을 맡은 사람은 <b>성도 돌봄(자동 심방)</b>에서 빠져요 — 둘 중 하나만 할 수 있어요.</p>';
+  if(!L.length)return h+'<p class="sempty">아직 맡길 '+R.n+'이(가) 없어요. 성도를 길러 세우거나 <b>외부 청빙</b>으로 모셔 오세요.</p>';
+  return h+'<div class="evg">'+L.map(function(w){
+    var here=w.at===b.id,ob=w.at&&!here?bById(w.at):null,st=here?'이 건물 담당':ob?defOf(ob).name+' 담당':(w.carer&&dg?'성도 돌봄 중':'대기 중');
+    return '<div class="mgrw"><button class="evc ppc mgrc '+w.src+(here?' here':'')+'" data-act="mgrset" data-v="'+w.key+'" aria-label="'+w.name+', '+(w.src==='in'?'교회에서 기른 사람':'외부 청빙')+', '+st+'">'+
+      '<span class="evr">'+ringSvg(0)+'<span class="ppi">'+portraitSvg({seed:w.seed,g:w.g})+'</span></span>'+
+      '<span class="evn">'+w.name+'</span><span class="evp">'+kText(w.k)+'</span><small>'+st+'</small></button>'+
+      (w.key.charAt(0)==='h'?'<button class="mgrx" data-act="hirefire" data-v="'+w.key.slice(1)+'" aria-label="'+w.name+' 내보내기" title="내보내기 (주급이 더 나가지 않아요)">내보내기</button>':'')+'</div>';}).join('')+'</div>';
+}
+function hireDlgHtml(){
+  var b=mgrScrB(),r=mgrRole(b),C=hireCands(r),stars=function(n){return '★★★★★'.slice(0,n)+'<i>'+'★★★★★'.slice(n)+'</i>';};
+  return '<div class="sdlg hire" role="dialog" aria-label="외부 청빙"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
+    '<div class="sdt"><h3>외부 청빙 · '+MGR_ROLE[r].n+'</h3><p>세 사람 가운데 한 분을 모셔요. 청빙하면 '+defOf(b).name+'에 바로 배치돼요.</p></div>'+
+    '<div class="hcs">'+C.map(function(c,i){var poor=S.money<c.fee;
+      return '<div class="hc"><span class="ppi">'+portraitSvg({seed:c.seed,g:c.g})+'</span><b>'+c.name+(c.title?' '+c.title:'')+'</b><span class="hst" aria-label="능력 별 '+c.skill+'개">'+stars(c.skill)+'</span>'+
+        '<span class="hk">'+kText(exK(c.skill))+(c.field?' · '+FIELDS[c.field].name:'')+'</span><p>'+c.story+'</p><small>주급 '+fmt(c.pay)+'</small>'+
+        '<button class="btn pri" data-act="hiretake" data-v="'+i+'"'+(poor?' disabled':'')+'>청빙 · '+fmt(c.fee)+'</button></div>';}).join('')+'</div>'+
+    '<div class="sdb"><button class="btn" data-act="hirereroll"'+(S.money<HIRE_REROLL?' disabled':'')+'>🎲 다시 뽑기 · '+fmt(HIRE_REROLL)+'</button></div></div>';
+}
+function scrMgrClick(a,v){
+  if(UI.scr!=='mgr')return false;
+  var b=mgrScrB();if(!b)return false;var r=mgrRole(b),why;
+  if(a==='mgrset'){
+    if(b.mgr===v){mgrClear(b.id);scrToast('관리자를 뺐어요 · 다시 성도 돌봄을 맡을 수 있어요',2000);}
+    else{why=mgrSet(b.id,v);if(why){scrToast(why,2000);sfx('error',.4);}else{sfx('join',.5,0);scrToast(mgrOf(b).name+'님이 '+defOf(b).name+'을(를) 맡았어요',2200);}}
+  }else if(a==='mgrclear'){mgrClear(b.id);scrToast('관리자를 뺐어요',1600);}
+  else if(a==='hirefire'){hireFire(+v);scrToast('내보냈어요 · 주급이 더 나가지 않아요',1800);}
+  else if(a==='hireopen'){UI.scrSel={t:'hire'};sfx('click',.4);}
+  else if(a==='hirereroll'){why=hireReroll(r);if(why){scrToast(why,2000);sfx('error',.4);}else{sfx('coins',.5,0);scrToast('새 후보 세 분이 왔어요',1600);}}
+  else if(a==='hiretake'){why=hireTake(r,+v,b.id);if(why){scrToast(why,2400);sfx('error',.4);}else{UI.scrSel=null;sfx('join',.6,0);scrToast(mgrOf(b)?mgrOf(b).name+'님을 모셨어요 · '+defOf(b).name+' 가동 시작':'청빙했어요',2600);}}
+  else return false;
+  renderScreen();hud(true);return true;
 }

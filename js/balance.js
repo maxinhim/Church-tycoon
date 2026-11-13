@@ -188,3 +188,14 @@ var OFF_EV={
   minedu:{base:400,per:50,xp:30,trust:1,cd:6,dur:1,goal:1},
   minfel:{base:1000,per:90,xp:60,trust:2,cd:12,dur:2,goal:2}
 };
+
+/* 건물 관리자 (managers.js)
+   · 관리자가 있어야 가동하는 건물: 예배(추가 예배당) → 부교역자, 교제(소그룹실·친교실) → 직분자·리더, 매장 → 직원. 처음부터 있는 대예배당은 담임목사가 맡는다
+   · 성능 배율(효과·회전): 교회에서 기른 사람 MGR_IN_K × (1 + 호감 Lv × MGR_PLV_K, 부교역자는 레벨마다 MGR_LV_K), 밖에서 청빙한 사람 MGR_EX_K0 + 별 × MGR_EX_STEP
+   · 건물을 맡은 사람은 성도 돌봄(자동 심방)에서 빠진다 — 둘 중 하나만
+   · 외부 청빙: 후보 3명. 주급 = HIRE_PAY0 + 별 × HIRE_PAY_K (부교역자는 50 + 별 × 30), 청빙비 = 주급 × HIRE_FEE_K, 다시 뽑기 HIRE_REROLL.
+     처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 나온다 */
+var MGR_NEED={worship:'pastor',fellow:'leader',shop:'staff'};
+var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['server','tlead','dlead','cstaff'];
+var MGR_IN_K=1.3,MGR_PLV_K=.004,MGR_LV_K=.04,MGR_EX_K0=.7,MGR_EX_STEP=.08;
+var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
