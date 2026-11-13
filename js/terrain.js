@@ -45,11 +45,8 @@ function terPlan(x,y,id,lvl,dir){
   if(lvl>MAXH-1)return {why:'땅은 '+(MAXH-1)+'층 높이까지 올릴 수 있어요'};
   if(lvl<MINH)return {why:'땅은 지하 '+(-MINH)+'층까지 내릴 수 있어요'};
   var cells=[{x:x,y:y}],bid=occ[y][x],b=bid?bById(bid):null;
-  if(b&&isGate(b)){var gb=bById(b.of);if(gb){b=gb;x=gb.x;y=gb.y;}}
   if(b){
     cells=bTiles(b).map(function(t){return {x:t.x,y:t.y};});
-    // 붙은 입구·출구 칸도 함께 높인다
-    S.buildings.forEach(function(g){if(isGate(g)&&g.of===b.id&&g.z==null)cells.push({x:g.x,y:g.y});});
     if(b.z!=null)return {why:'데크 위 건물 밑의 땅은 바꿀 수 없어요'};
     if(lvl+bTopFloors(b)>MAXH)return {why:'땅 높이와 건물 층수를 합쳐 '+MAXH+'층을 넘을 수 없어요'};
     if(lvl+bLevelsTall(b)>ceilOver(b))return {why:'위의 다리·계단에 건물이 닿아요'};
@@ -126,7 +123,7 @@ function terChanged(cells){
   cells.forEach(function(c){hit[gid(c.x,c.y)]=1;piecesAt(c.x,c.y).forEach(function(p){hit[PN+p.id]=1;});});
   waterFix();rebuildOcc();recalc();
   V.forEach(function(v){
-    if(v.state==='inside'||v.state==='xfer'||v.state==='goin')return;
+    if(v.state==='inside'||v.state==='xfer')return;
     var on=!!hit[v.node],via=v.path&&v.path.some(function(q){return hit[q.n];});
     if(!on&&!via)return;
     if(nodeOk(v.node))placeAt(v,v.node);
@@ -276,14 +273,12 @@ function drawTerCell(x,y,tint){
       c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);
     }
     c.stroke();
-    if(fl&&!tint&&isQueueId(fl))drawQueueRails(x,y);
   }else{
     var h=th(x,y);
     atZ(h*LV,function(){
       quad(top.map(function(q){return [q[0],q[1],0];}),tint||texPattern('t_grass',2)||'#86b86f','rgba(40,80,30,.18)');
       if(fl&&D[fl]&&!tint)drawFloorTile(fl,x,y);
     });
-    if(fl&&!tint&&isQueueId(fl))drawQueueRails(x,y);
   }
   if(!tint&&S.wx&&S.wx.snow>.05){c.globalAlpha=Math.min(.85,S.wx.snow);quad(top,'#f4f7fb',null);c.globalAlpha=1;}
   // 파인 칸은 깊을수록 그늘져 보인다 (주변 잔디와 구분되게)

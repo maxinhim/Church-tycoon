@@ -24,19 +24,21 @@ function renderSelCard(){
   var h='',row='',more='';
   if(UI.sel){
     var b=bById(UI.sel),bd=defOf(b),fl=b.floors||1,st=isRoom(b)&&UI.selTile&&tileOf(b,UI.selTile.x,UI.selTile.y);
-    var sub=[];
-    if(bd.cap)sub.push('이용 '+b.inUse+'/'+bd.cap+'명');
-    if(b.door&&bd.cap)sub.push('회전 '+rotTime(b).toFixed(1)+'초'+(qLen(b)?' · 줄 '+queueCount(b)+'/'+qLen(b):''));
+    var sub=[],md=bMode(bd);
+    if(bd.cap)sub.push((md==='batch'?(b.run>0?'가동 중 ':'모이는 중 '):'이용 ')+b.inUse+'/'+bCap(b)+'명');
+    if(b.door&&bd.cap)sub.push((md==='batch'?'가동 ':'회전 ')+rotTime(b).toFixed(1)+'초');
     if(maintainable(b))sub.push('상태 '+Math.round(condOf(b))+'%'+(wearStage(b)?' · 효율 '+Math.round(condFactor(b)*100)+'%':''));
     var warn='';
-    var gs=needsGates(b)?gatesOf(b):null,gmiss=gs&&(!gs.ent||!gs.ext);
-    if(gmiss)warn=!gs.ent&&!gs.ext?'입구·출구를 지어야 운영돼요':(!gs.ent?'입구를 지어야 운영돼요':'출구를 지어야 운영돼요');
-    else if(needsGates(b)&&!b.door)warn='입구·출구가 건물에서 떨어졌어요. 다시 지어 주세요';
-    else if(b.door&&!usable(b))warn=b.q&&b.q.entry<0?'대기줄 끝이 길에 닿지 않아요':(!b.acc||!b.acc.ent?'입구까지 길이 없어 이용 못 해요':'출구에서 나갈 길이 없어요');
+    if(b.door&&!usable(b))warn='문 앞까지 길이 없어 이용 못 해요';
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
-    h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
-    if(gmiss)row+=scBtn('gatego',!gs.ent?'입구 짓기':'출구 짓기','pri',!gs.ent?'ent':'ext',!gs.ent?'이 건물의 입구 짓기':'이 건물의 출구 짓기');
-    if(isGate(b)){var ob=bById(b.of);h=h.replace('</b>','</b><span>'+(ob?defOf(ob).name+'의 '+(D[b.def].role==='ent'?'입구':'출구'):'붙은 건물 없음')+'</span>');}
+    var lvTag=hasLv(b)?'<i class="blv">Lv '+bLv(b)+'</i>'+(bd.tier===2?'<i class="btr">상위</i>':''):'';
+    h='<div class="sct"><b>'+bd.name+(fl>1?' · '+fl+'층':'')+'</b>'+lvTag+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
+    // 레벨 올리기: 투자 게이지와 버튼
+    if(hasLv(b)&&bLv(b)<BLV_MAX){
+      var iw=investWhy(b);
+      h+='<div class="sclv"><span class="bar"><i style="width:'+Math.round((b.bx||0)/BLV_XP*100)+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
+      row+=scBtn('invest','투자 '+fmt(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmt(investCost(b)));
+    }
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다

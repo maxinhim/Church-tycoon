@@ -211,7 +211,7 @@ async function modularChecks(browser, url) {
     // 방문자는 가까운 곳부터 가므로, 입구 근처의 기본 예배실을 치워 이 예배실을 쓰게 한다
     S.buildings.filter(b => b.def === 'room').forEach(b => demolish(b.id));
     // 방문자는 바닥·길 위로만 다니므로 입구까지 길을 잇고, 교회 문을 연다
-    o.gateless = !usable(rooms()[0]); autoGates(rooms()[0], null, null, true); recalc();
+    o.gateless = !usable(rooms()[0]); recalc();
     o.unlinked = o.gateless && !usable(rooms()[0]);
     o.linkOk = linkDoor(rooms()[0]) === '' && usable(rooms()[0]);
     S.open = true;
@@ -266,8 +266,6 @@ async function pathChecks(browser, url) {
     const room = S.buildings.find(b => b.def === 'mroom');
     // 잔디 칸에서 이미 닿는 바닥까지 보도블록을 깐다
     const connect = (x, y) => { const t = walkSearch(x, y, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc(); return !!t; };
-    // 입구·출구는 계단 자리(가운데 앞줄)를 비켜서 짓는다
-    { const cs = gateCands(room, 'g_arch').filter(c => c.x !== X + 1); UI.gateFor = room.id; buildGate('g_arch', cs[0].x, cs[0].y); const c2 = gateCands(room, 'x_arch').filter(c => c.x !== X + 1)[0]; buildGate('x_arch', c2.x, c2.y); UI.gateFor = null; S.money += 500; }
     S.open = true; recalc(); linkDoor(room);
     o.unconnected = room.acc.ok && defOf(room).seats === D.mroom.per.seats * 4;
     // 땅에서 방 쪽(-y)으로 오르막 1칸, 이어서 평지 다리 1칸
@@ -284,17 +282,8 @@ async function pathChecks(browser, url) {
     paintFloor(X + 1, Y + 1, 'f_block'); paintFloor(X + 1, Y + 2, 'f_block');
     o.ground = grassNo && groundOk(X + 1, Y + 1) && groundOk(X + 1, Y + 2);
     connect(X + 1, Y + 3);
-    // 입구·출구는 건물 1층 둘레에만: 다리 데크(2층 높이) 위에는 지을 수 없다
-    { const old = gatesOf(room).ent; UI.gateFor = room.id;
-      o.gate2 = gateAttachWhy(D.g_wood, X + 1, Y + 1); UI.gateFor = null;
-      o.connected = /1층 둘레/.test(o.gate2) && !!old && gateOk(old, room) && room.acc.ok;
-      // 예전 저장처럼 위층에 붙은 입구는 제자리로 치지 않는다
-      const fake = { def: 'g_wood', x: X + 1, y: Y + 1, z: 1, face: 3, of: room.id };
-      o.navUp = !gateOk(fake, room); o.dbgN = [o.gate2]; }
-    // 입구·출구 건물: 건물 바로 옆에만, 건물마다 하나씩
-    { const far = gateAttachWhy(D.g_arch, X + 1, Y + 8), again = gateCands(room, 'g_arch')[0]; UI.gateFor = room.id;
-      const dup = again ? buildGate('g_arch', again.x, again.y) : 'none'; UI.gateFor = null;
-      o.cycle = /옆 칸/.test(far) && /이미 입구/.test(dup); }
+    // 문은 1층 정면 한 칸: 다리 데크(2층 높이)가 붙어도 문은 1층에 있고, 문 앞 길로 이어진다
+    o.connected = !!room.door && room.door.ent.l === 0 && room.acc.ok;
     // 정면 방향: 예배당(3×2)을 오른쪽(+x)을 향해 지으면 2×3을 차지하고 출입구도 그쪽
     let fb = null;
     for (let y = 0; y < ROWS - 4 && !fb; y++) for (let x = 0; x < COLS - 3; x++) {
@@ -302,11 +291,10 @@ async function pathChecks(browser, url) {
     }
     o.facing = !!fb && fb.face === 0 && bDims(fb).w === 4 && bDims(fb).h === 6 && !!fb.door &&
       [0, 1, 2, 3].every(i => [0, 1, 2, 3, 4, 5].every(j => occ[fb.y + j][fb.x + i] === fb.id));
-    // 모든 방문 건물에 입구·출구가 있다
-    o.allDoors = S.buildings.every(b => !b.door || (gateOk(gatesOf(b).ent, b) && gateOk(gatesOf(b).ext, b))) && S.buildings.filter(b => defOf(b).fill && !isRoom(b)).every(b => !!b.door);
+    // 방문자가 쓰는 모든 건물에 정면 1층 가운데 문이 하나 있다
+    o.allDoors = S.buildings.filter(b => defOf(b).fill && !isRoom(b)).every(b => !!b.door && b.door.ent.d === (b.face == null ? 2 : b.face) && b.door.ent.l === 0 && sameSpot(b.door.ent, b.door.ext));
     return o;
   });
-  if (!r.navUp) console.log('DBGN', JSON.stringify(r.dbgN));
   check(r.found, '길: 시험할 빈 자리를 찾음');
   check(r.defaultDoor, '문: 기본 예배실에 출입구가 있고 이용 가능');
   check(r.unconnected, '길: 1층 출입구만 있어도 2층 좌석이 들어감');
@@ -314,11 +302,9 @@ async function pathChecks(browser, url) {
   check(r.undo, '길: 되돌리기로 마지막 조각과 커서가 돌아옴');
   check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
   check(r.ground, '길: 다리 아래와 철골 계단 밑 땅으로 걸어 다닐 수 있음');
-  check(r.connected, '입구·출구: 다리 위(2층 높이)에는 못 짓고 1층 둘레에만 지음');
-  check(r.navUp, '입구·출구: 위층 높이에 붙은 입구는 제자리로 치지 않음');
-  check(r.cycle, '입구·출구: 건물 바로 옆에만 짓고, 건물마다 입구 하나');
+  check(r.connected, '문: 칸 건물도 1층 둘레의 문 하나로 길과 이어짐');
   check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
-  check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 입구·출구가 있음');
+  check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 정면 1층 가운데 문 하나');
   check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
@@ -361,16 +347,15 @@ async function stackChecks(browser, url) {
     o.linked = A.links.indexOf(B.id) >= 0 && B.links.indexOf(A.id) >= 0;
     o.skyNotNav = !NAV.reach[PN + S.paths.find(p => p.k === 'sky').id];
     // A가 꽉 차면 다리를 건너 B로
-    autoGates(A, null, null, true); autoGates(B, null, null, true); recalc();
+    recalc();
     linkDoor(A); linkDoor(B);
-    A.inUse = defOf(A).cap;
+    A.inUse = bCap(A);
     spawnV(); const v = V[V.length - 1]; v.target = A.id; arrive(v);
     o.xferStart = v.state === 'xfer' && B.inUse === 1;
     let maxZ = 0; for (let i = 0; i < 60 && v.state === 'xfer'; i++) { stepV(v, 0.1); maxZ = Math.max(maxZ, v.z); }
     o.xferDone = v.state === 'inside' && v.inside === B.id && maxZ >= LV - 0.01;
     A.inUse = 0;
     // 역할이 다른 건물을 이으면 연결되지 않고 경고 표시
-    S.buildings = S.buildings.filter(g => !(isGate(g) && (g.of === A.id || g.of === B.id))); rebuildOcc(); recalc();
     placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X + 2, Y + 1, 'mcomf'); placeTile(X, Y + 1, 'mcare'); placeTile(X, Y + 1, 'mcare');
     UI.pc = newCursor(); UI.pc.x = X + 1; UI.pc.y = Y + 1; UI.pc.l = 1; UI.pc.dir = 0; UI.pc.k = 'sky'; pcBuild();
     const sk2 = S.paths.find(p => p.k === 'sky' && p.y === Y + 1);
@@ -388,7 +373,7 @@ async function stackChecks(browser, url) {
     o.floorBlocked = paintFloor(cell.x, cell.y, 'f_brick') !== '';
     paintFloor(fx, fy, 'f_wood');
     // 새로 넣은 건물·요소를 모두 지어 본다
-    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor' && d.kind !== 'gate' && !d.water);
+    const want = DEFS.filter(d => d.kind !== 'mroom' && d.kind !== 'path' && d.kind !== 'floor' && !d.water && !d.retired);
     const missing = [];
     want.forEach(d => {
       if (S.buildings.some(b => b.def === d.id)) return;
@@ -397,7 +382,7 @@ async function stackChecks(browser, url) {
       if (!done) missing.push(d.id);
     });
     o.allBuilt = missing.length === 0 ? '' : missing.join(',');
-    o.noDoor = S.buildings.filter(b => needsGates(b) && !isRoom(b) && !b.door && gateCands(b, 'g_arch').length > 1).map(b => b.def + '@' + b.x + ',' + b.y).join(' ');
+    o.noDoor = S.buildings.filter(b => needsDoor(b) && !isRoom(b) && !b.door).map(b => b.def + '@' + b.x + ',' + b.y).join(' ');
     o.allDoors = !o.noDoor;
     for (let i = 0; i < 1500; i++) update(0.1);
     for (let k = 0; k < 4; k++) { window.__ct.setRot(k); draw(); }
@@ -418,7 +403,7 @@ async function stackChecks(browser, url) {
   check(r.floorPaint && r.floorUndo && r.floorErase && r.floorBlocked, '바닥: 칠하기·되돌리기·지우기, 건물 위 금지, 분위기 반영, 걸을 수 있음');
   check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
   if (!r.allDoors) console.log('DBG', r.noDoor);
-  check(r.allDoors, '문: 새 건물에도 모두 입구·출구가 있음');
+  check(r.allDoors, '문: 새 건물에도 모두 정면 문이 있음');
   check(errs.length === 0, '새 건물·요소: 시뮬레이션·4방향 그리기·패널 ' + r.cats + '개 분류 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
@@ -465,7 +450,7 @@ async function rulesChecks(browser, url) {
     // 매장: 지갑의 돈으로 사고, 수익이 쌓이며 건물 위에 금액이 뜬다
     S.money = 50000;
     let shopB = null;
-    for (let y = 0; y < PZ - 2 && !shopB; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.bakery, x, y, 2)) { build('bakery', x, y, 2); shopB = S.buildings[S.buildings.length - 1]; break; }
+    for (let y = 0; y < PZ - 2 && !shopB; y++) for (let x = 0; x < COLS - 2; x++) if (canPlace(D.shop, x, y, 2)) { build('shop', x, y, 2); shopB = S.buildings[S.buildings.length - 1]; break; }
     spawnV(false); const v = V[V.length - 1]; v.wallet = 30; enter(v, shopB);
     const m0 = S.money, ws0 = S.weekShop, wsu0 = S.weekSup || 0; finishVisit(v);
     o.shop = S.money > m0 && S.weekShop > ws0 && v.wallet < 30 && F.some(f => /^\+\d+$/.test(f.text));
@@ -474,7 +459,7 @@ async function rulesChecks(browser, url) {
     // 주일 정산 때 무작위 사건(감사 헌금·수리비)이 끼지 않게
     { S.evtLeft = 2; S.evt = null; const ms = S.money, wi = S.weekInc, wsup = S.weekSup; weekEnd(); const r = S.rcpt;
       o.settle = S.money - ms === r.settle && r.pre === Math.round(wi - wsup) && r.net === r.settle + r.pre && /정산 때 자금/.test(rcptHtml(r, false)); }
-    o.shopCat = DEFS.filter(d => d.cat === 'shop').length >= 7 && ['market', 'bakery', 'bookstore'].every(id => D[id] && D[id].income > 0);
+    o.shopCat = DEFS.filter(d => d.cat === 'shop' && !d.retired).length >= 4 && ['shop', 'coffeecart', 'bookstore', 'dining', 'cafe', 'books'].every(id => D[id] && D[id].income > 0);
     // 대출: 한도 안에서 빌리고, 주일마다 갚고, 한 번에 갚을 수 있음
     const lim = creditLimit(), m1 = S.money;
     o.borrow = borrow('small') === '' && S.money === m1 + LOANS.small.amt && S.loans.length === 1;
@@ -921,7 +906,7 @@ async function ministryChecks(browser, url) {
     const cv2 = document.createElement('canvas'); cv2.width = 200; cv2.height = 200; const g2 = cv2.getContext('2d');
     const keep = { c: PJ.c, ox: PJ.ox, oy: PJ.oy, s: PJ.s };
     const shot = (id, f) => { g2.clearRect(0, 0, 200, 200); PJ.c = g2; PJ.ox = 100; PJ.oy = 60; PJ.s = 1.4; const b = { x: 0, y: 0, def: id, id: 3, face: f }; ensureDoors(b); drawEntity(b, 0); return cv2.toDataURL(); };
-    const out = ['bench', 'room', 'lamp2', 'busstop', 'picnic'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, f))).size >= 2 && shot(id, 0) !== shot(id, 2));
+    const out = ['bench', 'room', 'lamp2', 'wc', 'pray'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, f))).size >= 2 && shot(id, 0) !== shot(id, 2));
     PJ.c = keep.c; PJ.ox = keep.ox; PJ.oy = keep.oy; PJ.s = keep.s;
     return out;
   });
@@ -979,9 +964,9 @@ async function ministryChecks(browser, url) {
     endPlace(); startPlace('bench'); p = spot('bench'); UI.ghost = { ...p }; syncPlace();
     if (arrowMode(D.bench) !== 'face') return 'bench mode'; plDir(2); plLock = 0; plOk();
     const bn = S.buildings[S.buildings.length - 1]; if (bn.face !== 2 || (UI.ghost.x === p.x && UI.ghost.y === p.y)) return 'bench';
-    endPlace(); startPlace('parasol'); p = spot('parasol'); UI.ghost = { ...p }; syncPlace();
-    const noArr = arrowMode(D.parasol) === 'line'; plLock = 0; plOk(); const pa = S.buildings[S.buildings.length - 1];
-    endPlace(); if (!noArr || pa.face !== gateFace(D.parasol, pa.x, pa.y)) return 'parasol';
+    endPlace(); startPlace('planter'); p = spot('planter'); UI.ghost = { ...p }; syncPlace();
+    const noArr = arrowMode(D.planter) === 'line'; plLock = 0; plOk(); const pa = S.buildings[S.buildings.length - 1];
+    endPlace(); if (!noArr || pa.face !== gateFace(D.planter, pa.x, pa.y)) return 'planter';
     if (turnable(D.tree) || !turnable(D.fence_w) || !turnable(D.bench)) return 'turnable';
     return 'ok';
   });
@@ -1214,89 +1199,91 @@ async function startTerrainChecks(browser, url) {
   await ctx.close();
 }
 
-async function queueChecks(browser, url) {
-  const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } });
+async function levelChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
   const page = await ctx.newPage();
   const errs = watchErrors(page);
-  await page.addInitScript(() => {
-    let s = 99;
-    Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-    window.__CT_TEST = true; window.requestAnimationFrame = () => 0;
-  });
+  await page.addInitScript(() => { window.__CT_TEST = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} });
   await page.goto(url);
   const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999; levelTick(true); S.unlockAll = true; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.dlg = null; S.open = true;
+    window.__ct.init(); S.money = 9999999; levelTick(true); S.unlockAll = true; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.dlg = null; S.open = true;
     S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
     const o = {};
-    // 기도실(수용 2명)을 (20,20)에 정면 +y로. 입구 앞 (x,22)부터 아래로 대기줄 6칸, 그 끝에서 입구 길까지 보도블록
-    build('pray', 20, 20, 2); const b = S.buildings[S.buildings.length - 1];
-    const t0 = rotTime(b), k0 = useK(b);
-    const ex = b.door.ent.x, Q0 = doorOut(b.door.ent).y; // 입구 건물 바로 앞 칸부터
-    for (let i = 0; i < 6; i++) paintFloor(ex, Q0 + i, 'q_rope');
-    paintFloor(ex, Q0 + 6, 'f_block'); recalc(); linkDoor(b); recalc();
-    o.built = !!b.q && b.q.cells.length === 6 && b.q.entry >= 0 && Math.abs(nodePos(b.q.entry).x - ex - .5) + Math.abs(nodePos(b.q.entry).y - (Q0 + 5.5)) === 1 && usable(b) && b.q.cells[0].y === Q0;
-    o.dbg = [JSON.stringify(b.q), gid(ex, 28), usable(b), JSON.stringify(b.door), JSON.stringify(b.acc), !groundOk(ex, 24), groundOk(ex, 28)];
-    o.noWalk = !groundOk(ex, Q0 + 2) && groundOk(ex, Q0 + 6) && navReach(gateNode())[gid(ex, Q0 + 2)] === undefined;
-    // 줄은 입구 건물 앞에서 시작해야만 그 건물의 줄: 출구 앞에는 줄을 시작할 수 없고, 줄이 있으면 방문자는 줄 끝으로만 들어간다
-    { const xo = doorOut(b.door.ext), ow = qGateAt(xo.x, xo.y, OPP[b.door.ext.d]);
-      const nearEnd = [0, 1, 2, 3].some(d => isQueueCell(xo.x + DIRS[d][0], xo.y + DIRS[d][1]));
-      o.entOnly = !ow && (nearEnd || /입구 바로 앞/.test(queueWhy(xo.x, xo.y, 0))) && entNode(b) === b.q.entry && b.q.entry !== doorNode(b.door.ent, b) && !groundOk(doorOut(b.door.ent).x, doorOut(b.door.ent).y);
-      // 입구 건물을 다른 곳으로 옮기면 남은 줄 타일은 그 건물의 줄이 아니다
-      const eg = gatesOf(b).ent, keep = { x: eg.x, y: eg.y, face: eg.face }; S.buildings = S.buildings.filter(g => g !== eg); rebuildOcc(); recalc();
-      o.entOnly = o.entOnly && !b.q && !usable(b);
-      S.buildings.push(eg); Object.assign(eg, keep); rebuildOcc(); recalc();
-      o.entOnly = o.entOnly && !!b.q && b.q.cells.length === 6 && usable(b); }
-    // 한 줄만: 줄 중간 옆에는 갈래를 낼 수 없고, 아무 줄에도 닿지 않는 칸에는 깔 수 없음
-    o.single = /이어 깔아요/.test(floorWhy(ex + 1, Q0 + 2, 'q_rope') || '') && /이어 깔아요/.test(floorWhy(ex + 6, Q0 + 2, 'q_rope') || '');
-    o.rot = t0 === D.pray.dur * STAY * ROT_CAT.worship * capK(D.pray) * QUEUE_NONE_T && k0 === QUEUE_NONE_E && rotTime(b) > t0 * 1.3 && useK(b) > 1.3 && useK(b) / (rotTime(b) / t0 * QUEUE_NONE_T) > k0 / QUEUE_NONE_T;
-    // 방문자 7명을 보낸다: 2명은 들어가고 나머지는 줄에 선다
-    V.length = 0; const vs = [];
-    for (let i = 0; i < 8; i++) { spawnV(false); const v = V[V.length - 1]; v.life = 999; v.wcT = v.foodT = v.lonT = 1e9; NEEDS.forEach(n => { v.needs[n] = 5; }); v.target = b.id; v.want = 'word'; v.path = navPath(v.node, n => n === entNode(b)); v.pi = 0; v.state = 'walk'; v.speed = 4 + i * .1; vs.push(v); }
-    const pat0 = QUEUE_PATIENCE; QUEUE_PATIENCE = 8;
-    let maxQ = 0, offLine = false, left = false, order = true;
-    for (let i = 0; i < 700; i++) {
-      vs.forEach(v => { const st = v.state; if (['walk', 'queue', 'inside', 'wait', 'goin', 'goout'].indexOf(st) >= 0) stepV(v, .1); if (st === 'queue' && ['queue', 'inside', 'goin'].indexOf(v.state) < 0) left = true; });
-      const ql = QL[b.id] || []; maxQ = Math.max(maxQ, ql.length);
-      ql.forEach((v, k) => { if (v.qt > 3 && !isQueueCell(Math.floor(v.x), Math.floor(v.y))) offLine = true; if (k > 0 && v.qt > 6 && ql[k - 1].qt > 6 && v.y < ql[k - 1].y - .01) order = false; });
-      if (b.inUse > D.pray.cap) offLine = true;
-    }
-    QUEUE_PATIENCE = pat0;
-    o.lined = maxQ >= 4 && !offLine && !left && order;
-    o.served = (b.uses || 0) >= 5;
-    // 오래 기다리면 불편 '줄'
-    o.gripe = (S.grip.queue || 0) >= 1 && GRIPE_W.queue > 0 && /줄/.test(GRIPES.queue.n);
-    // 줄이 꽉 차면 줄 끝에서 잠깐 기다리다 돌아선다
-    V.length = 0; QL[b.id] = []; b.inUse = D.pray.cap; S.grip = {};
-    const mk = () => { spawnV(false); const v = V[V.length - 1]; v.life = 999; v.target = b.id; placeAt(v, b.q.entry); v.path = []; v.pi = 0; v.state = 'walk'; return v; };
-    for (let i = 0; i < 6; i++) arrive(mk());
-    const extra = mk(); arrive(extra);
-    o.full = queueCount(b) === 6 && extra.state === 'wait';
-    for (let i = 0; i < 60; i++) stepV(extra, .1);
-    o.full = o.full && extra.state !== 'queue' && (S.grip.crowd || 0) === 1;
-    // 줄 타일을 걷어내면 넘치는 사람은 풀려난다
-    floorSwap(ex, Q0 + 3, 'f_erase'); recalc();
-    o.shrink = b.q.cells.length === 0 || b.q.entry < 0 || queueCount(b) <= b.q.cells.length;
-    UI.flast = null; paintFloor(ex, Q0 + 3, 'q_wood'); recalc(); o.mixed = b.q.cells.length === 6;
-    // 경사로 위에도 깔린다
-    terApply(40, 20, 'ter_ramp', 0, 0); o.ramp = /이어 깔아요/.test(paintFloor(40, 20, 'q_chain')) && !isQueueCell(40, 20);
-    ['q_hedge', 'q_paint'].forEach((id, i) => paintFloor(44 + i, 20, id));
+    const put = (id, face) => { const d = D[id]; for (let y = 4; y < PZ - 8; y += 2) for (let x = 4; x < COLS - 10; x += 2) if (canPlace(d, x, y, face) && !onFloorAt(d, x, y, face)) { if (build(id, x, y, face)) { const b = S.buildings[S.buildings.length - 1]; recalc(); linkDoor(b); recalc(); if (usable(b)) return b; demolish(b.id); recalc(); } } return null; };
+    // 대기줄·입구·출구 건물은 없다: 시작 예배실은 정면 문 하나로 바로 쓴다
+    const room = S.buildings.find(b => b.def === 'room');
+    o.start = usable(room) && !!room.door && room.door.ent.d === room.face && typeof gatesOf === 'undefined' && typeof qLen === 'undefined' && !DEFS.some(d => d.kind === 'gate' || d.queue) && !CATS.some(c => c[0] === 'gate');
+    // 문은 정면 1층 가운데 한 칸, 방향을 돌리면 문도 돈다
+    const pr = put('pray', 2);
+    o.front = !!pr && pr.door.ent.d === 2 && pr.door.ent.l === 0 && sameSpot(pr.door.ent, pr.door.ext);
+    if (pr) { pr.face = 0; recalc(); o.front = o.front && pr.door.ent.d === 0; pr.face = 2; recalc(); linkDoor(pr); recalc(); }
+    // 짓고 나면 입구·출구 놓기로 이어지지 않고 건물 카드가 뜬다
+    { UI.tab = 'build'; UI.fold = false; UI.cat = 'worship'; startPlace('bible'); let g = null; for (let y = 4; y < PZ - 8 && !g; y += 2) for (let x = 4; x < COLS - 10; x += 2) if (!placeWhy(D.bible, x, y, UI.face) && !onFloorAt(D.bible, x, y, UI.face)) { g = { x, y }; break; }
+      UI.ghost = g; plLock = 0; plOk(); const nb = S.buildings[S.buildings.length - 1]; o.noGateFlow = !!g && nb.def === 'bible' && !isPlacing() && UI.sel === nb.id; UI.sel = null; }
+    // 일괄 가동: 예배실은 정원이 찰 때까지 안에서 기다리고, 차면 한꺼번에 가동해 함께 나온다. 가동 중엔 문 앞에서 기다린다
+    const cap = bCap(room), en = entNode(room), mk = () => { spawnV(); const v = V[V.length - 1]; placeAt(v, en); v.target = room.id; v.needs.word = 10; return v; };
+    V.length = 0; room.inUse = 0; room.run = 0; const vs = [];
+    for (let i = 0; i < cap - 1; i++) { const v = mk(); arrive(v); vs.push(v); }
+    const before = room.run === 0 && vs.every(v => v.state === 'inside' && v.batch);
+    const last = mk(); arrive(last); vs.push(last); const started = room.run > 0;
+    const extra = mk(); arrive(extra); const waits = extra.state === 'wait';
+    batchTick(room.run + .01);
+    o.batch = bMode(D.room) === 'batch' && cap >= 2 && before && started && waits && vs.every(v => v.state === 'idle' && !v.inside && v.needs.word > 10) && room.inUse === 0 && room.run === 0;
+    // 주일: 정원이 안 차도 주일이 되는 순간 가동. 같은 주 금·토요일에 이미 가동했으면 건너뜀
+    V.length = 0; room.inUse = 0; room.run = 0; S.sunW = -1; room.fsW = -1;
+    S.t = WEEK * 5.5 / 7; const one = mk(); arrive(one); batchSunday(); const notYet = room.run === 0;
+    S.t = WEEK * 6.2 / 7; batchSunday(); const sun = room.run > 0; batchTick(room.run + .01);
+    V.length = 0; room.inUse = 0; S.sunW = -1; S.t = WEEK * 4.5 / 7; batchStart(room); const fri = room.fsW === S.week; batchTick(room.run + .01);
+    const two = mk(); arrive(two); S.t = WEEK * 6.2 / 7; batchSunday(); const skip = room.run === 0;
+    o.sunday = notYet && sun && fri && skip && two.state === 'inside';
+    V.length = 0; room.inUse = 0; room.run = 0; S.t = 1;
+    // 한 명씩: 화장실은 정원 1명, 레벨이 오를수록 회전 시간이 크게 짧아짐
+    const wc = put('wc', 2), rot1 = wc && rotTime(wc);
+    if (wc) { wc.lv = 10; } const rot10 = wc && rotTime(wc); if (wc) wc.lv = 1;
+    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap > 1 && bCap(wc) === 1 && rot10 < rot1 / 2.5 && bCap(room) > 1;
+    // 문 앞에서 기다리기: 꽉 찼으면 문 앞 길에서 기다리고, 한계를 넘기면 화남 표시·불만, 다른 곳으로
+    let soft = false;
+    if (wc) { wc.inUse = 1; spawnV(); const v = V[V.length - 1]; placeAt(v, entNode(wc)); v.target = wc.id; arrive(v); const p0 = nodePos(entNode(wc));
+      const near = v.state === 'wait' && Math.hypot(v.x - p0.x, v.y - p0.y) < .5 * G, g0 = S.grip.crowd || 0;
+      let n = 0; while (v.state === 'wait' && n < (VIS_PATIENCE + 2) * 10) { stepV(v, .1); n++; }
+      soft = near && n >= (VIS_PATIENCE - .5) * 10 && v.state === 'idle' && v.angry > 0 && (S.grip.crowd || 0) > g0 && v.blocked[wc.id] > S.clock && !v.dead;
+      wc.inUse = 0; V.length = 0; }
+    o.soft = soft && VIS_SPEED < 1 && TEMPO_ROT > 1;
+    // 레벨: 카드에서 투자, BLV_XP번이면 한 단계. 효과·정원·좌석이 오르고 최대 Lv 10, 모습은 3단계
+    { const c1 = investCost(room), m0 = S.money, perf0 = bPerf(room), cap0 = bCap(room), seat0 = agg().seats;
+      UI.sel = room.id; UI.fold = true; renderSelCard(); const card = document.getElementById('selCard'), btn = card.querySelector('[data-act="invest"]'), t1 = card.textContent;
+      for (let i = 0; i < BLV_XP; i++) document.querySelector('#selCard [data-act="invest"]').click();
+      o.invest = !!btn && /Lv 1/.test(t1) && /투자/.test(t1) && bLv(room) === 2 && S.money === m0 - BLV_XP * c1 && bPerf(room) > perf0 && bCap(room) >= cap0 && agg().seats > seat0 && /Lv 2/.test(document.getElementById('selCard').textContent) && /Lv 3까지/.test(document.getElementById('selCard').textContent);
+      const st = [1, 3, 4, 6, 7, 10].map(l => { room.lv = l; return bStage(room); }).join('');
+      room.lv = BLV_MAX; o.levels = st === '112233' && investWhy(room) !== '' && !document.querySelector('#selCard [data-act="invest"]') === false;
+      renderSelCard(); o.levels = st === '112233' && /최고/.test(investWhy(room)) && !document.querySelector('#selCard [data-act="invest"]');
+      for (const l of [1, 5, 9]) { room.lv = l; draw(); } room.lv = 1; room.bx = 0; UI.sel = null; renderSelCard(); recalc(); }
+    // 티어: 상위(티어 2)는 티어 1 성능을 이어받아 × TIER2_K, 값은 티어 1의 Lv 10 누적 투자만큼 더. 티어 1은 상위가 열리기 전엔 하나만
+    { let inv = 0; for (let L = 1; L < BLV_MAX; L++) inv += BLV_XP * BLV_INVEST * (1 + BLV_INVEST_UP * (L - 1));
+      const ch = { def: 'chapel', lv: 1, id: 0 }, r6 = { def: 'room', lv: 6, id: 0 }, r7 = { def: 'room', lv: 7, id: 0 }, r10 = { def: 'room', lv: 10, id: 0 }, c10 = { def: 'chapel', lv: 10, id: 0 };
+      o.tier2 = D.chapel.tier === 2 && D.chapel.t1 === 'room' && D.room.tier === 1 && Math.abs(D.chapel.cost - D.room.cost * (1 + inv)) <= 10 && D.chapel.cost > D.room.cost * 5 &&
+        bPerf(ch) >= bPerf(r6) && bPerf(ch) <= bPerf(r7) + 1e-9 && bPerf(c10) > bPerf(r10) * 1.5 && D.chapel.seats === D.room.seats && TIER_PAIRS.every(p => D[p[0]] && D[p[1]] && D[p[1]].tier === 2);
+      S.unlockAll = false; S.lvl = 1; const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 2, 2, 2);
+      S.unlockAll = true; o.tier1 = isLocked('chapel') === false && /1개까지/.test(lockedWhy) && !again && S.buildings.length === nb && tierWhy('room') === ''; }
+    // 매장·편의 종류는 기능별로 줄였다: 더 짓지 않는 것은 목록에 없고 지을 수 없다
+    { UI.tab = 'build'; UI.fold = false; UI.bstep = 'items'; UI.cat = 'shop'; renderBuild(); const shopCards = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.v); closeDock();
+      o.retired = RETIRED.every(id => !D[id] || (D[id].retired && isLocked(id))) && !shopCards.some(id => RETIRED.indexOf(id) >= 0) && shopCards.includes('shop') && !build('bakery', 2, 2, 2); }
+    // 예전 저장: 대기줄 바닥·입구·출구 건물은 걷어 낸다
+    { const raw = JSON.parse(JSON.stringify(S)); raw.floor['3,3'] = 'q_rope'; raw.qprev = { '3,3': 2 }; raw.buildings.push({ id: 999, def: 'g_arch', x: 3, y: 4, face: 2, of: 1, inUse: 0, uses: 0 });
+      localStorage.setItem(SAVE_KEY, JSON.stringify(raw)); const L2 = load(); o.oldSave = !L2.floor['3,3'] && !L2.qprev && !L2.buildings.some(b => b.def === 'g_arch'); }
     for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
-    // 카드에 회전 시간과 줄
-    UI.fold = true; UI.tool = null; UI.sel = b.id; renderSelCard();
-    o.card = /회전 [\d.]+초/.test(document.getElementById('selCard').textContent) && /줄 \d+\/6/.test(document.getElementById('selCard').textContent);
-    o.defs = ['q_rope', 'q_wood', 'q_chain', 'q_hedge', 'q_paint'].every(id => D[id] && D[id].queue && D[id].cat === 'path') && FLOOR_IDS.every(id => !D[id].queue);
     return o;
   });
-  check(r.built && r.noWalk, '대기줄: 입구 앞부터 이어 깔면 그 건물의 줄이 되고, 줄 타일은 지나다닐 수 없음');
-  check(r.single, '대기줄: 한 줄로만 이어지고 갈래·떨어진 칸은 깔리지 않음');
-  check(r.entOnly, '대기줄: 입구 건물 앞에서 시작한 줄만 그 건물의 줄(출구 앞은 안 됨), 줄이 있으면 줄 끝으로만 들어가고 입구가 없으면 줄도 없음');
-  if (!(r.built && r.noWalk)) console.log('DBG', r.dbg.join(' | '));
-  check(r.rot, '회전 시간: 성격·수용 인원·줄 길이로 정해지고, 줄이 길수록 길어지며 1초당 효과는 더 좋음');
-  check(r.lined && r.served, '대기줄: 방문자가 줄 끝으로 들어와 차례대로 서고, 중간에 떠나지 않고 들어감');
-  check(r.gripe, '대기줄: 오래 기다리면 불편이 생김');
-  check(r.full, '대기줄: 줄이 꽉 차면 끝에서 잠깐 기다리다 돌아섬');
-  check(r.shrink && r.mixed && r.ramp, '대기줄: 타일을 걷으면 줄이 끊기고, 다시 깔면 이어지며 모양을 섞어도 됨');
-  check(r.card && r.defs, '대기줄: 모양 5가지가 길·지형에 있고, 건물 카드에 회전 시간과 줄 인원이 보임');
+  if (!(r.start && r.front && r.noGateFlow && r.invest && r.levels)) console.log('LV', JSON.stringify([r.start, r.front, r.noGateFlow, r.invest, r.levels]));
+  check(r.start && r.front && r.noGateFlow, '문: 대기줄·입구·출구 건물이 없고, 건물마다 정면 1층 가운데 문 하나(돌리면 문도 돎), 짓고 나면 바로 건물 카드');
+  check(r.batch, '일괄 가동: 예배실은 정원이 찰 때까지 안에서 기다렸다가 한꺼번에 가동 후 함께 나오고, 가동 중엔 문 앞에서 기다림');
+  check(r.sunday, '일괄 가동: 주일이 되면 정원이 덜 차도 가동하되, 같은 주 금·토에 가동했으면 건너뜀');
+  check(r.single, '한 명씩: 매장·편의 시설은 정원 1명, 레벨이 오를수록 회전 시간이 짧아짐');
+  check(r.soft, '기다리기: 문 앞 길에서 기다리다 한계를 넘기면 화남 표시·불만을 남기고 다른 곳으로 (걸음은 느리게)');
+  check(r.invest && r.levels, '건물 레벨: 카드에서 투자해 Lv 10까지, 효과·정원·좌석이 오르고 모습은 3단계');
+  check(r.tier2 && r.tier1, '티어: 상위 시설은 티어 1 Lv 6~7 성능에 비싸고, 티어 1은 상위가 열리기 전엔 하나만');
+  check(r.retired, '매장·편의: 기능별로 줄인 목록 (통합된 시설은 짓지 않음)');
+  check(r.oldSave, '예전 저장: 대기줄 바닥·입구·출구 건물을 걷어 냄');
   // 달력: 한 달 5주·한 해 12달(60주), 계절별 날씨 (눈은 겨울만, 폭염·비는 여름만, 봄·가을은 바람)
   const cal = await (async () => { const pg = await ctx.newPage(); await pg.addInitScript(() => { window.__CT_TEST = true; window.requestAnimationFrame = () => 0; }); await pg.goto(url);
     const o = await pg.evaluate(() => { window.__ct.init(); const q = {};
@@ -1311,95 +1298,7 @@ async function queueChecks(browser, url) {
     await pg.close(); return o; })();
   check(cal.fmt && cal.season && cal.hud, '달력: 한 달 5주, 한 해 12달(60주), 시계는 "0월 0주"로 보임, 계절은 달로 나뉨');
   check(cal.wx && cal.ev, '날씨: 눈은 겨울에만, 폭염·비는 여름에만, 봄·가을은 바람, 행사 계절은 달로 안내');
-  check(errs.length === 0, '대기줄: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
-  await ctx.close();
-}
-
-async function gateChecks(browser, url) {
-  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
-  const page = await ctx.newPage();
-  const errs = watchErrors(page);
-  await page.addInitScript(() => { window.__CT_TEST = true; window.__CT_GATES = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} });
-  await page.goto(url);
-  const r = await page.evaluate(() => {
-    window.__ct.init(); S.money = 999999; levelTick(true); S.unlockAll = true; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.dlg = null; S.open = true;
-    S.buildings = S.buildings.filter(b => b.def !== 'tree'); rebuildOcc(); recalc();
-    const o = {};
-    // 시작 예배실은 입구·출구가 있어 바로 쓸 수 있다
-    const room = S.buildings.find(b => b.def === 'room'); const rg = gatesOf(room);
-    o.start = usable(room) && !!rg.ent && !!rg.ext && rg.ent.def === 'g_arch';
-    // 한 칸짜리 소품: 벤치·쓰레기통은 한 칸, 그림 높이도 절반. 큰 건물은 2배 칸
-    o.small = ['bench', 'bin', 'lamp', 'tree', 'statue', 'drinkfount', 'vending'].every(id => D[id].w === 1 && D[id].h === 1 && D[id].cell) && D.chapel.w === 6 && heightOf('bench') < .3;
-    // 화면에서 짓기: 기도실을 지으면 곧바로 입구 놓기, ✓ 다음 출구 놓기, ✓면 건물 카드
-    UI.tab = 'build'; UI.fold = false; UI.cat = 'worship'; startPlace('pray');
-    let spot = null; for (let y = 10; y < 40 && !spot; y += 2) for (let x = 6; x < 50 && !spot; x += 2) if (canPlace(D.pray, x, y, 2) && [-2, -1, 0, 1, 2, 3].every(j => [-2, -1, 0, 1, 2, 3].every(i => !occ[y + j][x + i]))) spot = { x, y };
-    UI.ghost = { ...spot }; UI.face = 2; plLock = 0; plOk();
-    const pr = S.buildings.find(b => b.def === 'pray');
-    // 입구 모양은 건축 창 모양의 카드로 먼저 고른다 (그동안 지도 짓기는 멈춤), 고르면 지도에서 놓기
-    const chooseEnt = !isPlacing() && !document.getElementById('dock').hidden && /입구 모양/.test(document.getElementById('dtitle').textContent) && document.querySelectorAll('#cards [data-act="cpick"]').length === GATE_DESIGNS.length && !!document.querySelector('#detail .cinfo');
-    document.querySelector('#cards [data-v="g_arch"]').click();
-    o.flowEnt = chooseEnt && !!pr && !usable(pr) && isPlacing() && UI.tool === 'g_arch' && UI.gateFor === pr.id && !!UI.ghost && !document.getElementById('pbar').hidden;
-    const m0 = S.money; plLock = 0; plOk();
-    o.flowExt = !!gatesOf(pr).ent && !isPlacing() && /출구 모양/.test(document.getElementById('dtitle').textContent) && UI.tool === 'x_arch' && m0 - S.money === D.g_arch.cost;
-    document.querySelector('#cards [data-v="x_flower"]').click();
-    // 놓는 중에도 '모양 바꾸기'로 다시 고를 수 있고, ‹면 놓던 자리로 돌아온다
-    const gk = { ...UI.ghost }; document.querySelector('#pbar [data-act="choose"][data-v="gdesign"]').click();
-    const reopen = !isPlacing() && !document.getElementById('dock').hidden; document.querySelector('#dtitle [data-act="cback"]').click();
-    o.flowExt = o.flowExt && reopen && isPlacing() && UI.tool === 'x_flower' && UI.ghost.x === gk.x && UI.ghost.y === gk.y;
-    plLock = 0; plOk();
-    o.flowDone = !!gatesOf(pr).ext && gatesOf(pr).ext.def === 'x_flower' && !isPlacing() && UI.sel === pr.id && !!pr.door;
-    // 입구는 건물 반대쪽을 바라보고, 그 바깥 칸에서 들어간다
-    const ge = gatesOf(pr).ent, gx = gatesOf(pr).ext;
-    o.facing = occ[ge.y - DIRS[ge.face][1]][ge.x - DIRS[ge.face][0]] === pr.id && pr.door.ent.x === ge.x && doorOut(pr.door.ent).x === ge.x + DIRS[ge.face][0];
-    // 길을 이으면 운영된다
-    o.link = linkDoor(pr) === '' && usable(pr);
-    // 방문자는 입구 건물 문까지 걸어가 들어가고, 나올 때는 출구 건물 문에서 나와 바깥 칸으로 걸어간다
-    { V.length = 0; spawnV(false); const v = V[0]; placeAt(v, doorNode(pr.door.ent, pr)); v.target = pr.id; v.path = []; v.state = 'walk'; arrive(v);
-      const goin = v.state === 'goin' && pr.inUse === 1; let seen = goin; for (let i = 0; i < 40 && v.state === 'goin'; i++) stepV(v, .1);
-      const dp = gateDoorPt(pr, 'ent'); const inDoor = v.state === 'inside' && Math.hypot(v.x - dp.x, v.y - dp.y) < .01;
-      v.t = 0; stepV(v, .1); const xp = gateDoorPt(pr, 'ext'); const out0 = v.state === 'goout' && Math.hypot(v.x - xp.x, v.y - xp.y) < .01 && pr.inUse === 0;
-      for (let i = 0; i < 40 && v.state === 'goout'; i++) stepV(v, .1); const op = nodePos(doorNode(pr.door.ext, pr));
-      o.walkIn = seen && inDoor && out0 && v.state === 'idle' && Math.hypot(v.x - op.x, v.y - op.y) < .01; V.length = 0; }
-    // 건물을 옮기면 입구·출구도 같이 옮겨지고, 회전하면 떨어져 나가 값을 돌려받는다
-    const before = [ge.x, ge.y]; let mv = null; for (let dx = 4; dx < 20 && !mv; dx += 2) if (canPlace(D.pray, pr.x + dx, pr.y, 2) && [ge, gx].every(g => !occ[g.y][g.x + dx])) mv = dx;
-    startMove(pr); UI.ghost = { x: pr.x + mv, y: pr.y }; plMoveDone();
-    o.moveWith = ge.x === before[0] + mv && ge.y === before[1] && !!pr.door; o.mvd = [mv, before, ge.x, ge.y, !!pr.door];
-    // 옮길 자리에서 출구 칸이 막혀 있으면 출구는 떨어져 나가고 값을 돌려받는다
-    let mv2 = null; for (let dx = 4; dx < 24 && !mv2; dx += 2) if (canPlace(D.pray, pr.x + dx, pr.y, 2) && !occ[ge.y][ge.x + dx] && canPlace(D.tree, gx.x + dx, gx.y, 2)) mv2 = dx;
-    build('tree', gx.x + mv2, gx.y, 2);
-    const m1 = S.money; startMove(pr); UI.ghost = { x: pr.x + mv2, y: pr.y }; plMoveDone();
-    o.rotDrop = !!gatesOf(pr).ent && !gatesOf(pr).ext && !pr.door && S.money - m1 === D.x_flower.cost && !usable(pr);
-    UI.sel = pr.id; UI.fold = true; UI.tool = null; renderSelCard();
-    o.card = /출구를 지어야/.test(document.getElementById('selCard').textContent) && !!document.querySelector('#selCard [data-act="gatego"]');
-    // 철거하면 입구·출구도 함께 사라진다
-    autoGates(pr); o.mvd.push(!!gatesOf(pr).ext); const n0 = S.buildings.filter(isGate).length; demolish(pr.id);
-    o.demolish = S.buildings.filter(isGate).length === n0 - 2;
-    // 입구 칸 밑의 땅만 따로 바꿀 수 없다 (건물과 함께)
-    const rgE = rg.ent; o.ter = terPlan(rgE.x, rgE.y, 'ter_set', 1).cells.length > 4;
-    // 대기줄 지그재그: 옆 줄과 맞닿아도 섞이지 않고 한 줄
-    const ch = S.buildings.find(b => b.def === 'room'); const ent = ch.door.ent, q0 = doorOut(ent);
-    UI.flast = null; const lay = (x, y) => { const w = paintFloor(x, y, 'q_rope'); UI.flast = { x, y }; return w; };
-    S.floor = {}; recalc();
-    const path = [[0, 0], [0, 1], [1, 1], [2, 1], [2, 0], [3, 0], [3, 1]].map(p => [q0.x + p[0], q0.y + p[1]]);
-    // 입구 앞 칸은 하나, 그 아래 → 오른쪽 → 위(입구 줄과 맞닿음) → 오른쪽 → 아래
-    const ws = path.map(p => lay(p[0], p[1]));
-    paintFloor(q0.x + 4, q0.y + 1, 'f_block'); recalc();
-    o.snake = ws.every(w => w === '') && !!ch.q && ch.q.cells.length === 7 && ch.q.cells.map(c => c.x + ',' + c.y).join(' ') === path.map(p => p.join(',')).join(' ');
-    // 갈래: 줄 중간 옆 칸은 이어지지 않는다
-    UI.flast = null; o.branch = /이어 깔아요/.test(floorWhy(q0.x + 1, q0.y + 2, 'q_rope') || '') && /이어 깔아요/.test(floorWhy(q0.x - 1, q0.y + 1, 'q_rope') || '');
-    for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
-    return o;
-  });
-  check(r.start, '입구·출구: 시작 예배실에는 처음부터 있어 바로 쓸 수 있음');
-  check(r.small, '소품: 벤치·쓰레기통·가로등·나무 등은 한 칸, 그림 높이도 작게');
-  check(r.flowEnt && r.flowExt && r.flowDone, '입구·출구: 건물을 지으면 곧바로 입구 → 출구 놓기, 모양을 골라 ✓, 끝나면 건물 카드');
-  check(r.facing && r.link, '입구·출구: 건물 반대쪽을 보고 바깥 칸에서 드나들며, 길을 이으면 운영');
-  check(r.walkIn, '입구·출구: 방문자가 입구 건물 문으로 걸어 들어가고, 출구 건물 문에서 걸어 나옴');
-  if (!(r.moveWith && r.rotDrop && r.card && r.demolish)) console.log('DBGM', JSON.stringify([r.mvd, r.moveWith, r.rotDrop, r.card, r.demolish]));
-  check(r.moveWith && r.rotDrop && r.card, '입구·출구: 건물을 옮기면 같이 옮겨지고, 못 붙는 쪽은 떨어져 값을 돌려받고 카드에 다시 지으라고 뜸');
-  check(r.demolish && r.ter, '입구·출구: 건물과 함께 철거되고, 땅을 바꾸면 함께 움직임');
-  check(r.snake && r.branch, '대기줄: 지그재그로 맞닿아도 놓은 순서대로 한 줄, 갈래는 안 됨');
-  check(errs.length === 0, '입구·출구: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  check(errs.length === 0, '건물 레벨·운영: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }
 
@@ -1436,7 +1335,6 @@ async function terrainChecks(browser, url) {
     // 경사로 아래에서 기존 바닥까지
     const t = walkSearch(19, 14, {}); (t || []).forEach(q => { S.floor[q.x + ',' + q.y] = 'f_block'; }); recalc();
     // 출구도 길 쪽으로 다시 짓는다 (처음엔 길이 없어 아무 쪽에나 났다)
-    { const xg = gatesOf(pr).ext; S.buildings = S.buildings.filter(g => g !== xg); rebuildOcc(); recalc(); autoGates(pr, null, null, true); recalc(); }
     o.reach = !!(pr.acc && pr.acc.ok);
     const path = navPath(gateNode(), m => m === doorNode(pr.door.ent));
     o.climb = !!path && Math.abs(path[path.length - 1].z - 2 * LV) < .01;
@@ -1624,7 +1522,7 @@ async function gripeChecks(browser, url) {
     // 새 교회: 만족도 항목이 모두 50% 안팎에서 시작하고, 전체도 45~55
     { const c = S.cov; o.start50 = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].every(k => c[k] >= 0.4 && c[k] <= 0.6) && S.mood >= 40 && S.mood <= 58 && BLD_SAT === 0.6 && MOOD_LEAVE === 45 && MOOD_GAIN === 50;
       o.start50d = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].map(k => k + Math.round(c[k] * 100)).join(' ') + ' mood' + Math.round(S.mood); }
-    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.chapel.cost === 5600 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && MROOM.floorCost === 250 && QID.g1.m === 800 && LOANS.big.amt === 40000;
+    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.room.cost === 1800 && D.chapel.cost > D.room.cost * 5 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && MROOM.floorCost === 250 && QID.g1.m === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
     o.props = ['bench', 'picnic', 'parasol', 'swing', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
     S.money = 999999; levelTick(true); S.unlockAll = true; recalc();
@@ -1637,7 +1535,6 @@ async function gripeChecks(browser, url) {
     document.querySelector('#cards [data-act="cpick"][data-v="f_brick"]').click();
     o.link = lp.tiles.length > 0 && row.length === FLOOR_IDS.length && usable(cafe) && m0 - S.money === lp.tiles.length * D.f_brick.cost && lp.tiles.every(t => S.floor[t.x + ',' + t.y] === 'f_brick');
     UI.sel = null; closeSelCard && closeSelCard();
-    // 편의 시설(화장실·휴게실 등)은 입구·출구 없이 옆 길에서 바로 쓴다
 
     // 화장실: 급한데 없으면 불편 + 일찍 돌아감, 있으면 찾아간다
     S.grip = {}; spawnV(false); const v = V[V.length - 1]; v.urge = 'wc'; v.life = 50;
@@ -1679,11 +1576,11 @@ async function gripeChecks(browser, url) {
     club.weekUses = 60; cafe.weekUses = 0; club.inUse = cafe.inUse = 0; const toCafe = pick();
     club.weekUses = 0; cafe.weekUses = 60; const toCafe2 = pick(); club.weekUses = cafe.weekUses = 0;
     o.dbg = [toCafe, toCafe2, !!club, !!cafe && usable(cafe)];
-    o.spread = toCafe >= 9 && toCafe2 <= 3 && NEED_OK >= 85 && WAIT_T < 5 && CROWD_ANNOY > 1 && GRIPE_W.crowd >= 1;
-    // 편의 시설(화장실·휴게실 등)은 입구·출구 없이 옆 길에서 바로 쓴다
-    { const w2 = put('lounge'); recalc(); const lk = linkDoor(w2); recalc(); const g2 = gatesOf(w2);
-      o.wcFree = !needsGates(w2) && !g2.ent && !g2.ext && (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && needsGates(S.buildings.find(b => b.def === 'room')) && noGateDef(D.wc) && noGateDef(D.mcomf) && !noGateDef(D.cafe);
-      o.wcDbg = [!needsGates(w2), !g2.ent, lk, usable(w2), JSON.stringify(w2.door), JSON.stringify(w2.acc)]; }
+    o.spread = toCafe >= 9 && toCafe2 <= 3 && NEED_OK >= 85 && VIS_PATIENCE > 5 && CROWD_ANNOY > 0 && GRIPE_W.crowd >= 1;
+    // 편의 시설도 정면 문 하나로 옆 길에서 바로 쓰고, 한 명씩 쓴다
+    { const w2 = put('lounge'); recalc(); const lk = linkDoor(w2); recalc();
+      o.wcFree = (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && bCap(w2) === 1 && bMode(D.mcomf) === 'single';
+      o.wcDbg = [lk, usable(w2), JSON.stringify(w2.door), JSON.stringify(w2.acc)]; }
     o.fixes = gripeFixes(D.boardgame).includes('외로움') && gripeFixes(D.cell).includes('외로움') && gripeFixes(D.bakery).includes('배고픔') && gripeFixes(D.cafe).includes('목마름') && /외로움/.test(effText(D.futsal));
     // 소모임 분류: 제목 줄에 운동·취미·음악 칩, 고른 묶음만 목록에
     o.club = CATS.some(c => c[0] === 'club') && D.gym.cat === 'club' && D.gym.sub === 'sport' && OUTDOOR.indexOf('court') >= 0 && PRICY_CATS.indexOf('club') >= 0;
@@ -1757,7 +1654,7 @@ async function gripeChecks(browser, url) {
   check(r.price, '가격: 초기 자금 20,000, 기능 건물·칸 위층·목표 보상·대출 2배, 꾸미기·바닥은 그대로');
   check(r.props, '편의 소품: 벤치·피크닉·파라솔·그네·선베드·식수대·쓰레기통·정자는 편의 분류, 값 그대로, 이어 놓기');
   if (!r.wcFree) console.log('WC', JSON.stringify(r.wcDbg));
-  check(r.wcFree, '편의 시설: 화장실·휴게실·편의실 칸은 입구·출구 없이 옆 길에서 바로 이용');
+  check(r.wcFree, '편의 시설: 정면 문 하나로 옆 길에서 바로 이용, 한 명씩');
   check(r.link, '길 잇기: 카드에서 바닥 종류를 골라 그 바닥으로 깔고, 값은 칸 수 × 그 바닥 값');
   check(r.noWc && r.goWc, '불편: 화장실이 급하면 찾아가고, 없으면 불편을 겪고 일찍 돌아감');
   check(r.trash && r.legs, '불편: 매장에서 산 뒤 쓰레기통이 없으면 불편, 오래 걸으면 쉴 자리·마실 것을 찾음');
@@ -1825,28 +1722,17 @@ async function earlyChecks(browser, url) {
     o.old = L2.lvl === null && L2.lvc === 3 && L2.step === undefined && L2.goal === undefined && L2.qd.f4 === 1 && !L2.qd.f5 && L2.qd.g2 === 1 && !L2.qd.g3 && L2.qxp === QID.f1.xp + QID.f2.xp + QID.f3.xp + QID.f4.xp + QID.g1.xp + QID.g2.xp;
     // 미리보기 첫 자리: 화면 가운데가 길이어도 바닥 타일 위에 놓이지 않는다
     S.money = 50000; homeView(); startPlace('wc'); o.offPath = !!UI.ghost && !onFloorAt(D.wc, UI.ghost.x, UI.ghost.y, UI.face) && canPlace(D.wc, UI.ghost.x, UI.ghost.y, UI.face); endPlace();
-    // 입구 건물이 빠진 건물: 카드에 '입구를 지어야 운영돼요'와 '입구 짓기'. 누르면 길 쪽 자리에 미리보기가 뜨고 ✓로 짓는다
+    // 문 앞에 길이 없으면 카드에 이유와 '길 잇기' 버튼. 문은 지을 때 고른 정면(방향)에 난다
     { let spot = null; for (let y = 4; y < PZ - 8 && !spot; y++)for (let x = 4; x < COLS - 12 && !spot; x++) { let ok = true; for (let j = -3; j <= 6 && ok; j++)for (let i = -3; i <= 10 && ok; i++)if (occ[y + j][x + i] || S.floor[(x + i) + ',' + (y + j)]) ok = false; if (ok) spot = { x, y }; }
-      build('pray', spot.x, spot.y, 2); const wc = S.buildings[S.buildings.length - 1]; recalc();
-      const eg = gatesOf(wc).ent; S.buildings = S.buildings.filter(g => g !== eg); rebuildOcc(); recalc();
-      UI.sel = wc.id; UI.fold = true; UI.tool = null; renderSelCard();
-      const btn = document.querySelector('#selCard [data-act="gatego"]'), why = (document.querySelector('#selCard .scw') || {}).textContent || '';
-      const unusable = !usable(wc) && !wc.door; if (btn) btn.click();
-      const placing = !isPlacing() && !document.getElementById('dock').hidden && isGateDef(D[UI.tool]) && D[UI.tool].role === 'ent' && UI.gateFor === wc.id && !!UI.ghost && !gateAttachWhy(D[UI.tool], UI.ghost.x, UI.ghost.y);
-      // 모양을 바꿔 짓는다
-      document.querySelector('#cards [data-act="cpick"][data-v="g_stone"]').click();
-      const m0 = S.money; plLock = 0; plOk();
-      const ng = gatesOf(wc).ent;
-      o.fixdoor = unusable && !!btn && /입구를 지어야/.test(why) && placing && !!ng && ng.def === 'g_stone' && m0 - S.money === D.g_stone.cost && !!wc.door && !isPlacing() && UI.sel === wc.id;
-      o.fd = [unusable, !!btn, why, placing, ng && ng.def, m0 - S.money, !!wc.door, isPlacing(), UI.sel === wc.id];
-      // 다른 건물 옆이 아니면 못 짓고, 같은 건물에 입구 둘은 안 된다
-      o.fixdoor = o.fixdoor && /옆 칸/.test(gateAttachWhy(D.g_arch, spot.x + 9, spot.y + 5));
-      // 옆에 이미 길이 있으면 처음부터 그쪽으로 입구가 난다 (길과 건물 사이 칸에 입구, 바깥이 길)
-      { const px = spot.x + 6, py = spot.y - 2; S.floor[px + ',' + py] = 'f_block'; recalc(); build('pray', px + 2, py, 2); const pr = S.buildings[S.buildings.length - 1];
-        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 1 && doorOut(pr.door.ent).x === px && doorOut(pr.door.ent).y === py; demolish(pr.id); delete S.floor[px + ',' + py]; recalc(); }
-      // 새로 지을 때는 처음부터 막히지 않은 쪽으로 문이 난다
-      const t2 = { x: spot.x + 6, y: spot.y }; build('tree', t2.x, t2.y + 2, 2); recalc(); build('wc', t2.x, t2.y, 2); const wc2 = S.buildings[S.buildings.length - 1]; recalc();
-      o.fd.push(linkPlan(wc2).why, wc2.def, JSON.stringify(wc2.door)); o.fixdoor = o.fixdoor && !linkPlan(wc2).why; UI.sel = null; }
+      build('pray', spot.x, spot.y, 2); const pb = S.buildings[S.buildings.length - 1]; recalc();
+      UI.sel = pb.id; UI.fold = true; UI.tool = null; renderSelCard();
+      const why = (document.querySelector('#selCard .scw') || {}).textContent || '', btn = document.querySelector('#selCard [data-act="link"]');
+      const unusable = !usable(pb) && !!pb.door; const lw = linkDoor(pb); recalc();
+      o.fixdoor = unusable && /문 앞까지 길/.test(why) && !!btn && lw === '' && usable(pb);
+      o.fd = [unusable, why, !!btn, lw, usable(pb)];
+      { const px = spot.x + 6, py = spot.y - 2; build('pray', px + 2, py, 1); const pr = S.buildings[S.buildings.length - 1]; recalc();
+        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 1 && pr.face === 1; demolish(pr.id); recalc(); }
+      UI.sel = null; renderSelCard(); }
     // 영수증: 패널이 열려 있으면 옆으로 비켜 뜨고, 눌러도 탭이 바뀌지 않음
     S.rcpt = S.rcpt || { net: 0, inc: 0, exp: 0 }; openGroup('build'); const tab0 = UI.tab; showReceipt(); const rc = document.getElementById('rcpt');
     const side = rc.classList.contains('side'), dk = document.getElementById('dock').getBoundingClientRect(), rr = rc.getBoundingClientRect(); rc.click();
@@ -1974,7 +1860,7 @@ async function earlyChecks(browser, url) {
   check(r.selHi, '고른 바닥 칸·길 조각: 지도에 노란 반투명 표시가 그려짐');
   check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 띠 없이 지도 위 ▲▼와 ✓ 옆 높이 글씨만');
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
-  check(r.fixdoor, '입구·출구 건물: 빠지면 카드에 이유와 짓기 버튼, 누르면 길 쪽 자리에 미리보기, 모양을 골라 ✓로 지음');
+  check(r.fixdoor, '문: 문 앞에 길이 없으면 카드에 이유와 길 잇기, 이으면 이용');
   { const nt = (r.ni && r.ni.nt) || r.nt || {};
     check(nt.base && nt.total && nt.add, '달란트: 사역 경험 Lv 1당 1개, 사역팀에 넣으면 효과가 생기고 자금·사례비는 안 듦');
     check(nt.max && nt.curve && nt.move && nt.sub, '사역팀: 최대 5단계, 단계가 오를수록 증가폭이 줄고, 한 팀에서 빼 다른 팀으로 옮길 수 있음');
@@ -1993,7 +1879,7 @@ async function earlyChecks(browser, url) {
     check(n.decay, '심방 활동은 주마다 식음');
     if (!(n.sum && n.curve && n.trust && n.build && n.claim && n.chips && n.ui && n.quest && n.decay)) console.log('NI', JSON.stringify(n)); }
   if (!r.fixdoor) console.log('DBG', JSON.stringify(r.fd));
-  check(r.autoDoor, '문 자동: 지을 때 옆에 길이 있으면 그쪽으로 문이 남');
+  check(r.autoDoor, '문: 지을 때 고른 방향(정면)에 문이 남');
   check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
   check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');
   check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');
@@ -2018,8 +1904,7 @@ async function earlyChecks(browser, url) {
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
     await waterChecks(browser, url);
-    await queueChecks(browser, url);
-    await gateChecks(browser, url);
+    await levelChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);
     await gripeChecks(browser, url);

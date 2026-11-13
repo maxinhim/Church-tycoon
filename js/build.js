@@ -23,22 +23,19 @@ function canPlace(d,x,y,face){
 function bump(){
   // 서 있던 칸이 막히거나 길이 사라진 방문자는 입구 아치로 돌려보낸다
   V.forEach(function(v){
-    if(v.state==='inside'||v.state==='queue'||v.state==='goin')return;
+    if(v.state==='inside')return;
     if(!nodeOk(v.node)){placeAt(v,gateNode());v.state='idle';v.t=0.2;v.target=0;}
   });
 }
 function build(id,x,y,face){
-  if(isGateDef(D[id]))return !buildGate(id,x,y);
   if(isRoomDef(id))return placeTile(x,y,id);
   if(D[id]&&D[id].kind==='floor')return !paintFloor(x,y,id);
   var d=D[id];if(face==null)face=2;
-  if(S.money<d.cost||!canPlace(d,x,y,face))return false;
+  if(S.money<d.cost||!canPlace(d,x,y,face)||tierWhy(id)||d.retired)return false;
   S.money-=d.cost;
   var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0,bw:S.week};setPlaceLevel(nb,d,x,y,face);
   S.buildings.push(nb);addFresh(d.beauty);noteNew();
   rebuildOcc();bump();recalc();
-  // 테스트에서는 입구·출구를 저절로 붙여 지어 둔다 (__CT_GATES를 켜면 직접 짓는다)
-  if(AUTOGATE()&&needsGates(nb)){autoGates(nb,null,null,true);S.buildings.splice(S.buildings.indexOf(nb),1);S.buildings.push(nb);}
   save();return true;
 }
 function demolish(id){
@@ -46,7 +43,6 @@ function demolish(id){
   var d=defOf(b);
   S.money+=Math.floor(d.cost*0.5);
   S.buildings=S.buildings.filter(function(x){return x.id!==id;});
-  demolishGatesOf(b);
   releaseVisitors(id);
   rebuildOcc();bump();recalc();save();
 }
@@ -61,7 +57,7 @@ var MAXF=10,STACK_CATS=['worship','fellow','club','care','comfort','park'];
 function maxFloors(b){return MAXF-Math.min(0,bLevel(b));}
 function canStack(b){var d=D[b.def];return !!d&&d.kind==='bld'&&STACK_CATS.indexOf(d.cat)>=0;}
 function floorCostOf(b){return Math.round(D[b.def].cost*0.75/10)*10;}
-function structureChanged(){rebuildOcc();dropLooseGates();bump();recalc();save();}
+function structureChanged(){rebuildOcc();bump();recalc();save();}
 function addFloor(b){
   if(!b||!canStack(b))return '층을 올릴 수 없는 건물이에요';
   var f=b.floors||1;if(f>=maxFloors(b))return maxFloors(b)+'층까지만 올릴 수 있어요';

@@ -63,7 +63,7 @@ function syncRoomBox(b){
 }
 function roomsChanged(){
   S.buildings.forEach(function(b){if(isRoom(b))syncRoomBox(b);});
-  rebuildOcc();dropLooseGates();bump();recalc();
+  rebuildOcc();bump();recalc();
   save();
 }
 

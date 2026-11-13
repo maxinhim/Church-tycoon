@@ -1,7 +1,9 @@
 'use strict';
 /* ---------- 방문자 ----------
-   방문자는 길찾기 노드(땅 칸·길 조각)를 따라 움직이고, 건물에는 입구로 들어가 출구로 나온다.
-   입구·출구가 입구 아치에서 닿지 않는 건물은 고르지 않는다.
+   방문자는 길찾기 노드(땅 칸·길 조각)를 따라 움직이고, 건물에는 정면의 문으로 드나든다(문 앞 길 칸 하나).
+   문 앞이 입구 아치에서 닿지 않는 건물은 고르지 않는다. 들어갈 수 없으면(정원이 찼거나 일괄 가동 중) 문 앞 길에서
+   VIS_PATIENCE초까지 기다리고, 넘으면 머리 위에 화남 표시를 띄우고 불만이 쌓인 채 다른 곳으로 간다.
+   예배·교제 건물(일괄 가동)은 안에서 정원이 차기를 기다렸다가 함께 나온다(bldlv.js).
    연결 다리로 이어진 같은 역할 건물은 한 묶음: 들어간 건물이 꽉 차면 다리를 건너 옆 건물로 가고,
    자기 출구가 막혀 있어도 묶음의 다른 출구로 나올 수 있다. */
 // member: 주일에 예배하러 오는 성도 (정착 판정 없음, 말씀이 가장 급하다). wallet: 매장에서 쓸 수 있는 돈
@@ -10,7 +12,7 @@ function spawnV(member){
   if(member)needs.word=8+Math.random()*10;
   V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
     member:!!member,wallet:Math.round(member?36+Math.random()*120:20+Math.random()*96),
-    life:55+Math.random()*30,speed:(1.9+Math.random()*0.7)*G,ph:Math.random()*6.28,
+    life:55+Math.random()*30,speed:(1.9+Math.random()*0.7)*G*VIS_SPEED,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
     pant:['#3b4252','#5b4a3a','#2f3e5c'][(Math.random()*3)|0],dead:false});
   gripeInit(V[V.length-1]);
@@ -45,13 +47,12 @@ function moveAlong(v,dt){
   }
   return v.pi>=v.path.length;
 }
-function usable(b){
-  if(!b||!b.acc||!b.acc.ent)return false;
-  return b.acc.ext||(b.links||[]).some(function(id){var o=bById(id);return !!(o&&o.acc&&o.acc.ext);});
-}
+function usable(b){return !!(b&&b.acc&&b.acc.ent);}
+// 지금 들어갈 수 있는지: 일괄 가동 중이면 못 들어가고, 아니면 정원까지
+function canEnter(b){return !!b&&!(b.run>0)&&b.inUse<bCap(b);}
 function linkWithSpace(b){
   var ids=b.links||[];
-  for(var i=0;i<ids.length;i++){var o=bById(ids[i]);if(o&&o.inUse<defOf(o).cap)return o;}
+  for(var i=0;i<ids.length;i++){var o=bById(ids[i]);if(o&&canEnter(o))return o;}
   return null;
 }
 // 꽉 찬 건물 안에서 연결 다리를 건너 옆 건물로. 자리는 미리 잡아 둔다
@@ -62,47 +63,31 @@ function startXfer(v,from,to){
   v.x=r[0].x;v.y=r[0].y;v.z=r[0].z;v.node=r[0].n;
   return true;
 }
-// 나올 곳: 자기 출구 → 묶음의 다른 출구 → 자기 입구 → 묶음의 입구 → 입구 아치
+// 나올 곳: 자기 문 앞 → 묶음 건물의 문 앞 → 입구 아치
 function exitNodeFor(b){
   if(!b)return gateNode();
-  var mates=(b.links||[]).map(bById).filter(function(o){return o&&o.door;}),cand=[];
-  if(b.door)cand.push(b.door.ext);
-  mates.forEach(function(o){cand.push(o.door.ext);});
-  if(b.door)cand.push(b.door.ent);
-  mates.forEach(function(o){cand.push(o.door.ent);});
-  for(var i=0;i<cand.length;i++){var n=doorNode(cand[i]);if(n>=0&&NAV.reach[n])return n;}
-  if(b.q&&b.q.entry>=0&&NAV.reach[b.q.entry])return b.q.entry;
+  var cand=[b].concat((b.links||[]).map(bById).filter(Boolean));
+  for(var i=0;i<cand.length;i++){var n=entNode(cand[i]);if(n>=0&&NAV.reach[n])return n;}
   return gateNode();
 }
+// 문 앞에서 기다리기: 겹쳐 보이지 않게 조금씩 비켜 선다
+function startWait(v){v.state='wait';v.wait=VIS_PATIENCE;var j=.32*G;v.x+=(Math.random()-.5)*j;v.y+=(Math.random()-.5)*j;}
 function arrive(v){
   if(!v.target){v.state='idle';v.t=0.8+Math.random();return;}
   var b=bById(v.target);
   if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
-  // 대기줄이 있으면 줄에 선다. 줄이 꽉 찼으면 잠깐 기다려 본다
-  if(qLen(b)){if(!queueJoin(v,b)){v.state='wait';v.wait=WAIT_T;}return;}
-  if(b.inUse<defOf(b).cap)enter(v,b);
-  else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt))){v.state='wait';v.wait=WAIT_T;}}
-}
-// 한 주 48초에 맞춰 건물 안에 머무는 시간을 짧게
-// 꽉 찬 건물 앞에서 기다리는 시간. 넘으면 크게 불만(평판·정착 손해, 불편 '붐빔')
-/* 입구·출구 건물이 있으면 그 건물의 문으로 드나드는 모습을 보인다:
-   들어갈 때는 입구 건물 문까지 걸어가 사라지고(goin), 나올 때는 출구 건물 문에서 나타나 바깥 칸으로 걸어 나온다(goout).
-   자리는 걷기 시작할 때 이미 잡아 둔다 (그사이 다른 사람이 채우지 못하게) */
-function gateDoorPt(b,which){
-  var s=b&&b.door&&b.door[which];if(!s||!needsGates(b))return null;
-  return {x:s.x+.5+DIRS[s.d][0]*.42,y:s.y+.5+DIRS[s.d][1]*.42,z:(bLevel(b)+s.l)*LV};
+  if(canEnter(b))enter(v,b);
+  else{var alt=linkWithSpace(b);if(!(alt&&startXfer(v,b,alt)))startWait(v);}
 }
 function enter(v,b){
-  b.inUse++;v.inside=b.id;v.t=rotTime(b)*(0.8+Math.random()*0.4);v.uk=useK(b);
-  var dp=gateDoorPt(b,'ent');
-  if(dp&&Math.hypot(dp.x-v.x,dp.y-v.y)<2.5){v.state='goin';v.gp=dp;return;}
-  v.state='inside';
+  b.inUse++;v.inside=b.id;v.uk=bPerf(b);v.state='inside';
+  if(bMode(defOf(b))==='batch'){v.t=BATCH_PATIENCE;v.batch=true;if(b.inUse>=bCap(b))batchStart(b);}
+  else{v.batch=false;v.t=rotTime(b)*(0.8+Math.random()*0.4);}
 }
-// 문까지(또는 문에서 바깥 칸까지) 걷기. 다 왔으면 true
-function gateWalk(v,dt){
-  var p=v.gp,dx=p.x-v.x,dy=p.y-v.y,d=Math.hypot(dx,dy),st=v.speed*.7*dt;
-  if(d<=st){v.x=p.x;v.y=p.y;v.z=p.z;return true;}
-  v.x+=dx/d*st;v.y+=dy/d*st;v.z+=(p.z-v.z)*st/d;return false;
+// 기다리다 지쳐 돌아선다: 화남 표시·불만, 그 건물은 한동안 피한다
+function giveUp(v,b){
+  v.angry=ANGRY_T;v.annoy+=CROWD_ANNOY;addGripe('crowd',b?defOf(b).name:'');
+  if(b)v.blocked[b.id]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;
 }
 function finishVisit(v){
   var b=bById(v.inside);
@@ -113,10 +98,7 @@ function finishVisit(v){
       if(n==='care')amt*=MOD.care;
       if(n==='word')amt*=MOD.word;
       amt*=wxFill(d)*(v.uk||1);
-      var nv=v.needs[n]+amt;
-      // 줄을 서서 오래 머문 방문: 넘친 몫의 일부가 가장 모자란 다른 필요로 간다
-      if(nv>100&&(v.uk||1)>1){var lo=null;for(var oi=0;oi<NEEDS.length;oi++){var on=NEEDS[oi];if(on!==n&&(lo==null||v.needs[on]<v.needs[lo]))lo=on;}if(lo)v.needs[lo]=Math.min(100,v.needs[lo]+(nv-100)*QUEUE_SPILL);}
-      v.needs[n]=Math.min(100,nv);
+      v.needs[n]=Math.min(100,v.needs[n]+amt);
     }
     // 매장: 가진 돈 안에서 사 간다. 건물 위에 번 돈이 뜬다
     if(d.income&&v.wallet>0){
@@ -124,10 +106,7 @@ function finishVisit(v){
       if(pay>0){var sup=Math.round(pay*SHOP_COST);v.wallet-=pay;S.money+=pay-sup;S.weekInc+=pay;S.weekShop+=pay;S.weekSup=(S.weekSup||0)+sup;gripeBought(v,b);sfx('coin',.3,160);var bd=bDims(b);F.push({x:b.x+bd.w/2,y:b.y+bd.h/2,z:bLevel(b)*LV+bHeight(b)+.1,t:1.1,d:1.1,text:'+'+pay,col:'#ffd76a'});}
     }
     gripeUsed(v,b);
-    var en=exitNodeFor(b),xp=gateDoorPt(b,'ext');
-    placeAt(v,en);
-    // 출구 건물 문에서 나와 바깥 칸으로 걸어간다
-    if(xp&&en===doorNode(b.door.ext,b)){var to=nodePos(en);v.x=xp.x;v.y=xp.y;v.z=xp.z;v.gp=to;v.inside=0;v.target=0;v.state='goout';v.idleN=0;return;}
+    placeAt(v,exitNodeFor(b));
   }
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
 }
@@ -164,8 +143,10 @@ function decide(v){
     // 지갑에 돈이 있으면 매장에 조금 더 끌린다
     // 모든 건물을 골고루: 거리보다 '이번 주에 얼마나 쓰였나(자리 대비)'와 '지금 붐비나'를 더 크게 본다.
     // 새 건물에는 조금만 더 끌리고, 사람마다 조금씩 다르게 고른다
-    var jit={};cands.forEach(function(b){jit[b.id]=Math.random()*4;});
-    var cost=function(b){var d=defOf(b),cp=Math.max(1,d.cap);return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5+b.inUse/cp*4-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
+    var jit={},wq={};cands.forEach(function(b){jit[b.id]=Math.random()*4;});
+    // 문 앞에서 기다리는 사람이 많은 곳은 피한다
+    V.forEach(function(o){if(o.state==='wait'&&o.target)wq[o.target]=(wq[o.target]||0)+1;});
+    var cost=function(b){var d=defOf(b),cp=Math.max(1,bCap(b));return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5/bPerf(b)+(b.run>0?4:bMode(d)==='batch'?-b.inUse/cp*3:b.inUse/cp*4)+(wq[b.id]||0)*3-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],tn=entNode(b),p=navPath(v.node,function(m){return m===tn;});
@@ -180,7 +161,8 @@ function decide(v){
   if(wp&&wp.length){v.path=wp;v.pi=0;v.target=0;v.want='';v.state='walk';}else v.t=0.6;
 }
 function stepV(v,dt){
-  v.life-=dt;
+  // 일괄 가동 건물 안에서 모이기를 기다리는 동안은 머무를 시간이 줄지 않는다
+  if(!(v.state==='inside'&&v.batch))v.life-=dt;if(v.angry>0)v.angry-=dt;
   // 비·폭염·눈 속을 걸으면 편의 욕구가 떨어진다
   if(v.state!=='inside'){var dr=wxDrain();if(dr)v.needs.comf=Math.max(0,v.needs.comf-dr*dt);
     // 밖에 있는 동안 욕구가 천천히 줄어 다음 건물을 찾게 된다
@@ -195,24 +177,24 @@ function stepV(v,dt){
     }
     if(r===true){if(v.state==='leave')depart(v);else arrive(v);}
   }else if(v.state==='wait'){
+    // 문 앞 길에서 기다린다. 자리가 나면 들어가고, 한계를 넘으면 화가 나 돌아선다
     var b=bById(v.target);
     if(!usable(b)){v.state='idle';v.t=0.2;v.target=0;return;}
-    if(qLen(b)){if(queueJoin(v,b))return;}
-    else if(b.inUse<defOf(b).cap){enter(v,b);return;}
-    if(!qLen(b)&&linkWithSpace(b)&&startXfer(v,b,linkWithSpace(b))){}
-    else{v.wait-=dt;if(v.wait<=0){v.annoy+=CROWD_ANNOY;addGripe('crowd',defOf(b).name);v.blocked[v.target]=S.clock+14;v.target=0;v.state='idle';v.t=0.3;}}
+    if(canEnter(b)){enter(v,b);return;}
+    var alt=linkWithSpace(b);if(alt&&startXfer(v,b,alt))return;
+    v.wait-=dt;if(v.wait<=0){placeAt(v,v.node);giveUp(v,b);}
   }else if(v.state==='xfer'){
     var to=bById(v.target),r2=moveAlong(v,dt);
     if(r2==='blocked'||!to){if(to)to.inUse=Math.max(0,to.inUse-1);placeAt(v,exitNodeFor(to));v.state='idle';v.t=0.3;v.target=0;return;}
-    if(r2===true){v.state='inside';v.inside=to.id;v.t=rotTime(to)*(0.8+Math.random()*0.4);v.uk=useK(to);}
-  }else if(v.state==='goin'){
-    if(gateWalk(v,dt))v.state='inside';
-  }else if(v.state==='goout'){
-    if(gateWalk(v,dt)){v.state='idle';v.t=0.3;}
-  }else if(v.state==='queue'){
-    queueStep(v,dt);
+    if(r2===true){to.inUse--;enter(v,to);}
   }else if(v.state==='inside'){
-    v.t-=dt;if(v.t<=0)finishVisit(v);
+    // 일괄 가동 건물: 가동이 끝나면 건물이 내보낸다. 정원이 차지 않아 너무 오래 기다리면 화가 나 나온다
+    v.t-=dt;
+    if(v.t<=0){
+      var ib=bById(v.inside);
+      if(v.batch&&ib&&!(ib.run>0)){ib.inUse=Math.max(0,ib.inUse-1);v.inside=0;placeAt(v,exitNodeFor(ib));giveUp(v,ib);}
+      else if(!v.batch)finishVisit(v);
+    }
   }else if(v.state==='idle'){
     v.t-=dt;if(v.t<=0)decide(v);
   }

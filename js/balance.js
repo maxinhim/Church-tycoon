@@ -8,7 +8,7 @@
 var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 
 /* 수입 */
-var VIS_RATE=0.6;        // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
+var VIS_RATE=0.7;        // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
 var SHOP_K=8;            // 한 번 살 때 = 건물 income × SHOP_K
 var SHOP_COST=0.25;      // 매장 재료비 비율 (판매 순간 빠진다)
 var OFFER_PER=30;        // 주일 헌금: 출석 한 명당
@@ -16,7 +16,7 @@ var VIS_GIVE=3;          // 방문자 헌금: 한 명당
 var SPONSOR0=600,SPONSOR_DROP=6;   // 개척 후원: 시작 금액, 주마다 줄어드는 양
 
 /* 성도 수: 정착·이탈 */
-var JOIN_P=0.072;        // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
+var JOIN_P=0.1;          // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
 var REFER_K=0.015;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
 var MOOD_LEAVE=45;       // 만족도가 이보다 낮으면 떠나는 성도가 는다
 var MOOD_GAIN=50;        // 만족도가 이보다 높으면 소개로 새 성도가 온다
@@ -49,7 +49,7 @@ var SACRAMENT={communion:{span:8,w:.6},baptism:{span:12,w:.35},retreat:{span:16,
 var BEAUTY_K=0.15,FRESH_K=1,FRESH_DECAY=0.85;
 
 /* 방문자 불편 */
-var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2,queue:1};   // 불편마다 무게
+var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};   // 불편마다 무게
 var GRIPE_MAX=8;         // 만족도를 깎는 최대치
 var GRIPE_K=11;          // 불편 비율 × 이 값만큼 깎는다
 var GRIPE_N0=14;         // 방문자가 이보다 적으면 이 수로 나눈다 (초반에 몇 명에 크게 흔들리지 않게)
@@ -105,20 +105,8 @@ var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
    맡아서 하는 심방·선물은 값이 DELEG_COST_K배, 호감 경험치가 DELEG_XP_K배 (직접 하는 것보다 싸고 효과는 조금 작다) */
 var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
 var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
-var STAY=0.8;            // 건물 안에 머무는 시간 배율
-/* 회전 시간과 대기줄
-   회전 시간 = 건물의 dur × STAY × 성격(ROT_CAT) × 수용 인원 보정(capK) × 줄 보정.
-   · 줄 없음: 시간 ×QUEUE_NONE_T, 효과 ×QUEUE_NONE_E (짧게 머물고 조금 얻는다)
-   · 줄 n칸: 시간 ×(1+QUEUE_T·f), 효과 ×(1+QUEUE_E·f), f = min(1, n/QUEUE_FULL)
-     → 줄이 꽉 길면 머무는 1초당 효과가 약 19% 좋고(줄 없는 건물은 6%), 꽉 찬 동안 사람을 놓치지 않는다.
-       넘친 효과는 QUEUE_SPILL만큼 다른 필요로 가서, 한 건물에서 오래 머문 사람은 들를 곳이 줄어든다.
-       대신 기다리는 동안은 아무것도 채우지 못하고, QUEUE_PATIENCE초를 넘기면 불편 '줄'이 생긴다 */
-var ROT_CAT={worship:1.15,fellow:1.05,club:1.05,care:1,shop:.8,comfort:.75};
-var QUEUE_NONE_T=.8,QUEUE_NONE_E=.85,QUEUE_T=.35,QUEUE_E=.6,QUEUE_FULL=10;
-var QUEUE_SPILL=.3;      // 줄 있는 건물에서 한 필요가 100을 넘겨 채워지면, 넘친 몫의 이만큼이 가장 모자란 다른 필요로 간다 (오래 머문 만큼 두루 채워진다)
-var QUEUE_PATIENCE=14,QUEUE_ANNOY=1.2;   // 줄에서 이만큼(초) 넘게 기다리면 불만
-var WAIT_T=3.5;          // 꽉 찬 건물 앞에서 기다리는 시간(초)
-var CROWD_ANNOY=1.5;     // 기다리다 돌아설 때의 불만
+var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
+var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만
 var NEED_OK=88;          // 욕구가 이만큼 차면 됐다고 본다 (높을수록 건물을 더 많이 들른다)
 var NEED_DRAIN=0.4;      // 밖에 있는 동안 욕구가 줄어드는 빠르기(초당)
 
@@ -161,3 +149,26 @@ var LV_TIER=[1,2,3,5];
    효과 = 팀마다 정해진 기본 효과 × 단계 효과 배수 (TEAM_K × TEAM_CURVE[단계]). 단계가 오를수록 늘어나는 폭이 줄어들어
    달란트를 여러 팀에 나누는 것과 한 팀에 모으는 것이 균형을 이룬다 */
 var TEAM_MAX=5,TALENT_PER_LV=1,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9];
+
+/* 건물 운영·레벨·티어 (bldlv.js)
+   · 운영 방식: 예배·교제 건물은 '일괄 가동'(정원이 차면 한꺼번에 BATCH 시간 동안 가동 후 내보냄, 주일이 되면 정원이 덜 차도 가동),
+     매장·편의 시설은 '한 명씩'(수용 1명, 회전 시간이 레벨에 따라 짧아짐), 그 밖(소모임·돌봄)은 정원만큼 각자 머문다
+   · 건물 레벨 1~BLV_MAX: 선택 카드에서 투자(값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)))를 BLV_XP번 하면 한 레벨.
+     레벨마다 효과 +BLV_FX, 정원·좌석·수용 +BLV_CAP, 회전 속도 +BLV_ROT (한 명씩 건물)
+   · 같은 기능의 기본(티어 1)·상위(티어 2) 건물: 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 6~7), 값은 티어 1의 Lv 10 누적 투자만큼 더 비싸다.
+     티어 1은 티어 2가 열리기 전엔 TIER1_MAX개, 열린 뒤엔 TIER1_MAX_OPEN개까지 */
+var VIS_SPEED=.7;       // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
+var TEMPO_ROT=1.4;       // 건물 안에 머무는 시간 배율
+var VIS_PATIENCE=14;     // 문 앞 길에서 기다리는 한계(초). 넘으면 화남 표시·불만·다른 곳으로
+var ANGRY_T=2.2;         // 화남 표시가 떠 있는 시간(초)
+var BATCH_ROT=.6;       // 일괄 가동 시간 = dur × STAY × TEMPO_ROT × BATCH_ROT
+var BATCH_PATIENCE=60;   // 일괄 가동 건물 안에서 정원이 차기를 기다리는 한계(초). 한 주(48초)보다 길어 늦어도 주일 예배는 드린다
+var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 정원 × BATCH_CAP0 × 레벨 배율 (작게 모여 자주 가동, 레벨이 오를수록 크게)
+var BATCH_SUN_WAIT=3;    // 주일에는 (금·토에 가동하지 않았으면) 모인 사람이 이만큼 기다리면 다시 가동한다
+var SINGLE_ROT=1;        // 한 명씩 건물(매장·편의) Lv 1 회전 시간 배율
+var BLV_MAX=10,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=2,BLV_INVEST=.12,BLV_INVEST_UP=.35;
+var TIER2_K=2.1,TIER1_MAX=1,TIER1_MAX_OPEN=3;
+// 같은 기능의 [티어 1, 티어 2]
+var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
+// 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)
+var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop','mcomf'];

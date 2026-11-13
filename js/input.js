@@ -92,7 +92,7 @@ function syncTabs(){
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
-var SPEND_ACTS={cpick:1,floorup:1,fswap:1,gter:1,wswap:1,wfill:1,wbridge:1,pbuild:1,gramp:1,wfount:1};
+var SPEND_ACTS={invest:1,cpick:1,floorup:1,fswap:1,gter:1,wswap:1,wfill:1,wbridge:1,pbuild:1,gramp:1,wfount:1};
 function onPanel(e){
   var el=e.target.closest('[data-act]'),sa=el&&SPEND_ACTS[el.dataset.act],m0=S.money,pos=sa?spendPos():null;
   onPanel0(e);if(sa)spendFx(m0,pos);
@@ -120,8 +120,7 @@ function onPanel0(e){
   else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
   else if(a==='pslope'){UI.pc.slope=+v;UI.pbarOpen=false;renderDetail();}
-  else if(a==='gdesign'){UI.gateDesign=v;var gd0=D[UI.tool];if(isGateDef(gd0))UI.tool=gateId(gd0.role,v);renderDetail();}
-  else if(a==='gatego'){var gb0=bById(UI.sel);if(gb0)startGateFlow(gb0,v);}
+  else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){investBld(ib);if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==(il0<=3?1:il0<=6?2:3)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
   else if(a==='pkind'){if(v==='sky'&&isLocked('sky')){toast('연결 다리는 '+lockText(lockGoal('sky'))+' 지을 수 있어요',1800);return;}UI.pc.k=v;UI.pbarOpen=false;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}

@@ -34,7 +34,7 @@ function runBot(cfg) {
   const stat = { built: {}, events: 0, staff: 0, fail: {} };
   const failed = (id, why) => { const k = id + ':' + why; stat.fail[k] = (stat.fail[k] || 0) + 1; };
   function put(id) {
-    const d = D[id]; if (!d || isLocked(id) || S.money < d.cost + (strat === 'deco' ? 0 : 0)) return false;
+    const d = D[id]; if (!d || isLocked(id) || tierWhy(id) || S.money < d.cost + (strat === 'deco' ? 0 : 0)) return false;
     if (isRoomDef(id)) return false;
     const okN = () => S.buildings.filter(b => b.door && usable(b)).length, dm = faceDims(d, 2);
     let tries = 0;
@@ -47,8 +47,6 @@ function runBot(cfg) {
       if (++tries > 300) { failed(id, '300번 시도'); return false; }
       const m0 = S.money, n0 = okN(), f0 = S.fresh, fl0 = JSON.stringify(S.floor); if (!build(id, c[0], c[1], 2)) continue;
       const nb = S.buildings[S.buildings.length - 1];
-      // 입구·출구 건물도 값을 내고 짓는다 (길 쪽 가장 좋은 자리)
-      recalc(); if (needsGates(nb) && autoGates(nb)) { failed(id, '입구·출구 자리 없음'); demolish(nb.id); S.floor = JSON.parse(fl0); S.money = m0; S.fresh = f0; recalc(); continue; }
       recalc(); let lw = ''; if (nb.door && !usable(nb)) { lw = linkDoor(nb); recalc(); }
       // 문에 닿지 못하거나, 다른 건물의 길을 막았으면 되돌린다
       if ((nb.door && !usable(nb)) || okN() < n0 + (nb.door ? 1 : 0)) { failed(id, nb.door && !usable(nb) ? '길 못 이음(' + (lw || JSON.stringify(nb.acc)) + ')' : '다른 건물 막음'); demolish(nb.id); S.floor = JSON.parse(fl0); S.money = m0; S.fresh = f0; recalc(); continue; }
@@ -94,6 +92,13 @@ function runBot(cfg) {
     const sp = spiritParts(), q = ['w', 'p', 'r'].sort((a, b) => sp[a] - sp[b])[0]; if (sp[q] >= 1) return;
     const id = best(d => (SPIRIT_B[d.id] || {})[q] || 0); if (id) put(id);
   }
+  // 건물 레벨: 이번 주에 자리 대비 가장 많이 쓰인 건물부터 투자한다 (여유 자금으로)
+  function invest() {
+    for (let n = 0; n < 8; n++) {
+      const L = S.buildings.filter(b => hasLv(b) && !investWhy(b) && S.money - investCost(b) > RES * 3).sort((a, b) => (b.weekUses || 0) / Math.max(1, bCap(b)) - (a.weekUses || 0) / Math.max(1, bCap(a)));
+      if (!L.length) return; investBld(L[0]); stat.invest = (stat.invest || 0) + 1;
+    }
+  }
   function week() {
     if (S.dlg) { const d = dlgById(S.dlg); let i = d.o.findIndex(o => !o.ok || o.ok()); chooseDlg(i < 0 ? 0 : i); }
     if (needRepair().length && S.money > RES) repairAll();
@@ -102,6 +107,7 @@ function runBot(cfg) {
     seats();
     // 첫 걸음 퀘스트(화장실)를 따라 한다
     if (!hasBuilt(['wc'])) put('wc');
+    if (!hasBuilt(['bench'])) put('bench');
     if (strat === 'shop') { const id = best(d => d.income, d => d.cat === 'shop'); if (id) put(id); return; }
     if (strat === 'spirit') { events(['communion', 'bible', 'creed', 'retreat', 'easter', 'thanks', 'christmas', 'revival']); staffUp(['praise', 'prayer', 'edu']); spiritBuild(); pastoral(); return; }
     // wish: 성도들의 바람부터 들어준다
@@ -117,7 +123,7 @@ function runBot(cfg) {
     const g = gripeList()[0];
     if (g) { const G = GRIPES[g.k]; if (g.k === 'bin') put('bin'); else if (g.k === 'bare') decorate(2); else if (G.ids) { const id = best(d => gripeFits(G, d) ? 1 : 0); if (id) put(id); } }
     if (S.money > 6000) { const id = best(d => d.income, d => d.cat === 'shop'); if (id && (stat.built[id] || 0) < 2) put(id); }
-    decorate(1);
+    decorate(1); invest();
   }
   const rows = [];
   for (let w = 0; w < cfg.weeks && !S.over; w++) {
@@ -140,7 +146,7 @@ function runBot(cfg) {
     const ctx = await browser.newContext({ viewport: { width: 800, height: 380 } }), page = await ctx.newPage();
     const errs = []; page.on('pageerror', e => errs.push(e.message));
     await page.addInitScript(seed => { let s = seed; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
-      window.__CT_TEST = true; window.__CT_GATES = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
+      window.__CT_TEST = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
     await page.goto(url); await page.evaluate(() => window.__ct.init());
     out[strat] = await page.evaluate(runBot, { strat, weeks: WEEKS, diff: DIFFK });
     out[strat].errs = errs; await ctx.close();

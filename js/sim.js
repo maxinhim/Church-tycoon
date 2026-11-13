@@ -18,6 +18,7 @@ function update(dt){
     }
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
+  batchTick(dt);batchSunday();
   // 목표는 주중에도 이루는 즉시 보상 (0.5초마다 확인)
   S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;questTick();wishTick();evTick();peopleTick();}
   V=V.filter(function(v){return !v.dead;});

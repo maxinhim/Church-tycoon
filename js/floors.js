@@ -8,7 +8,7 @@ function floorSlot(x,y,pid){
   if(pid){var p=pieceById(pid);if(!p||!isDeckPiece(p))return null;
     return {get:function(){return p.f||null;},set:function(v){if(v)p.f=v;else delete p.f;},busy:deckCovered(p)};}
   var k=x+','+y;
-  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];queueTileSet(x,y,v);},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])};
+  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])};
 }
 // 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
 function floorWhy(x,y,id,pid){
@@ -18,7 +18,6 @@ function floorWhy(x,y,id,pid){
   var sl=floorSlot(x,y,pid);if(!sl)return '데크가 없어요';
   if(sl.busy)return '건물이 있어요';
   var prev=sl.get();
-  if(isQueueId(id)&&!isQueueId(prev)){var qw=queueWhy(x,y,pid);if(qw)return qw;}
   if(id==='f_erase')return prev?'':'지울 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
   if(S.money<floorSwapCost(prev,id))return '자금이 부족해요';
@@ -81,7 +80,7 @@ function drawFloorTile(id,x,y){
   }
 }
 function drawFloors(){
-  for(var k in S.floor){var p=k.split(','),id=S.floor[k],fx=+p[0],fy=+p[1];if(D[id]&&!th(fx,fy)&&!isRamp(fx,fy)){drawFloorTile(id,fx,fy);if(D[id].queue)drawQueueRails(fx,fy);}}
+  for(var k in S.floor){var p=k.split(','),id=S.floor[k],fx=+p[0],fy=+p[1];if(D[id]&&!th(fx,fy)&&!isRamp(fx,fy)){drawFloorTile(id,fx,fy);}}
 }
 
 /* ---------- 입구까지 길 잇기 ----------
@@ -97,16 +96,6 @@ function linkPlan(b){
     if(s.l>0){var dn0=doorNode(s);if(dn0>=0&&NAV.reach[dn0])continue;return {why:'위층 문은 계단·다리로 이어 주세요'};}
     var o=doorOut(s);
     if(o.y>=PZ)continue;
-    // 대기줄이 있는 입구: 줄 끝에서부터 길을 잇는다
-    if(i===0&&b.q){
-      if(b.q.entry>=0&&NAV.reach[b.q.entry])continue;
-      if(b.q.entry>=0){var ep=nodePos(b.q.entry),er=walkSearch(Math.floor(ep.x),Math.floor(ep.y),add);if(!er)return {why:'대기줄 끝에서 길을 이을 수 없어요'};er.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});continue;}
-      var last=b.q.all[b.q.all.length-1],bestR=null;
-      for(var qd=0;qd<4;qd++){var qx=last.x+DIRS[qd][0],qy=last.y+DIRS[qd][1],qg=groundPort(last.x,last.y,qd);if(qg===NOPORT||qx<0||qy<0||qx>=COLS||qy>=PZ||groundPort(qx,qy,OPP[qd])!==qg)continue;var qr=walkSearch(qx,qy,add);if(qr&&(!bestR||qr.length<bestR.length))bestR=qr;}
-      if(!bestR)return {why:'대기줄 끝이 막혀 길을 이을 수 없어요'};
-      bestR.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});continue;
-    }
-    if(b.q&&sameSpot(s,b.door.ent))continue;
     if(o.x<0||o.y<0||o.x>=COLS||groundPort(o.x,o.y,OPP[s.d])!==bLevel(b))return {why:'문 앞 땅 높이가 달라요. 경사로나 계단으로 이어 주세요'};
     var r=walkSearch(o.x,o.y,add);if(!r)return {why:'문 앞이 막혀 길을 이을 수 없어요'};
     r.forEach(function(t){var k=t.x+','+t.y;if(!add[k]){add[k]=1;tiles.push(t);}});
@@ -114,7 +103,7 @@ function linkPlan(b){
   return {tiles:tiles,cost:tiles.length*D[LINK_FLOOR].cost};
 }
 function walkSearch(sx,sy,add){
-  var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x]&&!isQueueCell(x,y);};
+  var free=function(x,y){return x>=0&&y>=0&&x<COLS&&y<PZ&&!occ[y][x];};
   var walk=function(x,y){return groundOk(x,y)||!!add[x+','+y];};
   var goal=function(x,y){return (walk(x,y)&&!!NAV.reach[gid(x,y)])||(isEnt(x)&&y===PZ-1);};
   if(!free(sx,sy))return null;

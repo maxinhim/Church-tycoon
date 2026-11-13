@@ -128,7 +128,7 @@ function draw(){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);setPlaceLevel(gb,gd,gb.x,gb.y,gb.face);
     if(mvb){gb.id=mvb.id;gb.floors=mvb.floors;gb.cond=mvb.cond;}
     ensureDoors(gb);
-    atZ(gz,function(){c.globalAlpha=.78;if(gd.cell)cellDraw(gb,function(){drawEntity(gb,0);});else legacy(function(){drawEntity(legB(gb),Math.round(gd.park*.5));});c.globalAlpha=1;drawDoorPads(gb);});
+    atZ(gz,function(){c.globalAlpha=.78;if(gd.cell)cellDraw(gb,function(){drawEntity(gb,0);});else legacy(function(){drawEntity(legB(gb),Math.round(gd.park*.5));});c.globalAlpha=1;});
   }
   // 고른 길 조각·바닥 칸: 건물을 고를 때처럼 노란 반투명 + 점선 테두리 (지금 무엇을 고치는지 보이게)
   if(UI.selPiece){var spc=pieceById(UI.selPiece);if(spc){c.globalAlpha=.6;drawPiece(spc,'#ffd23f');c.globalAlpha=1;
@@ -137,9 +137,7 @@ function draw(){
   if(UI.selFloor&&!UI.sel&&!UI.selPiece&&selCardOn()){var sf=UI.selFloor,sp=sf.pid&&pieceById(sf.pid);
     if(!sp&&isRamp(sf.x,sf.y))slopeFoot(sf.x,sf.y,th(sf.x,sf.y)*LV,tslope(sf.x,sf.y),LV,'rgba(255,210,63,.38)','#ffd23f',[6,4]);
     else atZ(sp?sp.l*LV+.02:th(sf.x,sf.y)*LV+.02,function(){footprint(sf.x,sf.y,1,1,'rgba(255,210,63,.38)','#ffd23f',[6,4]);});}
-  if(sb)atZ(bLevel(sb)*LV,function(){drawDoorPads(sb);});
   // 고른 입구·출구: 붙은 건물도 함께 표시
-  if(sb&&isGate(sb)){var ob=bById(sb.of);if(ob)atZ(bLevel(ob)*LV,function(){bTiles(ob).forEach(function(t){footprint(t.x,t.y,1,1,'rgba(255,210,63,.12)','rgba(255,210,63,.6)',[3,3]);});});}
   drawFx(c);
 }
 // 건물 위 표시: 빨간 '?'는 입구·출구에 닿는 길이 없어 이용 불가

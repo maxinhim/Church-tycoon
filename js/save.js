@@ -12,6 +12,8 @@ function load(){
       // 현황 지표·퀘스트가 생기기 전 저장: 목표·첫 걸음을 마친 만큼 퀘스트로 옮기고 Level은 새 기준으로 다시 맞춘다
       if(o.lvc<3){migrateQuests(o);o.lvl=null;o.lvc=3;}
       for(var k in n){if(o[k]===undefined)o[k]=n[k];}
+      // 없어진 바닥(예전 대기줄 타일 등)·입구·출구 건물은 걷어 낸다
+      for(var fk in o.floor||{})if(!D[o.floor[fk]])delete o.floor[fk];delete o.qprev;
       o.buildings=o.buildings.filter(function(b){return D[b.def]&&(!isRoomDef(b.def)||(b.tiles&&b.tiles.length));});o.buildings.forEach(function(b){b.inUse=0;});
       ['staff','off'].forEach(function(k2){for(var q in n[k2])if(o[k2][q]===undefined)o[k2][q]=n[k2][q];});
       return o;}

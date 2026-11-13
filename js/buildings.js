@@ -51,6 +51,7 @@ mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,
 mk('info','안내실','comfort',1,1,500,5,'bld','#e8eef2','#3f5ea3',{H:.75,roof:'flat',deco:'info',ccap:6,fill:{comf:30,fel:10},cap:3,dur:3,vis:0.03,desc:'처음 온 사람을 맞이하는 안내 창구. 방문자 +3%'});
 mk('nurse','수유실','comfort',1,1,600,5,'bld','#f6eef0','#c77d8f',{H:.75,roof:'hip',rh:.45,ccap:4,kcap:2,fill:{comf:44,care:16},cap:2,dur:4,desc:'아기와 부모를 위한 조용한 방'});
 mk('lounge','휴게실','comfort',2,1,800,7,'bld','#e9efe6','#5c8a5a',{H:.8,roof:'flat',bigwin:1,ccap:10,fill:{comf:50,fel:8},cap:6,dur:4,desc:'잠시 앉아 쉬어가는 실내 공간'});
+mk('wc2','화장실 동','comfort',2,1,800,7,'bld','#dfe6ea','#6c8794',{H:.8,roof:'flat',deco:'wc',bigwin:1,ccap:12,fill:{comf:60},cap:3,dur:3,desc:'넓고 깨끗한 화장실 건물'});
 mk('shop','매점','shop',1,1,450,3,'bld','#f2ede4','#d1a02e',{H:.7,roof:'flat',deco:'awning',ccap:4,fill:{comf:30,fel:6},cap:3,dur:3,income:3,desc:'간식과 음료를 파는 작은 매점'});
 mk('parktower','주차 타워','park',2,2,3000,18,'bld','#c9ced3','#59626b',{H:1.6,roof:'flat',deco:'park',park:24,desc:'좁은 땅에 많은 차를 세우는 주차 타워. 층을 올리면 더 늘어나요'});
 mk('busstop','버스 정류장','comfort',1,1,300,2,'busstop','#3f5ea3','#d6e2ea',{dir:'face',vis:0.05,desc:'교회 앞 버스 정류장. 방문자 +5%'});
@@ -143,19 +144,6 @@ mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',
 mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.05,desc:'결이 보이는 나무 바닥'});
 mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.08,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
 mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
-// 대기줄 타일: 건물 입구 앞 칸부터 이어 깔면 그 건물의 대기줄이 된다 (queue.js). 모양만 다르고 기능은 같다
-mk('q_rope','로프 대기줄','path',1,1,24,0,'floor','#cfc7b8','#b5332e',{queue:true,qs:'rope',pat:'grid',beauty:0.03,short:'입구 앞부터',desc:'금색 기둥과 붉은 로프. 건물 입구 앞 칸부터 이어 깔면 대기줄이 돼요'});
-mk('q_wood','나무 울타리 대기줄','path',1,1,20,0,'floor','#c9b48f','#7a5530',{queue:true,qs:'wood',pat:'plank',beauty:0.03,short:'입구 앞부터',desc:'낮은 나무 울타리로 가른 대기줄'});
-mk('q_chain','쇠사슬 대기줄','path',1,1,20,0,'floor','#bfc3c6','#59626b',{queue:true,qs:'chain',pat:'grid',beauty:0.02,short:'입구 앞부터',desc:'쇠기둥과 사슬로 가른 대기줄'});
-mk('q_hedge','화단 대기줄','path',1,1,30,0,'floor','#d6cdb9','#4f8a4a',{queue:true,qs:'hedge',pat:'',beauty:0.06,short:'입구 앞부터',desc:'꽃이 핀 낮은 화단으로 가른 대기줄'});
-mk('q_paint','바닥 선 대기줄','path',1,1,12,0,'floor','#b9b3a7','#f2c230',{queue:true,qs:'paint',pat:'',beauty:0.01,short:'입구 앞부터',desc:'바닥에 노란 선만 그은 가장 싼 대기줄'});
-var GATE_DESIGNS=[['arch','벽돌 현관'],['wood','나무 현관'],['glass','유리 현관'],['stone','돌 현관'],['flower','꽃 현관']];
-// 입구·출구 건물 (gates.js): 이용 효과가 있는 건물은 둘 다 붙여 지어야 운영된다. 한 칸, 모양만 다르다
-GATE_DESIGNS.forEach(function(g,i){
-  var cost=[120,80,150,140,110][i];
-  mk('g_'+g[0],g[1]+' 입구','gate',1,1,cost,0,'gate','#3f9d5a','#3f9d5a',{role:'ent',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 짓는 작은 현관 건물. 방문자가 이 문으로 들어가요'});
-  mk('x_'+g[0],g[1]+' 출구','gate',1,1,cost,0,'gate','#e08a2c','#e08a2c',{role:'ext',design:g[0],cell:true,beauty:.2,hgt:1.05,desc:'건물 바로 옆 칸에 붙여 짓는 작은 현관 건물. 방문자가 이 문으로 나와요'});
-});
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});

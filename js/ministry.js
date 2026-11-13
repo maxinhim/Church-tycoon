@@ -36,10 +36,11 @@ function lockLv(id){return LV_UNLOCK[id]||0;}
 function unlockLevel(){return S.unlockAll?999:(S.lvl||1);}
 // 목록의 n번째 단계(예전 목표 n개째)가 열렸는지: LV_TIER[n]
 function tierOk(n){return !n||unlockLevel()>=LV_TIER[n];}
-function isLocked(id){return !tierOk(lockGoal(id))||lockLv(id)>unlockLevel();}
+function isLocked(id){return (D[id]&&D[id].retired)||!tierOk(lockGoal(id))||lockLv(id)>unlockLevel();}
 function lockText(n){return '교회 Lv '+LV_TIER[n]+' 달성 후';}
 // 건물 잠금 문구 (short: 카드 가격 자리에 넣는 짧은 꼴)
 function lockLabel(id,short){
+  if(D[id]&&D[id].retired)return short?'통합됨':'다른 시설로 통합돼 더는';
   if(!tierOk(lockGoal(id)))return short?'Lv '+LV_TIER[lockGoal(id)]+' 후':lockText(lockGoal(id));
   return 'Lv '+lockLv(id)+(short?' 후':' 달성 후');
 }

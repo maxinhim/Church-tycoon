@@ -14,7 +14,7 @@ var fmt=function(n){return Math.round(n).toLocaleString('ko-KR');};
 var NEEDS=['word','fel','care','comf'];
 var NK={word:'말씀',fel:'교제',care:'돌봄',comf:'편의'};
 var NC={word:'#3f6fe0',fel:'#e8892c',care:'#d9467a',comf:'#1c9c8c'};
-var CATS=[['worship','예배'],['fellow','교제'],['club','소모임'],['shop','매장'],['care','돌봄'],['comfort','편의'],['park','주차'],['path','길·지형'],['gate','입구·출구'],['garden','조경'],['deco','꾸미기'],['floor','바닥']];
+var CATS=[['worship','예배'],['fellow','교제'],['club','소모임'],['shop','매장'],['care','돌봄'],['comfort','편의'],['park','주차'],['path','길·지형'],['garden','조경'],['deco','꾸미기'],['floor','바닥']];
 // 구역: 'road' 도로 줄, 'park' 주차 구역, 'church' 교회 부지
 function zoneOf(y){return y>=ROWS-RD?'road':(y>=PZ?'park':'church');}
 var DAYS=['월요일','화요일','수요일','목요일','금요일','토요일','주일'];

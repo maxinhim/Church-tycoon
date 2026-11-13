@@ -86,7 +86,7 @@ function renderPanel(){
 function buildOrder(cat){
   var can=function(d){return !isLocked(d.id)&&S.money>=d.cost;};
   var cs=UI.csub||'sport';
-  return DEFS.filter(function(d){return d.cat===cat&&(cat!=='club'||d.sub===cs);}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
+  return DEFS.filter(function(d){return d.cat===cat&&!d.retired&&(cat!=='club'||d.sub===cs);}).map(function(d,i){return {d:d,i:i};}).sort(function(a,b){
     var ta=a.d.cost?0:1,tb=b.d.cost?0:1;if(ta!==tb)return ta-tb;
     var ca=can(a.d)?0:1,cb=can(b.d)?0:1;if(ca!==cb)return ca-cb;
     return a.d.cost-b.d.cost||a.i-b.i;
@@ -98,8 +98,6 @@ function buildOrder(cat){
    ‹ 는 원래 카드로(입구·출구 모양은 처음이면 짓기를 그만둠, 바꾸던 중이면 지도로), 카드를 누르면 그 동작을 한다 */
 function chooseCtx(){
   var c=UI.choose;if(!c)return null;
-  if(c.kind==='gdesign'){var d=D[UI.tool];if(!d||!isGateDef(d))return null;
-    return {title:(d.role==='ent'?'입구':'출구')+' 모양',items:GATE_DESIGNS.map(function(g){var id=gateId(d.role,g[0]);return {id:id,cost:D[id].cost,name:g[1]};}),cur:UI.tool};}
   if(c.kind==='linkf'){var b=bById(UI.sel),lp=b&&linkPlan(b),n=lp&&!lp.why?lp.tiles.length:0;if(!n)return null;
     return {title:'길 잇기 · '+n+'칸',items:FLOOR_IDS.map(function(id){return {id:id,cost:n*D[id].cost};})};}
   var sp=UI.selPiece&&pieceById(UI.selPiece),sf=UI.selFloor,x=sp?sp.x:sf&&sf.x,y=sp?sp.y:sf&&sf.y;if(x==null)return null;

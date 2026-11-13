@@ -20,10 +20,9 @@ var GRIPES={
   seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','parasol','elder'],near:18*G},
   bin:{n:'쓰레기 버릴 곳이 없던',fix:'매장 둘레에 쓰레기통'},
   bare:{n:'볼거리 없이 삭막하다고 느낀',fix:'다니는 길 둘레에 나무·화단·장식'},
-  crowd:{n:'건물이 붐벼 그냥 돌아선',fix:'자리를 늘리세요 (층 올리기·하나 더)'},
-  queue:{n:'줄에서 너무 오래 기다린',fix:'같은 건물을 하나 더 짓거나 층을 올리세요'}
+  crowd:{n:'건물 앞에서 기다리다 화가 난',fix:'건물 레벨을 올리거나 하나 더 지으세요'}
 };
-var GRIPE_ORDER=['wc','food','drink','lonely','seat','bin','bare','crowd','queue'];
+var GRIPE_ORDER=['wc','food','drink','lonely','seat','bin','bare','crowd'];
 // 이 건물이 그 불편을 풀어 주는지
 function gripeFits(g,d){return !!g.ids&&(g.ids.indexOf(d.id)>=0||(!!g.cat&&d.cat===g.cat));}
 // 건물 설명용: 이 건물이 풀어 주는 불편 이름들

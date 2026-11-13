@@ -29,7 +29,7 @@ function recent(id,span){var w=(S.evW||{})[id];if(w==null)return 0;return Math.m
 function spiritParts(){
   // 기본은 바닥의 절반(처음엔 50% 안팎), 건물 자리는 × 0.6, 사역팀·부교역자·권사는 그대로
   var m=Math.max(1,S.members),E=expectK(m),st=teamEff(),N=SPIRIT_NEED,cap={w:N.w.b,p:N.p.b,r:N.r.b};
-  S.buildings.forEach(function(b){var s=SPIRIT_B[b.def];if(!s)return;var k=condFactor(b)*(b.floors||1)*BLD_SAT;for(var q in s)cap[q]+=s[q]*k;});
+  S.buildings.forEach(function(b){var s=SPIRIT_B[b.def];if(!s)return;var k=condFactor(b)*(b.floors||1)*BLD_SAT*bCapK(b);for(var q in s)cap[q]+=s[q]*k;});
   cap.w+=8*st.edu;cap.p+=8*st.prayer+Math.min(6,S.off.kwonsa);cap.r+=10*st.praise;
   S.assoc.forEach(function(a){var k=asSkill(a);if(a.field==='edu')cap.w+=6*k;else if(a.field==='praise')cap.r+=6*k;else if(a.field==='visit')cap.p+=4*k;});
   // 성도들의 호감 레벨과 직분

@@ -24,7 +24,7 @@
 - `assets/decor/`·`assets/bld/`·`assets/tex/` — 조경·꾸미기, 건물, 바닥 질감 그림 조각. `python3 tools/slice_sheet.py`로 `docs/art/sheets`의 모든 시트에서 잘라 만듭니다 (`js/sprite-data.js`도 함께 생성)
 - `js/` — 빌드 도구 없이 클래식 `<script>`로 순서대로 로드하며, 전역 스코프를 공유합니다. `index.html`의 로드 순서를 바꾸지 마세요.
   - 데이터·상태: `config` → `buildings` → `state`
-  - 게임 로직: `pathfinding`(바닥·길·계단·다리를 잇는 길찾기, 울타리·교회 문) → `visitors` → `sim` → `build` → `modular`(역할별로 칸을 이어 짓는 건물, 층 쌓기) → `doors`(입구·출구) → `paths`(길·철골 계단·다리·연결 다리) → `floors`(바닥 타일) → `ministry`(난이도·목표·사역팀·부교역자·직분자·행사·고민 카드·노후) → `finance`(교회 문, 대출, 주일 정산 영수증) → `weather`(날씨·계절·화면 효과) → `save`
+  - 게임 로직: `pathfinding`(바닥·길·계단·다리를 잇는 길찾기, 울타리·교회 문) → `visitors` → `sim` → `build` → `modular`(역할별로 칸을 이어 짓는 건물, 층 쌓기) → `doors`(정면 문 하나) → `bldlv`(운영 방식·건물 레벨·티어) → `paths`(길·철골 계단·다리·연결 다리) → `floors`(바닥 타일) → `ministry`(난이도·목표·사역팀·부교역자·직분자·행사·고민 카드·노후) → `finance`(교회 문, 대출, 주일 정산 영수증) → `weather`(날씨·계절·화면 효과) → `save`
   - 렌더링: `render-core`(투영·도형) → `sprite-data`(자동 생성: 그림 조각 크기·자리) → `sprites`(그림 조각 불러오기·그리기, 없으면 벡터로) → `render-entities`(건물·방문자) → `render-scene`(장면 합성)
   - UI·진입점: `camera` → `hud` → `effects`(목표 축하·빠른 현황·고민 카드) → `panel` → `selcard`(지은 것을 누르면 뜨는 작은 카드) → `place`(지도 위에서 짓기·옮기기: ✓·✕·방향 화살표) → `input` → `audio`(배경 음악·효과음) → `main`(`init`은 마지막 파일에서 실행)
 

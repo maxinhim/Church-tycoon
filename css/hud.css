@@ -201,3 +201,10 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 .qchip[hidden]{display:none}
 @media (prefers-reduced-motion:no-preference){.ind.pop{animation:indPop .9s ease-out}}
 @keyframes indPop{0%{transform:scale(1)}25%{transform:scale(1.25)}100%{transform:scale(1)}}
+
+/* 건물 카드: 레벨·투자 */
+#selCard .blv{font-style:normal;font-size:10.5px;font-weight:800;color:#5a3d00;background:linear-gradient(180deg,#ffe07a,#f2b632);border-radius:999px;padding:1px 6px}
+#selCard .btr{font-style:normal;font-size:10px;font-weight:700;color:#fff;background:#7a5bd1;border-radius:999px;padding:1px 6px}
+.sclv{display:flex;align-items:center;gap:6px;padding:0 2px;font-size:10.5px;color:var(--muted)}
+.sclv .bar{flex:1;height:5px;min-width:60px}
+.sclv .bar i{background:#f2b632}

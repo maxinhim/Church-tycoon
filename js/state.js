@@ -29,14 +29,11 @@ function newState(dk){
   dk=DIFF[dk]?dk:'normal';
   var bs=[{id:1,def:'room',x:14*G,y:22*G,face:2,inUse:0,uses:0}],fl={};
   START_TREES.forEach(function(t,i){bs.push({id:i+2,def:'tree',x:t[0]*G,y:t[1]*G,inUse:0,uses:0});});
-  // 첫 예배실의 입구·출구 (앞쪽 보도 위)
-  bs.push({id:bs.length+1,def:'g_arch',x:30,y:48,face:2,of:1,inUse:0,uses:0});
-  bs.push({id:bs.length+1,def:'x_arch',x:28,y:48,face:2,of:1,inUse:0,uses:0});
   // 예전 칸 좌표로 적어 둔 시작 바닥: 한 칸마다 G×G칸을 깐다
   START_FLOOR.forEach(function(t){for(var j=0;j<G;j++)for(var i=0;i<G;i++)fl[(t[0]*G+i)+','+(t[1]*G+j)]='f_block';});
   var st=startTerrain();
   return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,open:false,loans:[],wx:{cur:'sun',next:'cloud',day:0,clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1},rcpt:null,weekShop:0,weekSup:0,weekGive:0,memAcc:0,
-    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:st.hgt,slp:st.slp,water:st.water,wall:{},qprev:{},
+    buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:st.hgt,slp:st.slp,water:st.water,wall:{},
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0,cstaff:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
@@ -57,7 +54,7 @@ function rebuildOcc(){
 function agg(){
   var a={seats:0,fcap:0,ccap:0,kcap:0,park:0,beauty:0,vis:0,up:0,rep:0};
   // 낡은 건물(상태 60% 미만)은 수용 효과가 줄어든다
-  S.buildings.forEach(function(b){var d=defOf(b),k=condFactor(b);a.seats+=d.seats*k;a.fcap+=d.fcap*k;a.ccap+=d.ccap*k;a.kcap+=d.kcap*k;a.park+=d.park*k;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);a.rep+=d.rep;});
+  S.buildings.forEach(function(b){var d=defOf(b),k=condFactor(b)*bCapK(b);a.seats+=d.seats*k;a.fcap+=d.fcap*k;a.ccap+=d.ccap*k;a.kcap+=d.kcap*k;a.park+=d.park*k;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);a.rep+=d.rep;});
   ['seats','fcap','ccap','kcap','park'].forEach(function(k){a[k]=Math.round(a[k]);});
   for(var fk in S.floor){var fd=D[S.floor[fk]];if(fd)a.beauty+=fd.beauty||0;}
   S.paths.forEach(function(p){var pd=p.f&&D[p.f];if(pd)a.beauty+=pd.beauty||0;if(PATHK[p.k])a.beauty+=PATHK[p.k].beauty||0;});

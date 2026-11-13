@@ -56,7 +56,7 @@ function setGate(open){
     F.push({x:entC(),y:PZ-1,z:1.6,t:2.4,d:2.4,text:'교회 문을 열었어요',col:'#ffe28a',big:1});
   }else{
     // 주차 구역에 있던 사람은 돌아가고, 부지 안에 있던 사람은 볼일을 마치고 나간다
-    V.forEach(function(v){if(v.y>=PZ&&v.state!=='leave'&&v.state!=='inside'&&v.state!=='goin')goLeave(v);});
+    V.forEach(function(v){if(v.y>=PZ&&v.state!=='leave'&&v.state!=='inside')goLeave(v);});
     addLog('교회 문을 닫았어요');sfx('gate_close',.8,0);toast('교회 문을 닫았어요',1800);
   }
   save();hud(true);

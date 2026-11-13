@@ -135,7 +135,38 @@ function drawSpire(b){
   fr('L',r,mx-.08,mx+.08,1.4,1.75,'#2d2a33');fr('R',r,my-.08,my+.08,1.4,1.75,'#24222a');
   var ap=hip(r,1.95,.8,d.roofc);cross(ap[0],ap[1],ap[2],1.05);
 }
+/* 건물 레벨에 따른 모습 3단계 (bldlv.js bStage): Lv 1~3 천막·가건물, 4~6 보통 건물, 7~10 큰 시설(금빛 테두리·깃발) */
+function lvLook(b){var d=D[b.def];return !!(b.id&&d&&d.fill&&!d.cell&&d.kind!=='mroom'&&typeof hasLv==='function'&&hasLv(b));}
 function drawEntity(b,cars){
+  if(lvLook(b)&&bStage(b)===1){drawTent(b);return;}
+  drawEntity0(b,cars);
+  if(lvLook(b)&&bStage(b)===3)drawGrand(b);
+}
+function drawTent(b){
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h;
+  box(rrect(x+.03,y+.03,x+w-.03,y+h-.03),0,.04,'#cdbf9f');
+  var r=rrect(x+.2,y+.2,x+w-.2,y+h-.2),H=.4,top=H+.36+Math.min(w,h)*.07,col=d.roofc||'#c4503a',e=.07;
+  box(r,.04,H,'#efe6d2');
+  var cx=(r.x0+r.x1)/2,cy=(r.y0+r.y1)/2,a=[r.x0-e,r.y0-e,H],b2=[r.x1+e,r.y0-e,H],c2=[r.x1+e,r.y1+e,H],d2=[r.x0-e,r.y1+e,H],t=[cx,cy,top];
+  quad([a,b2,t],shade(col,.8));quad([a,d2,t],shade(col,.86));
+  quad([d2,c2,t],shade(col,1.04),EDGE);quad([b2,c2,t],shade(col,.76),EDGE);
+  // 앞쪽 두 면에 흰 줄무늬
+  [.33,.66].forEach(function(k){quad([[d2[0]+(c2[0]-d2[0])*(k-.05),d2[1],H],[d2[0]+(c2[0]-d2[0])*(k+.05),d2[1],H],t],'rgba(255,255,255,.55)');
+    quad([[b2[0],b2[1]+(c2[1]-b2[1])*(k-.05),H],[b2[0],b2[1]+(c2[1]-b2[1])*(k+.05),H],t],'rgba(255,255,255,.4)');});
+  // 정면(문) 쪽에 걷어 올린 천막 문
+  if(b.door||b.face!=null){var f=b.face==null?2:b.face,fx=x+w/2+DIRS[f][0]*(w/2-.2+.01),fy=y+h/2+DIRS[f][1]*(h/2-.2+.01),tx=-DIRS[f][1]*.14,ty=DIRS[f][0]*.14,p1=rotPt(fx-tx,fy-ty),p2=rotPt(fx+tx,fy+ty),pm=rotPt(fx,fy);
+    quad([[p1[0],p1[1],.05],[p2[0],p2[1],.05],[pm[0],pm[1],H*.85]],'#5b4636');}
+  if(d.cat==='worship'){quad([[cx-.015,cy,top],[cx+.015,cy,top],[cx+.015,cy,top+.26],[cx-.015,cy,top+.26]],'#f4efe6',EDGE);quad([[cx-.08,cy,top+.17],[cx+.08,cy,top+.17],[cx+.08,cy,top+.2],[cx-.08,cy,top+.2]],'#f4efe6',EDGE);}
+}
+function drawGrand(b){
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,H=(b.floors||1)>1?b.floors*LV:heightOfDef(d);
+  var r=rrect(x+.04,y+.04,x+w-.04,y+h-.04),g='#f2c230';
+  quad([[r.x0,r.y0,.07],[r.x1,r.y0,.07],[r.x1,r.y1,.07],[r.x0,r.y1,.07]],null,g);
+  var px=r.x0+.12,py=r.y0+.12;
+  quad([[px-.012,py,H],[px+.012,py,H],[px+.012,py,H+.62],[px-.012,py,H+.62]],'#8a7a5a');
+  quad([[px,py,H+.62],[px+.3,py+.04,H+.53],[px,py,H+.44]],g,EDGE);
+}
+function drawEntity0(b,cars){
   var k=D[b.def].kind;
   if(drawSprEntity(b))return;
   if(k==='mroom'){drawRoom(b);return;}
@@ -144,7 +175,6 @@ function drawEntity(b,cars){
   if(k==='terrain'){drawTerIcon(b);return;}
   if(k==='fountain'){drawFountain(b);return;}
   if(k==='wfount'){drawWFount(b);return;}
-  if(k==='gate'){drawGateEnt(b);return;}
   if(k==='lamp'){drawLamp(b);return;}
   if(k==='hedge'){drawHedge(b);return;}
   if(k==='arch'){drawRoseArch(b);return;}
@@ -162,7 +192,7 @@ function drawEntity(b,cars){
 }
 function drawVisitor(v){
   var c=PJ.c,s=PJ.s,p=rotPt(v.x,v.y),q=P(p[0],p[1],v.z||0);
-  var walking=v.state==='walk'||v.state==='leave'||v.state==='goin'||v.state==='goout';
+  var walking=v.state==='walk'||v.state==='leave';
   var bob=walking?Math.abs(Math.sin(S.clock*11+v.ph))*1.2*s:0;
   var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);
   c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(q[0],q[1],bw*.9,bw*.38,0,0,6.283);c.fill();
@@ -171,7 +201,9 @@ function drawVisitor(v){
   c.fillStyle='#f0cfa8';c.beginPath();c.arc(q[0],q[1]-lg-bh-hr-bob,hr,0,6.283);c.fill();
   var top=q[1]-lg-bh-hr*2-bob;
   if(v.want&&v.state==='walk'){c.fillStyle=NC[v.want];c.beginPath();c.arc(q[0],top-3.2*Math.max(s,.6),Math.max(1.6,2.4*s),0,6.283);c.fill();c.strokeStyle='#fff';c.lineWidth=1;c.stroke();}
-  if(v.state==='wait'){c.fillStyle='#fff';c.font='700 '+Math.max(9,11*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('…',q[0],top);}
+  // 기다리다 지쳐 화가 나면 머리 위에 화남 표시 (잠깐)
+  if(v.angry>0){c.globalAlpha=Math.min(1,v.angry/.4);c.font=Math.max(11,15*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('😠',q[0],top-1);c.globalAlpha=1;}
+  else if(v.state==='wait'){c.fillStyle='#fff';c.font='700 '+Math.max(9,11*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('…',q[0],top);}
   // 비·눈 오는 날엔 우산
   if(wxUmbrella()){
     var ur=Math.max(4.5,8*s),uy=top-1.5*s,uc=['#d6453a','#3f6fe0','#f2c14e','#2f9e6e','#8a5bb5','#2b2b2b'][(v.ph*10|0)%6];
