@@ -107,7 +107,23 @@ function rwMoney(v){v=Math.round(v);S.money+=v;S.weekInc+=v;return '자금 +'+fm
 function rwRep(v){gainRep(v);return '평판 +'+v;}
 function rwMood(v){S.tempMood+=v;return '만족 +'+v;}
 function eduRw(k){var x=EDU_EV[k].xp,n=ppGainAll(x);return '모든 성도 경험치 +'+x+(n?' ('+n+'명 레벨 업)':'');}
+// 직분자·교역자 행사: 대상(직분자 / 교역 갈래 성도+부교역자)에게 경험치를 준다
+function offTargets(){return (S.people||[]).filter(function(p){return ppTrack(p)==='A';});}
+function minTargets(){return (S.people||[]).filter(function(p){return ppTrack(p)==='B';});}
+function offEvN(g){return g==='off'?offTargets().length:minTargets().length+(S.assoc||[]).length;}
+function offEvRw(k,g){var c=OFF_EV[k],up=0,n=0;
+  (g==='off'?offTargets():minTargets()).forEach(function(p){n++;if(ppGain(p,c.xp))up++;});
+  if(g==='min')(S.assoc||[]).forEach(function(a){n++;if(asGain(a,Math.max(1,Math.round(c.xp/4))))up++;});
+  trustAct(c.trust);return (g==='off'?'직분자 ':'교역자 ')+n+'명 경험치 +'+c.xp+(up?' ('+up+'명 레벨 업)':'');}
+function offEv(k,g,o){var c=OFF_EV[k];
+  return Object.assign({cost:c.base,cd:c.cd,dur:c.dur,goal:c.goal,grp:g,costFn:function(){return c.base+offEvN(g)*c.per;},
+    need:function(){return offEvN(g)>0?'':(g==='off'?'직분자':'교역자')+'가 한 명 이상 있어야 해요';},
+    rwt:(g==='off'?'직분자':'교역자')+' 모두 경험치 +'+c.xp+', 신뢰도 ↑',rw:function(){return [offEvRw(k,g)];}},o);}
 var EVENTS={
+  offsem:offEv('offsem','off',{name:'직분자 세미나',ic:'📚',col:'#7a62b8',desc:'집사·장로·권사를 모시고 직분의 사명을 배워요',fx:'말씀 효과 +8%',mods:function(m){m.word*=1.08;}}),
+  offret:offEv('offret','off',{name:'직분자 수련회',ic:'🏕️',col:'#4d8f6a',desc:'직분자들이 함께 떠나 기도하고 교제해요',fx:'만족 +4, 헌금 +10%',mods:function(m){m.mood+=4;m.offer*=1.1;}}),
+  minedu:offEv('minedu','min',{name:'교역자 연수',ic:'🎓',col:'#3a7fb0',desc:'부교역자·교역 성도를 위한 신학·목회 교육이에요',fx:'말씀 효과 +8%',mods:function(m){m.word*=1.08;}}),
+  minfel:offEv('minfel','min',{name:'교역자 교제의 밤',ic:'🍵',col:'#c07a4a',desc:'사역자들이 서로 격려하고 쉼을 나눠요',fx:'만족 +4, 돌봄 효과 +10%',mods:function(m){m.mood+=4;m.care*=1.1;}}),
   smallgroup:{name:'소그룹 모임',ic:'🫖',col:'#6fa86a',cost:150,cd:2,dur:2,goal:0,desc:'가정과 교회에서 모여 삶을 나눠요',fx:'만족 +6, 이탈 -30%',rwt:'만족 +2',
     need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;},rw:function(){return [rwMood(2)];}},
   bible:{name:'성경공부',ic:'📖',col:'#5a74b8',cost:EDU_EV.bible.base,cd:3,dur:1,goal:0,edu:'bible',desc:'함께 말씀을 읽고 나눠요',fx:'말씀 효과 +10%',rwt:'모든 성도 경험치 +'+EDU_EV.bible.xp,

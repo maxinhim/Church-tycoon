@@ -721,6 +721,11 @@ async function ministryChecks(browser, url) {
   const offScr = await page.evaluate(() => { const o = {};
     o.empty = /아직 이 갈래에 들어선 성도가 없어요/.test(document.getElementById('scrBody').textContent);
     const p = S.people[0]; p.node = 'deacon'; p.lv = 45; recalc(); renderScreen(); o.list = document.querySelectorAll('#scrBody .ppc').length === 1 && /집사 1명/.test(document.getElementById('scrBody').textContent);
+    { const ua = S.unlockAll, mm = S.money, tv = S.tv || 0, xp0 = p.xp + p.lv * 1e3; S.unlockAll = true; S.money = 99999; S.ev.offsem = { cd: 0 }; renderScreen();
+      const ic = document.querySelector('#scrBody [data-act="evquick"][data-v="offsem"]'); o.offIc = !!ic && !!document.querySelector('#scrBody [data-v="offret"]') && !document.querySelector('#scrBody [data-v="minedu"]');
+      ic.click(); o.offRun = evRunning('offsem') && S.money === 99999 - (EVENTS.offsem.cost + 30 * 1);
+      S.ev.offsem.end = evNow() - 1; evTick(); o.offReady = evReady('offsem'); document.querySelector('#scrBody [data-act="evquick"][data-v="offsem"]').click();
+      o.offDone = !evReady('offsem') && (S.tv || 0) > tv && S.ev.offsem.cd === OFF_EV.offsem.cd && p.xp + p.lv * 1e3 > xp0; S.unlockAll = ua; S.money = mm; }
     S.assoc.push({ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }); recalc(); document.querySelector('#scrTabs [data-v="assoc"]').click();
     const ac = document.querySelector('#scrBody [data-act="asopen"]'); o.assoc = !!ac && /김시온/.test(ac.textContent); ac.click();
     const dl = document.getElementById('scrDlg'); o.asDlg = !dl.hidden && !!dl.querySelector('[data-act="ascheer"]') && !!dl.querySelector('[data-act="dismiss"]');
@@ -853,6 +858,7 @@ async function ministryChecks(browser, url) {
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
+  check(offScr.offIc && offScr.offRun && offScr.offReady && offScr.offDone, '직분자 탭: 직분자 행사 아이콘으로 바로 열고 보상을 받으며, 교역자 행사는 직분 탭에 나오지 않음');
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');
   check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
   check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');

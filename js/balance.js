@@ -179,3 +179,12 @@ var VIS_STROLL=.3;        // 건물을 고르기 전에 길을 한 바퀴 거닐
 var VIS_STROLL_MAX=3;     // 한 방문에서 거니는 최대 횟수
 var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은 길을 피하는 무게, 가까움을 따지는 무게
 var VIS_MAX=110;         // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
+
+/* 직분자·교역자 행사 (ministry.js): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 호감·경험치 xp (+ 신뢰도 trust)
+   직분자 = 직분 갈래(집사·장로·권사·교회직원), 교역자 = 교역 갈래 성도 + 부교역자. 쉬는 기간 cd(주), 소요 시간 dur(주) */
+var OFF_EV={
+  offsem:{base:300,per:30,xp:30,trust:1,cd:6,dur:1,goal:1},
+  offret:{base:900,per:70,xp:60,trust:2,cd:12,dur:2,goal:2},
+  minedu:{base:400,per:50,xp:30,trust:1,cd:6,dur:1,goal:1},
+  minfel:{base:1000,per:90,xp:60,trust:2,cd:12,dur:2,goal:2}
+};

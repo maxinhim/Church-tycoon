@@ -72,7 +72,7 @@ function renderScreen(){
     body.className='sbody list';var keep2=panel;panel=body;renderStaff('cands');panel=keep2;
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
-  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=bulkBar()+(UI.scrTab==='assoc'?assocHtml():(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml());}
+  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='assoc'?assocHtml():(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml());}
   else if(UI.scr==='events'){
     body.className='sbody';
     var ids=Object.keys(EVENTS).filter(function(id){return !EVENTS[id].hidden;});
@@ -141,6 +141,12 @@ function scrClick(e){
     else{sfx('coins',.55,0);scrToast(EVENTS[v].name+'을(를) 시작했어요 · '+durText(EVENTS[v].dur)+' 뒤 보상을 받을 수 있어요',2600);F.push({x:entC(),y:PZ-2.5,z:1.4,t:2.4,d:2.4,text:EVENTS[v].name,col:'#ffe28a',big:1});}
     renderScreen();hud(true);return;
   }
+  if(a==='evquick'){
+    if(evReady(v)){var gq=claimEvent(v);if(gq){sfx('coins',.7,0);scrToast(EVENTS[v].name+' 마무리 · '+(gq.join(' · ')||'수고했어요'),3000);}}
+    else if(evRunning(v)){scrToast(EVENTS[v].name+' 진행 중 · '+evLeftText(v)+' 남음',1600);}
+    else{var wq=runEvent(v);if(wq){scrToast(wq,2000);sfx('error',.4);}else{sfx('coins',.55,0);scrToast(EVENTS[v].name+'을(를) 시작했어요 · '+durText(EVENTS[v].dur)+' 뒤 보상을 받을 수 있어요',2600);}}
+    renderScreen();hud(true);return;
+  }
   if(a==='evclaimall'){
     var all=claimAllEvents();
     if(all.n){sfx('coins',.7,0);setTimeout(function(){sfx('join',.6,0);},180);scrToast('행사 '+all.n+'개 마무리 · '+(all.got.join(' · ')||'수고했어요'),3400);UI.scrSel=null;}
@@ -186,6 +192,15 @@ function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
   if(UI.scr==='officers')return all.filter(function(p){return ppTrack(p)===(tab==='off'?'A':tab);}).sort(ppOrder);
   return all.filter(function(p){var d=ppDepth(p);return tab==='care'?!!careOf(p):tab==='new'?d===0:tab==='grow'?d>=1&&d<=3:tab==='lead'?d>=4:tab==='todo'?((p.tr&&p.tr.ready)||ppCanStep(p)):true;}).sort(ppOrder);
+}
+// 직분자·교역 탭 위: 그 탭에 맞는 행사를 아이콘으로 바로 열고 보상을 받는다 (행사 화면과 같은 행사)
+function evIcons(){
+  var g=UI.scr==='officers'?(UI.scrTab==='off'?'off':UI.scrTab==='B'||UI.scrTab==='assoc'?'min':''):'';if(!g)return '';
+  var ids=Object.keys(EVENTS).filter(function(id){return EVENTS[id].grp===g;});
+  return '<div class="sbulk evq"><span>'+(g==='off'?'직분자':'교역자')+' 행사</span>'+ids.map(function(id){
+    var e=EVENTS[id],ln=evLine(id),why=evBlock(id),rdy=evReady(id),run=evRunning(id),ok=rdy||(!why&&!run);
+    return '<button class="evq-b'+(ok?' on':'')+(rdy?' rdy':'')+'" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+' · '+ln.t+'" title="'+e.name+' · '+ln.t+(why&&!rdy&&!run?' ('+why+')':'')+'">'+
+      '<span class="evr">'+ringSvg(evProg(id))+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span></span><b>'+e.name+'</b><small>'+ln.t+'</small></button>';}).join('')+'</div>';
 }
 function bulkBar(){
   if(UI.scr==='officers'&&UI.scrTab==='assoc'){

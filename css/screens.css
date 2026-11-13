@@ -245,3 +245,13 @@
 .sbulk .bic.on{filter:none;opacity:1;background:#fff3cf;box-shadow:0 0 0 2px #e3b23a inset}
 .sbulk .bic i{position:absolute;right:-4px;top:-4px;min-width:16px;height:16px;border-radius:8px;background:#d83a34;color:#fff;font:700 10px/16px system-ui;font-style:normal;text-align:center;padding:0 3px}
 .sbulk .bic:disabled{cursor:default}
+
+/* 직분자·교역 탭 위 행사 아이콘 */
+.sbulk.evq{gap:10px}
+.evq-b{display:flex;align-items:center;gap:6px;border:1px solid var(--line,#0002);background:var(--card,#fff);color:var(--ink);border-radius:999px;padding:2px 12px 2px 3px;cursor:pointer;filter:grayscale(.8);opacity:.7}
+.evq-b.on{filter:none;opacity:1}
+.evq-b.rdy{box-shadow:0 0 0 2px #e3b23a inset;background:#fff3cf;color:#5a3a00}
+.evq-b .evr{width:34px;height:34px;flex:none}
+.evq-b .evi{font-size:17px}
+.evq-b b{font-size:11.5px;font-weight:600}
+.evq-b small{font-size:10.5px;color:var(--muted)}
