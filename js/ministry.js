@@ -12,16 +12,6 @@ var DIFF={
 };
 function curDiff(){return DIFF[S.diff]||DIFF.normal;}
 
-/* ---------- 목표: 이루면 후원금·평판과 함께 새 건물·사역·행사가 열린다 ---------- */
-var GOALS=[
-  {n:'첫 예배 공동체',d:'성도 12명',t:function(s){return s.members>=12;},p:function(s){return s.members/12;},r:800,rep:3},
-  {n:'작은 예배 공동체',d:'성도 25명 · 평판 40',t:function(s){return s.members>=25&&s.rep>=40;},p:function(s){return Math.min(s.members/25,s.rep/40);},r:1400,rep:3},
-  {n:'뿌리내리는 교회',d:'성도 50명 · 만족도 55',t:function(s){return s.members>=50&&s.mood>=55;},p:function(s){return Math.min(s.members/50,s.mood/55);},r:2000,rep:4},
-  {n:'스스로 서는 교회',d:'성도 90명 · 4주 연속 흑자',t:function(s){return s.members>=90&&s.posWeeks>=4;},p:function(s){return Math.min(s.members/90,s.posWeeks/4);},r:3000,rep:4},
-  {n:'동네의 이웃',d:'성도 140명 · 평판 65 · 직분자 10명',t:function(s){return s.members>=140&&s.rep>=65&&offTotal(s)>=10;},p:function(s){return Math.min(s.members/140,s.rep/65,offTotal(s)/10);},r:4400,rep:5},
-  {n:'지역을 섬기는 교회',d:'성도 220명 · 평판 80',t:function(s){return s.members>=220&&s.rep>=80;},p:function(s){return Math.min(s.members/220,s.rep/80);},r:6000,rep:5},
-  {n:'부흥하는 교회',d:'성도 350명 · 만족도 70',t:function(s){return s.members>=350&&s.mood>=70;},p:function(s){return Math.min(s.members/350,s.mood/70);},r:10000,rep:5}
-];
 function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 // 목표를 n개 이루면 열리는 것들 (건물 id, 'sky'=연결 다리)
 var UNLOCK={
@@ -42,16 +32,20 @@ var LV_UNLOCK={
 };
 function lockGoal(id){return UNLOCK[id]||0;}
 function lockLv(id){return LV_UNLOCK[id]||0;}
-function isLocked(id){return lockGoal(id)>S.goal||lockLv(id)>(S.lvl||1);}
-function lockText(n){return '목표 '+n+'개 달성 후';}
-// 건물 잠금 문구: 목표가 먼저, 아니면 Level (short: 카드 가격 자리에 넣는 짧은 꼴)
+// 지금 열려 있는 교회 Level (S.unlockAll은 시험·점검용으로 모두 여는 스위치)
+function unlockLevel(){return S.unlockAll?999:(S.lvl||1);}
+// 목록의 n번째 단계(예전 목표 n개째)가 열렸는지: LV_TIER[n]
+function tierOk(n){return !n||unlockLevel()>=LV_TIER[n];}
+function isLocked(id){return !tierOk(lockGoal(id))||lockLv(id)>unlockLevel();}
+function lockText(n){return '교회 Lv '+LV_TIER[n]+' 달성 후';}
+// 건물 잠금 문구 (short: 카드 가격 자리에 넣는 짧은 꼴)
 function lockLabel(id,short){
-  if(lockGoal(id)>S.goal)return short?'목표 '+lockGoal(id)+'개 후':lockText(lockGoal(id));
+  if(!tierOk(lockGoal(id)))return short?'Lv '+LV_TIER[lockGoal(id)]+' 후':lockText(lockGoal(id));
   return 'Lv '+lockLv(id)+(short?' 후':' 달성 후');
 }
 // Level L이 되면 새로 열리는 꾸미기 이름
 function lvUnlockNames(L){var o=[];for(var id in LV_UNLOCK)if(LV_UNLOCK[id]===L&&D[id])o.push(D[id].name);return o;}
-// 목표 n개째를 이뤘을 때 새로 열리는 것들의 이름
+// 단계 n이 열릴 때 새로 열리는 것들의 이름
 function unlockNames(n){
   var out=[];
   for(var id in UNLOCK)if(UNLOCK[id]===n)out.push(id==='sky'?'연결 다리':(D[id]?D[id].name:id));
@@ -59,16 +53,8 @@ function unlockNames(n){
   for(var e in EVENTS)if((EVENTS[e].goal||0)===n&&n>0&&!EVENTS[e].hidden)out.push(EVENTS[e].name);
   return out;
 }
-function checkGoal(){
-  var g=GOALS[S.goal];
-  if(!g||!g.t(S))return;
-  S.money+=g.r;gainRep(g.rep);S.goal++;
-  var opened=unlockNames(S.goal);
-  var lines=['후원금 +'+fmt(g.r),'평판 +'+g.rep];
-  if(opened.length)lines.push('새로 열림 · '+opened.join(', '));
-  addLog('목표 달성 · '+g.n);
-  if(typeof celebrate==='function')celebrate(g,lines);
-}
+// 교회 Level L에 열리는 단계의 이름들
+function tierNames(L){var out=[];for(var t=1;t<LV_TIER.length;t++)if(LV_TIER[t]===L)out=out.concat(unlockNames(t));return out;}
 
 /* ---------- 사역팀 ---------- */
 var STAFF={
@@ -85,7 +71,7 @@ var STAFF={
 function teamPay(){var t=0;for(var k in STAFF)t+=STAFF[k].week*(S.staff[k]||0);return t;}
 function hireTeam(k){
   var s=STAFF[k],lv=S.staff[k]||0;
-  if((s.goal||0)>S.goal)return lockText(s.goal)+' 꾸릴 수 있어요';
+  if(!tierOk(s.goal||0))return lockText(s.goal)+' 꾸릴 수 있어요';
   if(lv>=3)return '이미 최대 단계예요';
   if(S.money<s.costs[lv])return '자금이 부족해요';
   S.money-=s.costs[lv];S.staff[k]=lv+1;recalc();save();return '';
@@ -192,7 +178,7 @@ function evSeasonText(e){return e.season?(e.season[0]===e.season[1]?e.season[0]+
 // 열 수 없으면 이유, 열 수 있으면 ''
 function evBlock(id){
   var e=EVENTS[id],st=evState(id);
-  if((e.goal||0)>S.goal)return lockText(e.goal)+' 열 수 있어요';
+  if(!tierOk(e.goal||0))return lockText(e.goal)+' 열 수 있어요';
   if(st.run)return st.ready?'보상을 먼저 받아 주세요':'진행 중이에요';
   if(e.season){var mo=monthOf();if(mo<e.season[0]||mo>e.season[1])return evSeasonText(e)+'에만 열 수 있어요';}
   if(st.cd>0)return st.cd+'주 뒤에 다시 열 수 있어요';

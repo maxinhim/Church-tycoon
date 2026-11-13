@@ -70,7 +70,7 @@ function runBot(cfg) {
   function decorate(n) { for (let i = 0; i < n; i++) { const L = decoIds(); if (!L.length) return; L.sort((a, b) => b.beauty / b.cost - a.beauty / a.cost); put(L[(decoN++) % Math.min(6, L.length)].id); } }
   function seats() { if (S.members > A.seats * 0.85) { const id = best(d => d.seats, d => HALLS.indexOf(d.id) >= 0); if (id) put(id); } }
   function events(list) { Object.keys(S.ev).forEach(id => { if (evReady(id)) { claimEvent(id); stat.claims = (stat.claims || 0) + 1; } }); list.forEach(id => { if (EVENTS[id] && !evBlock(id) && S.money > evCost(EVENTS[id]) + RES) { if (runEvent(id) === '') stat.events++; } }); }
-  function staffUp(keys) { keys.forEach(k => { const lv = S.staff[k] || 0; if (lv < 3 && (STAFF[k].goal || 0) <= S.goal && S.money > STAFF[k].costs[lv] + RES * 2) { if (hireTeam(k) === '') stat.staff++; } }); }
+  function staffUp(keys) { keys.forEach(k => { const lv = S.staff[k] || 0; if (lv < 3 && tierOk(STAFF[k].goal || 0) && S.money > STAFF[k].costs[lv] + RES * 2) { if (hireTeam(k) === '') stat.staff++; } }); }
   // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계 교육을 시작하고, 남는 돈으로 몇 명을 심방한다
   // 성도 관리: 교육이 끝난 사람은 임명하고, 레벨이 된 사람은 다음 단계(갈래는 은사에 따라)를 시작하고, 남는 돈으로 몇 명을 심방한다
   function people() {
@@ -99,6 +99,8 @@ function runBot(cfg) {
     if (strat === 'idle') return;
     if (strat === 'deco') { decorate(3); return; }
     seats();
+    // 첫 걸음 퀘스트(화장실)를 따라 한다
+    if (!hasBuilt(['wc'])) put('wc');
     if (strat === 'shop') { const id = best(d => d.income, d => d.cat === 'shop'); if (id) put(id); return; }
     if (strat === 'spirit') { events(['communion', 'bible', 'creed', 'retreat', 'easter', 'thanks', 'christmas', 'revival']); staffUp(['praise', 'prayer', 'edu']); spiritBuild(); pastoral(); return; }
     // wish: 성도들의 바람부터 들어준다
@@ -120,11 +122,11 @@ function runBot(cfg) {
   for (let w = 0; w < cfg.weeks && !S.over; w++) {
     week();
     for (let i = 0; i < 480; i++) { update(0.1); if (S.dlg && i % 60 === 0) { const d = dlgById(S.dlg); let k = d.o.findIndex(o => !o.ok || o.ok()); chooseDlg(k < 0 ? 0 : k); } }
-    hud(true);
+    hud(true); IND.forEach(d => { if (indReady(d.k)) claimInd(d.k); });
     const c = S.cov, r = S.rcpt || {}, g = S.gripL || {}; let gt = 0; for (const k in g) gt += g[k];
     rows.push({ w: S.week, money: Math.round(S.money), mem: S.members, mood: Math.round(S.mood), items: Math.round((c.items || 0) * 100), bonus: Math.round(S.mood - 85 * (c.items || 0)),
       spirit: Math.round(c.spirit * 100), seat: Math.round(c.seat * 100), past: Math.round(c.past * 100), fel: Math.round(c.fel * 100), park: Math.round(c.park * 100), care: Math.round(c.care * 100), comf: Math.round(c.comf * 100),
-      rep: Math.round(S.rep), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: S.goal, net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length, sc: scoreParts() });
+      rep: Math.round(trustIdx()), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: qCount(), il: IND.map(d => ilState()[d.k].lv).join('/'), net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length, sc: scoreParts() });
   }
   stat.wishOk = S.wishOk; stat.wishFail = S.wishFail;
   return { rows, over: !!S.over, stat };
@@ -147,10 +149,11 @@ function runBot(cfg) {
   for (const s of ONLY) {
     const R = out[s].rows;
     console.log(`\n## ${s}${out[s].over ? ' (파산)' : ''}${out[s].errs.length ? ' 오류: ' + out[s].errs[0] : ''}`);
-    console.log('| 주 | 자금 | 성도 | 만족 | 항목% | 보너스 | 영성 | 좌석 | 목양 | 교제 | 주차 | 돌봄 | 편의 | 평판 | Lv | 목표 | 순익 | 헌금 | 매장 | 지출 | 불편 | 건물 |');
+    console.log('| 주 | 자금 | 성도 | 만족 | 항목% | 보너스 | 영성 | 좌석 | 목양 | 교제 | 주차 | 돌봄 | 편의 | 신뢰 | Lv | 퀘스트 | 순익 | 헌금 | 매장 | 지출 | 불편 | 건물 |');
     console.log('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
     marks.forEach(w => { const r = R[w - 1]; if (!r) return;
-      console.log(`| ${r.w} | ${r.money} | ${r.mem} | ${r.mood} | ${r.items} | ${r.bonus} | ${r.spirit} | ${r.seat} | ${r.past} | ${r.fel} | ${r.park} | ${r.care} | ${r.comf} | ${r.rep} | ${r.lvl} | ${r.goal} | ${r.net} | ${r.offer} | ${r.shop} | ${r.opex} | ${r.pen} | ${r.bld} |`); });
+      console.log(`| ${r.w} | ${r.money} | ${r.mem} | ${r.mood} | ${r.items} | ${r.bonus} | ${r.spirit} | ${r.seat} | ${r.past} | ${r.fel} | ${r.park} | ${r.care} | ${r.comf} | ${r.rep} | ${r.lvl} | ${r.goal} | ${r.net} | ${r.offer} | ${r.shop} | ${r.opex} | ${r.pen} | ${r.bld} |`);
+      console.log(`|  | 점수 영${r.sc.sp} 만${r.sc.mood} 편${r.sc.conv} 신${r.sc.trust} 경${r.sc.xp} = ${r.sc.total} · 지표Lv ${r.il} |`); });
     console.log('지은 것:', JSON.stringify(out[s].stat));
   }
   const jf = arg('json', ''); if (jf) fs.writeFileSync(jf, JSON.stringify(out));

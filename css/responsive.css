@@ -20,11 +20,15 @@
 
 /* ---------- 작게: 화면 위 정보·버튼·글씨를 줄여 지도를 덜 가린다 ---------- */
 #ui{--fabh:55px;--toph:36px;row-gap:6px}
-#top{padding:3px 9px 4px;max-width:min(260px,100%)}
+#top{padding:3px 8px 3px 10px;gap:8px}
+.inds{gap:5px}
+.ind{min-width:40px}
+.ind svg.indi{width:12px;height:12px}
+.ind b{font-size:10.5px}
+.qchip{max-width:170px;padding:2px 6px 3px}
+.qchip span{font-size:9.5px}
 h1{font-size:12.5px}
 .lvp{font-size:9.5px;padding:2px 6px}
-.goal{font-size:9.5px;gap:5px}
-.goal .bar{flex-basis:32px;height:4px}
 #clock{padding:3px 8px 4px;min-width:128px;gap:2px;border-radius:10px}
 .ck1 b{font-size:12px}
 .ck1 span{font-size:9.5px}

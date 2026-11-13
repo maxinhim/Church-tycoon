@@ -11,7 +11,7 @@ const {chromium}=require('playwright');
 for(const seed of [1,2,3,4,5,6]){const p=await b.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message+' @ '+(e.stack||'').split('\n')[1]));
 await p.addInitScript(sd=>{let s=sd;Math.random=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};window.__CT_TEST=true;window.requestAnimationFrame=()=>0;try{localStorage.clear()}catch(e){}},seed);
 await p.goto(URL);await p.evaluate(()=>window.__ct.init());
-const r=await p.evaluate(()=>{restart('easy');S.goal=GOALS.length;setGate(true);const R=Math.random,ri=n=>(R()*n)|0,log=[],bad=[];
+const r=await p.evaluate(()=>{restart('easy');S.unlockAll=true;setGate(true);const R=Math.random,ri=n=>(R()*n)|0,log=[],bad=[];
  const ids=DEFS.filter(d=>d.kind!=='terrain'&&d.id!=='f_erase'&&d.id!=='path').map(d=>d.id);let last='';
  const chk=(op)=>{const nums={money:S.money,mood:S.mood,rep:S.rep,mem:S.members,lvl:S.lvl,fresh:S.fresh};for(const k in nums)if(!Number.isFinite(nums[k]))bad.push(op+': '+k+'='+nums[k]);
   if(S.members<0)bad.push(op+' members<0');S.buildings.forEach(b=>{if(b.inUse<0||!Number.isFinite(b.inUse))bad.push(op+' inUse '+b.def);});
@@ -27,6 +27,7 @@ const r=await p.evaluate(()=>{restart('easy');S.goal=GOALS.length;setGate(true);
   else if(o===9){op='run';for(let k=0;k<120;k++)update(0.1);S.dlg=null;}
   else if(o===10){op='week';S.t=WEEK-.05;update(0.1);S.dlg=null;S.over=false;if(S.money<0)S.money=20000;}
   else if(o===11){op='saveload';save();const s2=load();s2.open=S.open;S=s2;V=[];rebuildOcc();recalc();levelTick(true);}
+  else if(o===12&&R()<.25){op='claim';IND.forEach(d=>{if(indReady(d.k))claimInd(d.k);});levelTick();}
   else if(o===12){op='event';const es=Object.keys(EVENTS);const e=es[ri(es.length)];Object.keys(S.ev).forEach(k=>{if(evReady(k)&&R()<.7)claimEvent(k);});(S.people||[]).slice(0,12).forEach(q=>{const z=R();if(z<.3)ppCare(q.id,z<.15?'visit':'gift');else if(z<.5){const nx=ppNexts(q),to=nx[ri(Math.max(1,nx.length))];if(to){q.lv=Math.max(q.lv,PP_TREE[to].lv);ppTrain(q.id,to);}}else if(z<.7&&q.tr){q.tr.end=evNow()-.01;peopleTick();ppAppoint(q.id);}});if(S.assoc.length&&R()<.3)asCheer(0);if(R()<.4)caresWeek();(S.cares||[]).slice().forEach(c=>{if(R()<.5)careChoose(c.id,ri(4));});if(S.assoc.length&&R()<.2){delegState().on=true;delegWeek();}if(!evBlock(e))runEvent(e);const ks=Object.keys(STAFF);hireTeam(ks[ri(ks.length)]);}
   hud(true);if(i%25===0){draw&&draw();}
   }catch(e){bad.push(op+' THROW '+e.message+' '+(e.stack||'').split('\n')[1]);}

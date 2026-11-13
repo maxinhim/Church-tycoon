@@ -173,7 +173,6 @@ function onPanel0(e){
     UI.selFloor=null;UI.tab='build';UI.fold=false;UI.cat='path';startPlace('ter_ramp');UI.ghost={x:rf.x,y:rf.y};renderDetail();
   }
   else if(a==='fexp'){UI.fexp=UI.fexp===v?null:v;renderFinance();}
-  else if(a==='mexp'){UI.mexp=UI.mexp===v?null:v;renderStatus();}
   else if(a==='tlv'){UI.tlv=clamp(UI.tlv+(+v),MINH,MAXH-1);renderDetail();}
   else if(a==='plevel'){UI.pc.l=clamp(UI.pc.l+(+v),MINH,MAXL);renderDetail();}
   else if(a==='demtile'){

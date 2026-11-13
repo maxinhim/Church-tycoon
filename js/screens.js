@@ -9,6 +9,7 @@
 var SCREENS={
   events:{title:'행사',tabs:[['events','행사'],['staff','사역팀']]},
   people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
+  status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['week','이번 주'],['fin','재정']]},
   officers:{title:'직분자',tabs:[['off','직분'],['B','교역'],['C','섬김'],['assoc','부교역자'],['cands','청빙']]}
 };
 var PP_PAGE=60;
@@ -26,7 +27,7 @@ function ringSvg(p,cls){
 // 행사 카드 아래 한 줄: 지금 상태
 function evLine(id){
   var e=EVENTS[id],st=evState(id);
-  if((e.goal||0)>S.goal)return {t:'목표 '+e.goal+'개 후',c:'lock'};
+  if(!tierOk(e.goal||0))return {t:'Lv '+LV_TIER[e.goal]+' 후',c:'lock'};
   if(evReady(id))return {t:'보상 수령',c:'ready'};
   if(evRunning(id))return {t:evLeftText(id)+' 남음',c:'run'};
   if(e.season){var mo=monthOf();if(mo<e.season[0]||mo>e.season[1])return {t:evSeasonText(e)+'에 열려요',c:'wait'};}
@@ -68,6 +69,7 @@ function renderScreen(){
     body.className='sbody list';var keep=panel;panel=body;renderStaff('teams');panel=keep;
   }else if(UI.scr==='officers'&&UI.scrTab==='cands'){
     body.className='sbody list';var keep2=panel;panel=body;renderStaff('cands');panel=keep2;
+  }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
   else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=bulkBar()+(UI.scrTab==='assoc'?assocHtml():officersHtml());}
   else if(UI.scr==='events'){
@@ -81,6 +83,7 @@ function renderScreen(){
   if(sel&&sel.t==='ev'&&EVENTS[sel.id])dh=evDlgHtml(sel.id);
   else if(sel&&sel.t==='pp'&&ppById(sel.id))dh=ppDlgHtml(ppById(sel.id));
   else if(sel&&sel.t==='as'&&S.assoc[sel.id])dh=asDlgHtml(sel.id);
+  else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
 }
@@ -94,6 +97,7 @@ function syncScreen(){
     rp.setAttribute('stroke-dashoffset',(RING_C*(1-evProg(id))).toFixed(1));
     if(evRunning(id)){var t=els[i].querySelector('[data-evp]');if(t)t.textContent=evLeftText(id)+' 남음';}
   }
+  syncStatusScreen();
   var ps=document.querySelectorAll('#scr [data-pp]');
   for(var j=0;j<ps.length;j++){
     var pp=ppById(+ps[j].dataset.pp),rq=ps[j].querySelector('.rp');if(!pp||!rq)continue;
@@ -109,6 +113,7 @@ function syncEvBadge(){
   var b=$('#evBadge');if(!b)return;var n=evReadyCount();
   b.hidden=!n;if(n)b.textContent=n;
   var pb=$('#ppBadge'),pn=ppReadyCount()+caresCount();if(pb){pb.hidden=!pn;if(pn)pb.textContent=pn;}
+  var sb=$('#stBadge'),sn=indReadyCount();if(sb){sb.hidden=!sn;if(sn)sb.textContent=sn;}
 }
 function scrToast(msg,ms){
   var t=$('#scrToast');if(!t)return;t.textContent=msg;t.hidden=false;
@@ -118,6 +123,7 @@ function scrClick(e){
   var el=e.target.closest('[data-act]');
   // 정보 창 바깥(어두운 곳)을 누르면 닫는다
   if(!el){if(e.target.id==='scrDlg'){UI.scrSel=null;renderScreen();}return;}
+  if(scrStatusClick(el.dataset.act,el.dataset.v,el))return;
   if(scrPeopleClick(el.dataset.act,el.dataset.v,el))return;
   var a=el.dataset.act,v=el.dataset.v;
   if(a==='scrclose'){closeScreen();return;}
@@ -141,6 +147,7 @@ function scrClick(e){
 }
 function setupScreens(){
   $('#scr').addEventListener('click',scrClick);
+  setupStatusUI();
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&UI.scr){if(UI.scrSel){UI.scrSel=null;renderScreen();}else closeScreen();}});
 }
 

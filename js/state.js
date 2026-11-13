@@ -40,9 +40,9 @@ function newState(dk){
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0,cstaff:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
-    hist:[],log:[],goal:0,over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
+    hist:[],log:[],over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
     grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{communion:-2},lvl:null,
-    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:2,step:0,stepW:0,cares:[],careId:1};
+    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:3,qd:{},qb:{},qxp:0,tv:0,il:{},ind:null,careDone:0,cares:[],careId:1};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
@@ -82,6 +82,6 @@ function calcMood(){
   // 좋은 보너스(꾸밈·사역팀·권사·행사)는 합쳐서 BONUS_MAX까지만. 나쁜 것(침체·낡음·불편)은 그대로 깎는다
   var pos=beautyBonus(),neg=0;(MOD.parts||[]).forEach(function(p){if(p[1]>0)pos+=p[1];else neg+=p[1];});
   var mood=MOOD_ITEMS*items+Math.min(BONUS_MAX,pos)+neg;
-  return {mood:clamp(mood,0,100),items:items,bonus:Math.min(BONUS_MAX,pos),bonusRaw:pos,malus:neg,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
+  return {sp:sp,mood:clamp(mood,0,100),items:items,bonus:Math.min(BONUS_MAX,pos),bonusRaw:pos,malus:neg,seat:seat,spirit:sp.v,fel:fel,care:care,comf:comf,park:park,past:past,E:E};
 }
-function recalc(){syncPeople();refreshNav();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;}
+function recalc(){syncPeople();refreshNav();refreshMods();A=agg();rebuildDecor();var m=calcMood();S.mood=m.mood;S.cov=m;S.ind=calcInd(m);}

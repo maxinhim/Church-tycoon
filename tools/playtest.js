@@ -119,8 +119,8 @@ const RULES = [
       if (await page.evaluate(id => UI.sel === id, id)) return true; stat.mispick = (stat.mispick || 0) + 1; }
     return false;
   };
-  const state = () => page.evaluate(() => ({ week: S.week, money: Math.round(S.money), mem: S.members, mood: Math.round(S.mood), rep: Math.round(S.rep), lvl: S.lvl, goal: S.goal, step: S.step, open: S.open, bld: S.buildings.length,
-    line: document.getElementById('goalTxt').textContent, warn: warnings().slice(0, 6), wish: S.wish ? S.wish.label : '', net: (S.rcpt || {}).net || 0 }));
+  const state = () => page.evaluate(() => ({ week: S.week, money: Math.round(S.money), mem: S.members, mood: Math.round(S.mood), rep: Math.round(trustIdx()), lvl: S.lvl, goal: qCount(), step: qCount(), open: S.open, bld: S.buildings.length,
+    line: document.getElementById('qTxt').textContent, warn: warnings().slice(0, 6), wish: S.wish ? S.wish.label : '', net: (S.rcpt || {}).net || 0 }));
   const advance = async (days) => { await page.evaluate(n => { const k = Math.round(WEEK * 10 / 7 * n); for (let i = 0; i < k; i++)update(0.1); hud(true); }, days); await closeOverlays(); };
 
   await shot('w00-start');

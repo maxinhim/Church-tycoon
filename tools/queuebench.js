@@ -12,7 +12,7 @@ function serve(){return new Promise(res=>{const srv=http.createServer((q,r)=>{co
   r.writeHead(200,{'Content-Type':TYPES[path.extname(p)]||'application/octet-stream'});fs.createReadStream(p).pipe(r);});srv.listen(0,'127.0.0.1',()=>res(srv));});}
 const {chromium}=require('playwright');
 function run(cfg){
-  restart('easy');S.dlg=null;setGate(true);S.step=STEPS.length;S.goal=GOALS.length;S.money=1e7;
+  restart('easy');S.dlg=null;setGate(true);S.unlockAll=true;S.money=1e7;
   S.buildings.filter(b=>b.def==='room'||b.def==='tree').forEach(b=>demolish(b.id));S.floor={};
   // 입구에서 위로 큰길
   for(let y=30;y<PZ;y++)for(let x=ENT;x<ENT+2;x++)S.floor[x+','+y]='f_block';

@@ -9,7 +9,7 @@ function update(dt){
   // 초반에도 마당이 비어 보이지 않게 방문자는 넉넉히, 대신 한 사람의 정착 확률은 낮게
   // 교회 문이 닫혀 있으면 아무도 오지 않는다. 주일에는 성도들이 예배하러 온다
   if(S.open){
-    var rate=VIS_RATE*(0.4+S.rep/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
+    var rate=VIS_RATE*(0.4+trustIdx()/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
     S.spawnAcc+=rate*dt;
     while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<70)spawnV(false);}
     if(isSunday()){
@@ -19,13 +19,14 @@ function update(dt){
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
   // 목표는 주중에도 이루는 즉시 보상 (0.5초마다 확인)
-  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;checkGoal();wishTick();evTick();peopleTick();}
+  S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;questTick();wishTick();evTick();peopleTick();}
   V=V.filter(function(v){return !v.dead;});
   if(S.t>=WEEK){S.t-=WEEK;weekEnd();}
 }
 // 한 주 48초 기준. 자금 걱정보다 짓고 꾸미는 재미에 집중하도록 수입을 넉넉하게:
 // 매장은 한 번 살 때 8배(SHOP_K), 재료비는 판매액의 25%. 헌금은 출석 한 명당 30, 방문자 한 명당 3, 개척 후원은 600에서 주마다 6씩 줄어든다
 // 평판: 만족도·방문자 만족이 50일 때 제자리. 40을 넘으면 넘은 만큼 × REP_DECAY씩 식고, 행사로 얻는 평판은 높을수록 덜 오른다
+/* 평판(S.rep)은 신뢰도의 한 재료로만 쓰인다 (현황 화면에 따로 나오지 않는다) */
 function gainRep(v){S.rep=clamp(S.rep+(v>0?v*clamp((100-S.rep)/60,0.15,1):v),0,100);}
 function isSunday(){return S.t>=WEEK*6/7;}
 function dayIdx(){return Math.min(6,Math.floor(S.t/WEEK*7));}
@@ -44,14 +45,14 @@ function weekEnd(){
   var ppFlat=closed?0:Math.round(PA.flat);
   var offering=Math.round(attend*OFFER_PER*(0.4+0.6*mood/100)*MOD.offer/(1+attend/500))+ppFlat;
   var online=closed?Math.round(m*1.2):0;
-  var visGive=Math.round(S.visitsWeek*VIS_GIVE*(0.5+S.rep/100));
+  var visGive=Math.round(S.visitsWeek*VIS_GIVE*(0.5+trustIdx()/100));
   var sponsor=Math.round(Math.max(0,SPONSOR0-SPONSOR_DROP*S.week));
   var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(teamPay()+assocPay());
   // 재정 화면에서 항목마다 어떻게 계산됐는지 보여 주려고 계산 재료를 함께 남긴다
   var loanList=S.loans.map(function(l){return {n:LOANS[l.k].name,p:Math.round(l.pay)};});
   var upTop=S.buildings.map(function(b){var d=defOf(b),u=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);return {n:d.name,u:u,w:wearStage(b)};})
     .filter(function(o){return o.u>0;}).sort(function(a,b){return b.u-a.u;}).slice(0,3);
-  var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,ppFlat:ppFlat,ppK:ppGiveK(),visits:S.visitsWeek,rep:Math.round(S.rep),week:S.week,
+  var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,ppFlat:ppFlat,ppK:ppGiveK(),visits:S.visitsWeek,rep:Math.round(trustIdx()),week:S.week,
     up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,team:Math.round(teamPay()),assoc:Math.round(assocPay()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
   var loan=payLoans();
   // 매장 재료비는 팔 때마다 바로 나갔다(S.weekSup). 정산 때는 나머지만 오간다
@@ -83,7 +84,7 @@ function weekEnd(){
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}
-  decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;
+  decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;S.tv=(S.tv||0)*TRUST_VIS_DECAY;
   peopleWeek();caresWeek();
   if(S.week-S.candWeek>=6)refreshCands();
   var ev='';
@@ -99,11 +100,11 @@ function weekEnd(){
   if(typeof showReceipt==='function')showReceipt();
   rollDilemma();
   recalc();
-  checkGoal();
+  questTick();
   recalc();
   if(S.money<-1500){S.over=true;showOver();}
   save();
-  if(!UI.fold&&(UI.tab==='status'||UI.tab==='finance'||UI.tab==='staff'||UI.tab==='events'))renderPanel();
+  if(!UI.fold&&(UI.tab==='finance'||UI.tab==='staff'||UI.tab==='events'))renderPanel();
   if(S.dlg&&typeof showDlg==='function')showDlg();
   hud(true);
 }

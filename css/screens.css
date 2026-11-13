@@ -155,3 +155,33 @@
 .scopts .btn small{font-size:10px;color:var(--muted)}
 .scopts .btn small.bad{color:var(--bad)}
 @media (max-width:520px){.scopts{grid-template-columns:1fr}}
+
+/* ---------- 현황 화면 ---------- */
+.stsum{display:flex;flex-wrap:wrap;align-items:center;gap:3px 12px;margin:0 auto 10px;max-width:760px}
+.stsum .stlv{font-family:var(--f-display);font-size:15px}
+.stsum .bar{flex:1 1 160px;max-width:260px;height:7px}
+.stsum span{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.stsum .stnu{flex-basis:100%;color:var(--ink);font-size:11.5px;white-space:normal}
+.indg{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-width:760px;margin:0 auto}
+.indc .evr{width:78px;height:78px}
+.indc .evi{font-size:0}
+.indc svg.indbig{width:44%;height:44%;color:#fff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.indc .inlv{font-weight:800;color:var(--muted);margin-left:2px}
+.indc.ready .evp{background:#37b24d;color:#fff;font-weight:700;box-shadow:0 2px 0 #23803a}
+.sdh .evi svg.indbig{width:44%;height:44%;color:#fff}
+.sdh .evi{font-size:0}
+.swhyl{margin:8px 0 0;padding:0 0 0 16px;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.swhyl li{margin:1px 0}
+.sdcov{margin-top:8px}
+/* 퀘스트 목록 */
+.qrow{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 6px}
+.qt{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.qt b{font-size:13px}
+.qt span{font-size:11.5px;color:var(--muted);line-height:1.35}
+.qt .bar{margin-top:3px;height:5px}
+.qr{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.qr .qm{display:inline-flex;align-items:center;gap:4px;color:#8a5a00}
+.qr .qx{color:#5f3d9c}
+.qdone{display:flex;flex-wrap:wrap;gap:4px}
+.qdone span{font-size:11px;color:var(--muted);background:var(--chip);border-radius:999px;padding:2px 9px}
+@media (max-height:340px){.indc .evr{width:62px;height:62px}.indg{gap:4px}.qrow{padding:6px 10px}}

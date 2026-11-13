@@ -30,7 +30,7 @@ function wishCands(){
   if(g&&GRIPES[g.k].ids){var G=GRIPES[g.k],d3=pickB(function(d){return gripeFits(G,d)?1:0;});
     if(d3)L.push({t:'build',id:d3.id,n:countDef(d3.id),need:0.6,label:GRIPES[g.k].s+' 때문에 힘들어요 ('+d3.name+')'});}
   [['communion','성찬식을 한 지 오래됐어요',8],['smallgroup','소그룹으로 모이고 싶어요',6],['retreat','수련회를 가고 싶어요',16],['service','이웃을 섬기는 날을 갖고 싶어요',10]].forEach(function(e){
-    var ev=EVENTS[e[0]];if(!ev||(ev.goal||0)>S.goal)return;var st=S.ev[e[0]]||{cd:0};
+    var ev=EVENTS[e[0]];if(!ev||!tierOk(ev.goal||0))return;var st=S.ev[e[0]]||{cd:0};
     if(st.cd>WISH_DUE-1||recent(e[0],e[2])>0.3)return;
     if(evCost(ev)>Math.max(2000,S.money*1.2))return;
     L.push({t:'event',id:e[0],need:0.45+0.4*(1-recent(e[0],e[2])),label:e[1]+' ('+ev.name+')'});});

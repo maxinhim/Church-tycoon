@@ -11,7 +11,7 @@ const {chromium}=require('playwright');
 for(const seed of [11,12,13,14,15,16,17,18]){const p=await b.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message+' @ '+(e.stack||'').split('\n')[1]));
 await p.addInitScript(sd=>{let s=sd;Math.random=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};window.__CT_TEST=true;window.requestAnimationFrame=()=>0;try{localStorage.clear()}catch(e){}},seed);
 await p.goto(URL);await p.evaluate(()=>window.__ct.init());
-const r=await p.evaluate(()=>{restart('easy');S.goal=GOALS.length;S.step=STEPS.length;setGate(true);const R=Math.random,ri=n=>(R()*n)|0,bad=[];
+const r=await p.evaluate(()=>{restart('easy');S.unlockAll=true;setGate(true);const R=Math.random,ri=n=>(R()*n)|0,bad=[];
  const ids=DEFS.filter(d=>d.kind!=='terrain'&&d.kind!=='floor'&&d.kind!=='mroom'&&d.id!=='path'&&d.kind!=='lot').map(d=>d.id);
  // 좁은 구역에 몰아서 서로 부딪히는 경우를 많이 만든다
  const X0=6,Y0=8,W=12,H=10,rx=()=>X0+ri(W),ry=()=>Y0+ri(H);let nfill=0,ndrain=0,nwater=0,deep=0;

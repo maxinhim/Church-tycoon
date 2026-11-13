@@ -128,11 +128,26 @@ var WISH_FIRST=2,WISH_GAP=[2,3],WISH_DUE=5,WISH_GOOD=6,WISH_BAD=-5,WISH_FX_WEEKS
 /* 매너리즘: 새 건물·다른 행사가 STALE_AFTER주 넘게 없으면 넘은 주마다 STALE_STEP씩, 최대 STALE_MAX까지 만족도가 내려간다 */
 var STALE_AFTER=4,STALE_STEP=1.5,STALE_MAX=9;
 
-/* 교회 Level: L이 되려면 점수 ≥ LV_BASE + LV_K × (L−1)^LV_P
-   Lv 2는 약 2만(골고루 지으면 4~6주, 3~5분), Lv 9는 약 8만(30분쯤), Lv 100은 약 170만.
-   처음 짓는 건물로 몇 단계씩 한꺼번에 뛰지 않도록 Lv 2를 시작 점수(약 1만)보다 넉넉히 높게 둔다 */
-var LV_MAX=100,LV_BASE=15700,LV_K=4300,LV_P=1.3;
+/* 현황 지표 (status.js): 영성·만족도·편의·신뢰도·사역 경험 다섯 가지를 점수로 매기고, 지표마다 레벨을 준다.
+   · 점수는 '실제로 채운 만큼'이다: 항목마다 min(기본 + 건물 자리, SERVE_CAP × 필요). 필요는 성도 수에 맞춰 늘기 때문에, 성도가 늘수록 채워야 할 몫도 커진다
+   · 영성 = (말씀·기도·찬양 채운 합) × (IND_SAC0 + (1−IND_SAC0) × 성례)
+   · 만족도 = 교제 + 돌봄 + 목양 × IND_PAST + 꾸밈 × IND_BEAUTY + 나쁜 것(침체·낡음·불편) × IND_NEG
+   · 편의 = 편의 시설 + 주차 + 좌석 × IND_SEAT
+   · 신뢰도 = 평판 × TRUST_REP + 성도 평균 호감 Lv × TRUST_LV + 직분자 × TRUST_OFF + 목양 충족 × TRUST_PAST + 심방·선물 활동 (최대 TRUST_VIS_MAX, 매주 × TRUST_VIS_DECAY)
+     신뢰도 지수(0~100): x = 점수 × TRUST_IDX, x가 TRUST_SOFT를 넘으면 넘은 몫은 점점 덜 오른다 (TRUST_SOFT + (100−TRUST_SOFT) × (1 − e^(−(x−TRUST_SOFT)/TRUST_SOFT_K))).
+     방문자가 오는 빠르기·방문자 헌금·신용 한도가 이 지수를 따른다
+   · 사역 경험 = 퀘스트로 쌓은 경험치
+   지표 레벨 L(2 이상)이 되려면 점수 ≥ IND_B[지표] + IND_U[지표] × (L−2)^IND_P (IND_B는 Lv 2 문턱 = 처음 점수보다 조금 높게).
+   레벨이 오르면 '보상 받기'로 자금 IND_GIFT0 + IND_GIFT_K × L을 받는다 */
+var SERVE_CAP=1.2;
+var IND_SAC0=.7,IND_PAST=.5,IND_SEAT=.5,IND_BEAUTY=5,IND_NEG=5;
+var TRUST_REP=1,TRUST_LV=1.5,TRUST_OFF=2,TRUST_PAST=20,TRUST_VIS=2,TRUST_VIS_MAX=40,TRUST_VIS_DECAY=.85,TRUST_IDX=.62,TRUST_SOFT=60,TRUST_SOFT_K=50;
+var IND_B={sp:26,mood:50,conv:40,trust:50,xp:10},IND_U={sp:14,mood:24,conv:12,trust:14,xp:30},IND_P=1.2,IND_MAX=50;
+var IND_GIFT0=40,IND_GIFT_K=25;
+/* 교회 Level = 다섯 지표 점수의 합. L이 되려면 합 ≥ LV_BASE + LV_K × (L−1)^LV_P (한 번 오른 Level은 내려가지 않는다) */
+var LV_MAX=100,LV_BASE=200,LV_K=36,LV_P=1.4;
 // Level이 오를 때 축하금 = LV_GIFT0 + LV_GIFT_K × 새 Level (Lv 2는 250, Lv 10은 650)
 var LV_GIFT0=150,LV_GIFT_K=50;
-// 첫 걸음(처음 할 일 안내) 하나를 이룰 때마다 받는 돈
-var STEP_GIFT=250;
+// 건물·사역팀·행사가 열리는 교회 Level (예전 목표 1·2·3개째)
+var LV_TIER=[1,2,3,5];
+// 퀘스트 한 칸마다 받는 돈은 퀘스트 목록(quests.js)에 있다

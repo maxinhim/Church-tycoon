@@ -28,10 +28,10 @@ function drawFx(c){
 
 /* ---------- 목표 달성 축하 ---------- */
 var CF=[],celeTimer=0;
-function celebrate(g,lines){
+function celebrate(g,lines,kick){
   var el=$('#cele');if(!el)return;
   sfx('bell',.85,0);setTimeout(function(){sfx('join',.7,0);},300);
-  el.innerHTML='<div class="cbox" role="status"><div class="ckick">목표 달성</div><h2>'+g.n+'</h2><ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul><p class="chint">눌러서 닫기</p></div>';
+  el.innerHTML='<div class="cbox" role="status"><div class="ckick">'+(kick||'목표 달성')+'</div><h2>'+g.n+'</h2><ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul><p class="chint">눌러서 닫기</p></div>';
   el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   clearTimeout(celeTimer);celeTimer=setTimeout(function(){el.hidden=true;},7000);
   if(!REDUCED.matches){
@@ -42,7 +42,7 @@ function celebrate(g,lines){
         r:Math.random()*6,vr:(Math.random()-.5)*14,w:5+Math.random()*6,h:3+Math.random()*4,col:cols[i%cols.length],life:2.6+Math.random()*1.4});
     }
   }
-  toast('목표 달성 · '+g.n,3000);
+  toast((kick||'목표 달성')+' · '+g.n,3000);
 }
 
 /* ---------- 현황 한눈 요약 ---------- */
@@ -70,7 +70,7 @@ function qbar(label,v){
 }
 function statusSummary(){
   var c=S.cov||{},net=lastNet(S),w=warnings(),act=activeEvents().filter(function(id){return !EVENTS[id].hidden;});
-  return '<div class="qnums"><div><span>만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
+  return '<div class="qnums"><div><span>성도 만족도</span><b>'+Math.round(S.mood)+'%</b></div><div><span>지난주 수지</span><b class="'+(net<0?'neg':'pos')+'">'+(net>=0?'+':'')+fmt(net)+'</b></div>'+
     '<div><span>이번 주 방문</span><b>'+S.visitsWeek+'</b></div><div><span>새 성도</span><b>'+S.joinedWeek+'</b></div></div>'+
     (act.length?'<div class="qev">'+act.map(function(id){return '<span>'+EVENTS[id].name+' · '+evLeftText(id)+'</span>';}).join('')+'</div>':'')+
     '<div class="sec">챙길 일</div>'+(w.length?'<ul class="qwarn">'+w.map(function(t){return '<li>'+t+'</li>';}).join('')+'</ul>':'<p class="qok">지금은 특별히 챙길 일이 없어요</p>');

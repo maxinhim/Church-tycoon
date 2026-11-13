@@ -12,10 +12,10 @@ var LOANS={
 var gateAsk=-1e9;
 function loanPayment(p,r,n){return Math.ceil(p*r/(1-Math.pow(1+r,-n)));}
 function debt(){return (S.loans||[]).reduce(function(t,l){return t+l.bal;},0);}
-function creditLimit(){return Math.round((8000+S.members*180+S.rep*120)*(S.diff==='hard'?0.7:1)/100)*100;}
+function creditLimit(){return Math.round((8000+S.members*180+trustIdx()*120)*(S.diff==='hard'?0.7:1)/100)*100;}
 function loanBlock(k){
   var L=LOANS[k];
-  if(L.goal&&S.goal<L.goal)return lockText(L.goal)+' 받을 수 있어요';
+  if(L.goal&&!tierOk(L.goal))return lockText(L.goal)+' 받을 수 있어요';
   if(S.loans.length>=3)return '대출은 3건까지 받을 수 있어요';
   if(debt()+L.amt>creditLimit())return '신용 한도('+fmt(creditLimit())+')를 넘어요';
   return '';
@@ -115,7 +115,7 @@ function rcptWhy(r,k){
     if(x.ppFlat)L.push('+ 직분자·신학 수료 성도의 헌금 '+fmt(x.ppFlat));
     L.push('늘리려면: 좌석(예배당), 만족도, 재정·목양 사역팀');
   }else if(k==='online'){L.push('교회 문을 닫은 주일에는 온라인 헌금만 들어와요: 성도 '+x.m+'명 × 1.2');L.push('문을 열면 주일 헌금으로 바뀌어요');}
-  else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × '+VIS_GIVE+' × 평판 보정 '+pct(0.5+x.rep/100)+' (평판 '+x.rep+')');}
+  else if(k==='visGive'){L.push('이번 주 방문자 '+x.visits+'명 × '+VIS_GIVE+' × 신뢰도 보정 '+pct(0.5+x.rep/100)+' (신뢰도 지수 '+x.rep+')');}
   else if(k==='shop'){L.push('방문자가 주중에 매장(카페·식당·빵집·서점 등)에서 산 금액의 합계예요');L.push('이 중 '+pct(x.shopRate)+'는 팔 때마다 재료비로 바로 나가요');}
   else if(k==='other'){L.push('행사·특별 후원 등 매장 밖에서 주중에 들어온 돈이에요');}
   else if(k==='sponsor'){L.push('개척 초기 후원: '+SPONSOR0+' − '+SPONSOR_DROP+' × 지난 주 수('+x.week+') — 주마다 줄어 '+Math.round(SPONSOR0/SPONSOR_DROP)+'주 뒤 끝나요');}

@@ -35,7 +35,7 @@ function effText(d){
 /* 기능 패널: 동그란 버튼(건축·행사·현황)과 상단 메뉴 버튼으로 연다.
    '행사' 버튼 안에는 행사·사역자 두 탭이 있다 */
 var GROUP_TITLE={build:'건축',minis:'행사',status:'현황',menu:'메뉴'};
-var SUBTABS={minis:[['events','행사'],['staff','사역자']],status:[['status','현황'],['finance','재정']]};
+var SUBTABS={minis:[['events','행사'],['staff','사역자']]};
 // 건축 › 소모임의 하위 묶음: 제목 줄 빈자리에 칩으로 (창 높이가 늘지 않게)
 var CLUB_SUBS=[['sport','운동'],['hobby','취미'],['music','음악']];
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
@@ -54,7 +54,7 @@ function openGroup(g){
   sfx('page',.35);
   // 건축 버튼으로 새로 열면 늘 분류 목록부터
   if(g==='build')UI.bstep='cat';
-  UI.tab=g==='minis'?(UI.minisTab||'events'):(g==='status'?(UI.statusTab||'status'):g);UI.fold=false;UI.confirmNew=false;
+  UI.tab=g==='minis'?(UI.minisTab||'events'):g;UI.fold=false;UI.confirmNew=false;
   renderPanel();
 }
 // 닫으면 짓던 것도 함께 취소한다 (미리보기만 지도에 남지 않게)
@@ -79,7 +79,7 @@ function renderPanel(){
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
     (t==='build'&&!UI.choose&&UI.bstep!=='cat'&&UI.cat==='club'&&UI.tool!=='demolish'?CLUB_SUBS.map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" class="'+(cs===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
-  if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else if(t==='status')renderStatus();else renderMenu();
+  if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else renderMenu();
 }
 /* 건축 목록 순서: 지금 지을 수 있는 것(잠금이 풀렸고 자금이 되는 것)을 앞에, 각각 싼 것부터.
    지우기 같은 도구(값 0)는 맨 뒤. 분류를 열 때만 정렬한다 (자금이 바뀌어도 누르는 도중 카드가 움직이지 않게) */
@@ -269,7 +269,7 @@ function renderStaff(part){
   h+=srow('목양 수용력',S.members+' / '+Math.round(MOD.cap)+'명','담임목사·부교역자·직분자·세례교인·돌봄팀이 함께 돌볼 수 있는 성도 수예요. 넘으면 그만큼 성도가 떠나요.','',meter(MOD.cap/Math.max(1,S.members)));
   h+='<div class="sec">사역팀 · 주 '+fmt(teamPay())+'</div>';
   Object.keys(STAFF).forEach(function(k){
-    var t=STAFF[k],lv=S.staff[k]||0,lk=(t.goal||0)>S.goal,next=t.costs[lv];
+    var t=STAFF[k],lv=S.staff[k]||0,lk=!tierOk(t.goal||0),next=t.costs[lv];
     var btn=lk?'<button class="btn" disabled>'+lockText(t.goal)+'</button>':
       (lv>0?'<button class="btn" data-act="fire" data-v="'+k+'" aria-label="'+t.name+' 축소">−</button>':'')+
       (lv<3?'<button class="btn pri" data-act="hire" data-v="'+k+'"'+(S.money<next?' disabled':'')+'>'+fmt(next)+'</button>':'<button class="btn" disabled>최대</button>');
@@ -336,23 +336,6 @@ function moodWhy(k){
   }
   if(w)L.unshift('만족도 비중 '+Math.round(w*100)+'%');
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');
-}
-function renderStatus(){
-  var c=S.cov||{};
-  var h=statusSummary()+'<div class="sec">성도 만족도 <small>· 항목을 누르면 계산 방식</small></div><div class="cov">';
-  MOOD_ROWS.forEach(function(r){
-    var v=r[0]==='all'?Math.round(S.mood):Math.round((c[r[0]]==null?1:c[r[0]])*100),open=UI.mexp===r[0];
-    var col=r[0]==='all'?'':';background:'+(v<50?'var(--bad)':v<80?'var(--gold)':'var(--good)');
-    h+='<button class="covb'+(open?' open':'')+'" data-act="mexp" data-v="'+r[0]+'" aria-expanded="'+open+'"><span>'+r[1]+'</span><div class="bar"><i style="width:'+v+'%'+col+'"></i></div><span class="v">'+v+'%</span></button>'+
-      (open?'<ul class="rwhy">'+moodWhy(r[0])+'</ul>':'');
-  });
-  h+='</div><div class="sec">이번 주</div><div class="legend"><span>지금 교회 마당에 '+V.length+'명</span><span>이번 주 방문 '+S.visitsWeek+'</span><span>새 성도 '+S.joinedWeek+'</span></div>';
-  h+='<div class="legend" style="margin-top:6px">'+NEEDS.map(function(n){return '<span><i style="background:'+NC[n]+'"></i>'+NK[n]+'</span>';}).join('')+'<span>머리 위 점은 방문자가 찾는 것</span></div>';
-  var rp=needRepair(),rc=rp.reduce(function(t,b){return t+repairCost(b);},0);
-  if(rp.length)h+='<div class="btns"><button class="btn pri" data-act="repairAll"'+(S.money<rc?' disabled':'')+'>낡은 건물 '+rp.length+'곳 모두 수리 · '+fmt(rc)+'</button></div>';
-  h+='<div class="sec">주간 수입과 지출</div>'+chart();
-  h+='<div class="sec">소식</div><ul class="log">'+(S.log.length?S.log.map(function(l){return '<li>'+dateText(l.w,true)+' · '+l.msg+'</li>';}).join(''):'<li>아직 소식이 없어요. 한 주가 지나면 기록됩니다.</li>')+'</ul>';
-  panel.innerHTML=h;
 }
 function chart(){
   var hs=S.hist;

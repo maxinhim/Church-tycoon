@@ -5,7 +5,7 @@
 #cv{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
 #ui{position:relative;height:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr) auto;column-gap:12px;row-gap:8px;padding-block:8px;pointer-events:none;--fabh:74px;--toph:44px}
 .glass{background:var(--glass);border:1px solid var(--glass-line);border-radius:14px;box-shadow:var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:auto}
-#top{grid-column:1;grid-row:1;width:auto;max-width:min(300px,100%);justify-self:start;align-self:start}
+#top{grid-column:1;grid-row:1;width:auto;max-width:100%;justify-self:start;align-self:start}
 #tr{grid-column:2;grid-row:1;display:flex;gap:8px;align-items:flex-start;justify-self:end}
 #gear{position:relative;pointer-events:auto}
 /* 오른쪽 위 시계: 몇 년 몇 주, 요일, 주일 정산까지 남은 날 */
@@ -71,18 +71,15 @@
 #status{grid-column:1;grid-row:3;width:auto;max-width:100%;justify-self:start;align-self:end}
 #fab{grid-column:2;grid-row:3;display:flex;gap:12px;align-items:flex-end;pointer-events:none}
 
-/* 왼쪽 위 작은 이름표: 교회 이름과 목표만 */
-#top{display:flex;flex-direction:column;gap:2px;padding:5px 12px 6px;border-radius:12px;min-width:0}
+/* 왼쪽 위 한 줄: 교회 이름·Level · 현황 지표 다섯 칸(아이콘 + Lv + 얇은 게이지) · 지금 퀘스트 */
+#top{display:flex;flex-direction:row;align-items:center;gap:10px;padding:4px 10px 4px 12px;border-radius:12px;min-width:0}
 /* 교회 이름 옆 레벨 배지 */
 .tname{display:flex;align-items:center;gap:6px;min-width:0}
 .lvp{flex:none;border:0;cursor:pointer;font:800 10.5px/1 var(--f-ui,'IBM Plex Sans KR'),sans-serif;letter-spacing:.02em;color:#5a3d00;background:linear-gradient(180deg,#ffe07a,#f2b632);border-radius:999px;padding:3px 7px;box-shadow:0 1px 0 rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
 .lvp:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.goal{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);min-width:0}
-.goal span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:28px}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
-.goal .bar{flex:0 0 40px;height:5px}
 /* 오른쪽 위 톱니바퀴: 누르면 게임 속도와 메뉴가 나온다 */
 .gbtn{position:relative;width:42px;height:42px;border-radius:50%;border:1px solid var(--glass-line);background:var(--glass);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:grid;place-items:center;padding:0;color:var(--ink)}
 .gbtn svg{width:21px;height:21px}
@@ -187,3 +184,20 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 #selCard .fsr{flex-wrap:wrap;max-width:300px}
 #selCard .fsw{display:inline-flex;align-items:center;gap:4px}
 #selCard .fsw i{width:10px;height:10px;border-radius:3px;background:var(--fc);border:1px solid rgba(0,0,0,.25);flex:none}
+
+/* 현황 지표 칩 */
+.inds{display:flex;gap:7px;flex:none}
+.ind{position:relative;border:0;background:transparent;padding:1px 2px 0;cursor:pointer;display:grid;grid-template-columns:auto auto;align-items:center;column-gap:3px;row-gap:2px;color:var(--ink);font:inherit;min-width:46px}
+.ind svg.indi{width:14px;height:14px;color:var(--c)}
+.ind b{font-size:11.5px;line-height:1;font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.ind .ig{grid-column:1/3;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.ind .ig i{display:block;height:100%;width:0;background:var(--c);border-radius:2px;transition:width .4s}
+.ind.rdy::after{content:'';position:absolute;left:-1px;top:-2px;width:7px;height:7px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px var(--glass)}
+.ind:focus-visible,.qchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.qchip{flex:1 1 auto;min-width:0;max-width:210px;border:0;background:var(--chip);border-radius:8px;padding:3px 8px 4px;cursor:pointer;color:var(--ink);font:inherit;text-align:left;display:flex;flex-direction:column;gap:2px}
+.qchip span{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+.qchip .qbar{display:block;height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.qchip .qbar b{display:block;height:100%;width:0;background:var(--good);transition:width .4s}
+.qchip[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){.ind.pop{animation:indPop .9s ease-out}}
+@keyframes indPop{0%{transform:scale(1)}25%{transform:scale(1.25)}100%{transform:scale(1)}}

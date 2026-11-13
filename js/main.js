@@ -72,7 +72,7 @@ function init(){
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gatePop').hidden)closeGatePop();});
   // 주일 정산 화면은 어디를 눌러도 그냥 사라진다 (재정 내역은 현황 › 재정에서 본다)
   $('#rcpt').addEventListener('click',function(){$('#rcpt').hidden=true;});
-  if(!S.open&&!stepActive())setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
+  if(!S.open&&qDone('f6'))setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
   setupInput();setupPlace();setupSelCard();setupScreens();setupAudio();loadSprites();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
@@ -81,7 +81,6 @@ function init(){
   document.addEventListener('pointerdown',lockLandscape,{once:true});
   document.addEventListener('visibilitychange',function(){if(document.hidden)save();});
   resize();renderPanel();hud(true);
-  setInterval(function(){if(UI.tab==='status'&&!UI.fold&&!S.over)renderStatus();},1500);
   if(S.over)showOver();
   if(S.dlg)showDlg();
   requestAnimationFrame(frame);

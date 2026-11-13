@@ -126,7 +126,7 @@ function careWhy(c,i){var o=CARES[c.k].o[i];return o&&o.need?o.need():'';}
 function careChoose(id,i){
   var c=careById(id);if(!c)return null;var t=CARES[c.k],o=t.o[i];if(!o||careWhy(c,i))return null;
   var a=ppById(c.a),b=c.b?ppById(c.b):null,r=o.f(a,b);
-  S.cares=S.cares.filter(function(q){return q!==c;});
+  S.cares=S.cares.filter(function(q){return q!==c;});S.careDone=(S.careDone||0)+1;
   addLog(t.t+' · '+careText(c,o.l));recalc();save();
   return r;
 }

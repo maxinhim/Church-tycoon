@@ -12,7 +12,8 @@
 <div id="ui">
   <header id="top" class="glass">
     <div class="tname"><h1 id="cname">새빛교회</h1><button id="clvl" class="lvp" aria-label="교회 레벨">Lv 1</button></div>
-    <div class="goal"><span id="goalTxt"></span><div class="bar"><i id="goalBar" style="width:0%"></i></div></div>
+    <div class="inds" id="inds" role="group" aria-label="현황 지표"></div>
+    <button class="qchip" id="qchip" aria-label="퀘스트"><span id="qTxt"></span><i class="qbar"><b id="qBar"></b></i></button>
   </header>
   <div id="tr">
   <div id="clock" class="glass" role="button" tabindex="0" aria-live="off">
@@ -48,7 +49,6 @@
   <div id="status" class="glass">
     <div class="stat"><span class="k">자금</span><b id="vMoney">0</b></div>
     <div class="stat"><span class="k">성도</span><b id="vMem">0</b></div>
-    <div class="stat"><span class="k">평판</span><b id="vRep">0</b></div>
     <div class="stat" id="sDebt" hidden><span class="k">빚</span><b id="vDebt">0</b></div>
   </div>
   <section id="dock" class="glass" hidden aria-labelledby="dtitle">
@@ -61,7 +61,7 @@
     <button class="fab" data-fab="minis" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9" r="2.5"/><path d="M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6M13.5 15.2c.9-.8 1.9-1.2 3-1.2 2.5 0 4.5 2.4 4.5 5.5"/></svg><span id="evBadge" class="fbadge" hidden></span></span><span class="fl">행사</span></button>
     <button class="fab" data-fab="people" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4.2 3.3-7 7.5-7s7.5 2.8 7.5 7"/></svg><span id="ppBadge" class="fbadge" hidden></span></span><span class="fl">성도</span></button>
     <button class="fab" data-fab="officers" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M12 6.6v4.8M9.6 9h4.8M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/></svg></span><span class="fl">직분자</span></button>
-    <button class="fab" data-fab="status" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-6M21.5 20h-19"/></svg></span><span class="fl">현황</span></button>
+    <button class="fab" data-fab="status" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-6M21.5 20h-19"/></svg><span id="stBadge" class="fbadge" hidden></span></span><span class="fl">현황</span></button>
   </nav>
 </div>
 <div id="place" hidden></div>
@@ -121,10 +121,12 @@
 <script src="js/camera.js"></script>
 <script src="js/hud.js"></script>
 <script src="js/effects.js"></script>
+<script src="js/status.js"></script>
 <script src="js/level.js"></script>
-<script src="js/steps.js"></script>
+<script src="js/quests.js"></script>
 <script src="js/panel.js"></script>
 <script src="js/screens.js"></script>
+<script src="js/stscreen.js"></script>
 <script src="js/selcard.js"></script>
 <script src="js/place.js"></script>
 <script src="js/input.js"></script>

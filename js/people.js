@@ -117,7 +117,7 @@ function ppCare(id,kind){
   var why=ppCareWhy(p,kind);if(why)return why;
   var c=kind==='gift'?PP_GIFT:PP_VISIT;
   S.money-=c.cost;if(kind==='gift')p.gw=S.week;else p.vw=S.week;
-  var up=ppGain(p,c.xp);recalc();save();
+  var up=ppGain(p,c.xp);trustAct(kind==='gift'?2:1);recalc();save();
   return up?'+'+p.lv:'';   // '+레벨'이면 레벨이 올랐다
 }
 // 일괄 심방·선물: 지금 할 수 있는 사람(대기 기간·최고 레벨이 아닌)만, 자금이 되는 만큼 앞에서부터
@@ -230,5 +230,5 @@ function asCheerWhy(a){
 function asCheer(i){
   var a=S.assoc[i];if(!a)return '사역자를 찾을 수 없어요';
   var why=asCheerWhy(a);if(why)return why;
-  S.money-=ASSOC_CHEER.cost;a.cw=S.week;var up=asGain(a,ASSOC_CHEER.xp);recalc();save();return up?'+'+a.lv:'';
+  S.money-=ASSOC_CHEER.cost;a.cw=S.week;var up=asGain(a,ASSOC_CHEER.xp);trustAct(1);recalc();save();return up?'+'+a.lv:'';
 }
