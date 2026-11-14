@@ -78,7 +78,7 @@ function setupInput(){
     else if(gest.mode==='ghost'){
       var w=toWorld(e.clientX,e.clientY,0),gd=faceDims(D[UI.tool],UI.face);
       var nx=clamp(gest.g0.x+Math.round(w[0]-gest.w0[0]),0,COLS-gd.w),ny=clamp(gest.g0.y+Math.round(w[1]-gest.w0[1]),0,ROWS-RD-gd.h);
-      if(nx!==UI.ghost.x||ny!==UI.ghost.y){UI.ghost.x=nx;UI.ghost.y=ny;renderDetail();}
+      if(nx!==UI.ghost.x||ny!==UI.ghost.y){UI.ghost.x=nx;UI.ghost.y=ny;var sh=plAutoFace();if(sh)gest.g0={x:gest.g0.x+sh[0],y:gest.g0.y+sh[1]};renderDetail();}
     }
     gest.lx=e.clientX;gest.ly=e.clientY;
   });

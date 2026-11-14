@@ -1173,7 +1173,8 @@ async function entranceChecks(browser, url) {
     UI.faceHand = false; UI.face = 2; UI.ghost = { x: 26, y: 40 }; plAutoFace(); const fE = UI.face;
     UI.faceHand = false; UI.face = 3; UI.ghost = { x: 10, y: 10 }; plAutoFace(); const fN = UI.face;
     UI.faceHand = true; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fH = UI.face;
-    o.face = fW === 1 && fE === 0 && fN === 3 && fH === 2; endPlace();
+    UI.faceHand = false; UI.face = 2; UI.ghost = { x: 33, y: 40 }; plAutoFace(); const fG = UI.face;   // 한 칸 떨어져 있어도 길 쪽
+    o.face = fW === 1 && fE === 0 && fN === 3 && fH === 2 && fG === 1; endPlace();
     // 레벨 100·투자 ×10·건물 위 레벨 아이콘, 일괄 심방·선물 옆 비용
     const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money, got = investMany(rm, 10);
     o.lv100 = BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
