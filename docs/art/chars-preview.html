@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>캐릭터 미리보기 시트</title>
+<style>body{margin:0;background:#f3efe6;font-family:"IBM Plex Sans KR",sans-serif}canvas{display:block}</style>
+<canvas id="cv" width="1280" height="960"></canvas>
+<script src="../../js/render-chars.js"></script>
+<script>
+'use strict';
+var cv=document.getElementById('cv'),c=cv.getContext('2d');
+c.fillStyle='#f3efe6';c.fillRect(0,0,cv.width,cv.height);
+function T(t,x,y,sz,col,w){c.fillStyle=col||'#2b2433';c.font=(w||'600')+' '+(sz||14)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='left';c.textBaseline='alphabetic';c.fillText(t,x,y);}
+function panel(x,y,w,h,bg){c.fillStyle=bg||'#fffdf8';c.strokeStyle='#d9d2c2';c.lineWidth=1;c.beginPath();c.roundRect(x,y,w,h,10);c.fill();c.stroke();}
+function cap(t,x,y){c.fillStyle='#6d6672';c.font='500 11px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.fillText(t,x,y);}
+T('캐릭터 미리보기 시트 — 코드로 그린 2D 픽셀풍 (2.5등신)',24,36,20);
+T('한 칸 = 16×23 격자. 색·소품만 바꿔 다른 사람을 만든다. 좌우 뒤집기로 네 방향.',24,58,12,'#6d6672','500');
+var rows=[['pastor','담임목사','검은 가운 · 흰 칼라 · 보라 스톨 · 금빛 십자가 · 성경책'],['visitor','방문객','하늘색 가디건 · 청바지 · 어깨 가방 · 단발']];
+rows.forEach(function(r,ri){
+  var sp=CHR_SPECS[r[0]],Y=80+ri*420;
+  panel(16,Y,1248,404);
+  T(r[1],32,Y+28,17);T(r[2],32+(r[1].length*17)+14,Y+28,12,'#6d6672','500');
+  // 큰 그림: 앞·뒤
+  var bx=110,by=Y+270;
+  chrDraw(c,bx,by,8,sp,'f','stand',0,false);cap('앞모습 ×8',bx,by+22);
+  chrDraw(c,bx+170,by,8,sp,'b','stand',0,false);cap('뒷모습 ×8',bx+170,by+22);
+  // 걷기 프레임 앞·뒤
+  var wx=400,wy=Y+172,i;
+  T('걷기 4프레임 (앞)',wx-30,Y+62,12,'#6d6672');
+  for(i=0;i<4;i++){chrDraw(c,wx+i*78,wy,4,sp,'f','walk',i,false);cap(String(i+1),wx+i*78,wy+16);}
+  T('걷기 4프레임 (뒤)',wx-30,Y+222,12,'#6d6672');
+  for(i=0;i<4;i++){chrDraw(c,wx+i*78,wy+150,4,sp,'b','walk',i,false);cap(String(i+1),wx+i*78,wy+166);}
+  // 특수 동작
+  var px=760;
+  if(r[0]==='pastor'){
+    T('설교 2프레임',px-30,Y+62,12,'#6d6672');
+    for(i=0;i<2;i++){chrDraw(c,px+i*84,wy,4,sp,'f','preach',i,false);cap(String(i+1),px+i*84,wy+16);}
+  }else{
+    T('두리번 2프레임 · 앉기',px-30,Y+62,12,'#6d6672');
+    for(i=0;i<2;i++){chrDraw(c,px+i*78,wy,4,sp,'f','look',i,false);cap(String(i+1),px+i*78,wy+16);}
+    chrDraw(c,px+170,wy,4,sp,'f','sit',0,false);cap('앉기',px+170,wy+16);
+  }
+  T('네 방향 (뒤집기)',px-30,Y+222,12,'#6d6672');
+  [['f',false,'↘'],['f',true,'↙'],['b',false,'↖'],['b',true,'↗']].forEach(function(d,j){chrDraw(c,px+j*66,wy+150,3,sp,d[0],'stand',0,d[1]);cap(d[2],px+j*66,wy+166);});
+  // 확대 크기별 (게임 속 크기)
+  var sx=1030;
+  T('확대 크기별',sx-22,Y+62,12,'#6d6672');
+  [[.6,'축소'],[1,'기본'],[1.5,''],[2,'확대'],[3,'최대']].forEach(function(z,j){
+    var xx=sx+[0,30,66,112,176][j];
+    chrDraw(c,xx,wy,z[0],sp,'f','stand',0,false);cap('×'+z[0],xx,wy+16);
+  });
+  // 게임 바탕 위: 예전 그림과 나란히
+  var gx=1010,gy=Y+236,gw=236,gh=150;
+  c.save();c.beginPath();c.roundRect(gx,gy,gw,gh,8);c.clip();
+  c.fillStyle=r[0]==='pastor'?'#b07a45':'#86b86f';c.fillRect(gx,gy,gw,gh);
+  c.fillStyle=r[0]==='pastor'?'#a26c3a':'#7fb169';for(i=0;i<8;i++)c.fillRect(gx,gy+i*24+12,gw,2);
+  // 예전 그림(막대 몸 + 둥근 머리)
+  var ox=gx+52,oy=gy+96,s=2;
+  c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(ox,oy,4.6*s*.9,4.6*s*.38,0,0,6.283);c.fill();
+  c.fillStyle='#3d4650';c.fillRect(ox-4.6*s/2,oy-3*s,4.6*s,3*s);c.fillStyle=r[0]==='pastor'?'#2f3550':'#5a8ac6';c.fillRect(ox-4.6*s/2,oy-10*s,4.6*s,7*s);
+  c.fillStyle='#f0cfa8';c.beginPath();c.arc(ox,oy-12.6*s,2.6*s,0,6.283);c.fill();
+  chrDraw(c,gx+150,oy,1.6,sp,'f',r[0]==='pastor'?'preach':'walk',1,false);
+  c.restore();
+  cap('지금 그림',ox,gy+gh-14);cap('새 그림 (같은 확대)',gx+150,gy+gh-14);
+  T('게임 바탕 위 비교',gx,gy-8,12,'#6d6672');
+});
+T('다음 단계: 확인 후 게임 속 방문객·관리자 그림을 이 캐릭터로 바꾸고, 같은 틀에서 색·소품만 바꿔 나머지(부교역자·장로·권사·집사·청년·아이·어르신·찬양팀·성가대)를 만든다.',24,940,12,'#6d6672','500');
+</script>
