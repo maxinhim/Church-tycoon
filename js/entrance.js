@@ -67,16 +67,8 @@ function entrBannerOff(){S.entr.ban=null;recalc();save();}
 /* 그림: 파란 아치와 같은 짜임에 모양별 색을 넣는다 */
 function drawArchStyled(){
   var y=PZ,p=ENT_PAL[S.entr.st]||ENT_PAL.stone,open=S.open;
-  box(rrect(ENT-.04,y-.06,ENT+.08,y+.06),0,1.25,p.p);
-  box(rrect(ENT+.92,y-.06,ENT+1.04,y+.06),0,1.25,p.p);
-  if(S.entr.st==='wood'){box(rrect(ENT+.1,y-.02,ENT+.9,y+.03),.04,open?.2:.66,p.d);}
-  if(open){
-    box(rrect(ENT+.06,y,ENT+.1,y+.42),0,.62,p.t);box(rrect(ENT+.9,y,ENT+.94,y+.42),0,.62,p.t);
-  }else{
-    box(rrect(ENT+.08,y-.02,ENT+.92,y+.02),.04,.66,p.d);
-    for(var i=1;i<8;i++)box(rrect(ENT+i*.11,y-.025,ENT+i*.11+.02,y+.025),.04,.7,p.t);
-  }
-  box(rrect(ENT-.06,y-.07,ENT+1.06,y+.07),1.1,1.3,p.t);
+  chGate(p,open);
+  if(S.entr.st==='wood'){box(rrect(ENT-.12,y-.12,ENT+1.12,y+.12),1.3,1.38,p.t);box(rrect(ENT+.1,y-.1,ENT+.9,y+.1),1.38,1.5,shade(p.t,.8));}
   if(S.entr.st==='glass'){box(rrect(ENT+.1,y-.01,ENT+.9,y+.01),1.3,1.36,'#9fd3e6');}
   if(S.entr.st==='garden'){for(var k=0;k<7;k++){var fx=ENT+.12+k*.12;dot(fx,y+.08,1.3+(k%2)*.05,Math.max(1.4,2.2*PJ.s),['#e57aa5','#f2c14e','#ffffff'][k%3]);}}
   var m=rotPt(ENT+.5,y);

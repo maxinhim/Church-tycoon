@@ -110,6 +110,12 @@ mk('library','작은 도서함','deco',1,1,260,0,'spr','#8a6844','#6b4f3a',{hgt:
 mk('drinkfount','식수대','comfort',1,1,180,0,'spr','#c9c2b6','#9aa3a8',{prop:1,hgt:1.1,dir:'face',ccap:2,fill:{comf:16},cap:2,dur:2,beauty:0.3,desc:'목을 축이는 돌 식수대. 편의 수용 +2'});
 mk('grill','바비큐 그릴','deco',1,1,300,1,'spr','#3d4650','#59626b',{hgt:1.4,dir:'face',fcap:3,fill:{fel:26,comf:6},cap:3,dur:4,beauty:0.3,desc:'함께 구워 먹으며 교제하는 그릴'});
 mk('lectern','야외 강대상','deco',1,1,350,0,'spr','#8a6844','#c9c2b6',{hgt:1.2,dir:'face',beauty:0.7,rep:0.05,desc:'야외 예배에 쓰는 작은 강대상. 평판이 조금 오릅니다'});
+/* 교회 소품: 코드로 그린다 (js/render-church.js) */
+mk('piano','그랜드 피아노','deco',1,1,900,3,'piano','#22252b','#f4efe6',{hgt:.9,dir:'face',beauty:1.2,desc:'찬양을 반주하는 검은 그랜드 피아노'});
+mk('speaker','음향 스피커','deco',1,1,260,2,'speaker','#22252b','#3b4048',{hgt:1.1,beauty:0.3,desc:'예배 소리를 또렷하게 전하는 스피커'});
+mk('mixer','음향 믹서','deco',1,1,380,2,'mixer','#2b2f36','#c9c2b6',{hgt:.6,dir:'face',beauty:0.4,desc:'예배 음향을 조절하는 믹서 데스크'});
+mk('drums','드럼 세트','deco',1,1,520,3,'drums','#a8433a','#f4efe6',{hgt:.9,dir:'face',beauty:0.6,desc:'찬양팀이 치는 드럼 세트'});
+mk('offering','헌금함','deco',1,1,140,0,'offering','#8a5a2b','#5e3a1c',{hgt:.6,beauty:0.3,desc:'감사 헌금을 넣는 나무 헌금함'});
 mk('vending','자판기','shop',1,1,420,2,'spr','#3d4650','#59626b',{hgt:1.5,dir:'face',ccap:2,fill:{comf:20},cap:2,dur:3,income:2,desc:'음료 자판기. 방문자가 음료를 사 마셔요'});
 mk('coffeecart','커피 카트','shop',1,1,650,3,'spr','#8a6844','#a07a52',{hgt:1.5,dir:'face',ccap:3,fcap:3,fill:{fel:20,comf:14},cap:3,dur:3,income:3,desc:'지붕 달린 작은 커피 카트. 방문자가 커피를 사 마셔요'});
 mk('flowercart','꽃 가판대','shop',1,1,600,3,'spr','#8a6844','#d9567a',{hgt:1.5,dir:'face',ccap:3,fill:{comf:24,fel:8},cap:3,dur:3,income:3,beauty:0.5,desc:'꽃을 파는 작은 수레 가판대'});

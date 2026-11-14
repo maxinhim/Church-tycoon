@@ -24,8 +24,8 @@ var UNLOCK={
 /* 교회 Level이 오르면 열리는 꾸미기: 목표는 기능 건물을, Level은 아름다움이 큰 꾸미기를 연다.
    값싼 기본 꾸미기(화단·나무·울타리 등)는 처음부터 열려 있다 */
 var LV_UNLOCK={
-  cherry:2,maple:2,lantern:2,stringlight:2,
-  ginkgo:3,lamp2:3,birdbath:3,
+  cherry:2,maple:2,lantern:2,stringlight:2,speaker:2,mixer:2,
+  ginkgo:3,lamp2:3,birdbath:3,piano:3,drums:3,
   lilypond:4,rosearch:4,bridge_w:4,
   stonelamp:5,bridge_a:5,
   fountain:6,bell:7,pond:8,statue:10
