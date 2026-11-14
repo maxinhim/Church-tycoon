@@ -81,8 +81,10 @@ function draw(){
     var rp=rrect(p.x,p.y,p.x+1,p.y+1);rp.pid=p.id;rp.zb=p.l>pg?p.l*LV-.14:pg*LV;rp.zt=((p.l===pg&&!p.s)?pg*LV:pieceTop(p)*LV);
     rp.f=pg<0||p.l<0?function(){pitClip(rp,function(){drawPiece(p);});}:function(){drawPiece(p);};E.push(rp);
   });
+  // 벤치에 앉은 방문자: 건물 안에 있는 동안 벤치 위에 앉은 모습으로 그린다 (sit.js)
+  var sitN={};
   V.forEach(function(v){
-    if(v.state==='inside')return;
+    if(v.state==='inside'){var sb=v.inside?bById(v.inside):null;if(sb&&isSitDef(sb)){var si=sitN[sb.id]||0;sitN[sb.id]=si+1;E.push(sitEntry(sb,si));}return;}
     var p=rotPt(v.x,v.y),z=v.z||0;
     var ve={x0:p[0]-.05,y0:p[1]-.05,x1:p[0]+.05,y1:p[1]+.05,zb:z,zt:z+.7,on:v.node>=PN?v.node-PN:0,f:function(){drawVisitor(v);}};
     if(z<-.01)ve.f=function(){var u=unrot(p[0],p[1]),cx=Math.floor(u[0]),cy=Math.floor(u[1]);pitClip(rrect(cx,cy,cx+1,cy+1),function(){drawVisitor(v);});};

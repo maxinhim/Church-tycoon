@@ -8,8 +8,10 @@ function floorSlot(x,y,pid){
   if(pid){var p=pieceById(pid);if(!p||!isDeckPiece(p))return null;
     return {get:function(){return p.f||null;},set:function(v){if(v)p.f=v;else delete p.f;},busy:deckCovered(p)};}
   var k=x+','+y;
-  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])};
+  return {get:function(){return S.floor[k]||null;},set:function(v){if(v)S.floor[k]=v;else delete S.floor[k];},busy:!!occ[y][x]&&!(DECK.up&&DECK.up[y][x])&&!oneCellAt(x,y)};
 }
+// 한 칸짜리 꾸미기·소품(벤치·쓰레기통 등)이 있는 칸: 그 밑에도 바닥을 깔 수 있다 (소품은 칸을 막지만 바닥은 그대로 둔다)
+function oneCellAt(x,y){var b=occ&&occ[y]&&occ[y][x]?bById(occ[y][x]):null;return !!b&&!!defOf(b).cell;}
 // 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
 function floorWhy(x,y,id,pid){
   if(x<0||y<0||x>=COLS||y>=ROWS-RD)return '부지 밖이에요';

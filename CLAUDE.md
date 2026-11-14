@@ -41,3 +41,5 @@
 - 교회 입구(`js/entrance.js`, `S.entr`): 레벨 1~ENT_MAX(올리면 방문자 `ENT_VIS`씩), 모양 5종(`ENT_STYLES`, 사서 끼움, 그림은 `drawArchStyled`), 현수막 5종(`ENT_BANNERS`, 사서 걸면 아치 위 글씨와 `ENT_BAN_VIS`). 입구 카드의 '꾸미기'(#gpDeco)나 입구 화면(`#scr`의 `gate`, `entrHtml`)에서 고친다. 수치는 `balance.js` ENT_*
 - 대예배당의 성능·정원은 `MAIN_K`배(bldlv.js `mainK`). 시작 때 기능별 1티어(방·소그룹실·매장·돌봄(아이·유아)·편의·소모임·주차)는 처음부터 열려 있다(UNLOCK에 없음)
 - 길 옆에 건물·앞뒤가 있는 소품(벤치 등 dir face)을 놓으면 정면(문·앉는 쪽)이 저절로 길 쪽을 본다(`plAutoFace`, place.js): 입구 아치에서 닿는 길 > 걸을 수만 있는 바닥, 같으면 그 방향에 건물이 많은 쪽·입구에 가까운 쪽. 화살표로 직접 돌리면(`UI.faceHand`) 멈추고, 길이 없으면 그대로. 성도 화면 일괄 심방·선물 아이콘 옆에는 비용(`bcost`)
+- 한 칸짜리 꾸미기·소품(`cell:true`, 벤치 등)이 있는 칸에도 바닥을 깔 수 있다(`oneCellAt`, floors.js). 큰 건물 밑은 여전히 막힌다. 한 칸 소품은 길 칸에 놓을 수 있지만, 놓아서 문 앞까지 길이 끊기는 건물이 생기면 못 놓는다(`propCutWhy`, place.js — 길 막힘 이유를 알린다)
+- 벤치(`SIT_DEFS`, sit.js)에 앉은 방문자는 벤치 위에 앉은 모습으로 그린다(`sitEntry`·`drawSitter`, render-scene.js에서 정렬)

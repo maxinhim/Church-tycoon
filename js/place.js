@@ -50,9 +50,26 @@ function plFace(){
   return gateFace(d,UI.ghost.x,UI.ghost.y);
 }
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
+// 한 칸 소품을 길 칸에 놓으면 그 칸이 막힌다. 막아서 문 앞까지 길이 끊기는 건물이 생기면 그 자리에는 놓지 못한다
+function propCutWhy(d,x,y){
+  if(!d||!d.cell||movingId())return '';
+  if(x<0||y<0||x>=COLS||y>=ROWS)return '';
+  if(!groundOk(x,y))return '';            // 원래 걸을 수 없는 칸이면 길을 끊지 않는다
+  var was=occ[y][x],lost=[],saved=NAV.reach,ok=false;
+  occ[y][x]=-1;
+  try{
+    NAV.all=true;var reach=navReach(gateNode());NAV.all=false;
+    S.buildings.forEach(function(b){
+      if(!needsDoor(b)||!usable(b))return;   // 지금 이미 이용할 수 없는 건물은 따지지 않는다
+      var ns=entNodes(b);if(!ns.some(function(n){return !!reach[n];}))lost.push(defOf(b).name);
+    });
+  }finally{occ[y][x]=was;NAV.all=false;NAV.reach=saved;}
+  return lost.length?'길이 막혀요 · '+lost[0]+(lost.length>1?' 외 '+(lost.length-1)+'곳':'')+'에 닿는 길이 끊겨요':'';
+}
 function placeWhy(d,x,y,face){
   var zw=zoneWhy(d,x,y,face)||levelWhy(d,x,y,face);if(zw)return zw;
   if(!canPlace(d,x,y,face))return '다른 건물이나 길과 겹쳐요. 끌어서 옮겨 보세요';
+  var cw=propCutWhy(d,x,y);if(cw)return cw;
   if(movingId())return '';
   if(isLocked(d.id))return lockLabel(d.id)+' 지을 수 있어요';
   var tw=tierWhy(d.id);if(tw)return tw;
