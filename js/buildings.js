@@ -79,7 +79,7 @@ mk('pampas','억새','garden',1,1,80,0,'flower','#7a8a4a','#e8dcc0',{petals:['#e
 mk('urn','돌 화분','garden',1,1,150,0,'planter','#b8b2a6','#5a9a4f',{beauty:1,desc:'담쟁이가 늘어진 돌 항아리 화분'});
 mk('basket','걸이 화분','garden',1,1,120,0,'planter','#3d4650','#e57a95',{beauty:0.8,desc:'쇠기둥에 매단 꽃바구니'});
 mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe0',{beauty:1.6,desc:'수련이 떠 있는 둥근 돌 물그릇'});
-mk('bench','벤치','comfort',1,1,160,0,'bench','#8a6a46','#8a6a46',{prop:1,dir:'face',ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
+mk('bench','벤치','comfort',1,1,160,0,'bench','#8a6a46','#8a6a46',{prop:1,dir:'face',nolimit:1,ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
 mk('wfount','물 분수','garden',1,1,250,2,'wfount','#c9c2b6','#7fb7d9',{beauty:1.2,water:true,cell:true,desc:'호수·강 위에 띄우는 분수. 물이 찬 칸에만 놓아요'});

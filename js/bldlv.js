@@ -69,7 +69,7 @@ function investBld(b){
 function investMany(b,n){var l0=bLv(b),k=0;while(k<n&&!investWhy(b)){investBld(b);k++;}return bLv(b)-l0;}
 /* 티어 1 개수 제한 */
 function tierWhy(id){
-  var d=D[id];if(!d||d.tier!==1)return '';
+  var d=D[id];if(!d||d.tier!==1||d.nolimit)return '';   // nolimit: 개수 제한 없음 (벤치)
   var n=S.buildings.filter(function(b){return b.def===id;}).length,mx=isLocked(d.t2)?TIER1_MAX:TIER1_MAX_OPEN;
   return n>=mx?d.name+'은(는) '+mx+'개까지 지을 수 있어요'+(mx===TIER1_MAX?' · '+D[d.t2].name+'이(가) 열리면 더 지을 수 있어요':''):'';
 }
