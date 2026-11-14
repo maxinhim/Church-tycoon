@@ -19,7 +19,7 @@ function mk(id,name,cat,w,h,cost,up,kind,wall,roofc,o){
 }
 mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.95,roof:'gable',rh:.55,deco:'crossRidge',seats:24,fill:{word:48},cap:10,dur:5,desc:'작고 따뜻한 첫 예배 공간'});
 // 처음부터 지도 가운데에 서 있는 본당: 담임목사가 맡고, 철거·이동할 수 없다 (목록에 없다). 성능은 작은 예배실과 같고 레벨로 키운다
-mk('main','대예배당','worship',3,2,900,8,'bld','#efe8da','#3f5ea3',{hidden:true,H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:24,fill:{word:48},cap:10,dur:5,desc:'교회의 중심. 담임목사가 맡는 본당이라 옮기거나 철거할 수 없어요'});
+mk('main','대예배당','worship',5.5,3.5,900,8,'bld','#efe8da','#3f5ea3',{hidden:true,H:1.15,roof:'gable',rh:.7,stained:1,seats:24,fill:{word:48},cap:10,dur:5,desc:'교회의 중심. 담임목사가 맡는 본당이라 옮기거나 철거할 수 없어요'});
 mk('chapel','예배당','worship',3,2,2800,24,'bld','#efe8da','#3f5ea3',{H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:70,fill:{word:60,fel:8},cap:28,dur:6,desc:'종탑이 있는 주일예배 공간'});
 mk('grand','대성전','worship',4,3,7600,60,'bld','#f2ece0','#34508f',{H:1.5,roof:'gable',rh:.95,deco:'tower',towerH:3.0,stained:1,seats:190,fill:{word:70,fel:10},cap:70,dur:7,desc:'수백 명이 모이는 큰 예배당'});
 mk('pray','기도실','worship',1,1,420,3,'bld','#ece5d6','#6a7fb0',{H:.8,roof:'hip',rh:.55,deco:'crossApex',seats:4,fill:{word:28,comf:12},cap:2,dur:4,desc:'조용히 머무는 작은 기도 공간'});

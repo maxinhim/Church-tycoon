@@ -11,7 +11,7 @@ var NAV={reach:{},all:false},WALK=null;
 function gid(x,y){return y*COLS+x;}
 // 그 칸에 선 건물의 바닥 높이(층). 건물이 없으면 땅 높이
 function cellLevel(x,y){var id=occ&&occ[y]&&occ[y][x],b=id&&bById(id);return b?bLevel(b):th(x,y);}
-function gateNode(){return gid(ENT,ROWS-1);}
+function gateNode(){return gid(ENT+(EW>>1),ROWS-1);}
 var PN=100000;
 function isPieceNode(n){return n>=PN;}
 function nodePiece(n){return pieceById(n-PN);}

@@ -68,18 +68,19 @@ function entrBannerOff(){S.entr.ban=null;recalc();save();}
 function drawArchStyled(){
   var y=PZ,p=ENT_PAL[S.entr.st]||ENT_PAL.stone,open=S.open;
   chGate(p,open);
-  if(S.entr.st==='wood'){box(rrect(ENT-.12,y-.12,ENT+1.12,y+.12),1.3,1.38,p.t);box(rrect(ENT+.1,y-.1,ENT+.9,y+.1),1.38,1.5,shade(p.t,.8));}
-  if(S.entr.st==='glass'){box(rrect(ENT+.1,y-.01,ENT+.9,y+.01),1.3,1.36,'#9fd3e6');}
-  if(S.entr.st==='garden'){for(var k=0;k<7;k++){var fx=ENT+.12+k*.12;dot(fx,y+.08,1.3+(k%2)*.05,Math.max(1.4,2.2*PJ.s),['#e57aa5','#f2c14e','#ffffff'][k%3]);}}
-  var m=rotPt(ENT+.5,y);
+  var w=EW/U;
+  if(S.entr.st==='wood'){box(rrect(ENT-.12,y-.12,ENT+w+.12,y+.12),1.3,1.38,p.t);box(rrect(ENT+.1,y-.1,ENT+w-.1,y+.1),1.38,1.5,shade(p.t,.8));}
+  if(S.entr.st==='glass'){box(rrect(ENT+.1,y-.01,ENT+w-.1,y+.01),1.3,1.36,'#9fd3e6');}
+  if(S.entr.st==='garden'){for(var k=0;k<11;k++){var fx=ENT+.12+k*(w-.24)/10;dot(fx,y+.08,1.3+(k%2)*.05,Math.max(1.4,2.2*PJ.s),['#e57aa5','#f2c14e','#ffffff'][k%3]);}}
+  var m=rotPt(ENT+w/2,y);
   if(S.entr.st!=='glass')cross(m[0],m[1],1.3,.7);
 }
 // 현수막: 윗인방 위에 걸린 천, 글씨는 화면 글씨로
 function drawEntrBanner(){
   var b=entrBanner();if(!b)return;
   var y=PZ,c=PJ.c,s=PJ.s;
-  box(rrect(ENT+.12,y-.03,ENT+.88,y+.03),1.32,1.9,b.c);
-  if(s>.42){var q=P(rotPt(ENT+.5,y)[0],rotPt(ENT+.5,y)[1],1.6);c.font='700 '+(Math.max(7,8*s))+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
+  box(rrect(ENT+.12,y-.03,ENT+EW/U-.12,y+.03),1.32,1.9,b.c);
+  if(s>.42){var q=P(rotPt(ENT+EW/U/2,y)[0],rotPt(ENT+EW/U/2,y)[1],1.6);c.font='700 '+(Math.max(7,8*s))+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
     c.fillStyle='#fff';c.fillText(b.n,q[0],q[1]);}
 }
 /* 화면 */

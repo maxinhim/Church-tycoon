@@ -101,8 +101,8 @@ function draw(){
         LE(r1,function(){drawRoadCar({r1:r1,r2:r2,c:col});});
       })(wx,ly,k?'#3d78c7':'#d65a4a');
     }
-    LE(rrect(ENT-.06,PZ-.07,ENT+1.06,PZ+.07),drawArch);
-    LE(rrect(ENT-.05,ROWS-1-.05,ENT+1.05,ROWS-1+.05),drawRoadGap);
+    LE(rrect(ENT-.12,PZ-.14,ENT+EW/U+.12,PZ+.14),drawArch);
+    LE(rrect(ENT-.1,ROWS-1-.1,ENT+EW/U+.1,ROWS-1+.1),drawRoadGap);
     fenceSegs().forEach(function(f){LE(fenceRect(f),function(){drawFenceSeg(f);});});
   });
   snowmen().forEach(function(t){var r=rrect(t.x+.25,t.y+.25,t.x+.75,t.y+.75);r.f=function(){drawSnowman(t);};E.push(r);});

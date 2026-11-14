@@ -4,7 +4,7 @@
    교회 입구는 ENT부터 EW칸 너비다.
    도로·주차 구역·부지는 울타리로 나뉘고, 주차 구역에서 부지로 들어오는 곳(ENT 열)에 교회 입구가 있다.
    지도 밖 BAND 칸까지 잔디를 그린다. 한 주는 현실 시간 WEEK초(48초, 하루 약 7초) */
-var G=2, COLS=64, ROWS=64, ENT=30, EW=2, PZ=54, RD=2, BAND=24, WEEK=48, SAVE_KEY='church-tycoon-iso-v5';
+var G=2, COLS=64, ROWS=64, ENT=30, EW=3, PZ=54, RD=2, BAND=24, WEEK=48, SAVE_KEY='church-tycoon-iso-v6';
 var HW=16, HH=8, ZH=30;
 function isEnt(x){return x>=ENT&&x<ENT+EW;}
 function entC(){return ENT+EW/2;}

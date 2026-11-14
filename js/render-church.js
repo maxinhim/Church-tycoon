@@ -94,7 +94,6 @@ function chPiano(P_,R,z,k){
   P_.push({r:R(.15,.72,.85,.83),z0:z+.34*k,z1:z+.355*k,c:'#f4efe6',t:'#ffffff'});       // 흰 건반
   for(var i=0;i<6;i++){var u=.2+i*.1+(i>2?.07:0);P_.push({r:R(u,.72,u+.04,.78),z0:z+.355*k,z1:z+.375*k,c:'#15171b'});}
   P_.push({r:R(.42,.66,.58,.7),z0:z+.44*k,z1:z+.54*k,c:'#3a3f48',t:'#59626b'});          // 악보대
-  P_.push({r:R(.28,.9,.72,1),z0:z,z1:z+.2*k,c:'#3a2616',t:'#5a3a1e'});                    // 의자
 }
 function chSpeaker(P_,R,z,k){
   P_.push({r:R(.22,.22,.78,.78),z0:z,z1:z+.9*k,c:'#22252b',t:'#2f343c'});
@@ -129,34 +128,117 @@ DECO_DRAW.piano=drawPiano;DECO_DRAW.speaker=drawSpeaker;DECO_DRAW.mixer=drawMixe
 /* ---------- 입구 대문: 벽돌 기둥(돌 갓·등)·나무 들보·나무 대문짝·붉은 깔개 ----------
    p: 모양 팔레트({p:기둥,t:들보,d:문짝}). 없으면 처음의 벽돌·나무 대문 */
 function chGate(p,open){
-  var y=PZ,brick=!p,pc=brick?CH_BRICK:p.p,tc=brick?CH_WOOD_D:p.t,dc=brick?CH_WOOD:p.d,c=PJ.c,s=PJ.s,i;
+  var w=EW/U,y=PZ,brick=!p,pc=brick?CH_BRICK:p.p,tc=brick?CH_WOOD_D:p.t,dc=brick?CH_WOOD:p.d,c=PJ.c,s=PJ.s,i;
   // 문 앞 돌판과 붉은 깔개: 입구가 어디인지 한눈에 보이게
-  box(rrect(ENT-.04,y-.34,ENT+1.04,y+.34),0,.012,'#cfc6b4','#ddd5c4');
-  box(rrect(ENT+.18,y-.3,ENT+.82,y+.3),.012,.028,'#9b2f2f','#b53a3a');
-  box(rrect(ENT+.18,y-.3,ENT+.2,y+.3),.028,.032,CH_GOLD);box(rrect(ENT+.8,y-.3,ENT+.82,y+.3),.028,.032,CH_GOLD);
+  box(rrect(ENT-.04,y-.34,ENT+w+.04,y+.34),0,.012,'#cfc6b4','#ddd5c4');
+  box(rrect(ENT+.26,y-.3,ENT+w-.26,y+.3),.012,.028,'#9b2f2f','#b53a3a');
+  box(rrect(ENT+.26,y-.3,ENT+.28,y+.3),.028,.032,CH_GOLD);box(rrect(ENT+w-.28,y-.3,ENT+w-.26,y+.3),.028,.032,CH_GOLD);
   // 기둥 두 개 + 돌 갓 + 등
-  [ENT-.08,ENT+.9].forEach(function(px,n){
+  [ENT-.08,ENT+w-.1].forEach(function(px,n){
     var r=rrect(px,y-.1,px+.18,y+.1);
     if(brick)chBrickBox(r,0,1.25,pc,31+n*5);else box(r,0,1.25,pc);
     box(rrect(px-.03,y-.13,px+.21,y+.13),1.25,1.33,CH_STONE,'#ece6d8');
     box(rrect(px+.04,y-.06,px+.14,y+.06),1.33,1.5,'#f5e6a8','#fff4c2');
     box(rrect(px+.01,y-.09,px+.17,y+.09),1.5,1.56,'#3a2616','#5a3a1e');
-    var m=rotPt(px+.09,y),q=P(m[0],m[1],1.42),g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],16*s);
-    g.addColorStop(0,'rgba(255,236,170,.38)');g.addColorStop(1,'rgba(255,236,170,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],16*s,0,6.283);c.fill();
+    var m=rotPt(px+.09,y);chGlow(m[0],m[1],1.42,16,.38);
   });
   // 대문짝: 나무 판 + 금빛 띠. 열면 양쪽 기둥 쪽으로 젖혀진다
+  var x0=ENT+.1,x1=ENT+w-.1,np=Math.round((x1-x0)/.1);
   if(open){
-    box(rrect(ENT+.1,y,ENT+.14,y+.42),0,.66,dc);box(rrect(ENT+.86,y,ENT+.9,y+.42),0,.66,dc);
+    box(rrect(x0,y,x0+.04,y+.42),0,.66,dc);box(rrect(x1-.04,y,x1,y+.42),0,.66,dc);
   }else{
-    box(rrect(ENT+.1,y-.025,ENT+.9,y+.025),.04,.68,dc);
-    for(i=1;i<8;i++)box(rrect(ENT+.1+i*.1,y-.03,ENT+.1+i*.1+.012,y+.03),.04,.68,shade(dc,.72));
-    box(rrect(ENT+.1,y-.032,ENT+.9,y+.032),.3,.33,CH_GOLD);box(rrect(ENT+.1,y-.032,ENT+.9,y+.032),.56,.59,CH_GOLD);
+    box(rrect(x0,y-.025,x1,y+.025),.04,.68,dc);
+    for(i=1;i<np;i++)box(rrect(x0+i*(x1-x0)/np,y-.03,x0+i*(x1-x0)/np+.012,y+.03),.04,.68,shade(dc,.72));
+    box(rrect(x0,y-.032,x1,y+.032),.3,.33,CH_GOLD);box(rrect(x0,y-.032,x1,y+.032),.56,.59,CH_GOLD);
   }
   // 들보: 나무 + 금빛 아랫단
-  box(rrect(ENT-.1,y-.1,ENT+1.1,y+.1),1.1,1.3,tc);
-  box(rrect(ENT-.1,y-.105,ENT+1.1,y+.105),1.1,1.13,CH_GOLD);
+  box(rrect(ENT-.1,y-.1,ENT+w+.1,y+.1),1.1,1.3,tc);
+  box(rrect(ENT-.1,y-.105,ENT+w+.1,y+.105),1.1,1.13,CH_GOLD);
 }
 
+/* ---------- 대예배당 꾸밈: 기둥·조명·대형 스크린·예배 공간 ---------- */
+// 불빛 번짐 (rx,ry는 화면 방향으로 돌린 좌표)
+function chGlow(rx,ry,z,rad,a){
+  var c=PJ.c,q=P(rx,ry,z),R=rad*PJ.s,g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],R);
+  g.addColorStop(0,'rgba(255,236,170,'+a+')');g.addColorStop(1,'rgba(255,236,170,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
+}
+// 장식 기둥: 돌 받침 · 크림색 몸통 · 금빛 띠 · 돌 머리 · 맨 위 등
+function chColumn(x,y,h,withLamp){
+  var s=.07,q=function(m){return {x0:x-s*m,y0:y-s*m,x1:x+s*m,y1:y+s*m};};
+  box(q(1.5),.05,.11,CH_STONE,'#ece6d8');
+  box(q(1),.11,h-.1,'#efe8da');
+  box(q(1.12),.3,.33,CH_GOLD);box(q(1.12),h-.2,h-.17,CH_GOLD);
+  box(q(1.4),h-.1,h,CH_STONE,'#ece6d8');box(q(1.45),h-.02,h+.02,CH_GOLD);
+  if(withLamp!==false){box(q(.6),h+.02,h+.13,'#f5e6a8','#fff4c2');chGlow(x,y,h+.08,22,.4);}
+}
+// 벽걸이 등: 금빛 받침 + 등
+function chSconce(x,y,z,rx){box({x0:x-.025,y0:y-.025,x1:x+.025,y1:y+.025},z-.05,z,CH_GOLD);box({x0:x-.03,y0:y-.03,x1:x+.03,y1:y+.03},z,z+.07,'#f5e6a8','#fff4c2');chGlow(x,y,z+.04,rx||15,.34);}
+// 뒷벽 대형 스크린: 파란 화면 + 교회 이름 (평면 위에 비스듬히)
+function chScreen(c,pl,at,a0,a1,z0,z1,txt,sub){
+  var g=PJ.c,m=.03,pt=function(u,z){return chPt(pl,at+.004,u,z);};
+  quad([pt(a0-m,z0-m),pt(a1+m,z0-m),pt(a1+m,z1+m),pt(a0-m,z1+m)],'#15171b');
+  var p0=chP3(pl,at+.006,a0,z1),p1=chP3(pl,at+.006,a1,z0),gr=g.createLinearGradient(p0[0],p0[1],p1[0],p1[1]);
+  gr.addColorStop(0,'#2b4fb0');gr.addColorStop(.55,'#5a43b5');gr.addColorStop(1,'#b24a9c');
+  quad([pt(a0,z0),pt(a1,z0),pt(a1,z1),pt(a0,z1)],gr);
+  quad([pt(a0,z1-.02),pt(a1,z1-.02),pt(a1,z1),pt(a0,z1)],'rgba(255,255,255,.16)');
+  var l=chP3(pl,at+.008,a0,(z0+z1)/2),r2=chP3(pl,at+.008,a1,(z0+z1)/2),cxs=(l[0]+r2[0])/2,cys=(l[1]+r2[1])/2,dx=r2[0]-l[0],dy=r2[1]-l[1],len=Math.hypot(dx,dy)||1,sk=dy/(len||1);
+  if(PJ.s>.4){
+    g.save();g.transform(dx/len,dy/len,0,1,cxs,cys);
+    g.textAlign='center';g.textBaseline='middle';g.fillStyle='#fff';
+    var fs=Math.max(7,Math.min(len/(txt.length*1.25),(chP3(pl,at,a0,z0)[1]-chP3(pl,at,a0,z1)[1])*.42));
+    g.font='700 '+fs+'px "Gowun Batang","IBM Plex Sans KR",serif';g.fillText(txt,0,-fs*.15);
+    g.font='500 '+(fs*.5)+'px "IBM Plex Sans KR",sans-serif';g.globalAlpha=.85;g.fillText(sub,0,fs*.62);g.restore();
+  }
+}
+// 강대상 앞면의 십자가 (pl 'L'평면)
+function chPulpitCross(at,cx,z0,z1,w){
+  var zc=z0+(z1-z0)*.58,pt=function(u,z){return chPt('L',at+.003,u,z);};
+  quad([pt(cx-.012,z0+.03),pt(cx+.012,z0+.03),pt(cx+.012,z1-.03),pt(cx-.012,z1-.03)],CH_GOLD);
+  quad([pt(cx-.05,zc-.012),pt(cx+.05,zc-.012),pt(cx+.05,zc+.012),pt(cx-.05,zc+.012)],CH_GOLD);
+}
+
+/* 예배 공간 하나: 높인 단(강대상·성경책·피아노·스피커·드럼), 통로 깔개, 장의자, 음향 믹서, 뒤쪽 헌금함.
+   k: 그림 배율. big이면 대예배당(셋으로 나눈 의자 · 더 넓고 깊은 단). 반환: 관리자 서는 자리 */
+function chWorship(c){
+  var b=c.b,r=c.r,T=c.T,fz=c.fz,cx=c.cx,W=c.W,Dp=c.Dp,parts=c.parts,figs=c.figs,nu=c.nu,big=c.big,yy,j,i;
+  var SZ=big?.07:.05,sz=fz+SZ,sy=r.y0+(big?.95:.6),hasMix=Dp>=1.6,k=big?.46:.34;
+  box({x0:r.x0+T,y0:r.y0+T,x1:r.x1-.08,y1:sy},fz,sz,CH_WOOD,'#b07a45');
+  box({x0:cx-.4,y0:sy,x1:cx+.4,y1:sy+.06},fz,fz+.03,CH_WOOD,'#b07a45');
+  // 통로와 장의자 묶음: 대예배당은 통로 둘·묶음 셋, 작은 예배당은 가운데 통로 하나
+  var aisles=big?[cx-.78,cx+.78]:[cx],blocks=big?[[r.x0+.34,cx-.93],[cx-.63,cx+.63],[cx+.93,r.x1-.34]]:[[r.x0+.14,cx-.14],[cx+.14,r.x1-.14]];
+  aisles.forEach(function(ax){
+    quad([[ax-.09,sy+.06,fz+.003],[ax+.09,sy+.06,fz+.003],[ax+.09,r.y1,fz+.003],[ax-.09,r.y1,fz+.003]],'#9b2f2f');
+    quad([[ax-.09,sy+.06,fz+.004],[ax-.075,sy+.06,fz+.004],[ax-.075,r.y1,fz+.004],[ax-.09,r.y1,fz+.004]],CH_GOLD);quad([[ax+.075,sy+.06,fz+.004],[ax+.09,sy+.06,fz+.004],[ax+.09,r.y1,fz+.004],[ax+.075,r.y1,fz+.004]],CH_GOLD);
+  });
+  // 강대상: 앞면(+y)에 금빛 십자가, 윗면에 펼친 성경책
+  var pw=big?.16:.1,py0=r.y0+(big?.5:.34),py1=r.y0+(big?.66:.46),ph=big?.24:.19;
+  parts.push({r:{x0:cx-pw,y0:py0,x1:cx+pw,y1:py1},z0:sz,z1:sz+ph,c:CH_WOOD,t:'#a8733c',cross:[py1,sz,sz+ph]});
+  parts.push({r:{x0:cx-pw-.025,y0:py0-.02,x1:cx+pw+.025,y1:py1+.02},z0:sz+ph,z1:sz+ph+.03,c:CH_WOOD_D,t:'#a8733c'});
+  var bz=sz+ph+.03,bw=pw*.78;
+  parts.push({r:{x0:cx-bw,y0:py0+.005,x1:cx+bw,y1:py1-.005},z0:bz,z1:bz+.014,c:'#3b2a1c',t:'#4a3624',o:.05});
+  parts.push({r:{x0:cx-bw+.01,y0:py0+.012,x1:cx-.004,y1:py1-.012},z0:bz+.014,z1:bz+.026,c:'#e8e0cc',t:'#f6f1e4',o:.06});
+  parts.push({r:{x0:cx+.004,y0:py0+.012,x1:cx+bw-.01,y1:py1-.012},z0:bz+.014,z1:bz+.026,c:'#e8e0cc',t:'#f6f1e4',o:.06});
+  parts.push({r:{x0:cx-.004,y0:py0+.01,x1:cx+.004,y1:py1-.01},z0:bz+.014,z1:bz+.03,c:'#7a2f2f',o:.07});
+  parts.push({r:{x0:cx+pw-.03,y0:py0+.01,x1:cx+pw-.02,y1:py0+.02},z0:bz,z1:bz+.1,c:'#15171b',o:.05});
+  var mx=cx+(big?.5:Math.min(.26,W*.2)),my=r.y0+(big?.55:.3);
+  if(W>=1.6){
+    chPiano(parts,chRM(r.x0+(big?.35:.1),r.y0+(big?.14:.1),r.x0+(big?.35:.1)+(big?.5:.36),r.y0+(big?.14:.1)+(big?.6:.4)),sz,k);
+    var so=big?.55:.28;
+    chSpeaker(parts,chRM(cx-so-.16,r.y0+.1,cx-so,r.y0+.26),sz,k);chSpeaker(parts,chRM(cx+so,r.y0+.1,cx+so+.16,r.y0+.26),sz,k);
+    if(!big){mx=cx+.55;my=r.y0+.3;}
+  }
+  if(big){
+    chSpeaker(parts,chRM(r.x0+.18,sy-.3,r.x0+.34,sy-.14),sz,k);chSpeaker(parts,chRM(r.x1-.34,sy-.3,r.x1-.18,sy-.14),sz,k);
+    chDrums(parts,chRM(r.x1-1.2,r.y0+.14,r.x1-.6,r.y0+.8),sz,k);
+  }else if(W>=2.4)chDrums(parts,chRM(r.x1-.56,r.y0+.08,r.x1-.16,r.y0+.52),sz,k);
+  if(hasMix)chMixer(parts,chRM(cx+(big?.34:.16),r.y1-.46,cx+(big?.7:.52),r.y1-.24),fz,.34);
+  if(W>=1.4)chOffering(parts,chRM(cx-(big?.7:.55),r.y1-.46,cx-(big?.34:.3),r.y1-.24),fz,.4);   // 맨 뒤쪽(출입구 쪽) 헌금함
+  for(yy=sy+.12,j=0;yy<r.y1-(hasMix?.55:.16);yy+=.27,j++){
+    blocks.forEach(function(bk,bi){chPew(parts,bk[0],bk[1],yy,fz);
+      if(figs.length<nu&&(j+bi)%2===0)figs.push([bk[0]+.12+(bk[1]-bk[0]-.24)*(.3+.4*hh(b.id+bi,j)),yy+.03,j*3+bi,.05]);});
+  }
+  return [mx,my];
+}
 /* ---------- 바닥 타일: 어긋쌓은 벽돌(색이 조금씩 다름) · 두 가지 색 나무 마루 ----------
    한 칸(x,y) 위에 그린다. 이웃 칸과 이음새가 같은 규칙이라 이어서 깔면 한 면처럼 보인다 */
 function chFloorTile(d,x,y){

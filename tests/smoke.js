@@ -1165,10 +1165,10 @@ async function entranceChecks(browser, url) {
     { const fx = 22, fy = 44; for (let x = fx; x < fx + 4; x++) { S.floor[x + ',' + fy] = 'f_block'; } recalc();
       const onBench = build('bench', fx + 1, fy, 2), tileOk = !floorWhy(fx + 1, fy, 'f_brick'); const bn2 = S.buildings.find(x => x.def === 'bench' && x.x === fx + 1 && x.y === fy);
       o.propTile = onBench && !!bn2 && tileOk && !floorWhy(fx + 1, fy, 'f_brick') === true && (paintFloor(fx + 1, fy, 'f_brick'), S.floor[(fx + 1) + ',' + fy] === 'f_brick');
-      // 교회 입구까지 이어진 두 칸 폭 길: 한쪽 칸에 소품은 놓을 수 있고(다른 칸으로 지나간다), 다른 쪽까지 막으면 길이 끊겨 못 놓는다
+      // 교회 입구까지 이어진 세 칸 폭 길: 한쪽 칸에 소품은 놓을 수 있고(다른 칸으로 지나간다), 나머지 칸까지 막으면 길이 끊겨 못 놓는다
       const y0 = 40; S.buildings.filter(x => defOf(x).cell).forEach(x => demolish(x.id));
       const oneSide = propCutWhy(D.bench, ENT, y0) === '';
-      occ[y0][ENT + 1] = -1; const cutBlocked = propCutWhy(D.bench, ENT, y0) !== ''; occ[y0][ENT + 1] = 0;
+      occ[y0][ENT + 1] = -1; occ[y0][ENT + 2] = -1; const cutBlocked = propCutWhy(D.bench, ENT, y0) !== ''; occ[y0][ENT + 1] = 0; occ[y0][ENT + 2] = 0;
       o.propCut = oneSide && cutBlocked && propCutWhy(D.bench, 500, 500) === '';
       if (bn2) { demolish(bn2.id); } }
     { const bn3 = build('bench', 2, 2, 2); o.sitDraw = !!bn3 || true; draw(); if (bn3) { const b3 = S.buildings.find(x => x.def === 'bench'); if (b3) demolish(b3.id); } }
