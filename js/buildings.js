@@ -47,7 +47,7 @@ mk('clinic','의료 봉사실','care',2,1,1300,14,'bld','#f4f6f7','#4f9a83',{H:.
 mk('study','공부방','care',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:10},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
 mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H:1.0,roof:'gable',rh:.55,deco:'barn',kcap:22,fill:{care:52},cap:14,dur:5,rep:1.0,desc:'이웃에게 따뜻한 한 끼를 나누는 곳. 평판이 크게 오릅니다'});
 mk('playground','놀이터','care',2,2,900,4,'playground','#e0c48a','#e8892c',{kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
-mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',ccap:12,fill:{comf:60},cap:2,dur:3,desc:'꼭 필요한 편의시설'});
+mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',nolimit:1,ccap:12,fill:{comf:60},cap:2,dur:3,desc:'꼭 필요한 편의시설'});
 mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
 mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
 mk('info','안내실','comfort',1,1,500,5,'bld','#e8eef2','#3f5ea3',{H:.75,roof:'flat',deco:'info',ccap:6,fill:{comf:30,fel:10},cap:3,dur:3,vis:0.03,desc:'처음 온 사람을 맞이하는 안내 창구. 방문자 +3%'});

@@ -355,7 +355,7 @@ function scrPeopleClick(a,v,el){
   if(a==='ppappoint'){
     var msg=ppAppoint(+v);
     if(msg){sfx('bell',.7,0);setTimeout(function(){sfx('join',.7,0);},200);scrToast(msg,3000);if(!ppById(+v))UI.scrSel=null;}
-    else{scrToast('부교역자 자리가 없어요 (성도 50명마다 한 자리)',2200);sfx('error',.4);}
+    else{scrToast('부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)',2200);sfx('error',.4);}
     renderScreen();hud(true);return true;
   }
   if(a==='ascheer'){

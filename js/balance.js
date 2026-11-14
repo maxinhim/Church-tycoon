@@ -104,6 +104,8 @@ var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
 /* 소그룹 리더(소그룹 리더·공동체 리더·간사·신학교 입학)도 성도 돌봄을 맡는다: 한 주에 단계의 목양 수용력(cap) × LEAD_CARE_K명.
    맡아서 하는 심방·선물은 값이 DELEG_COST_K배, 호감 경험치가 DELEG_XP_K배 (직접 하는 것보다 싸고 효과는 조금 작다) */
 var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
+/* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
+var ASSOC_PER=20;
 var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
 var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만

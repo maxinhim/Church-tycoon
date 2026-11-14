@@ -44,3 +44,4 @@
 - 한 칸짜리 꾸미기·소품(`cell:true`, 벤치 등)이 있는 칸에도 바닥을 깔 수 있다(`oneCellAt`, floors.js). 큰 건물 밑은 여전히 막힌다. 한 칸 소품은 길 칸에 놓을 수 있지만, 놓아서 문 앞까지 길이 끊기는 건물이 생기면 못 놓는다(`propCutWhy`, place.js — 길 막힘 이유를 알린다)
 - 벤치(`SIT_DEFS`, sit.js)에 앉은 방문자는 벤치 위에 앉은 모습으로 그린다(`sitEntry`·`drawSitter`, render-scene.js에서 정렬)
 - 개수 제한: 티어 1(방·소그룹실·매장·커피 카트·기독교 서점·화장실)은 상위가 열리기 전 `TIER1_MAX`(4)개, 열린 뒤 `TIER1_MAX_OPEN`(6)개. 벤치는 `nolimit`이라 제한이 없다. 상위(티어 2)·나머지 건물은 제한이 없고, 대예배당(`main`)은 하나만 있으며 새로 짓지 못한다
+- 부교역자 정원은 성도 `ASSOC_PER`(20)명마다 한 자리(`assocSlots` = 1 + 성도/ASSOC_PER, 최대 인원 없음). 화장실(`wc`)은 개수 제한이 없다(`nolimit`)

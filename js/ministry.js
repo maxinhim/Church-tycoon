@@ -73,7 +73,7 @@ function makeCand(){
   return {name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],title:sk>=3?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4};
 }
 function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
-function assocSlots(){return Math.min(5,1+Math.floor(S.members/50));}
+function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}
 function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}
 function hireAssoc(i){
   var c=S.cands[i];if(!c)return '후보가 없어요';

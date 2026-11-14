@@ -164,7 +164,7 @@ function ppTrainWhy(p,to){
   var st=PP_TREE[to];
   if(p.tr)return p.tr.ready?'임명을 기다리고 있어요':'교육 중이에요';
   if(p.lv<st.lv)return '호감 Lv '+st.lv+'부터 할 수 있어요';
-  if(to==='assoc'&&S.assoc.length>=assocSlots())return '부교역자 자리가 없어요 (성도 50명마다 한 자리)';
+  if(to==='assoc'&&S.assoc.length>=assocSlots())return '부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)';
   if(S.money<st.cost)return '자금이 부족해요';
   return '';
 }

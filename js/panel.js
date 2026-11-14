@@ -261,7 +261,7 @@ function srow(title,meta,desc,btns,extra){
 // 부교역자 청빙 후보 (직분자 화면). 사역팀은 teams.js
 function renderStaff(){
   var h='<div class="staff">';
-    h+='<p class="hint">부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 성도 50명마다 한 자리가 늘어요. 6주마다 새 후보가 찾아오고, 청빙 비용은 사례비 4주치예요. 성도를 길러 신학교에 보내면 별 5개 부교역자를 얻을 수도 있어요.</p>';
+    h+='<p class="hint">부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 성도 '+ASSOC_PER+'명마다 한 자리가 늘어요. 6주마다 새 후보가 찾아오고, 청빙 비용은 사례비 4주치예요. 성도를 길러 신학교에 보내면 별 5개 부교역자를 얻을 수도 있어요.</p>';
     S.cands.forEach(function(c,i){
       var full=S.assoc.length>=assocSlots();
       h+=srow(c.name+' '+c.title+' 후보',FIELDS[c.field].name+' '+stars(c.skill)+' · 사례비 주 '+c.pay,FIELDS[c.field].desc+' (별마다)',

@@ -1178,6 +1178,11 @@ async function entranceChecks(browser, url) {
     // 벤치도 길 쪽을 본다
     startPlace('bench'); UI.faceHand = false; UI.face = 2; UI.ghost = { x: 32, y: 42 }; plAutoFace(); const bW = UI.face; UI.face = 2; UI.ghost = { x: 29, y: 42 }; plAutoFace(); const bE = UI.face; endPlace();
     o.face = o.face && bW === 1 && bE === 0;
+    // 화장실도 개수 제한이 없고, 부교역자 정원은 성도 ASSOC_PER명마다 한 자리(최대 없음)
+    { let wcs = 0; for (let x = 4; x < 60 && wcs < 7; x += 2) for (let y = 40; y < 56 && wcs < 7; y += 2) { if (build('wc', x, y, 2)) wcs++; }
+      const m0 = S.members; S.members = 20; const s20 = assocSlots(); S.members = 200; const s200 = assocSlots(); S.members = m0;
+      o.wcUnl = wcs >= 7 && !tierWhy('wc') && s20 === 2 && s200 === 11 && ASSOC_PER === 20;
+      S.buildings.filter(b => b.def === 'wc').forEach(b => demolish(b.id)); }
     // 벤치는 처음부터 개수 제한이 없다 (라운지의 티어 1이지만 묶음 한도를 받지 않는다)
     { const n0 = S.buildings.length; let made = 0; for (let x = 4; x < 60 && made < 8; x += 2) for (let y = 60 - 14; y < 60 && made < 8; y += 2) { if (build('bench', x, y, 2)) made++; }
       o.benchNoLimit = made >= 8 && !tierWhy('bench') && S.buildings.filter(b => b.def === 'bench').length >= 8; S.buildings.filter(b => b.def === 'bench').forEach(b => demolish(b.id)); }
@@ -1204,6 +1209,7 @@ async function entranceChecks(browser, url) {
   check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
   check(r.enter0 && r.up && r.style && r.poor, '교회 입구: 기본 Lv 1, 레벨을 올리면 방문자 증가, 모양은 사서 끼움, 자금 부족이면 안 됨');
   check(r.benchNoLimit, '벤치: 개수 제한 없이 여러 개 지을 수 있음');
+  check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 20명마다 한 자리, 최대 없음');
   check(r.propTile && r.propCut, '소품: 벤치·쓰레기통 밑에도 바닥을 깔 수 있고, 길을 끊는 자리에는 소품을 놓지 못함');
   check(r.face, '건축: 길 옆에 놓으면 정면(문)이 길 쪽을 향하고, 직접 돌렸거나 길이 없으면 그대로');
   check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100(투자 ×10)·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
