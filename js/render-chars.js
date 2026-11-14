@@ -25,6 +25,7 @@ function chrOps(sp,view,pose,fr){
   }else{
     var y0=18+dy;
     R(5,y0,2,(liftL?3:4)-dy,sp.bottom);R(9,y0,2,(liftR?3:4)-dy,sp.bottomS);
+    if(sp.outfit==='dress'||sp.shorts){R(5,20,2,liftL?1:2,sp.skin);R(9,20,2,liftR?1:2,sp.skinS);}
     R(front?4:5,liftL?21:22,3,1,sp.shoe);R(front?9:8,liftR?21:22,3,1,sp.shoe);
   }
   // --- 몸
@@ -45,36 +46,66 @@ function chrOps(sp,view,pose,fr){
       R(2,12+by+aL,2,5,sp.robe);R(2,17+by+aL,2,1,sp.skin);R(12,12+by+aR,2,5,sp.robeS);R(12,17+by+aR,2,1,sp.skin);
     }
   }else{
-    R(3,11+by+aL,1,5,sp.top);R(3,16+by+aL,1,1,sp.skin);
-    R(12,11+by+aR,1,5,sp.topS);R(12,16+by+aR,1,1,sp.skin);
+    var of=sp.outfit||'cardigan',i;
+    R(3,11+by+aL,1,5,sp.sleeve||sp.top);R(3,16+by+aL,1,1,sp.skin);
+    R(12,11+by+aR,1,5,sp.sleeveS||sp.topS);R(12,16+by+aR,1,1,sp.skin);
     R(4,11+by,8,7,sp.top);R(11,11+by,1,7,sp.topS);R(4,17+by,8,1,sp.topS);
-    var i;
+    if(of==='dress'&&!sit){R(3,17+by,10,2,sp.top);R(12,17+by,1,2,sp.topS);R(3,19+by,10,1,sp.topS);}
+    if(sp.stripe)for(i=12;i<17;i+=2)R(4,i+by,8,1,sp.stripe);
+    if(of==='vest'){R(4,11+by,2,7,sp.vest);R(10,11+by,2,7,sp.vestS||sp.vest);}
     if(front){
-      R(7,11+by,2,6,sp.inner);
-      for(i=0;i<6;i++)R(4+i,11+by+i,1,1,sp.bagS);
-      R(10,15+by,3,3,sp.bag);R(10,15+by,3,1,sp.bagS);R(11,16+by,1,1,sp.gold||'#e8c86a');
+      if(of==='cardigan')R(7,11+by,2,6,sp.inner||'#ffffff');
+      if(of==='hoodie'){R(5,11+by,6,1,sp.topS);R(6,15+by,4,2,sp.topS);R(7,12+by,1,2,'#ffffff');R(9,12+by,1,2,'#ffffff');}
+      if(of==='suit'){R(7,11+by,2,3,'#ffffff');R(6,11+by,1,2,sp.topS);R(9,11+by,1,2,sp.topS);if(sp.tie)R(8,12+by,1,4,sp.tie);if(sp.collar)R(6,11+by,4,1,'#ffffff');}
+      if(of==='apron'){R(5,12+by,6,6,sp.apron);R(5,11+by,1,1,sp.apron);R(10,11+by,1,1,sp.apron);R(7,14+by,2,2,sp.apronS||'#ffffff');}
+      if(of==='vest'&&sp.badge)R(5,13+by,1,2,sp.badge);
+      if(of==='track'){R(8,11+by,1,7,'#ffffff');R(6,11+by,4,1,sp.topS);if(sp.badge)R(7,13+by,1,2,sp.badge);}
+      if(sp.sash)for(i=0;i<6;i++)R(10-i,11+by+i,2,1,sp.sash);
+      if(sp.bag){for(i=0;i<6;i++)R(4+i,11+by+i,1,1,sp.bagS);
+        R(10,15+by,3,3,sp.bag);R(10,15+by,3,1,sp.bagS);R(11,16+by,1,1,sp.gold||'#e8c86a');}
     }else{
-      for(i=0;i<6;i++)R(11-i,11+by+i,1,1,sp.bagS);
-      R(3,15+by,3,3,sp.bag);R(3,15+by,3,1,sp.bagS);
+      if(of==='apron'){R(5,11+by,1,3,sp.apron);R(10,11+by,1,3,sp.apron);R(4,14+by,8,1,sp.apron);R(7,14+by,2,2,sp.apron);}
+      if(of==='hoodie')R(5,11+by,6,2,sp.topS);
+      if(of==='track')R(5,13+by,6,1,'#ffffff');
+      if(sp.sash)for(i=0;i<6;i++)R(4+i,11+by+i,2,1,sp.sash);
+      if(sp.bag){for(i=0;i<6;i++)R(11-i,11+by+i,1,1,sp.bagS);
+        R(3,15+by,3,3,sp.bag);R(3,15+by,3,1,sp.bagS);}
     }
   }
   // --- 머리
-  var hy=by;
+  var hy=by,hs=sp.hairStyle||(pas?'part':'bob'),H=sp.hair,HS=sp.hairS,shortS=hs==='part'||hs==='short'||hs==='bun'||hs==='pony'||hs==='cap';
   if(front){
     R(7,10+hy,2,1,sp.skinS);
     R(3,4+hy,10,6,sp.skin);R(4,10+hy,8,1,sp.skinS);
-    R(4,0+hy,8,1,sp.hair);R(3,1+hy,10,3,sp.hair);R(3,4+hy,10,1,sp.hair);
-    if(pas){R(2,3+hy,1,2,sp.hair);R(13,3+hy,1,2,sp.hair);R(2,5+hy,1,2,sp.hairS);R(13,5+hy,1,2,sp.hairS);R(3,5+hy,1,1,sp.hair);R(9,4+hy,4,1,sp.skin);R(9,3+hy,1,1,sp.hairS);}
-    else{R(2,3+hy,1,7,sp.hair);R(13,3+hy,1,7,sp.hair);R(3,5+hy,2,2,sp.hair);R(12,5+hy,1,1,sp.hair);R(5,1+hy,3,1,sp.hairS);}
+    R(4,0+hy,8,1,H);R(3,1+hy,10,3,H);R(3,4+hy,10,1,H);
+    if(shortS){R(2,3+hy,1,2,H);R(13,3+hy,1,2,H);R(2,5+hy,1,2,hs==='part'?HS:H);R(13,5+hy,1,2,hs==='part'?HS:H);}
+    if(hs==='part'){R(3,5+hy,1,1,H);R(9,4+hy,4,1,sp.skin);R(9,3+hy,1,1,HS);}
+    else if(hs==='short'){R(5,4+hy,6,1,sp.skin);R(5,1+hy,3,1,HS);}
+    else if(hs==='bob'){R(2,3+hy,1,7,H);R(13,3+hy,1,7,H);R(3,5+hy,2,2,H);R(12,5+hy,1,1,H);R(5,1+hy,3,1,HS);}
+    else if(hs==='long'){R(2,3+hy,1,11,H);R(13,3+hy,1,11,H);R(3,5+hy,1,3,H);R(12,5+hy,1,3,H);R(3,10+hy,1,3,HS);R(12,10+hy,1,3,HS);R(8,4+hy,5,1,sp.skin);R(5,1+hy,3,1,HS);}
+    else if(hs==='bun'){R(6,-2+hy,4,2,H);R(7,-2+hy,2,1,HS);R(3,5+hy,1,1,H);R(12,5+hy,1,1,H);if(sp.pin)R(9,-1+hy,1,1,sp.pin);}
+    else if(hs==='pony'){R(13,2+hy,2,2,H);R(14,4+hy,1,5,H);R(3,5+hy,2,1,H);R(5,1+hy,3,1,HS);if(sp.pin)R(13,3+hy,1,1,sp.pin);}
+    else if(hs==='afro'){R(4,-2+hy,8,1,H);R(3,-1+hy,10,1,H);R(2,0+hy,12,4,H);R(1,1+hy,1,5,H);R(14,1+hy,1,5,H);R(2,4+hy,1,3,H);R(13,4+hy,1,3,H);R(5,0+hy,3,1,HS);}
+    else if(hs==='cap'){R(4,0+hy,8,1,sp.cap);R(3,1+hy,10,3,sp.cap);R(3,4+hy,11,1,sp.capS);R(13,4+hy,2,1,sp.capS);R(7,1+hy,2,2,'#ffffff');}
+    if(sp.band)R(3,2+hy,10,1,sp.band);
     R(6+ld,6+hy,1,2,CHR_LINE);R(10+ld,6+hy,1,2,CHR_LINE);
-    R(5+ld,8+hy,1,1,'#f0a79c');R(11+ld,8+hy,1,1,'#f0a79c');
-    R(8+ld,9+hy,1,1,'#b5655a');
-    if(pas)R(7+ld,9+hy,3,1,'#b5655a');   // 온화한 미소
+    R(5+ld,8+hy,1,1,sp.blush||'#f0a79c');R(11+ld,8+hy,1,1,sp.blush||'#f0a79c');
+    R(8+ld,9+hy,1,1,sp.lip||'#b5655a');
+    if(pas||sp.smile)R(7+ld,9+hy,3,1,sp.lip||'#b5655a');
+    if(sp.beard){R(5+ld,9+hy,2,1,H);R(10+ld,9+hy,2,1,H);R(6+ld,10+hy,5,1,H);}
+    if(sp.glasses){R(5+ld,6+hy,3,1,'#3a3a44');R(9+ld,6+hy,3,1,'#3a3a44');}
   }else{
     R(6,10+hy,4,1,sp.skinS);
-    R(4,0+hy,8,1,sp.hair);R(3,1+hy,10,pas?8:9,sp.hair);R(2,3+hy,1,pas?4:7,sp.hair);R(13,3+hy,1,pas?4:7,sp.hair);
-    R(4,pas?8+hy:9+hy,8,1,sp.hairS);R(5,2+hy,4,1,sp.hairS);
-    if(pas){R(3,9+hy,10,1,sp.skin);R(2,7+hy,1,2,sp.skin);R(13,7+hy,1,2,sp.skin);}
+    var hl=shortS?8:9;
+    R(4,0+hy,8,1,H);R(3,1+hy,10,hl,H);R(2,3+hy,1,shortS?4:7,H);R(13,3+hy,1,shortS?4:7,H);
+    R(4,hl+hy,8,1,HS);R(5,2+hy,4,1,HS);
+    if(shortS){R(3,9+hy,10,1,sp.skin);R(2,7+hy,1,2,sp.skin);R(13,7+hy,1,2,sp.skin);}
+    if(hs==='long'){R(2,10+hy,12,3,H);R(3,13+hy,10,1,HS);}
+    else if(hs==='bun'){R(6,-2+hy,4,2,H);if(sp.pin)R(6,-1+hy,1,1,sp.pin);}
+    else if(hs==='pony'){R(7,2+hy,2,2,sp.pin||HS);R(7,4+hy,2,8,H);R(7,11+hy,2,1,HS);}
+    else if(hs==='afro'){R(4,-2+hy,8,1,H);R(3,-1+hy,10,1,H);R(2,0+hy,12,4,H);R(1,1+hy,1,6,H);R(14,1+hy,1,6,H);}
+    else if(hs==='cap'){R(4,0+hy,8,1,sp.cap);R(3,1+hy,10,3,sp.cap);R(3,4+hy,10,1,sp.capS);}
+    if(sp.band)R(3,2+hy,10,1,sp.band);
   }
   return o;
 }
@@ -94,18 +125,38 @@ function chrDraw(c,cx,fy,k,sp,view,pose,fr,flip){
 }
 
 /* ---------- 게임 속 사람 그리기 ----------
-   방문객: 옷 색(tint·pant)과 머리색을 사람마다 바꾼 'visitor' 틀. 걷는 방향(화면 좌우·위아래)에 따라 앞·뒷모습과 좌우를 고른다 */
-var CHR_HAIRS=['#6b4226','#2b2b33','#a8742f','#8a3b2a','#c9a24a','#4a3a30'],CHR_VIS={};
-function chrVisSpec(tint,pant,ph){
-  var hi=((ph||0)*10|0)%CHR_HAIRS.length,k=tint+pant+hi;
-  if(!CHR_VIS[k]){var b=CHR_SPECS.visitor,h=CHR_HAIRS[hi];
-    CHR_VIS[k]={kind:'visitor',skin:b.skin,skinS:b.skinS,hair:h,hairS:shade(h,.75),top:tint,topS:shade(tint,.78),inner:'#ffffff',bottom:pant,bottomS:shade(pant,.8),shoe:b.shoe,bag:b.bag,bagS:b.bagS};}
-  return CHR_VIS[k];
+   방문객은 CHR_VISITORS의 여섯 사람 가운데 하나로 나온다(사람마다 고정: v.ph로 고른다 — 난수를 더 쓰지 않는다).
+   건물 담당자는 기능(분류)마다 한 사람으로 고정한다(CHR_STAFF). 대예배당은 담임목사 */
+function chrMk(o){var b={kind:'visitor',skin:'#f6d6b2',skinS:'#e0b48c',shoe:'#f4efe6',inner:'#ffffff'},k;for(k in o)b[k]=o[k];
+  if(!b.hairS)b.hairS=shade(b.hair,.72);if(!b.topS)b.topS=shade(b.top,.78);if(!b.bottomS)b.bottomS=shade(b.bottom,.8);
+  if(b.bag&&!b.bagS)b.bagS=shade(b.bag,.72);if(b.cap&&!b.capS)b.capS=shade(b.cap,.75);if(b.vest&&!b.vestS)b.vestS=shade(b.vest,.8);return b;}
+var CHR_VISITORS=null,CHR_STAFF=null,CHR_VIS={};
+function chrInit(){
+  if(CHR_VISITORS)return;
+  CHR_VISITORS=[
+    CHR_SPECS.visitor,                                                                                              // 단발 · 하늘색 가디건 · 어깨 가방
+    chrMk({skin:'#8a5a3c',skinS:'#6f452c',blush:'#a5644a',lip:'#5a2f24',hair:'#1d1a1c',hairStyle:'afro',outfit:'hoodie',top:'#f2b632',bottom:'#3b4252',shoe:'#e8e4da'}),   // 아프로 · 노란 후드
+    chrMk({skin:'#fbe3cf',skinS:'#e8c2a6',hair:'#e3b54a',hairStyle:'pony',pin:'#d6453a',outfit:'dress',top:'#d6504a',bottom:'#d6504a',shoe:'#7a3b2a',smile:1}),          // 금발 묶음머리 · 빨간 원피스
+    chrMk({skin:'#c48a5c',skinS:'#a56e44',blush:'#c9775a',lip:'#7a3f30',hair:'#22201f',hairStyle:'short',beard:1,outfit:'tee',top:'#2f9e8a',bottom:'#c9b38a',shoe:'#5b4a3a',bag:'#4a5560'}),  // 짧은 머리·수염 · 청록 셔츠
+    chrMk({skin:'#f2cfa6',skinS:'#d9aa80',hair:'#c9c9d0',hairStyle:'short',glasses:1,outfit:'vest',top:'#f1ece2',vest:'#8a5a3a',bottom:'#5b5148',shoe:'#3a2f28'}),       // 흰머리 어르신 · 갈색 조끼
+    chrMk({skin:'#e0aa7c',skinS:'#c48c60',hair:'#3a2a22',hairStyle:'cap',cap:'#d6453a',outfit:'tee',top:'#f4efe6',stripe:'#3f6fe0',bottom:'#3f6fe0',shorts:1,shoe:'#f2c14e'})  // 빨간 모자 · 줄무늬 티 · 반바지
+  ];
+  CHR_STAFF={
+    worship:chrMk({hair:'#2b2b33',hairStyle:'short',outfit:'suit',collar:1,top:'#27314f',bottom:'#1f2740',shoe:'#121216',smile:1}),                                    // 부교역자: 남색 정장·흰 칼라
+    fellow:chrMk({hair:'#5a3a26',hairStyle:'bun',pin:'#e8b93a',outfit:'vest',top:'#f6efe0',vest:'#3f8a5a',badge:'#f2c230',bottom:'#5b4a3a',shoe:'#3a2f28',smile:1}),    // 리더·집사: 초록 조끼·이름표
+    shop:chrMk({skin:'#e9bd94',skinS:'#cf9f76',hair:'#3a2a22',hairStyle:'cap',cap:'#c4503a',outfit:'apron',top:'#ffffff',apron:'#c4503a',apronS:'#f6e3b0',bottom:'#3d4650',shoe:'#22252b'}),  // 매장 직원: 빨간 모자·앞치마
+    care:chrMk({hair:'#6b4226',hairStyle:'pony',pin:'#f29cc0',outfit:'apron',top:'#fff6d6',apron:'#f29cc0',apronS:'#ffffff',bottom:'#7a8fb5',shoe:'#ffffff',smile:1}),  // 돌봄 교사: 분홍 앞치마
+    comfort:chrMk({skin:'#c99a6e',skinS:'#ab7d54',blush:'#c9775a',hair:'#22201f',hairStyle:'bob',outfit:'cardigan',top:'#3f6fe0',inner:'#ffffff',sash:'#f2c230',bottom:'#2f3550',shoe:'#22252b',smile:1}),  // 안내 봉사자: 파란 재킷·노란 띠
+    club:chrMk({skin:'#9a6a48',skinS:'#7d5236',blush:'#a5644a',lip:'#5a2f24',hair:'#1d1a1c',hairStyle:'short',band:'#f4efe6',outfit:'track',top:'#e8762c',badge:'#f2c230',bottom:'#2b2f36',shoe:'#ffffff'})   // 강사·코치: 주황 운동복·머리띠
+  };
 }
+function chrVisSpec(ph){chrInit();return CHR_VISITORS[(((ph||0)*977)|0)%CHR_VISITORS.length];}
+function chrStaffSpec(cat){chrInit();return CHR_STAFF[cat]||CHR_STAFF.fellow;}
 // 발밑 (x,y)에 사람 한 명: 한 칸 = 확대 s에 비례하는 픽셀. 반환: 머리 위 화면 좌표
 function chrPerson(c,x,y,s,sp,view,pose,fr,flip,ring){
-  var k=Math.max(.55,.78*s);
+  var k=Math.max(typeof ctx!=='undefined'&&c===ctx?.55:.2,.78*s);
   if(ring){c.strokeStyle=ring;c.lineWidth=Math.max(1.2,1.8*s);c.beginPath();c.ellipse(x,y,6*k,2.6*k,0,0,6.283);c.stroke();}
   chrDraw(c,x,y,k,sp,view,pose,fr,flip);
   return [x,y-CHR_H*k];
 }
+chrInit();

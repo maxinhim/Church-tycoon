@@ -14,6 +14,6 @@ function drawSitter(b,k){
   // k=0 왼쪽 자리, k=1 오른쪽 자리: 벤치 길이 방향으로 나란히
   var dx=(k?.22:-.22),ux=(b.face===0||b.face===1)?0:dx,uy=(b.face===0||b.face===1)?dx:0;
   var rp=rotPt(cx+ux,cy+uy),q=P(rp[0],rp[1],z),tint=k?'#5a8ac6':'#d98a3a';
-  chrPerson(c,q[0],q[1]+3*s,s,chrVisSpec(tint,'#3d4650',k?.3:.7),'f','sit',0,false);
+  chrPerson(c,q[0],q[1]+3*s,s,chrVisSpec(b.id*.137+k*.31),'f','sit',0,false);
 }
 function lgOf(s){return Math.max(1.4,2.2*s);}

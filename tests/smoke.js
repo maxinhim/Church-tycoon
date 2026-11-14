@@ -1240,7 +1240,7 @@ async function mgrChecks(browser, url) {
     const cap0 = delegCap(); mgrSet(cell.id, 'p' + p2.id); const cap1 = delegCap(); mgrClear(cell.id); o.excl = cap0 > 0 && cap1 === cap0 - leadCare(p2) && delegCap() === cap0 && mgrSet(cell.id, 'p' + p1.id) !== '' ;
     mgrSet(cell.id, 'p' + p2.id); p2.node = 'new'; recalc(); o.fit = !cell.mgr && !staffed(cell);
     // 내부 투시: 관리자가 있는 건물과 대예배당만, 그려도 오류가 없다
-    closeScreen(); shop.inUse = 1; o.cut = cutOn(shop) && cutOn(mn) && !cutOn(cell) && !cutOn(room) && !cutOn({ def: 'shop', id: shop.id, x: 0, y: 0 }); draw(); shop.inUse = 0;
+    closeScreen(); shop.inUse = 1; o.cut = cutOn(shop) && cutOn(mn) && cutOn(cell) && cutOn(room) && cutOn({ def: 'shop', id: shop.id, x: 0, y: 0 }) && !cutOn({ def: 'bench', id: 3, x: 0, y: 0 }) && DEFS.filter(d => d.kind === 'bld' && !d.retired).every(d => ROOMS[d.id] || d.cat === 'worship') && CHR_VISITORS.length === 6 && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(k => CHR_STAFF[k]); draw(); shop.inUse = 0;
     // 봇용 자동 배치, 예전 저장은 자원봉사자로 이어진다
     o.auto = autoStaff(0) >= 1 && staffed(cell);
     delete S.hrV; room.mgr = undefined; delete room.mgr; recalc(); o.old = room.mgr === 'v' && bOpen(room) && mgrOf(room).name === '자원봉사자';
@@ -1251,7 +1251,7 @@ async function mgrChecks(browser, url) {
   check(r.reroll && r.hire, '외부 청빙: 다시 뽑기는 큰돈이 들고, 청빙하면 바로 배치되어 가동·주급 지출');
   check(r.pool && r.swap, '관리자: 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르며, 바꿔 배치하면 회전이 빨라짐');
   check(r.excl && r.fit, '관리자: 건물을 맡은 리더는 성도 돌봄에서 빠지고(한 사람 한 건물), 자격을 잃으면 건물에서 빠짐');
-  check(r.cut && r.auto && r.old, '내부 투시: 관리자가 있는 건물만 단면으로 그리고 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
+  check(r.cut && r.auto && r.old, '내부 투시: 모든 건물을 단면으로 그리고(건물마다 내부 소품, 방문객 6명·기능별 담당자) 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
   if (!Object.values(r).every(Boolean)) console.log('MGR', JSON.stringify(r));
   check(errs.length === 0, '관리자: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
