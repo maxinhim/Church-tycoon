@@ -49,14 +49,14 @@ function curSub(cat){var L=CAT_SUBS[cat];if(!L)return null;for(var i=0;i<L.lengt
 function inSub(d,cat){var cs=curSub(cat);return !cs||(d.sub||CAT_SUBS[cat][0][0])===cs;}
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
 function openGroup(g){
-  UI.lastBuilt=null;
+  UI.lastBuilt=null;var wasEntr=!!UI.entr;UI.entr=null;
   // 행사는 화면 전체를 쓴다 (screens.js)
   if(g==='minis'){openScreen('events');return;}
   if(SCREENS[g]){openScreen(g);return;}
   if(UI.scr)closeScreen();
   // 지도에서 짓는 중에 건축 버튼을 누르면 짓기를 그만두고 목록으로
   if(g==='build'&&isPlacing()){endPlace();return;}
-  if(!UI.fold&&tabGroup(UI.tab)===g){closeDock();return;}
+  if(!UI.fold&&tabGroup(UI.tab)===g&&!wasEntr){closeDock();return;}
   // 건축이 아닌 패널로 옮기면 짓던 것(미리보기)은 취소한다
   if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];}
   UI.sel=null;UI.selPiece=null;
@@ -69,7 +69,7 @@ function openGroup(g){
 // 닫으면 짓던 것도 함께 취소한다 (미리보기만 지도에 남지 않게)
 function closeDock(){
   if(UI.choose){var ck=UI.choose.kind;UI.choose=null;if(ck==='gdesign'){endPlace();return;}UI.fold=true;renderPanel();return;}
-  UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;UI.lastBuilt=null;
+  UI.entr=null;UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;UI.lastBuilt=null;
   renderPanel();
 }
 function renderPanel(){
@@ -80,13 +80,15 @@ function renderPanel(){
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   var dt=$('#dtitle'),cx=t==='build'&&UI.choose?chooseCtx():null;
-  if(cx)dt.innerHTML='<button class="bback" data-act="cback" aria-label="돌아가기">‹</button>'+cx.title;
+  if(UI.entr&&t==='build')dt.textContent='교회 입구';
+  else if(cx)dt.innerHTML='<button class="bback" data-act="cback" aria-label="돌아가기">‹</button>'+cx.title;
   else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]));
   else dt.textContent=GROUP_TITLE[g];
   $('#dock').classList.toggle('bmode',t==='build');
   var cs=curSub(UI.cat);
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
-    (t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):'');
+    (UI.entr&&t==='build'?ENT_SUBS.map(function(s){return '<button role="tab" data-act="esub" data-v="'+s[0]+'" aria-selected="'+(UI.entr.sub===s[0])+'" aria-label="'+s[1]+'" class="csb'+(UI.entr.sub===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):
+    t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else renderMenu();
 }
@@ -155,6 +157,7 @@ function renderChooser(){
 function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&!x.hidden&&!x.retired;})[0];return d?iconCanvas(d):null;}
 function renderBuild(){
   panel.scrollTop=0;
+  if(UI.entr){renderEntr();return;}
   if(UI.choose){renderChooser();return;}
   if(UI.bstep==='cat'){
     panel.innerHTML='<div class="btiles" id="btiles"></div>';
@@ -244,6 +247,7 @@ function segBtns(act,val,items,off){
 function bad(t){return '<span style="color:var(--bad)">'+t+'</span>';}
 function renderDetail(){
   renderSelCard();
+  if(UI.entr&&UI.tab==='build'){renderEntrDetail();return;}
   if(isPlacing()){renderPbar();return;}
   var el=$('#detail');if(!el)return;
   if(UI.tab==='build'&&(UI.choose||UI.bstep!=='cat')&&UI.tool!=='demolish'&&$('#cards')){el.dataset.f='';focusCard();return;}

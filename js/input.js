@@ -99,7 +99,7 @@ function syncTabs(){
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
-var SPEND_ACTS={invest:1,cpick:1,fswap:1,wbridge:1,pbuild:1,wfount:1};
+var SPEND_ACTS={einvest:1,einvest10:1,epick:1,invest:1,cpick:1,fswap:1,wbridge:1,pbuild:1,wfount:1};
 function onPanel(e){
   var el=e.target.closest('[data-act]'),sa=el&&SPEND_ACTS[el.dataset.act],m0=S.money,pos=sa?spendPos():null;
   onPanel0(e);if(sa)spendFx(m0,pos);
@@ -108,6 +108,7 @@ function onPanel0(e){
   var el=e.target.closest('[data-act]');if(!el)return;
   var a=el.dataset.act,v=el.dataset.v;
   if(a==='close'){closeDock();return;}
+  if(entrAct(a,v))return;
   if(a==='subtab'){UI.tab=v;if(tabGroup(v)==='minis')UI.minisTab=v;else UI.statusTab=v;renderPanel();return;}
   if(a==='cat'){UI.cat=v;UI.bstep='items';UI.tool=null;UI.ghost=null;UI.sel=null;UI.selPiece=null;UI.pc=null;renderPanel();}
   if(a==='choose'){openChooser(v);return;}

@@ -216,18 +216,7 @@ function drawRoadCar(e){
 }
 /* 교회 입구: 주차 구역과 부지 사이 울타리의 ENT 칸. 문이 닫혀 있으면 철문이 가로막고, 열면 양쪽으로 젖혀진다 */
 function drawArch(){
-  var y=PZ;
-  if(entrStyled()){drawArchStyled();drawEntrBanner();archName();return;}
-  chGate(null,S.open);
-  var m=rotPt(ENT+EW/U/2,y);cross(m[0],m[1],1.3,.7);
-  drawEntrBanner();archName();
-}
-// 입구 아치 위 교회 이름
-function archName(){
-  if(entrBanner())return;   // 현수막을 걸었으면 이름 대신 현수막 글씨 (entrance.js)
-  var s=PJ.s,m=rotPt(ENT+EW/U/2,PZ);
-  if(s>.42){var q=P(m[0],m[1],1.1),c=PJ.c;c.font='600 '+(8*s)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
-    c.lineWidth=2.5;c.strokeStyle='rgba(20,30,60,.8)';c.strokeText(S.name,q[0],q[1]+10*s);c.fillStyle='#fff';c.fillText(S.name,q[0],q[1]+10*s);}
+  entrScene(S.entr.st,S.entr.sg,S.entr.lv,S.open,false);
 }
 // 지도 밖까지 잔디를 이어 깔아 떠 있는 섬처럼 보이지 않게 한다. 도로도 양옆으로 이어진다
 function drawGround(){
@@ -673,7 +662,7 @@ function drawCutaway(b){
       var sw=Math.min(2.6,W*.42),zs0=.5,zs1=HB-.22;
       chScreen(null,'L',r.y0+T,cx-sw/2,cx+sw/2,zs0,zs1,S.name,'☩ 예배에 오신 것을 환영합니다');
       chStrip('L',r.y0+T,r.x0+T,r.x1,.2,.23,CH_WOOD_D);chStrip('R',r.x0+T,r.y0+T,r.y1,.2,.23,CH_WOOD_D);
-      for(var sp=0;sp<3;sp++){var spx=cx-sw/2+sw*(sp+.5)/3;box({x0:spx-.03,y0:r.y0+T,x1:spx+.03,y1:r.y0+T+.05},HB-.16,HB-.08,'#15171b');chGlow(spx,r.y0+T+.1,HB-.6,26,.2);}
+      for(var sp=0;sp<3;sp++){var spx=cx-sw/2+sw*(sp+.5)/3;box({x0:spx-.03,y0:r.y0+T,x1:spx+.03,y1:r.y0+T+.05},HB-.16,HB-.08,'#15171b');chGlow(spx,r.y0+T+.1,HB-.2,18);}
       [[r.x0+.07,r.y0+.07,HB],[r.x1-.07,r.y0+.07,HB],[cx-sw/2-.28,r.y0+.07,HB],[cx+sw/2+.28,r.y0+.07,HB],[r.x0+.07,r.y0+Dp/3,H+.04],[r.x0+.07,r.y0+Dp*2/3,H+.04]].forEach(function(cl){chColumn(cl[0],cl[1],cl[2]);});
       chSconce(r.x0+T+.05,r.y0+Dp/6,.78);chSconce(r.x0+T+.05,r.y0+Dp/2,.78);chSconce(r.x0+T+.05,r.y0+Dp*5/6,.78);
       chSconce(r.x0+W*.2,r.y0+T+.05,.78);chSconce(r.x1-W*.2,r.y0+T+.05,.78);

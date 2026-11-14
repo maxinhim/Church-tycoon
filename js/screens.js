@@ -11,8 +11,7 @@ var SCREENS={
   people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'직분자',tabs:[['off','직분'],['B','교역'],['C','섬김'],['assoc','부교역자'],['cands','청빙']]},
-  mgr:{title:'관리자 배치',tabs:[['pool','인력']]},
-  gate:{title:'교회 입구',tabs:[['lv','레벨'],['sty','모양'],['ban','현수막']]}
+  mgr:{title:'관리자 배치',tabs:[['pool','인력']]}
 };
 var PP_PAGE=60;
 var RING_C=2*Math.PI*46;
@@ -76,7 +75,6 @@ function renderScreen(){
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
   else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='assoc'?assocHtml():(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml());}
   else if(UI.scr==='mgr'){body.className='sbody';body.innerHTML=mgrHtml();}
-  else if(UI.scr==='gate'){body.className='sbody';body.innerHTML=entrHtml();}
   else if(UI.scr==='events'){
     body.className='sbody';
     var ids=Object.keys(EVENTS).filter(function(id){return !EVENTS[id].hidden;});
@@ -147,7 +145,6 @@ function scrClick(e){
     renderScreen();hud(true);return;
   }
   if(scrMgrClick(a,v))return;
-  if(entrClick(a,v))return;
   if(a==='evquick'){
     if(evReady(v)){var gq=claimEvent(v);if(gq){sfx('coins',.7,0);scrToast(EVENTS[v].name+' 마무리 · '+(gq.join(' · ')||'수고했어요'),3000);}}
     else if(evRunning(v)){scrToast(EVENTS[v].name+' 진행 중 · '+evLeftText(v)+' 남음',1600);}

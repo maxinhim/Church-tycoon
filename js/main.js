@@ -67,7 +67,7 @@ function init(){
   $('#lvup').addEventListener('click',function(){$('#lvup').hidden=true;});
   $('#clvl').addEventListener('click',levelInfo);
   $('#gpBtn').addEventListener('click',toggleGate);
-  $('#gpDeco').addEventListener('click',function(){closeGatePop();openScreen('gate');});
+  $('#gpDeco').addEventListener('click',function(){closeGatePop();openEntrDock();});
   $('#clock').addEventListener('click',wxExplain);
   $('#clock').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();wxExplain();}});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gatePop').hidden)closeGatePop();});

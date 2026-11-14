@@ -207,3 +207,9 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 /* 건축 분류의 기능별 묶음 아이콘 칩 */
 .subtabs .csb{display:inline-flex;align-items:center;gap:3px;padding:0 9px 0 6px}
 .subtabs .csb i{font-style:normal;font-size:14px;line-height:1}
+
+/* 교회 입구 창(컨셉·안내문): 건축 카드보다 큰 그림 카드 */
+#panel.build .card.ec{width:92px;padding:3px 3px 3px}
+#panel.build .card.ec img{display:block;width:76px;height:60px;object-fit:contain}
+#panel.build .card.ec .nm{max-width:86px}
+#panel.build .card.ec .ef{min-height:14px}

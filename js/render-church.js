@@ -9,15 +9,16 @@ var CH_BRICK='#a9543c',CH_STONE='#d8cfc0',CH_WOOD='#8a5a2b',CH_WOOD_D='#5e3a1c',
 function chPt(pl,c,a,z){return pl==='L'?[a,c,z]:[c,a,z];}
 function chP3(pl,c,a,z){var q=chPt(pl,c,a,z);return P(q[0],q[1],q[2]);}
 // 보이는 벽면에 벽돌 무늬: 틈새 줄(어긋쌓기)과 몇 장의 밝은·어두운 벽돌
-function chBrick(pl,c,a0,a1,z0,z1,base,f,seed){
-  if(PJ.s<.42)return;
-  var g=PJ.c,rows=Math.max(1,Math.round((z1-z0)/.07)),rh=(z1-z0)/rows,bl=.16,i,a,n,p,q,c2=c+.002;
+function chBrick(pl,c,a0,a1,z0,z1,base,f,seed,rowH,bl,tp){
+  if(PJ.s<.3)return;
+  rowH=rowH||.07;bl=bl||.16;tp=tp==null?.4:tp;
+  var g=PJ.c,rows=Math.max(1,Math.round((z1-z0)/rowH)),rh=(z1-z0)/rows,i,a,n,p,q,c2=c+.002;
   for(i=0;i<rows;i++){
     var off=(i%2)*bl/2,zz=z0+i*rh;n=0;
     for(a=a0-off;a<a1;a+=bl,n++){
-      var h=hh(seed+i*13,n+i*3);if(h>.4)continue;
+      var h=hh(seed+i*13,n+i*3);if(h>tp)continue;
       var u0=Math.max(a0,a),u1=Math.min(a1,a+bl);if(u1-u0<.02)continue;
-      quad([chPt(pl,c2,u0,zz),chPt(pl,c2,u1,zz),chPt(pl,c2,u1,zz+rh),chPt(pl,c2,u0,zz+rh)],shade(base,f*(h<.2?.84:1.14)));
+      quad([chPt(pl,c2,u0,zz),chPt(pl,c2,u1,zz),chPt(pl,c2,u1,zz+rh),chPt(pl,c2,u0,zz+rh)],shade(base,f*(h<tp/2?.86:1.12)));
     }
   }
   g.strokeStyle='rgba(58,30,18,.4)';g.lineWidth=Math.max(.5,PJ.s*.7);g.beginPath();
@@ -125,42 +126,77 @@ function chProp(fn,hz){return function(b){var P_=[];fn(P_,function(u0,v0,u1,v1){
 var drawPiano=chProp(chPiano,1.05),drawSpeaker=chProp(chSpeaker,1.1),drawMixer=chProp(chMixer,1.1),drawDrums=chProp(chDrums,1.15),drawOffering=chProp(chOffering,1.1);
 DECO_DRAW.piano=drawPiano;DECO_DRAW.speaker=drawSpeaker;DECO_DRAW.mixer=drawMixer;DECO_DRAW.drums=drawDrums;DECO_DRAW.offering=drawOffering;
 
-/* ---------- 입구 대문: 벽돌 기둥(돌 갓·등)·나무 들보·나무 대문짝·붉은 깔개 ----------
-   p: 모양 팔레트({p:기둥,t:들보,d:문짝}). 없으면 처음의 벽돌·나무 대문 */
-function chGate(p,open){
-  var w=EW/U,y=PZ,brick=!p,pc=brick?CH_BRICK:p.p,tc=brick?CH_WOOD_D:p.t,dc=brick?CH_WOOD:p.d,c=PJ.c,s=PJ.s,i;
-  // 문 앞 돌판과 붉은 깔개: 입구가 어디인지 한눈에 보이게
+/* ---------- 입구 대문 ----------
+   spec(컨셉): {pm 재질 'brick'|'stone'|'marble'|'concrete'|'wood'|'steel'|'plain', pc 기둥색, cap 갓, beam 들보, trim 띠, leaf 문짝, bar 문살, slat 가로살, glass 유리문,
+   mat 깔개, roof 기둥 위 지붕색, flower 꽃} · lv 입구 레벨(오를수록 꾸밈이 늘어난다: 4 바닥 등, 7 금빛 갓, 10 금빛 첨두) */
+// 재질 그림을 얹은 상자
+function chSurf(r,z0,z1,spec,seed){
+  box(r,z0,z1,spec.pc);
+  var pm=spec.pm,L=function(f,rh,bl,tp,sd){chBrick('L',r.y1,r.x0,r.x1,z0,z1,spec.pc,.93,seed+sd,rh,bl,tp);chBrick('R',r.x1,r.y0,r.y1,z0,z1,spec.pc,.74,seed+sd+7,rh,bl,tp);};
+  if(pm==='brick')L(0,.07,.16,.4,0);
+  else if(pm==='stone')L(0,.17,.3,.55,3);
+  else if(pm==='concrete')L(0,.42,1.6,.12,5);
+  else if(pm==='wood')L(0,9,.045,.5,9);
+  else if(pm==='marble'){chVeins('L',r.y1,r.x0,r.x1,z0,z1,seed);chVeins('R',r.x1,r.y0,r.y1,z0,z1,seed+4);}
+}
+// 대리석 결: 연한 회색 곡선 몇 줄
+function chVeins(pl,c,a0,a1,z0,z1,seed){
+  if(PJ.s<.3)return;
+  var g=PJ.c,i,c2=c+.002;g.strokeStyle='rgba(120,120,135,.5)';g.lineWidth=Math.max(.5,.7*PJ.s);g.beginPath();
+  for(i=0;i<3;i++){
+    var u0=a0+(a1-a0)*(.1+hh(seed+i,3)*.3),u1=a0+(a1-a0)*(.55+hh(seed+i,5)*.4),zA=z0+(z1-z0)*(.05+.3*hh(seed,i+9)),zB=z0+(z1-z0)*(.6+.35*hh(seed+2,i)),um=(u0+u1)/2+(a1-a0)*.1;
+    var p0=chP3(pl,c2,u0,zA),p1=chP3(pl,c2,um,(zA+zB)/2+.08),p2=chP3(pl,c2,u1,zB);g.moveTo(p0[0],p0[1]);g.quadraticCurveTo(p1[0],p1[1],p2[0],p2[1]);
+  }
+  g.stroke();
+}
+function chGate(spec,open,lv){
+  lv=lv||1;
+  var w=EW/U,y=PZ,c=PJ.c,i,gold=lv>=7,ptop=lv>=10;
+  // 문 앞 돌판과 깔개: 입구가 어디인지 한눈에 보이게
   box(rrect(ENT-.04,y-.34,ENT+w+.04,y+.34),0,.012,'#cfc6b4','#ddd5c4');
-  box(rrect(ENT+.26,y-.3,ENT+w-.26,y+.3),.012,.028,'#9b2f2f','#b53a3a');
+  box(rrect(ENT+.26,y-.3,ENT+w-.26,y+.3),.012,.028,spec.mat||'#9b2f2f',shade(spec.mat||'#9b2f2f',1.15));
   box(rrect(ENT+.26,y-.3,ENT+.28,y+.3),.028,.032,CH_GOLD);box(rrect(ENT+w-.28,y-.3,ENT+w-.26,y+.3),.028,.032,CH_GOLD);
-  // 기둥 두 개 + 돌 갓 + 등
+  // 레벨 4부터 문 앞 양쪽 낮은 정원등
+  if(lv>=4)[ENT+.12,ENT+w-.12].forEach(function(lx){box(rrect(lx-.04,y+.32,lx+.04,y+.4),0,.3,'#3d4650');box(rrect(lx-.05,y+.31,lx+.05,y+.41),.3,.38,'#f0a81c','#ffd24a');var m=rotPt(lx,y+.36);chGlow(m[0],m[1],.34,12);});
+  // 기둥 두 개 + 갓 + 등
   [ENT-.08,ENT+w-.1].forEach(function(px,n){
     var r=rrect(px,y-.1,px+.18,y+.1);
-    if(brick)chBrickBox(r,0,1.25,pc,31+n*5);else box(r,0,1.25,pc);
-    box(rrect(px-.03,y-.13,px+.21,y+.13),1.25,1.33,CH_STONE,'#ece6d8');
-    box(rrect(px+.04,y-.06,px+.14,y+.06),1.33,1.5,'#f5e6a8','#fff4c2');
-    box(rrect(px+.01,y-.09,px+.17,y+.09),1.5,1.56,'#3a2616','#5a3a1e');
-    var m=rotPt(px+.09,y);chGlow(m[0],m[1],1.42,16,.38);
+    chSurf(r,0,1.25,spec,31+n*5);
+    var capc=gold?CH_GOLD:spec.cap;
+    box(rrect(px-.03,y-.13,px+.21,y+.13),1.25,1.33,capc,shade(capc,1.1));
+    if(gold)box(rrect(px-.035,y-.135,px+.215,y+.135),1.22,1.25,CH_GOLD);
+    box(rrect(px+.04,y-.06,px+.14,y+.06),1.33,1.5,'#f0a81c','#ffd24a');
+    var top=spec.roof?hip(rrect(px-.04,y-.12,px+.22,y+.12),1.5,.2,spec.roof):box(rrect(px+.01,y-.09,px+.17,y+.09),1.5,1.56,'#3a2616','#5a3a1e');
+    var m=rotPt(px+.09,y);chGlow(m[0],m[1],1.42,16);
+    if(ptop){var tz=spec.roof?1.72:1.56;box(rrect(px+.07,y-.02,px+.11,y+.02),tz,tz+.2,CH_GOLD);box(rrect(px+.05,y-.04,px+.13,y+.04),tz+.2,tz+.24,CH_GOLD);}
   });
-  // 대문짝: 나무 판 + 금빛 띠. 열면 양쪽 기둥 쪽으로 젖혀진다
-  var x0=ENT+.1,x1=ENT+w-.1,np=Math.round((x1-x0)/.1);
+  // 대문짝
+  var x0=ENT+.1,x1=ENT+w-.1,np=Math.round((x1-x0)/.1),lc=spec.leaf||CH_WOOD;
   if(open){
-    box(rrect(x0,y,x0+.04,y+.42),0,.66,dc);box(rrect(x1-.04,y,x1,y+.42),0,.66,dc);
+    box(rrect(x0,y,x0+.04,y+.42),0,.66,lc);box(rrect(x1-.04,y,x1,y+.42),0,.66,lc);
+  }else if(spec.glass){
+    box(rrect(x0,y-.015,x1,y+.015),.04,.68,'#bfe6f2','#dff4fa');
+    for(i=1;i<4;i++)box(rrect(x0+i*(x1-x0)/4-.008,y-.02,x0+i*(x1-x0)/4+.008,y+.02),.04,.68,spec.bar||'#3d4650');
+    box(rrect(x0,y-.02,x1,y+.02),.04,.07,spec.bar||'#3d4650');box(rrect(x0,y-.02,x1,y+.02),.64,.68,spec.bar||'#3d4650');
   }else{
-    box(rrect(x0,y-.025,x1,y+.025),.04,.68,dc);
-    for(i=1;i<np;i++)box(rrect(x0+i*(x1-x0)/np,y-.03,x0+i*(x1-x0)/np+.012,y+.03),.04,.68,shade(dc,.72));
-    box(rrect(x0,y-.032,x1,y+.032),.3,.33,CH_GOLD);box(rrect(x0,y-.032,x1,y+.032),.56,.59,CH_GOLD);
+    box(rrect(x0,y-.025,x1,y+.025),.04,.68,lc);
+    if(spec.slat){for(i=1;i<7;i++)box(rrect(x0,y-.03,x1,y+.03),.04+i*.09,.04+i*.09+.02,spec.bar||'#15171b');}
+    else for(i=1;i<np;i++)box(rrect(x0+i*(x1-x0)/np,y-.03,x0+i*(x1-x0)/np+.012,y+.03),.04,.68,spec.bar||shade(lc,.72));
+    if(spec.band!==false){box(rrect(x0,y-.032,x1,y+.032),.3,.33,spec.trim||CH_GOLD);box(rrect(x0,y-.032,x1,y+.032),.56,.59,spec.trim||CH_GOLD);}
   }
-  // 들보: 나무 + 금빛 아랫단
-  box(rrect(ENT-.1,y-.1,ENT+w+.1,y+.1),1.1,1.3,tc);
-  box(rrect(ENT-.1,y-.105,ENT+w+.1,y+.105),1.1,1.13,CH_GOLD);
+  // 들보 + 아랫단 띠
+  box(rrect(ENT-.1,y-.1,ENT+w+.1,y+.1),1.1,1.3,spec.beam);
+  box(rrect(ENT-.1,y-.105,ENT+w+.1,y+.105),1.1,1.13,spec.trim||CH_GOLD);
+  if(spec.flower){for(i=0;i<11;i++){var fx=ENT+.12+i*(w-.24)/10,fm=rotPt(fx,y+.08);dot(fm[0],fm[1],1.3+(i%2)*.05,Math.max(1.4,2.2*PJ.s),['#e57aa5','#f2c14e','#ffffff'][i%3]);}}
 }
 
 /* ---------- 대예배당 꾸밈: 기둥·조명·대형 스크린·예배 공간 ---------- */
-// 불빛 번짐 (rx,ry는 화면 방향으로 돌린 좌표)
-function chGlow(rx,ry,z,rad,a){
-  var c=PJ.c,q=P(rx,ry,z),R=rad*PJ.s,g=c.createRadialGradient(q[0],q[1],0,q[0],q[1],R);
-  g.addColorStop(0,'rgba(255,236,170,'+a+')');g.addColorStop(1,'rgba(255,236,170,0)');c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
+// 조명: 번지는 빛 없이, 전구 자체가 진한 금빛으로 밝게 빛난다 (rx,ry는 화면 방향으로 돌린 좌표, rad는 전구 크기 기준)
+function chGlow(rx,ry,z,rad){
+  var c=PJ.c,q=P(rx,ry,z),R=Math.max(1.8,rad*.11)*PJ.s,g=c.createRadialGradient(q[0]-R*.3,q[1]-R*.3,0,q[0],q[1],R);
+  g.addColorStop(0,'#fff6c0');g.addColorStop(.4,'#ffd23a');g.addColorStop(1,'#e59a0c');
+  c.fillStyle=g;c.beginPath();c.arc(q[0],q[1],R,0,6.283);c.fill();
+  c.strokeStyle='#a8680a';c.lineWidth=Math.max(.5,.7*PJ.s);c.stroke();
 }
 // 장식 기둥: 돌 받침 · 크림색 몸통 · 금빛 띠 · 돌 머리 · 맨 위 등
 function chColumn(x,y,h,withLamp){
@@ -169,10 +205,10 @@ function chColumn(x,y,h,withLamp){
   box(q(1),.11,h-.1,'#efe8da');
   box(q(1.12),.3,.33,CH_GOLD);box(q(1.12),h-.2,h-.17,CH_GOLD);
   box(q(1.4),h-.1,h,CH_STONE,'#ece6d8');box(q(1.45),h-.02,h+.02,CH_GOLD);
-  if(withLamp!==false){box(q(.6),h+.02,h+.13,'#f5e6a8','#fff4c2');chGlow(x,y,h+.08,22,.4);}
+  if(withLamp!==false){box(q(.6),h+.02,h+.13,'#f0a81c','#ffd24a');chGlow(x,y,h+.08,22);}
 }
 // 벽걸이 등: 금빛 받침 + 등
-function chSconce(x,y,z,rx){box({x0:x-.025,y0:y-.025,x1:x+.025,y1:y+.025},z-.05,z,CH_GOLD);box({x0:x-.03,y0:y-.03,x1:x+.03,y1:y+.03},z,z+.07,'#f5e6a8','#fff4c2');chGlow(x,y,z+.04,rx||15,.34);}
+function chSconce(x,y,z,rx){box({x0:x-.025,y0:y-.025,x1:x+.025,y1:y+.025},z-.05,z,CH_GOLD);box({x0:x-.03,y0:y-.03,x1:x+.03,y1:y+.03},z,z+.07,'#f0a81c','#ffd24a');chGlow(x,y,z+.04,rx||15);}
 // 뒷벽 대형 스크린: 파란 화면 + 교회 이름 (평면 위에 비스듬히)
 function chScreen(c,pl,at,a0,a1,z0,z1,txt,sub){
   var g=PJ.c,m=.03,pt=function(u,z){return chPt(pl,at+.004,u,z);};

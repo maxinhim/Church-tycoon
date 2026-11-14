@@ -210,9 +210,10 @@ var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
 
 /* 대예배당(`main`, 시작 건물): 같은 예배당보다 성능(효과·정원·좌석)이 MAIN_K배 */
 var MAIN_K=2.5;
-/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX. 레벨마다 방문자 ENT_VIS. 레벨업 값은 도달하는 레벨별(ENT_LV_COST[목표 레벨]).
-   모양(ENT_STYLE_COST)은 한 번 사면 계속 쓴다. 현수막(ENT_BANNER_COST, 목록 순서)은 사서 걸면 방문자 ENT_BAN_VIS */
-var ENT_MAX=5,ENT_VIS=0.06,ENT_BAN_VIS=0.02;
-var ENT_LV_COST=[0,0,200,500,1000,2000];
-var ENT_STYLE_COST={basic:0,stone:300,wood:500,glass:800,garden:1200};
-var ENT_BANNER_COST=[150,250,350,500,700];
+/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX. 레벨마다 방문자 ENT_VIS. 투자 한 번 = 한 레벨, 값은 도달하는 레벨별(ENT_LV_COST[목표 레벨]).
+   컨셉(ENT_STYLE_COST)은 한 번 사면 계속 쓴다. 안내문(ENT_SIGN_COST)도 한 번 사면 계속 쓰고, 걸면 안내문마다 방문자 ENT_SIGN_VIS */
+var ENT_MAX=10,ENT_VIS=0.04;
+var ENT_LV_COST=[0,0,200,500,1000,2000,3200,4800,7000,10000,14000];
+var ENT_STYLE_COST={brick:0,concrete:400,stone:300,wood:500,marble:1200,glass:800,garden:1200};
+var ENT_SIGN_COST={name:0,b0:150,b1:250,b2:350,b3:500,b4:700,led:900,led2:2500,neon:1500};
+var ENT_SIGN_VIS={name:0,b0:.02,b1:.02,b2:.02,b3:.02,b4:.02,led:.04,led2:.07,neon:.05};
