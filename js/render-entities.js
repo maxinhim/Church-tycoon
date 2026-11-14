@@ -194,19 +194,18 @@ function drawVisitor(v){
   var c=PJ.c,s=PJ.s,p=rotPt(v.x,v.y),q=P(p[0],p[1],v.z||0);
   var walking=v.state==='walk'||v.state==='leave';
   var bob=walking?Math.abs(Math.sin(S.clock*11+v.ph))*1.2*s:0;
-  var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);
-  c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(q[0],q[1],bw*.9,bw*.38,0,0,6.283);c.fill();
-  c.fillStyle=v.pant;c.fillRect(q[0]-bw/2,q[1]-lg,bw,lg);
-  c.fillStyle=v.tint;c.fillRect(q[0]-bw/2,q[1]-lg-bh-bob,bw,bh+bob*.5);
-  c.fillStyle='#f0cfa8';c.beginPath();c.arc(q[0],q[1]-lg-bh-hr-bob,hr,0,6.283);c.fill();
-  var top=q[1]-lg-bh-hr*2-bob;
+  // 걷는 방향: 화면에서 아래로 가면 앞모습, 위로 가면 뒷모습, 왼쪽이면 좌우 뒤집기
+  if(v.hx!=null){var ddx=q[0]-v.hx,ddy=q[1]-v.hy;if(ddx*ddx+ddy*ddy>.04){v.hdx=ddx;v.hdy=ddy;}}
+  v.hx=q[0];v.hy=q[1];
+  var back=(v.hdy||0)<0,fl=back?(v.hdx||0)>0:(v.hdx||0)<0;
+  var top=chrPerson(c,q[0],q[1]-bob*.4,s,chrVisSpec(v.tint,v.pant,v.ph),back?'b':'f',walking?'walk':'stand',walking?((S.clock*7+v.ph*9)|0)%4:0,fl)[1];
   if(v.want&&v.state==='walk'){c.fillStyle=NC[v.want];c.beginPath();c.arc(q[0],top-3.2*Math.max(s,.6),Math.max(1.6,2.4*s),0,6.283);c.fill();c.strokeStyle='#fff';c.lineWidth=1;c.stroke();}
   // 기다리다 지쳐 화가 나면 머리 위에 화남 표시 (잠깐)
   if(v.angry>0){c.globalAlpha=Math.min(1,v.angry/.4);c.font=Math.max(11,15*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('😠',q[0],top-1);c.globalAlpha=1;}
   else if(v.state==='wait'){c.fillStyle='#fff';c.font='700 '+Math.max(9,11*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('…',q[0],top);}
   // 비·눈 오는 날엔 우산
   if(wxUmbrella()){
-    var ur=Math.max(4.5,8*s),uy=top-1.5*s,uc=['#d6453a','#3f6fe0','#f2c14e','#2f9e6e','#8a5bb5','#2b2b2b'][(v.ph*10|0)%6];
+    var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),ur=Math.max(4.5,8*s),uy=top-1.5*s,uc=['#d6453a','#3f6fe0','#f2c14e','#2f9e6e','#8a5bb5','#2b2b2b'][(v.ph*10|0)%6];
     c.strokeStyle='#3d3d46';c.lineWidth=1;c.beginPath();c.moveTo(q[0]+bw*.3,q[1]-lg-bh*.4);c.lineTo(q[0]+bw*.3,uy);c.stroke();
     c.fillStyle=uc;c.beginPath();c.moveTo(q[0]+bw*.3-ur,uy+ur*.15);c.quadraticCurveTo(q[0]+bw*.3,uy-ur*1.05,q[0]+bw*.3+ur,uy+ur*.15);c.closePath();c.fill();
   }
@@ -611,14 +610,9 @@ function drawWear(b){
    안에서 기다리는 관리자(발밑 고리: 기른 사람 금빛·청빙한 사람 푸른빛), 가동 중이면 이용자 몇 사람과 번갈아 뜨는 말풍선을 그린다.
    (legacy() 안에서 부른다: 좌표는 예전 칸 단위, r은 화면 방향으로 돌린 사각형이라 x1·y1 쪽이 앞이다) */
 function cutOn(b){var d=D[b.def];return !!(b.id&&b.uses!=null&&d&&d.kind==='bld'&&typeof mgrOf==='function'&&(b.fixed||mgrRole(b))&&mgrOf(b));}
-function drawFig(rx,ry,z,tint,pant,bob,ring){
-  var c=PJ.c,s=PJ.s,q=P(rx,ry,z),bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);bob=(bob||0)*s;
-  if(ring){c.strokeStyle=ring;c.lineWidth=Math.max(1.2,1.8*s);c.beginPath();c.ellipse(q[0],q[1],bw*1.15,bw*.5,0,0,6.283);c.stroke();}
-  else{c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(q[0],q[1],bw*.9,bw*.38,0,0,6.283);c.fill();}
-  c.fillStyle=pant;c.fillRect(q[0]-bw/2,q[1]-lg,bw,lg);
-  c.fillStyle=tint;c.fillRect(q[0]-bw/2,q[1]-lg-bh-bob,bw,bh+bob*.5);
-  c.fillStyle='#f0cfa8';c.beginPath();c.arc(q[0],q[1]-lg-bh-hr-bob,hr,0,6.283);c.fill();
-  return [q[0],q[1]-lg-bh-hr*2-bob];
+function drawFig(rx,ry,z,tint,pant,bob,ring,sp){
+  var q=P(rx,ry,z),s=PJ.s;
+  return chrPerson(PJ.c,q[0],q[1]-(bob||0)*s*.5,s,sp||chrVisSpec(tint,pant,rx*7+ry*3),'f','stand',0,false,ring);
 }
 function drawBubble(at,txt){
   var c=PJ.c,s=Math.max(.7,PJ.s),w=13*s,h=9*s,x=at[0]-w/2,y=at[1]-h-4*s;
@@ -691,7 +685,7 @@ function drawCutaway(b){
     if(d.cat==='shop'){var cs=['#e0567f','#f2c14e','#4a78c7','#3d9b7a'];for(i=0;i<6;i++)dot(r.x0+.2+(W-.4)*i/5,r.y0+T+.1,.2+.14*(i%2),Math.max(1,1.8*PJ.s),cs[i%4]);}
     // 관리자와 이용자: 가동 중이면 서로 번갈아 말한다 (말풍선)
     var ph=Math.floor(S.clock*.9+b.id*.37),sway=act?Math.abs(Math.sin(S.clock*5+b.id))*.9:Math.sin(S.clock*1.6+b.id)*.25+.25;
-    var mt=drawFig(mx,my,fz,K.mg,'#3d4650',sway,mg.key==='me'?'#f2c230':mg.src==='in'?'#e3a521':'#3f7fd6'),ut=null;
+    var mt=drawFig(mx,my,fz,K.mg,'#3d4650',sway,mg.key==='me'?'#f2c230':mg.src==='in'?'#e3a521':'#3f7fd6',mg.key==='me'?CHR_SPECS.pastor:null),ut=null;
     var tc=['#5a8ac6','#d98a3a','#7a5bb5','#4f9a83','#c9627a','#8a6a46'];
     figs.sort(function(a,c2){return (a[0]+a[1])-(c2[0]+c2[1]);}).forEach(function(f,fi){var t2=drawFig(f[0],f[1],fz+(f[3]||0),tc[(f[2]+b.id)%6],'#4a5560',Math.abs(Math.sin(S.clock*4+f[2]*1.7))*.5);if(fi===ph%Math.max(1,figs.length))ut=t2;});
     if(act){if(ph%2===0)drawBubble(mt,K.say[0]);else if(ut)drawBubble(ut,K.say[1]);}

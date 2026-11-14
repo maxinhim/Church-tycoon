@@ -92,3 +92,20 @@ function chrDraw(c,cx,fy,k,sp,view,pose,fr,flip){
   for(i=0;i<ops.length;i++){p=ops[i];put(p[0],p[1],p[2],p[3],-t,0);put(p[0],p[1],p[2],p[3],t,0);put(p[0],p[1],p[2],p[3],0,-t);put(p[0],p[1],p[2],p[3],0,t);}
   for(i=0;i<ops.length;i++){p=ops[i];c.fillStyle=p[4];put(p[0],p[1],p[2],p[3],0,0);}
 }
+
+/* ---------- 게임 속 사람 그리기 ----------
+   방문객: 옷 색(tint·pant)과 머리색을 사람마다 바꾼 'visitor' 틀. 걷는 방향(화면 좌우·위아래)에 따라 앞·뒷모습과 좌우를 고른다 */
+var CHR_HAIRS=['#6b4226','#2b2b33','#a8742f','#8a3b2a','#c9a24a','#4a3a30'],CHR_VIS={};
+function chrVisSpec(tint,pant,ph){
+  var hi=((ph||0)*10|0)%CHR_HAIRS.length,k=tint+pant+hi;
+  if(!CHR_VIS[k]){var b=CHR_SPECS.visitor,h=CHR_HAIRS[hi];
+    CHR_VIS[k]={kind:'visitor',skin:b.skin,skinS:b.skinS,hair:h,hairS:shade(h,.75),top:tint,topS:shade(tint,.78),inner:'#ffffff',bottom:pant,bottomS:shade(pant,.8),shoe:b.shoe,bag:b.bag,bagS:b.bagS};}
+  return CHR_VIS[k];
+}
+// 발밑 (x,y)에 사람 한 명: 한 칸 = 확대 s에 비례하는 픽셀. 반환: 머리 위 화면 좌표
+function chrPerson(c,x,y,s,sp,view,pose,fr,flip,ring){
+  var k=Math.max(.55,.78*s);
+  if(ring){c.strokeStyle=ring;c.lineWidth=Math.max(1.2,1.8*s);c.beginPath();c.ellipse(x,y,6*k,2.6*k,0,0,6.283);c.stroke();}
+  chrDraw(c,x,y,k,sp,view,pose,fr,flip);
+  return [x,y-CHR_H*k];
+}

@@ -13,13 +13,7 @@ function drawSitter(b,k){
   var c=PJ.c,s=PJ.s,cx=b.x+.5,cy=b.y+.5,z=bZ(b)+.3;
   // k=0 왼쪽 자리, k=1 오른쪽 자리: 벤치 길이 방향으로 나란히
   var dx=(k?.22:-.22),ux=(b.face===0||b.face===1)?0:dx,uy=(b.face===0||b.face===1)?dx:0;
-  var rp=rotPt(cx+ux,cy+uy),q=P(rp[0],rp[1],z),bw=Math.max(2.6,4.6*s),bh=Math.max(3,5.2*s),hr=Math.max(1.5,2.6*s);
-  var tint=k?'#5a8ac6':'#d98a3a',pant='#3d4650';
-  // 무릎(허벅지): 앞쪽으로 뻗은 짧은 다리
-  c.fillStyle=pant;c.fillRect(q[0]-bw*.2,q[1]-bh*.3-lgOf(s),bw*1.1,lgOf(s));
-  // 몸통: 엉덩이 위에서 살짝 기운 몸
-  c.fillStyle=tint;c.fillRect(q[0]-bw/2,q[1]-bh*.3-bh*.9,bw,bh*.9);
-  // 머리
-  c.fillStyle='#f0cfa8';c.beginPath();c.arc(q[0],q[1]-bh*.3-bh*.9-hr*.6,hr,0,6.283);c.fill();
+  var rp=rotPt(cx+ux,cy+uy),q=P(rp[0],rp[1],z),tint=k?'#5a8ac6':'#d98a3a';
+  chrPerson(c,q[0],q[1]+3*s,s,chrVisSpec(tint,'#3d4650',k?.3:.7),'f','sit',0,false);
 }
 function lgOf(s){return Math.max(1.4,2.2*s);}
