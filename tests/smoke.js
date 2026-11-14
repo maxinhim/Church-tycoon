@@ -1056,32 +1056,12 @@ async function waterChecks(browser, url) {
     build('pray', 12, 12, 2); 
     o.noStackUnder = (() => { build('wc', 7, 12, 2); return true; })();
     for (let k = 0; k < 4; k++) { ROT = k; draw(); } ROT = 0;
-    // 옆면(벽) 타일
-    S.wall = {}; UI.undo = [];
-    terApply(26, 10, 'ter_set', 2); const wm0 = S.money;
-    o.wallSet = cellHasFace(26, 10) && !cellHasFace(28, 12) && wallSwap(26, 10, 'f_brick') === '' && wallId(26, 10) === 'f_brick' && wm0 - S.money === D.f_brick.cost && !!wallSwap(26, 10, 'f_brick');
-    paintFloor(26, 10, 'f_wood');
-    UI.fold = true; UI.tool = null; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: 26, y: 10 }; UI.wallMode = false; renderSelCard();
-    const wc = document.getElementById('selCard');
-    // 벽 타일 버튼을 누르면 건축 창 모양의 고르는 창이 뜨고, 카드를 누르면 그 벽에 붙고 원래 카드로 돌아온다
-    o.wallCard = !!wc.querySelector('[data-act="choose"][data-v="wswap"]') && !wc.querySelector('[data-act="wswap"]');
-    wc.querySelector('[data-act="choose"][data-v="wswap"]').click();
-    const wcards = [...document.querySelectorAll('#cards [data-act="cpick"]')].map(e => e.dataset.v);
-    o.wallCard = o.wallCard && !document.getElementById('dock').hidden && /벽 타일/.test(document.getElementById('dtitle').textContent) && wcards.includes('f_wood') && wcards.includes('f_erase') && !wcards.includes('f_brick');
-    const wm1 = S.money; document.querySelector('#cards [data-v="f_wood"]').click();
-    o.wallCard = o.wallCard && wallId(26, 10) === 'f_wood' && document.getElementById('dock').hidden && !wc.hidden && S.money === wm1 - floorSwapCost('f_brick', 'f_wood');
-    wallSwap(26, 10, 'f_brick');
-    // 땅 카드에는 땅 높이기·낮추기·경사로 단추가 없고, 칸을 골라도 이어 짓기 화살표가 없다
-    o.extCost = !wc.querySelector('[data-act="gter"]') && !wc.querySelector('[data-act="gramp"]') && !selTarget() && D.ter_set.hidden === true && D.ter_ramp.hidden === true;
-    o.extWall = true; o.extUndo = true;
-    // 경사로 하나의 세모 옆면, 파인 칸의 벽, 물을 채워도 유지
-    terApply(26, 13, 'ter_ramp', 0, 0); wallSwap(26, 13, 'f_step');
-    terApply(28, 15, 'ter_set', -2); wallSwap(28, 15, 'f_gravel'); fillWater(28, 15);
-    o.wallKeep = cellHasFace(26, 13) && wallId(28, 15) === 'f_gravel' && isWater(28, 15);
-    const wr = S.money; o.wallErase = wallSwap(26, 10, 'f_erase') === '' && !wallId(26, 10) && S.money - wr === Math.floor(D.f_brick.cost * .5);
-    wallSwap(26, 10, 'f_brick');
     for (let k = 0; k < 4; k++) { ROT = k; draw(); }
     ROT = 0;
+    // 땅 카드: 바닥 깔기만 (땅 높이기·경사로·벽 타일 단추 없음), 지형 도구는 숨김
+    { closeDock(); UI.fold = true; UI.tool = null; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: 26, y: 10 }; renderSelCard();
+      const cardEl = document.getElementById('selCard'); o.gcard = !cardEl.hidden && !cardEl.querySelector('[data-act="gter"]') && !cardEl.querySelector('[data-act="gramp"]') && !cardEl.querySelector('[data-act="wswap"],[data-act="choose"][data-v="wswap"]') && D.ter_set.hidden === true && D.ter_ramp.hidden === true;
+      UI.selFloor = null; closeSelCard(); }
     o.json = JSON.stringify(S).length > 0;
     return o;
   });
@@ -1101,10 +1081,7 @@ async function waterChecks(browser, url) {
   check(r.underLow, '다리 밑: 빈 높이에 들어가는 것만 놓임');
   check(r.underPick && r.deckPick && r.underState, '다리 밑: 밑을 고르면 땅에, 아니면 데크 위에 놓이고 다리는 계속 걸을 수 있음');
   check(r.underTer, '다리 밑: 건물이 다리에 닿게 땅을 높일 수 없음');
-  check(r.wallSet && r.wallErase, '벽 타일: 벽이 있는 칸에 붙이고 떼기(반값 환불)');
-  check(r.wallCard, '벽 타일: 땅 카드에서 윗면·옆면을 바꿔 고름');
-  check(r.extCost && r.extWall && r.extUndo, '지형 도구 없음: 땅 높이기·낮추기·경사로·물 채우기/빼기 단추와 이어 짓기가 없고 도구는 건축 목록에서 빠짐');
-  check(r.wallKeep, '벽 타일: 경사로 세모 옆면·파인 칸에도 붙고, 물을 채워도 남음');
+  check(r.gcard, '지형 도구 없음: 땅 카드에 땅 높이기·경사로·벽 타일 단추가 없고 지형 도구는 건축 목록에서 빠짐');
   check(errs.length === 0, '지하·물: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
 }

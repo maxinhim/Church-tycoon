@@ -73,9 +73,6 @@ function renderSelCard(){
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
     h='<div class="sct"><b>'+(cur?D[cur].name:(isRamp(sf.x,sf.y)?'흙 경사로':'빈 땅'))+'</b><span>'+(gh?lvName(gh)+' · ':'')+(cur?'바꾸면 걷어낸 값의 반을 빼고 계산해요':'바닥을 깔면 걸을 수 있어요')+'</span></div>';
     row+=scBtn('choose',cur?'바닥 바꾸기':'바닥 깔기','pri','fswap','이 칸에 깔 바닥 고르기');
-    // 벽이 있는 칸: 옆면 타일로 바꿔 고를 수 있다 (줄은 하나만 보인다)
-    var face=cellHasFace(sf.x,sf.y);
-    if(face)row+=scBtn('choose','벽 타일','','wswap','이 칸에 맞닿은 옆면(벽) 타일 고르기');
     if(cur)row+=scDem('철거',Math.floor(D[cur].cost*.5));
   }
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');

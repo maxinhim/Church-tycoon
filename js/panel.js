@@ -101,7 +101,7 @@ function buildOrder(cat){
   }).map(function(o){return o.d;});
 }
 /* ---------- 고르는 창 (건축 카드와 같은 모양) ----------
-   지도 위 작은 카드에서 여러 종류 가운데 하나를 고를 때(바닥 깔기·바꾸기, 벽 타일, 길 잇기, 입구·출구 모양)
+   지도 위 작은 카드에서 여러 종류 가운데 하나를 고를 때(바닥 깔기·바꾸기, 길 잇기, 입구·출구 모양)
    글자 버튼 줄 대신 건축 패널을 띄워 그림 카드로 고른다. UI.choose={kind, resume}.
    ‹ 는 원래 카드로(입구·출구 모양은 처음이면 짓기를 그만둠, 바꾸던 중이면 지도로), 카드를 누르면 그 동작을 한다 */
 function chooseCtx(){
@@ -109,9 +109,6 @@ function chooseCtx(){
   if(c.kind==='linkf'){var b=bById(UI.sel),lp=b&&linkPlan(b),n=lp&&!lp.why?lp.tiles.length:0;if(!n)return null;
     return {title:'길 잇기 · '+n+'칸',items:FLOOR_IDS.map(function(id){return {id:id,cost:n*D[id].cost};})};}
   var sp=UI.selPiece&&pieceById(UI.selPiece),sf=UI.selFloor,x=sp?sp.x:sf&&sf.x,y=sp?sp.y:sf&&sf.y;if(x==null)return null;
-  if(c.kind==='wswap'){var wp=wallId(x,y),wi=FLOOR_IDS.filter(function(id){return id!==wp;}).map(function(id){return {id:id,cost:floorSwapCost(wp,id)};});
-    if(wp)wi.push({id:'f_erase',cost:-Math.floor(D[wp].cost*.5),name:'흙벽으로'});
-    return {title:'벽 타일 · '+(wp?D[wp].name:'흙벽'),items:wi};}
   var prev=floorSlot(x,y,sp?sp.id:0).get();
   return {title:prev?'바닥 바꾸기 · '+D[prev].name:'바닥 깔기',items:FLOOR_IDS.filter(function(id){return id!==prev;}).map(function(id){return {id:id,cost:floorSwapCost(prev,id)};})};
 }

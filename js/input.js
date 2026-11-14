@@ -99,7 +99,7 @@ function syncTabs(){
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
-var SPEND_ACTS={invest:1,cpick:1,fswap:1,wswap:1,wbridge:1,pbuild:1,wfount:1};
+var SPEND_ACTS={invest:1,cpick:1,fswap:1,wbridge:1,pbuild:1,wfount:1};
 function onPanel(e){
   var el=e.target.closest('[data-act]'),sa=el&&SPEND_ACTS[el.dataset.act],m0=S.money,pos=sa?spendPos():null;
   onPanel0(e);if(sa)spendFx(m0,pos);
@@ -147,13 +147,6 @@ function onPanel0(e){
     if(tid==='f_erase'){toast('바닥을 걷어냈어요',1200);if(sf&&!sp)UI.selFloor=null;renderDetail();hud(true);return;}
     // 바꾼 뒤 바닥 깔기로 넘어가 화살표 쪽으로 이어 바꾼다
     startFloorFrom(fx,fy,sp?sp.id:0,tid,fprev);hud(true);
-  }
-  else if(a==='wmode'){UI.wallMode=!UI.wallMode;renderDetail();}
-  else if(a==='wswap'){
-    var wsf=UI.selFloor;if(!wsf)return;
-    var keepU=UI.undo;UI.undo=null;var wsw=wallSwap(wsf.x,wsf.y,v);UI.undo=keepU;
-    if(wsw){toast(wsw,1600);sfx('error',.4);}else sfx(v==='f_erase'?'demolish':'floor',.6);
-    renderDetail();hud(true);
   }
   else if(a==='wbridge'){
     var bf=UI.selFloor;if(!bf)return;
