@@ -210,10 +210,13 @@ var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
 
 /* 대예배당(`main`, 시작 건물): 같은 예배당보다 성능(효과·정원·좌석)이 MAIN_K배 */
 var MAIN_K=2.5;
-/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX. 레벨마다 방문자 ENT_VIS. 투자 한 번 = 한 레벨, 값은 도달하는 레벨별(ENT_LV_COST[목표 레벨]).
-   컨셉(ENT_STYLE_COST)은 한 번 사면 계속 쓴다. 안내문(ENT_SIGN_COST)도 한 번 사면 계속 쓰고, 걸면 안내문마다 방문자 ENT_SIGN_VIS */
-var ENT_MAX=10,ENT_VIS=0.04;
-var ENT_LV_COST=[0,0,200,500,1000,2000,3200,4800,7000,10000,14000];
+/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX(100). 투자 한 번 = 한 레벨, 값은 도달하는 레벨 L마다 entrLvCost(L) = ENT_LV_BASE × (L−1)^ENT_LV_POW (레벨이 오를수록 가파르게 비싸다).
+   방문자 증가는 건물 레벨처럼 Lv 10까지는 레벨마다 ENT_VIS씩, 그 뒤로는 BLV_TAIL배로 느리게(lvM).
+   컨셉(ENT_STYLE_COST)·안내문(ENT_SIGN_COST)·꾸미기(ENT_DECO_COST)는 한 번 사면 계속 쓴다. 안내문·꾸미기를 걸면 방문자 ENT_SIGN_VIS·ENT_DECO_VIS */
+var ENT_MAX=100,ENT_VIS=0.025,ENT_LV_BASE=300,ENT_LV_POW=1.9;
+function entrLvCost(L){return L<2?0:Math.round(ENT_LV_BASE*Math.pow(L-1,ENT_LV_POW)/10)*10;}
 var ENT_STYLE_COST={brick:0,concrete:400,stone:300,wood:500,marble:1200,glass:800,garden:1200};
-var ENT_SIGN_COST={name:0,b0:150,b1:250,b2:350,b3:500,b4:700,led:900,led2:2500,neon:1500};
-var ENT_SIGN_VIS={name:0,b0:.02,b1:.02,b2:.02,b3:.02,b4:.02,led:.04,led2:.07,neon:.05};
+var ENT_SIGN_COST={m0:0,m1:100,m2:150,m3:200,m4:250,m5:350,m6:450,m7:600,m8:800,m9:1000};
+var ENT_SIGN_VIS={m0:0,m1:.01,m2:.01,m3:.01,m4:.015,m5:.015,m6:.02,m7:.02,m8:.025,m9:.03};
+var ENT_DECO_COST={lights:300,flags:350,planter:400,lantern:600,balloon:700,flower:1000};
+var ENT_DECO_VIS={lights:.01,flags:.01,planter:.01,lantern:.015,balloon:.02,flower:.03};

@@ -1128,24 +1128,34 @@ async function entranceChecks(browser, url) {
     o.mainStrong = bCapK(mn) === MAIN_K && bPerf(mn) > bPerf({ def: 'room', lv: 1, id: 0, x: 0, y: 0 }) * 1.5 && bCap(mn) > bCap({ def: 'room', lv: 1, id: 0, x: 0, y: 0, face: 2 }) * 1.5;
     const cats = ['worship', 'fellow', 'shop', 'care', 'comfort', 'club', 'park'];
     o.tier1 = cats.every(c => DEFS.some(d => d.cat === c && !d.retired && !d.hidden && d.tier !== 2 && !isLocked(d.id))) && !isLocked('shop') && !isLocked('room') && !isLocked('cell') && !isLocked('wc');
-    o.enter0 = (recalc(), S.entr.lv === 1 && S.entr.st === 'brick' && S.entr.sg === 'name' && entrVis() === 1);
-    S.money = 99999; const m0 = S.money, v0 = MOD.vis;
-    o.up = entrUp() === '' && S.entr.lv === 2 && S.money === m0 - ENT_LV_COST[2] && MOD.vis > v0 && entrVis() > 1 && entrUpWhy() === '' && (S.entr.lv = ENT_MAX, entrUpWhy()) === '최고 레벨이에요';
-    S.entr.lv = 1; S.money = 99999; const m1 = S.money;
+    o.enter0 = (recalc(), S.entr.lv === 1 && S.entr.st === 'brick' && S.entr.sg === 'm0' && entrVis() === 1 && ENT_MAX === 100);
+    S.money = 99999999; const m0 = S.money, v0 = MOD.vis;
+    // 투자는 레벨이 오를수록 가파르게 비싸다 (Lv 100까지)
+    o.cost = entrLvCost(2) > 0 && entrLvCost(3) > entrLvCost(2) * 2 && entrLvCost(50) > entrLvCost(10) * 20 && entrLvCost(100) > entrLvCost(50) * 3;
+    o.up = entrUp() === '' && S.entr.lv === 2 && S.money === m0 - entrLvCost(2) && MOD.vis > v0 && entrVis() > 1 && entrUpWhy() === '' && (S.entr.lv = ENT_MAX, entrUpWhy()) === '최고 레벨이에요';
+    S.entr.lv = 1; S.money = 99999999; const m1 = S.money;
     o.style = entrStyle('marble') === '' && S.entr.st === 'marble' && S.money === m1 - ENT_STYLE_COST.marble && entrStyle('marble') === '' && S.money === m1 - ENT_STYLE_COST.marble && entrStyle('nope') !== '';
-    S.money = 0; o.poor = entrStyle('garden') === '자금이 부족해요' && entrUpWhy() === '자금이 부족해요' && entrSign('led2') === '자금이 부족해요';
-    S.money = 99999; const m2 = S.money;
-    o.ban = entrSign('b0') === '' && S.entr.sg === 'b0' && S.money === m2 - ENT_SIGN_COST.b0 && entrVis() > 1 && entrSign('name') === '' && S.entr.sg === 'name' && entrSign('b0') === '' && S.money === m2 - ENT_SIGN_COST.b0 && entrSign('nope') !== '';
-    // 입구 창: 건축 패널처럼 열리고 분류 칩(컨셉·안내문)·그림 카드·투자 단추가 있다
-    S.entr.lv = 1; S.money = 99999; closeDock(); openEntrDock();
-    o.dock = !document.getElementById('dock').hidden && /교회 입구/.test(document.getElementById('dtitle').textContent) && document.querySelectorAll('#subtabs .csb').length === 2 && document.querySelectorAll('#cards .card.ec').length === ENT_STYLES.length && /투자/.test(document.getElementById('detail').textContent);
+    S.money = 0; o.poor = entrStyle('garden') === '자금이 부족해요' && entrUpWhy() === '자금이 부족해요' && entrSign('m9') === '자금이 부족해요' && entrDeco('flower') === '자금이 부족해요';
+    S.money = 99999999; const m2 = S.money;
+    o.ban = entrSign('m1') === '' && S.entr.sg === 'm1' && S.money === m2 - ENT_SIGN_COST.m1 && entrVis() > 1 && entrSign('m0') === '' && S.entr.sg === 'm0' && entrSign('m1') === '' && S.money === m2 - ENT_SIGN_COST.m1 && entrSign('nope') !== '';
+    // 꾸미기: 사면 켜지고, 누르면 켜고 끄고, 함께 여러 개를 켤 수 있다
+    S.entr.dOn = []; S.entr.dOwn = []; const m3 = S.money, vv = entrVis();
+    o.deco = entrDeco('lights') === '' && S.entr.dOn.indexOf('lights') >= 0 && S.money === m3 - ENT_DECO_COST.lights && entrVis() > vv && entrDeco('lights') === '' && S.entr.dOn.length === 0 && entrDeco('lights') === '' && S.money === m3 - ENT_DECO_COST.lights && entrDeco('balloon') === '' && S.entr.dOn.length === 2 && entrDeco('nope') !== '';
+    // 교회 이름은 최대 12글자
+    S.name = '가나다라마바사아자차카타파하'; recalc(); o.name = Array.from(S.name).length === NAME_MAX && NAME_MAX === 12; S.name = '새빛교회'; recalc();
+    // 입구 창: 건축 패널처럼 열리고 분류 칩(컨셉·안내문·꾸미기)·그림 카드·투자 단추가 있다
+    S.entr.lv = 1; S.money = 99999999; closeDock(); openEntrDock();
+    o.dock = !document.getElementById('dock').hidden && /교회 입구/.test(document.getElementById('dtitle').textContent) && document.querySelectorAll('#subtabs .csb').length === 3 && document.querySelectorAll('#cards .card.ec').length === ENT_STYLES.length && /투자/.test(document.getElementById('detail').textContent);
     document.querySelector('#subtabs [data-v="sign"]').click(); o.tabSign = document.querySelectorAll('#cards .card.ec').length === ENT_SIGNS.length;
-    document.querySelector('#cards [data-v="led"]').click(); o.clickSign = S.entr.sg === 'led' && S.entr.sgOwn.indexOf('led') >= 0;
+    document.querySelector('#cards [data-v="m3"]').click(); o.clickSign = S.entr.sg === 'm3' && S.entr.sgOwn.indexOf('m3') >= 0;
+    document.querySelector('#subtabs [data-v="deco"]').click(); o.tabDeco = document.querySelectorAll('#cards .card.ec').length === ENT_DECOS.length;
+    document.querySelector('#cards [data-v="flags"]').click(); o.clickDeco = S.entr.dOn.indexOf('flags') >= 0;
     const elv0 = S.entr.lv; document.querySelector('#detail [data-act="einvest"]').click(); o.invest = S.entr.lv === elv0 + 1;
     document.querySelector('#detail [data-act="einvest10"]').click(); o.invest10 = S.entr.lv > elv0 + 1;
     document.querySelector('#subtabs [data-v="style"]').click(); document.querySelector('#cards [data-v="concrete"]').click(); o.clickStyle = S.entr.st === 'concrete';
     o.tabClose = (closeDock(), document.getElementById('dock').hidden && !UI.entr);
-    ENT_STYLES.forEach(s => ENT_SIGNS.forEach(g => { S.entr.st = s.id; S.entr.sg = g.id; draw(); })); S.entr.st = 'brick'; S.entr.sg = 'name'; S.entr.lv = 1; draw(); o.draw = true;
+    S.entr.dOn = ENT_DECOS.map(x => x.id); S.entr.dOwn = S.entr.dOn.slice();
+    ENT_STYLES.forEach(s => ENT_SIGNS.forEach(g => { S.entr.st = s.id; S.entr.sg = g.id; S.open = !S.open; draw(); })); S.open = false; S.entr.st = 'brick'; S.entr.sg = 'm0'; S.entr.dOn = []; S.entr.lv = 1; draw(); o.draw = true;
     // 길 옆에 놓으면 정면이 길 쪽을 향한다 (직접 돌렸으면 그대로, 길이 없으면 그대로)
     S.unlockAll = true; S.money = 99999; UI.tab = 'build'; UI.fold = false; startPlace('cell');
     UI.faceHand = false; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fW = UI.face;
@@ -1187,13 +1197,13 @@ async function entranceChecks(browser, url) {
   check(r.flatStart, '시작 지도: 평지로 시작 (땅 높이·경사·물 없음), 지형 시스템 함수는 그대로');
   check(r.mainStrong, '대예배당: 같은 예배당보다 성능·정원이 크게(MAIN_K) 시작');
   check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
-  check(r.enter0 && r.up && r.style && r.poor, '교회 입구: 기본 Lv 1, 투자로 레벨을 올리면 방문자 증가, 컨셉은 사서 끼움, 자금 부족이면 안 됨');
+  check(r.enter0 && r.cost && r.up && r.style && r.poor && r.name, '교회 입구: 기본 Lv 1, 최대 Lv 100·투자는 가파르게 비쌈, 컨셉은 사서 끼움, 자금 부족이면 안 됨, 교회 이름은 12글자까지');
   check(r.benchNoLimit, '벤치: 개수 제한 없이 여러 개 지을 수 있음');
   check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 20명마다 한 자리, 최대 없음');
   check(r.propTile && r.propCut, '소품: 벤치·쓰레기통 밑에도 바닥을 깔 수 있고, 길을 끊는 자리에는 소품을 놓지 못함');
   check(r.face, '건축: 길 옆에 놓으면 정면(문)이 길 쪽을 향하고, 직접 돌렸거나 길이 없으면 그대로');
   check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100(투자 ×10)·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
-  check(r.ban && r.dock && r.tabSign && r.clickSign && r.invest && r.invest10 && r.clickStyle && r.tabClose && r.draw, '교회 입구: 안내문은 사서 걸고, 건축 패널 모양의 창(컨셉·안내문 칩, 그림 카드, 투자)이 열리며 모든 컨셉·안내문 그림에 오류 없음');
+  check(r.ban && r.deco && r.dock && r.tabSign && r.clickSign && r.tabDeco && r.clickDeco && r.invest && r.invest10 && r.clickStyle && r.tabClose && r.draw, '교회 입구: 안내문은 사서 걸고 꾸미기는 켜고 끄며, 작은 건축 패널 모양의 창(컨셉·안내문·꾸미기 칩, 그림 카드, 투자)이 열리고 모든 조합 그림에 오류 없음');
   check(errs.length === 0, '교회 입구·시작 밸런스: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }

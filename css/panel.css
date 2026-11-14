@@ -208,8 +208,35 @@ svg text{fill:var(--muted);font-family:var(--f-body)}
 .subtabs .csb{display:inline-flex;align-items:center;gap:3px;padding:0 9px 0 6px}
 .subtabs .csb i{font-style:normal;font-size:14px;line-height:1}
 
-/* 교회 입구 창(컨셉·안내문): 건축 카드보다 큰 그림 카드 */
-#panel.build .card.ec{width:92px;padding:3px 3px 3px}
-#panel.build .card.ec img{display:block;width:76px;height:60px;object-fit:contain}
-#panel.build .card.ec .nm{max-width:86px}
-#panel.build .card.ec .ef{min-height:14px}
+/* 건축·입구 창은 지도를 덜 가리게 작게: 창 너비·그림·글자를 줄인다 */
+#dock{width:min(330px,44%)}
+#dock.bmode{width:min(300px,42%)}
+#dock.bmode .dhead{padding:2px 3px 2px 7px;gap:5px}
+#dock.bmode .dhead h2{font-size:12.5px}
+#dock.bmode .dclose,#dock.bmode .dhead .bback{width:24px;height:24px}
+#dock.bmode .subtabs button{height:21px;padding:0 7px;font-size:11px}
+#panel.build{padding:3px 6px 4px}
+#panel.build .cards{gap:4px;padding-top:2px;padding-bottom:6px}
+#panel.build .card{width:58px;padding:2px 2px 2px;border-radius:8px}
+#panel.build .card canvas{width:34px;height:24px}
+#panel.build .card .nm{font-size:10px;line-height:12px;max-width:54px}
+#panel.build .card .pr{font-size:9.5px;line-height:12px}
+#panel.build .card .pr small{font-size:9px}
+#panel.build .card .ef i{font-size:8.5px;line-height:10px;max-width:54px}
+#panel.build .detail{margin-top:2px}
+#panel.build .cinfo{font-size:10px;line-height:1.25}
+#panel.build .cinfo b{font-size:10.5px}
+#panel.build .detail .btn{height:26px;padding:0 8px;font-size:11px;border-radius:8px}
+#panel.build .btiles{grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:3px}
+#panel.build .btile{min-height:38px}
+#panel.build .btile canvas{width:30px!important;height:21px!important}
+#panel.build .btile .bic{height:21px;font-size:15px}
+#panel.build .btile .nm{font-size:10px}
+/* 교회 입구 창의 그림 카드 */
+#panel.build .card.ec{width:62px;padding:2px}
+#panel.build .card.ec img{display:block;width:54px;height:42px;object-fit:contain}
+#panel.build .card.ec .nm{max-width:58px}
+#panel.build .card.ec .ef{min-height:10px}
+@media (max-height:330px){
+  #dock.bmode{width:min(320px,48%)}
+}

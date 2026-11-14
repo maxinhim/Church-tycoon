@@ -173,7 +173,7 @@ function chGate(spec,open,lv){
   // 대문짝
   var x0=ENT+.1,x1=ENT+w-.1,np=Math.round((x1-x0)/.1),lc=spec.leaf||CH_WOOD;
   if(open){
-    box(rrect(x0,y,x0+.04,y+.42),0,.66,lc);box(rrect(x1-.04,y,x1,y+.42),0,.66,lc);
+    // 문이 열려 있으면 문짝은 보이지 않는다 (기둥의 안내문이 가려지지 않게)
   }else if(spec.glass){
     box(rrect(x0,y-.015,x1,y+.015),.04,.68,'#bfe6f2','#dff4fa');
     for(i=1;i<4;i++)box(rrect(x0+i*(x1-x0)/4-.008,y-.02,x0+i*(x1-x0)/4+.008,y+.02),.04,.68,spec.bar||'#3d4650');

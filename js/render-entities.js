@@ -216,7 +216,7 @@ function drawRoadCar(e){
 }
 /* 교회 입구: 주차 구역과 부지 사이 울타리의 ENT 칸. 문이 닫혀 있으면 철문이 가로막고, 열면 양쪽으로 젖혀진다 */
 function drawArch(){
-  entrScene(S.entr.st,S.entr.sg,S.entr.lv,S.open,false);
+  entrScene(S.entr.st,S.entr.sg,S.entr.lv,S.open,false,S.entr.dOn);
 }
 // 지도 밖까지 잔디를 이어 깔아 떠 있는 섬처럼 보이지 않게 한다. 도로도 양옆으로 이어진다
 function drawGround(){
