@@ -307,7 +307,7 @@ function plDir(d){
   if(g){g.x=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w);g.y=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-RD-n.h);}
   renderDetail();
 }
-/* 길 옆에 놓으면 정면(문)이 저절로 길 쪽을 본다 (사람이 화살표로 돌렸으면 그대로 둔다: UI.faceHand). 끄는 동안에도 바로 바뀐다.
+/* 길 옆에 놓으면 정면(문, 벤치는 앉는 쪽)이 저절로 길 쪽을 본다 (사람이 화살표로 돌렸으면 그대로 둔다: UI.faceHand). 끄는 동안에도 바로 바뀐다.
    네 방향마다 그 쪽 변을 재서 점수를 매긴다:
    · 문 앞 칸이 입구 아치에서 닿는 길이면 1000, 걸을 수만 있는 바닥이면 300
    · 그 변에 붙은 길 칸마다 150(닿는 길)·60(바닥), 한 칸 떨어진 닿는 길은 20 — 길이 변의 일부에만 닿거나 한 칸 떨어져 있어도 그쪽을 본다
@@ -332,7 +332,9 @@ function plFaceScore(d,x,y,f){
 }
 // 방향을 바꿨으면 미리보기가 옮겨진 만큼 [dx,dy]를 돌려준다 (끄는 중 기준점 보정용)
 function plAutoFace(){
-  var d=D[UI.tool];if(!d||!UI.ghost||movingId()||UI.faceHand||!d.fill||d.prop||arrowMode(d)!=='face')return null;
+  var d=D[UI.tool];if(!d||!UI.ghost||movingId()||UI.faceHand||arrowMode(d)!=='face')return null;
+  // 문이 있는 건물, 또는 앞뒤가 있는 소품·꾸미기(벤치·그네 의자·자판기·게시판 등 dir 'face')
+  if(!((d.fill&&!d.prop)||d.dir==='face'))return null;
   var g=UI.ghost,cur=UI.face,o=faceDims(d,cur),best=-1e9,bf=cur,bg=null;
   for(var f=0;f<4;f++){
     var nd=faceDims(d,f),gx=clamp(Math.round(g.x+o.w/2-nd.w/2),0,COLS-nd.w),gy=clamp(Math.round(g.y+o.h/2-nd.h/2),0,ROWS-RD-nd.h);
