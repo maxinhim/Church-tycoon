@@ -133,31 +133,13 @@ function terChanged(cells){
 
 // 바닥·지형 미리보기 칸의 높이(z): 데크를 골랐으면 데크 윗면
 function ghostZ(){var g=UI.ghost;if(!g)return 0;var p=g.pid&&pieceById(g.pid);return p?p.l*LV+.02:groundZ(g.x+.5,g.y+.5);}
-// 지금 고른 칸에 ✓를 누를 수 있는지 (바닥·지형 공용)
-function cellWhy(x,y,id){
-  if(!isTerDef(id))return floorWhy(x,y,id,UI.ghost&&UI.ghost.pid);
-  if(UI.ext){var e=extPlan(x,y);return e.why||(S.money<e.cost?'자금이 부족해요':'');}
-  var p=terPlan(x,y,id,UI.tlv,UI.fdir);return p.why||(S.money<p.cost?'자금이 부족해요':'');
-}
-// 바닥·지형 미리보기: 고른 칸 표시, 땅 높이는 목표 높이까지 반투명 기둥, 경사로는 오르는 쪽 화살표
+// 지금 고른 칸에 ✓를 누를 수 있는지 (바닥)
+function cellWhy(x,y,id){return floorWhy(x,y,id,UI.ghost&&UI.ghost.pid);}
+// 바닥 미리보기: 고른 칸 표시
 function drawTerGhost(){
   var g=UI.ghost,x=g.x,y=g.y;if(x<0||y<0||x>=COLS||y>=ROWS)return;
-  var ok=!cellWhy(x,y,UI.tool),z=ghostZ(),c=PJ.c,col=ok?'#ffd23f':'#ff5a4a';
-  if(UI.tool==='ter_set'){
-    var p=terPlan(x,y,UI.tool,UI.tlv,UI.fdir),cells=p.cells||[{x:x,y:y}];
-    c.globalAlpha=.42;
-    cells.forEach(function(t){var a=th(t.x,t.y)*LV,b=UI.tlv*LV;if(Math.abs(a-b)>.01)box(rrect(t.x+.03,t.y+.03,t.x+.97,t.y+.97),Math.min(a,b),Math.max(a,b),ok?'#ffd23f':'#f07a6e');});
-    c.globalAlpha=1;
-    cells.forEach(function(t){atZ(UI.tlv*LV,function(){footprint(t.x,t.y,1,1,ok?'rgba(255,210,63,.25)':'rgba(235,70,60,.3)',col,[4,3]);});});
-    return;
-  }
+  var ok=!cellWhy(x,y,UI.tool),z=ghostZ(),col=ok?'#ffd23f':'#ff5a4a';
   atZ(isRamp(x,y)&&!g.pid?th(x,y)*LV+.45:z,function(){footprint(x,y,1,1,ok?'rgba(255,210,63,.22)':'rgba(235,70,60,.3)',col,[4,3]);});
-  if(UI.tool==='ter_ramp'){
-    var rp=terPlan(x,y,'ter_ramp',0,UI.fdir);
-    if(rp.up){c.globalAlpha=.42;box(rrect(rp.up.x+.03,rp.up.y+.03,rp.up.x+.97,rp.up.y+.97),th(rp.up.x,rp.up.y)*LV,(th(x,y)+1)*LV,ok?'#ffd23f':'#f07a6e');c.globalAlpha=1;}
-    var dx=DIRS[UI.fdir][0],dy=DIRS[UI.fdir][1],cx=x+.5,cy=y+.5,tip=rotPt(cx+dx*.9,cy+dy*.9),l=rotPt(cx-dy*.25,cy+dx*.25),r=rotPt(cx+dy*.25,cy-dx*.25),zz=th(x,y)*LV+.08;
-    quad([[tip[0],tip[1],zz+.5*LV],[l[0],l[1],zz],[r[0],r[1],zz]],col,'rgba(30,30,30,.6)');
-  }
 }
 
 /* ---------- 그리기 ----------

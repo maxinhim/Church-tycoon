@@ -9,11 +9,16 @@ var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
 var START_TREES=[[10,20],[21,21],[18,22],[3,4],[6,13],[26,6],[29,16],[4,25],[13,9],[19,3],[8,2],[24,12],[2,18],[30,22],[11,25],[20,25]];
 // 대예배당(지도 가운데, 정면이 입구 쪽) 자리와, 그 문 앞에서 교회 입구까지 이어 둔 길(칸 좌표: 열 ENT~ENT+EW-1)
 var MAIN_AT={x:28,y:28},MAIN_PATH_Y=[32,PZ-1];
-/* 시작 지형: 지형 기능이 있다는 것이 한눈에 보이게 언덕 둘, 물이 찬 연못 하나, 마른 도랑 하나를 둔다.
-   교회·입구 길·시작 나무와 겹치지 않는 자리. 테스트(__CT_TEST)에서는 평지로 시작한다(__CT_TERRAIN을 켜면 지형 포함) */
+/* 시작 지도의 지형: 'flat'(평지, 기본) · 'hills'(언덕 둘·연못·도랑). 지형 시스템(땅 높이·경사·물·벽 타일, terrain.js·water.js)은 그대로 있고,
+   나중에 지도 종류를 늘릴 때 대예배당이 평지보다 높거나 낮거나 울퉁불퉁한 땅에 서게 하는 데 쓴다 */
+var START_TERRAIN='flat';
+/* 'hills' 시작 지형: 언덕 둘, 물이 찬 연못 하나, 마른 도랑 하나. 교회·입구 길·시작 나무와 겹치지 않는 자리.
+   기본은 평지다. 테스트에서 __CT_TERRAIN을 켜면 이 지형으로 시작한다 */
 function startTerrain(){
   var hgt={},slp={},water={},x,y,r;
-  if(typeof window!=='undefined'&&window.__CT_TEST&&!window.__CT_TERRAIN)return {hgt:hgt,slp:slp,water:water};
+  // 시작 지형은 START_TERRAIN이 정한다. 게임 안에서 땅 높이·경사로·물을 바꾸는 도구는 없다 (지형은 시작 지도로만 정해진다)
+  var preset=(typeof window!=='undefined'&&window.__CT_TERRAIN)?'hills':START_TERRAIN;
+  if(preset!=='hills')return {hgt:hgt,slp:slp,water:water};
   // 왼쪽 위 언덕 (2층, 남쪽에서 경사로 두 칸으로 오른다)
   for(y=9;y<=19;y++)for(x=9;x<=19;x++){r=Math.hypot(x-14,y-14);if(r<=2.6)hgt[x+','+y]=2;else if(r<=4.6)hgt[x+','+y]=1;}
   slp['14,19']=3;slp['14,17']=3;hgt['14,17']=1;

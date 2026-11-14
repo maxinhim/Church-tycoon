@@ -57,7 +57,7 @@ function draw(){
   pitBuild();if(PIT.path){c.fillStyle='#4f3d2b';c.fill(PIT.path);}
   legacy(function(){drawOutTrees(true);});
   var sb=UI.sel?bById(UI.sel):null;
-  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='path'&&!isFloorDef(UI.tool)&&!isTerDef(UI.tool)?D[UI.tool]:null,gok=false;
+  var gd=UI.ghost&&UI.tool&&D[UI.tool]&&UI.tool!=='path'&&!isFloorDef(UI.tool)?D[UI.tool]:null,gok=false;
   var E=[],use=Math.min(1,(S.members*0.35+V.length*0.15)/Math.max(1,A.park));
   var mvId=movingId();
   // 높인 땅·흙 경사로: 칸마다 흙 덩어리 하나
@@ -116,7 +116,7 @@ function draw(){
   legacy(function(){drawOutTrees(false);});
   drawWxOverlay(c);
   drawMarkers(c);
-  if((isFloorDef(UI.tool)||isTerDef(UI.tool))&&UI.ghost)drawTerGhost();
+  if(isFloorDef(UI.tool)&&UI.ghost)drawTerGhost();
   if(UI.tool==='path')drawPathGhost();
   if(gd){
     var gb={x:UI.ghost.x,y:UI.ghost.y,def:gd.id,id:0,face:plFace()},mvb=mvId&&bById(mvId);setPlaceLevel(gb,gd,gb.x,gb.y,gb.face);

@@ -310,7 +310,7 @@ async function stackChecks(browser, url) {
     o.floorBlocked = paintFloor(cell.x, cell.y, 'f_brick') !== '';
     paintFloor(fx, fy, 'f_wood');
     // 새로 넣은 건물·요소를 모두 지어 본다
-    const want = DEFS.filter(d => d.kind !== 'path' && d.kind !== 'floor' && !d.water && !d.retired);
+    const want = DEFS.filter(d => d.kind !== 'path' && d.kind !== 'floor' && d.kind !== 'terrain' && !d.water && !d.retired && !d.hidden);
     const missing = [];
     want.forEach(d => {
       if (S.buildings.some(b => b.def === d.id)) return;
@@ -1028,9 +1028,9 @@ async function waterChecks(browser, url) {
     UI.fold = true; UI.tool = null; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: 11, y: 6 };
     S.buildings = S.buildings.filter(b => b.def !== 'wfount'); rebuildOcc(); UI.selFloor = { x: 10, y: 6 }; renderSelCard();
     const card = document.getElementById('selCard');
-    o.card = !card.hidden && !!card.querySelector('[data-act="wdrain"]') && !!card.querySelector('[data-act="wbridge"]') && !selTarget();
-    card.querySelector('[data-act="wdrain"]').click();
-    o.drain = !isWater(10, 5) && !isWater(10, 6) && S.floor['10,5'] === 'f_brick';
+    // 지형을 바꾸는 단추(물 빼기·채우기)는 없다. 다리 놓기·물 분수만
+    o.card = !card.hidden && !card.querySelector('[data-act="wdrain"]') && !card.querySelector('[data-act="wfill"]') && !!card.querySelector('[data-act="wbridge"]') && !!card.querySelector('[data-act="wfount"]') && !selTarget();
+    o.drain = drainWater(10, 5) === '' && !isWater(10, 5) && !isWater(10, 6) && S.floor['10,5'] === 'f_brick';   // 시스템은 그대로: 지형 코드로는 뺄 수 있다
     // 되돌리기로 땅이 올라오면 물도 사라진다
     terApply(25, 5, 'ter_set', -1); fillWater(25, 5); S.hgt = Object.assign({}, S.hgt); delete S.hgt['25,5']; terChanged([{ x: 25, y: 5 }]);
     o.fix = !isWater(25, 5);
@@ -1071,13 +1071,9 @@ async function waterChecks(browser, url) {
     const wm1 = S.money; document.querySelector('#cards [data-v="f_wood"]').click();
     o.wallCard = o.wallCard && wallId(26, 10) === 'f_wood' && document.getElementById('dock').hidden && !wc.hidden && S.money === wm1 - floorSwapCost('f_brick', 'f_wood');
     wallSwap(26, 10, 'f_brick');
-    // 이어 짓기: 높이·윗면·옆면이 함께 이어지고, 되돌리기 한 번에 함께 돌아온다
-    selExtend(0); const em = S.money; UI.undo = [];
-    o.extCost = extPlan(27, 10).cost === 2 * TER_UP + D.f_wood.cost + D.f_brick.cost;
-    o.extWall = extApply(27, 10) === '' && th(27, 10) === 2 && S.floor['27,10'] === 'f_wood' && wallId(27, 10) === 'f_brick';
-    terUndoLast();
-    o.extUndo = th(27, 10) === 0 && !wallId(27, 10) && !S.floor['27,10'] && S.money === em;
-    endPlace();
+    // 땅 카드에는 땅 높이기·낮추기·경사로 단추가 없고, 칸을 골라도 이어 짓기 화살표가 없다
+    o.extCost = !wc.querySelector('[data-act="gter"]') && !wc.querySelector('[data-act="gramp"]') && !selTarget() && D.ter_set.hidden === true && D.ter_ramp.hidden === true;
+    o.extWall = true; o.extUndo = true;
     // 경사로 하나의 세모 옆면, 파인 칸의 벽, 물을 채워도 유지
     terApply(26, 13, 'ter_ramp', 0, 0); wallSwap(26, 13, 'f_step');
     terApply(28, 15, 'ter_set', -2); wallSwap(28, 15, 'f_gravel'); fillWater(28, 15);
@@ -1098,7 +1094,7 @@ async function waterChecks(browser, url) {
   check(r.spread && r.digThing, '물: 옆 칸을 파면 이어지고, 건물이 있는 칸은 못 팜');
   check(r.fillBlocked, '물: 0층 아래에 요소가 있으면 못 채움');
   check(r.pick && r.pickFlat, '지하: 파인 칸과 평지를 눌러 고를 수 있음');
-  check(r.card && r.drain, '물 카드: 다리 놓기·물 빼기, 빼면 타일이 다시 보임');
+  check(r.card && r.drain, '물 카드: 다리 놓기·물 분수만(물 빼기 단추 없음), 시스템으로 빼면 타일이 다시 보임');
   check(r.fix, '물: 땅이 0층 이상이 되면 사라짐');
   check(r.kinds, '길 종류: 벽돌·대리석·철 길과 종류별 계단 이름');
   check(r.underTile && r.underFirst, '계단 밑: 땅에서 시작하는 계단 밑은 바닥 타일만');
@@ -1107,7 +1103,7 @@ async function waterChecks(browser, url) {
   check(r.underTer, '다리 밑: 건물이 다리에 닿게 땅을 높일 수 없음');
   check(r.wallSet && r.wallErase, '벽 타일: 벽이 있는 칸에 붙이고 떼기(반값 환불)');
   check(r.wallCard, '벽 타일: 땅 카드에서 윗면·옆면을 바꿔 고름');
-  check(r.extCost && r.extWall && r.extUndo, '벽 타일: 이어 지으면 높이·윗면·옆면이 함께 이어지고 한 번에 되돌려짐');
+  check(r.extCost && r.extWall && r.extUndo, '지형 도구 없음: 땅 높이기·낮추기·경사로·물 채우기/빼기 단추와 이어 짓기가 없고 도구는 건축 목록에서 빠짐');
   check(r.wallKeep, '벽 타일: 경사로 세모 옆면·파인 칸에도 붙고, 물을 채워도 남음');
   check(errs.length === 0, '지하·물: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -1150,6 +1146,8 @@ async function entranceChecks(browser, url) {
   const r = await page.evaluate(() => {
     const o = {}; window.__ct.init(); S.dlg = null; S.unlockAll = false; S.lvl = 1; S.money = 20000; recalc();
     const mn = S.buildings.find(x => x.def === 'main');
+    // 시작 지도는 평지: 땅 높이·경사·물이 없다 (지형 시스템은 남아 있고 시작 지도로만 정해진다)
+    o.flatStart = START_TERRAIN === 'flat' && Object.keys(S.hgt).length === 0 && Object.keys(S.slp).length === 0 && Object.keys(S.water).length === 0 && typeof terApply === 'function' && typeof startTerrain === 'function';
     o.mainStrong = bCapK(mn) === MAIN_K && bPerf(mn) > bPerf({ def: 'room', lv: 1, id: 0, x: 0, y: 0 }) * 1.5 && bCap(mn) > bCap({ def: 'room', lv: 1, id: 0, x: 0, y: 0, face: 2 }) * 1.5;
     const cats = ['worship', 'fellow', 'shop', 'care', 'comfort', 'club', 'park'];
     o.tier1 = cats.every(c => DEFS.some(d => d.cat === c && !d.retired && !d.hidden && d.tier !== 2 && !isLocked(d.id))) && !isLocked('shop') && !isLocked('room') && !isLocked('cell') && !isLocked('wc');
@@ -1205,6 +1203,7 @@ async function entranceChecks(browser, url) {
     S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
     o.bcost = bc.length === 2 && bc.every(t => /만/.test(t));
     return o; });
+  check(r.flatStart, '시작 지도: 평지로 시작 (땅 높이·경사·물 없음), 지형 시스템 함수는 그대로');
   check(r.mainStrong, '대예배당: 같은 예배당보다 성능·정원이 크게(MAIN_K) 시작');
   check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
   check(r.enter0 && r.up && r.style && r.poor, '교회 입구: 기본 Lv 1, 레벨을 올리면 방문자 증가, 모양은 사서 끼움, 자금 부족이면 안 됨');
@@ -1534,11 +1533,10 @@ async function deckChecks(browser, url) {
     o.fchain = o.fchain && S.money === m4 - (D.f_wood.cost - Math.floor(D.f_block.cost * .5));
     endPlace(); UI.fold = true;
     const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && S.money - m3 === Math.floor(D.f_wood.cost * .5);
-    // 빈 땅을 누르면 바닥·땅 높이기·경사로 카드, 높이기를 누르면 바로 한 층
+    // 빈 땅을 누르면 바닥 깔기 카드만 (땅 높이기·경사로 없음)
     closeSelCard(); const em = rotPt(6.5, 2.5), eq = toScreen(em[0], em[1], 0); onTap(eq[0], eq[1]);
-    const gcard = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="gter"]') && !!document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
-    document.querySelector('#selCard [data-act="gter"]').click();
-    o.gcard = gcard && th(6, 2) === 1;
+    const gcard = !document.getElementById('selCard').hidden && !document.querySelector('#selCard [data-act="gter"]') && !document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
+    o.gcard = gcard && th(6, 2) === 0;   // 땅 높이기·경사로 단추가 없다
     // 카드가 열린 채 빈 땅을 누르면 닫기만 한다
     const om = rotPt(9.5, 2.5), oq = toScreen(om[0], om[1], 0); onTap(oq[0], oq[1]); o.gclose = document.getElementById('selCard').hidden;
     document.querySelector('#selCard') && closeSelCard();
@@ -1564,7 +1562,7 @@ async function deckChecks(browser, url) {
   check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (걷어낸 반값을 뺀 값)');
   check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(걷어낸 반값을 뺀 값) 걷어낼 수 있음');
   check(r.order, '건축 목록: 지금 지을 수 있는 것부터 싼 순서로');
-  check(r.gcard && r.gclose, '빈 땅: 누르면 바닥·땅 높이기·경사로 카드, 카드가 열려 있으면 닫기만');
+  check(r.gcard && r.gclose, '빈 땅: 누르면 바닥 깔기 카드(땅 높이기·경사로 없음), 카드가 열려 있으면 닫기만');
   check(r.novel && r.wander, '방문자: 새 건물에 끌리고, 발길이 적은 바닥으로 둘러봄');
   check(errs.length === 0, '데크: 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -1898,39 +1896,20 @@ async function earlyChecks(browser, url) {
         S.il = {}; S.qxp = 0; recalc(); indTick(true); }
       // 주마다 심방 활동은 식는다
       S.tv = 10; S.t = WEEK - 0.05; S.open = true; update(0.1); ni.decay = Math.abs(S.tv - 10 * TRUST_VIS_DECAY) < 0.5 || S.tv < 10; }
-    // 길과 지형은 한 분류, 지형을 지을 때 안내 글 띠가 없음
-    { const pb = document.getElementById('pbar'); UI.tab = 'build'; UI.fold = false; startPlace('ter_ramp'); renderPbar(); const rampHid = pb.hidden; startPlace('ter_set'); renderPbar();
-      o.land = !CATS.some(c => c[0] === 'land') && CATS.some(c => c[0] === 'path' && c[1] === '길·지형') && D.ter_ramp.cat === 'path' && D.ter_set.cat === 'path' && rampHid && pb.hidden; syncPlace(); const t0 = UI.tlv; document.querySelector('#place [data-pl="up"]').click(); o.land = o.land && UI.tlv === t0 + 1 && /높이/.test(document.querySelector('#place .ppr').textContent); endPlace(); }
-    // 고른 칸에서 이어 짓기: 화살표·▲▼가 뜨고, 옆 화살표 → ✓로 같은 높이·같은 바닥이 이어짐, 건물 칸·더 높은 칸은 막음, 되돌리기는 한 묶음
+    // 건축 분류 '길·계단': 땅 높이·흙 경사로 도구는 목록에 없다 (지형은 시작 지도로만 정해진다)
+    { UI.tab = 'build'; UI.fold = false; UI.cat = 'path'; UI.bstep = 'items'; renderBuild(); const pc = [...document.querySelectorAll('#cards [data-v]')].map(c => c.dataset.v); closeDock();
+      o.land = !CATS.some(c => c[0] === 'land') && CATS.some(c => c[0] === 'path' && c[1] === '길·계단') && !pc.includes('ter_set') && !pc.includes('ter_ramp') && pc.includes('path') && !build('ter_set', 5, 5, 2) && !build('ter_ramp', 5, 5, 2); }
+    // 고른 바닥 칸에는 이어 짓기 화살표·▲▼가 없고(땅 높이기·경사로 없음), 길 조각을 고르면 화살표로 같은 종류를 이어 짓고 ▲로 오르막
     { let sp = null; for (let y = 4; y < PZ - 8 && !sp; y++)for (let x = 4; x < COLS - 8 && !sp; x++) { let ok = true; for (let j = -1; j <= 5 && ok; j++)for (let i = -1; i <= 5 && ok; i++)if (occ[y + j][x + i] || S.floor[(x + i) + ',' + (y + j)] || th(x + i, y + j)) ok = false; if (ok) sp = { x, y }; }
-      S.money = 50000; UI.undo = []; terApply(sp.x, sp.y, 'ter_set', 2); paintFloor(sp.x, sp.y, 'f_gravel', 0); UI.undo = [];
+      S.money = 50000; UI.undo = []; paintFloor(sp.x, sp.y, 'f_gravel', 0); UI.undo = [];
       UI.tool = null; UI.fold = true; UI.sel = null; UI.selPiece = null; UI.selFloor = { x: sp.x, y: sp.y }; renderDetail(); syncPlace();
       const root = document.getElementById('place'), vis = q => [...root.querySelectorAll(q)].filter(e => !e.hidden).length;
-      const shown = !root.hidden && vis('.parr:not(.pv)') === 4 && vis('.pv') === 2 && vis('[data-pl="ok"]') === 0;
-      // ▲: 이 칸을 바로 한 층 높임
-      root.querySelector('[data-pl="up"]').click(); const raised = th(sp.x, sp.y) === 3 && S.floor[sp.x + ',' + sp.y] === 'f_gravel';
-      // 옆 화살표(방향 0) → 미리보기 → ✓ 두 번
-      root.querySelector('.parr[data-v="0"]').click(); syncPlace();
-      const nx = sp.x + DIRS[0][0], ny = sp.y + DIRS[0][1], n2x = nx + DIRS[0][0], n2y = ny + DIRS[0][1];
-      const started = isPlacing() && UI.tool === 'ter_set' && UI.ghost.x === nx && UI.ghost.y === ny && UI.tlv === 3 && /높이 3/.test(root.querySelector('.ppr').textContent);
-      const m0 = S.money; plLock = 0; plOk(); const cost1 = m0 - S.money; plLock = 0; plOk();
-      const ext = th(nx, ny) === 3 && S.floor[nx + ',' + ny] === 'f_gravel' && th(n2x, n2y) === 3 && S.floor[n2x + ',' + n2y] === 'f_gravel' && cost1 === 3 * TER_UP + D.f_gravel.cost;
-      // 되돌리기 한 번에 마지막 칸의 높이와 바닥이 함께 돌아옴
-      terUndoLast(); const undone = th(n2x, n2y) === 0 && !S.floor[n2x + ',' + n2y] && th(nx, ny) === 3;
-      // 건물 칸과 더 높은 칸은 막음
-      const g = UI.ghost; build('tree', g.x, g.y, 2); recalc(); const blockB = /건물/.test(cellWhy(g.x, g.y, 'ter_set'));
-      const hx = sp.x, hy = sp.y + 3; UI.ext = false; const keepU = UI.undo; UI.undo = []; terApply(hx, hy, 'ter_set', 6); UI.undo = keepU; UI.ext = true; const blockH = /더 높아요/.test(cellWhy(hx, hy, 'ter_set'));
-      endPlace();
-      // 경사로: 고르면 경사면에 맞는 표시가 그려지고, 오르는 쪽 화살표 → ✓로 한 층 위 경사로가 이어짐
-      const rx = sp.x + 2, ry = sp.y + 5; UI.undo = []; const rw = terApply(rx, ry, 'ter_ramp', 0, 0); UI.undo = [];
-      UI.tool = null; UI.fold = true; UI.selFloor = { x: rx, y: ry }; renderDetail(); syncPlace(); draw();
-      root.querySelector('.parr[data-v="0"]').click(); const rnx = rx + DIRS[0][0], rny = ry + DIRS[0][1];
-      const rstart = UI.tool === 'ter_ramp' && UI.rdir === 0 && UI.tlv === 1 && UI.ghost.x === rnx; plLock = 0; plOk();
-      const ramp = !rw && rstart && tslope(rnx, rny) === 0 && th(rnx, rny) === 1 && UI.tlv === 2; endPlace();
-      // 길 조각: 화살표로 같은 종류를 이어 짓기 시작, ▲로 오르막
+      const none = root.hidden || (vis('.parr:not(.pv)') === 0 && vis('.pv') === 0);
+      UI.selFloor = null;
       S.paths.push({ id: 9998, x: sp.x + 5, y: sp.y + 8, l: 0, s: 0, d: 0, k: 'wood' }); recalc(); UI.tool = null; UI.fold = true; UI.selFloor = null; UI.selPiece = 9998; renderDetail(); syncPlace();
+      const shown = !root.hidden && vis('.parr:not(.pv)') === 4 && vis('.pv') === 2;
       root.querySelector('[data-pl="up"]').click(); const pth = UI.tool === 'path' && UI.pc.k === 'wood' && UI.pc.slope === 1 && UI.pc.x === sp.x + 5 + DIRS[0][0]; endPlace(); UI.selPiece = null; S.paths = S.paths.filter(q => q.id !== 9998); recalc();
-      o.ext = shown && raised && started && ext && undone && blockB && blockH && ramp && pth; o.extd = JSON.stringify({ shown, raised, started, ext, undone, blockB, blockH, ramp, pth, cost1, rw }); }
+      o.ext = none && shown && pth; o.extd = JSON.stringify({ none, shown, pth }); }
     // 고른 바닥 칸·길 조각에 노란 표시: 고르기 전후로 그 칸 둘레 화면이 달라진다
     { const cv = document.getElementById('cv'), g = cv.getContext('2d'); const k = Object.keys(S.floor)[3].split(',').map(Number);
       const grab = () => { draw(); const r = rotPt(k[0] + .5, k[1] + .5), q = toScreen(r[0], r[1], 0), d = window.devicePixelRatio || 1; return Array.from(g.getImageData(Math.round(q[0] * d) - 6, Math.round(q[1] * d) - 3, 12, 6).data).join(','); };
@@ -1941,9 +1920,9 @@ async function earlyChecks(browser, url) {
       o.selHi = a !== b && c0 !== c1; }
     return o;
   });
-  check(r.ext, '이어 짓기: 고른 칸 둘레 화살표·▲▼, 옆 화살표 → ✓로 같은 높이·바닥·경사로·길이 이어지고, 건물 칸·더 높은 칸은 막음 (' + r.extd + ')');
+  check(r.ext, '이어 짓기: 고른 바닥 칸에는 화살표·▲▼가 없고, 길 조각을 고르면 화살표로 이어 짓고 ▲로 오르막 (' + r.extd + ')');
   check(r.selHi, '고른 바닥 칸·길 조각: 지도에 노란 반투명 표시가 그려짐');
-  check(r.land, '길·지형: 한 분류로 합쳐지고, 지형을 지을 때 띠 없이 지도 위 ▲▼와 ✓ 옆 높이 글씨만');
+  check(r.land, '길·계단: 한 분류, 땅 높이·흙 경사로 도구는 건축 목록에 없고 지을 수 없음');
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
   check(r.fixdoor, '문: 문 앞에 길이 없으면 카드에 이유와 길 잇기, 이으면 이용');
   { const nt = (r.ni && r.ni.nt) || r.nt || {};

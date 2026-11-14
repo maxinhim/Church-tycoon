@@ -12,7 +12,7 @@ function isPlacing(){return !UI.fold&&UI.tab==='build'&&!!UI.tool&&UI.tool!=='de
 function placeKind(){
   if(!isPlacing())return '';
   if(UI.tool==='path')return 'path';
-  if(isFloorDef(UI.tool)||isTerDef(UI.tool))return 'floor';
+  if(isFloorDef(UI.tool))return 'floor';
   return D[UI.tool]?'bld':'';
 }
 /* 화살표의 뜻 (arrowMode)
@@ -78,7 +78,7 @@ function placeWhy(d,x,y,face){
 }
 function startPlace(id){
   UI.bstep='items';if(UI.cat)(UI.lastPick||(UI.lastPick={}))[UI.cat]=id;
-  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;UI.faceHand=false;
+  UI.pbarOpen=false;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;UI.faceHand=false;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
@@ -88,7 +88,7 @@ function startPlace(id){
     // 화면 가운데가 막혀 있으면 가장 가까운 빈자리에서 시작
     var d=D[id];
     // 사람이 다니는 바닥 위도 피한다 (그대로 ✓를 누르면 길이 끊기므로). 끌어서 바닥 위에 놓는 것은 막지 않는다
-    if(!isFloorDef(id)&&!isTerDef(id)&&(!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)||onFloorAt(d,UI.ghost.x,UI.ghost.y,UI.face))){
+    if(!isFloorDef(id)&&(!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)||onFloorAt(d,UI.ghost.x,UI.ghost.y,UI.face))){
       var nf=plNear(d,UI.ghost.x,UI.ghost.y,10,true)||plNear(d,UI.ghost.x,UI.ghost.y,8);if(nf){UI.ghost.x=nf.x;UI.ghost.y=nf.y;}}
     plAutoFace();
   }
@@ -104,7 +104,7 @@ function plBox(){
   var k=placeKind(),x,y,w,h,z0,H;
   if(k==='bld'){if(!UI.ghost)return null;var dm=faceDims(D[UI.tool],UI.face);x=UI.ghost.x;y=UI.ghost.y;w=dm.w;h=dm.h;z0=plLevelZ(D[UI.tool],x,y,UI.face);H=heightOf(UI.tool);}
   else if(k==='path'){var c=UI.pc;if(!c||c.x==null)return null;x=c.x;y=c.y;w=1;h=1;z0=c.l*LV;H=.35;}
-  else if(k==='floor'){if(!UI.ghost)return null;x=UI.ghost.x;y=UI.ghost.y;w=1;h=1;z0=ghostZ();H=.1;if(isTerDef(UI.tool)&&UI.tool==='ter_set')H=Math.max(.1,UI.tlv*LV-z0);}
+  else if(k==='floor'){if(!UI.ghost)return null;x=UI.ghost.x;y=UI.ghost.y;w=1;h=1;z0=ghostZ();H=.1;}
   else{var st=selTarget();if(!st)return null;x=st.x;y=st.y;w=1;h=1;z0=st.z;H=st.H;}
   var L=1e9,R=-1e9,T=1e9,B=-1e9;
   [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(function(p){[z0,z0+H].forEach(function(z){var q=plScr(p[0],p[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
@@ -126,8 +126,7 @@ function plBox(){
 function selTarget(){
   if(isPlacing()||!selCardOn()||UI.sel)return null;
   if(UI.selPiece){var p=pieceById(UI.selPiece);return p?{x:p.x,y:p.y,z:p.l*LV,H:p.s?LV:.2,p:p}:null;}
-  var f=UI.selFloor;if(!f||f.pid||isWater(f.x,f.y))return null;
-  return {x:f.x,y:f.y,z:th(f.x,f.y)*LV,H:isRamp(f.x,f.y)?LV:.1};
+  return null;   // 빈 땅·바닥 칸에는 이어 짓기 화살표가 없다 (땅 높이기·경사로 이어 짓기는 없어졌다)
 }
 function extStart(id){UI.tab='build';UI.fold=false;UI.cat='path';UI.sel=null;UI.selPiece=null;UI.selFloor=null;startPlace(id);}
 function selExtend(d){
@@ -137,82 +136,16 @@ function selExtend(d){
     var pl=portLevel(t.p,d);if(pl===NOPORT){toast('계단 옆으로는 이을 수 없어요',1400);return;}
     var k=t.p.k;extStart('path');var c=UI.pc;c.k=k;c.dir=d;c.x=nx;c.y=ny;c.l=pl;c.slope=0;c.hist=[];renderDetail();return;
   }
-  if(nx<0||ny<0||nx>=COLS||ny>=PZ){toast('부지 밖이에요',1200);return;}
-  var h=th(t.x,t.y),rd=tslope(t.x,t.y),cur=floorSlot(t.x,t.y,0);cur=cur&&cur.get();
-  if(rd>=0){
-    var nl=h+(d===rd?1:d===OPP[rd]?-1:0);if(nl<MINH){toast('더 내려갈 수 없어요',1200);return;}
-    extStart('ter_ramp');UI.ext=true;UI.rdir=rd;UI.tlv=nl;
-  }else{extStart('ter_set');UI.ext=true;UI.tlv=h;UI.tfloor=cur||null;}
-  // 벽 타일도 함께 이어진다
-  UI.twall=wallId(t.x,t.y);
-  UI.fdir=d;UI.ghost={x:nx,y:ny};UI.flast={x:t.x,y:t.y};renderDetail();
 }
 // ▲▼ (v = +1 / -1)
 function plVert(v){
   var k=placeKind();
   if(k==='path'){var c=UI.pc;c.slope=c.slope===v?0:v;renderDetail();return;}
-  if(k==='floor'&&isTerDef(UI.tool)){UI.tlv=clamp(UI.tlv+v,MINH,MAXH-1);renderDetail();return;}
   var t=selTarget();if(!t)return;
   if(t.p){
     var p=t.p,d=p.d==null?UI.fdir:p.d,pl=portLevel(p,d);if(pl===NOPORT)return;
     var kk=p.k;extStart('path');var c2=UI.pc;c2.k=kk;c2.dir=d;c2.x=p.x+DIRS[d][0];c2.y=p.y+DIRS[d][1];c2.l=pl;c2.slope=v;c2.hist=[];renderDetail();return;
   }
-  var h=th(t.x,t.y),rd=tslope(t.x,t.y),m0=S.money,keep=UI.undo;UI.undo=[];
-  var w=rd>=0?rampAt(t.x,t.y,h+v,rd):terApply(t.x,t.y,'ter_set',h+v);
-  UI.undo=keep;
-  if(w){toast(w,1600);sfx('error',.4);}else{sfx('place',.6);toast('땅 '+lvName(h+v)+' · '+fmt(m0-S.money),1100);}
-  renderDetail();hud(true);
-}
-// (x,y)를 base 높이의 dir 방향 경사로로 만든다 (필요하면 먼저 높이를 맞춘다). 실패하면 아무것도 바꾸지 않는다
-function rampAt(x,y,base,dir){
-  if(base<MINH)return '더 내려갈 수 없어요';
-  if(base>MAXH-2)return '더 높이는 만들 수 없어요';
-  var n0=UI.undo?UI.undo.length:0,did=false;
-  if(th(x,y)!==base||isRamp(x,y)){var w=terApply(x,y,'ter_set',base);if(w&&w!=='이미 그 높이예요')return w;did=!w;}
-  var w2=terApply(x,y,'ter_ramp',0,dir);
-  if(w2&&did){var u=UI.undo&&UI.undo.length>n0?UI.undo.pop():null;if(u)terUndo(u);}
-  return w2;
-}
-// 이어 짓기에서 이 칸에 무엇이 바뀌고 얼마가 드는지 (매 프레임 부르므로 가볍게)
-function extPlan(x,y){
-  var zw=terZoneWhy(x,y);if(zw)return {why:zw};
-  if(occ[y][x])return {why:'건물이 있는 칸이에요'};
-  var h=th(x,y);
-  if(UI.rdir!=null){
-    if(UI.tlv<MINH)return {why:'더 내려갈 수 없어요'};
-    if(tslope(x,y)===UI.rdir&&h===UI.tlv)return {why:'이미 같은 경사로예요'};
-    var c0=0;if(h!==UI.tlv||isRamp(x,y)){var sp=terPlan(x,y,'ter_set',UI.tlv);if(sp.why&&sp.why!=='이미 그 높이예요')return {why:sp.why};c0=sp.cost||0;}
-    return {cost:c0+TER_RAMP+(UI.twall&&wallId(x,y)!==UI.twall?floorSwapCost(wallId(x,y),UI.twall):0)};
-  }
-  if(h>UI.tlv)return {why:'이 칸이 더 높아요. 낮추려면 그 칸을 골라 ▼를 누르세요'};
-  var cost=0,ch=false;
-  if(h!==UI.tlv||isRamp(x,y)){var p=terPlan(x,y,'ter_set',UI.tlv);if(p.why)return {why:p.why};cost+=p.cost;ch=true;}
-  if(UI.tfloor){var sl=floorSlot(x,y,0),cur=sl&&sl.get();if(sl&&!sl.busy&&cur!==UI.tfloor){cost+=floorSwapCost(cur,UI.tfloor);ch=true;}}
-  if(UI.twall&&wallId(x,y)!==UI.twall){cost+=floorSwapCost(wallId(x,y),UI.twall);ch=true;}
-  return ch?{cost:cost}:{why:'이미 같은 높이·바닥이에요'};
-}
-function extApply(x,y){
-  var pl=extPlan(x,y);if(pl.why)return pl.why;
-  if(S.money<pl.cost)return '자금이 부족해요';
-  var n0=UI.undo.length,w='';
-  if(UI.rdir!=null)w=rampAt(x,y,UI.tlv,UI.rdir);
-  else{
-    if(th(x,y)!==UI.tlv||isRamp(x,y))w=terApply(x,y,'ter_set',UI.tlv);
-    if(!w&&UI.tfloor){var fw=paintFloor(x,y,UI.tfloor,0);if(fw&&fw!=='이미 같은 바닥이에요'&&UI.undo.length===n0)w=fw;}
-  }
-  if(!w&&UI.twall&&wallId(x,y)!==UI.twall)wallSwap(x,y,UI.twall);
-  // 한 번의 ✓로 생긴 되돌리기는 한 묶음으로
-  var g=++extSeq;for(var i=n0;i<UI.undo.length;i++)UI.undo[i].g=g;
-  return w;
-}
-var extSeq=0;
-// 지형 되돌리기: 마지막 ✓에서 바뀐 것(땅 높이·경사·바닥)을 한꺼번에
-function terUndoLast(){
-  var u=UI.undo[UI.undo.length-1];if(!u)return false;
-  var g=u.g;
-  do{var t=UI.undo[UI.undo.length-1];if(t.ter){UI.undo.pop();terUndo(t);}else if(t.wall){UI.undo.pop();wallUndo(t);}else floorUndo();}
-  while(g&&UI.undo.length&&UI.undo[UI.undo.length-1].g===g);
-  return true;
 }
 function ghostHit(px,py){
   if(placeKind()!=='bld')return false;
@@ -238,7 +171,7 @@ function syncPlace(){
     el.setAttribute('aria-label',(line?'짓는 방향 ':'바라보는 방향 ')+PL_DIRNAME[worldToScreenDir(a.d)]);
   });
   // ▲▼: 화살표들 오른쪽에 위아래로. 고른 칸, 땅 높이, 경사로 이어 짓기, 길에서만
-  var terT=k==='floor'&&isTerDef(UI.tool),vOn=selM||k==='path'||(terT&&(UI.tool==='ter_set'||UI.rdir!=null));
+  var vOn=selM||k==='path';   // ▲▼는 길·계단 이어 짓기에서만
   // 오른쪽에 자리가 모자라면 왼쪽에 둔다
   var maxX=-1e9,minX=1e9;bx.arr.forEach(function(a){maxX=Math.max(maxX,a.x);minX=Math.min(minX,a.x);});
   var vx=maxX+38>vw-26?minX-38:maxX+38;
@@ -246,7 +179,7 @@ function syncPlace(){
     var el=root.querySelector('[data-pl="'+n+'"]');el.hidden=!vOn;if(!vOn)return;
     plMove(el,cl(vx,20,vw-20),cl((minY+maxY)/2+(i?19:-19),20,vh-20),32);
     var on=k==='path'&&UI.pc.slope===(i?-1:1);el.classList.toggle('on',on);
-    el.setAttribute('aria-label',k==='path'?(i?'내리막':'오르막'):(selM?(i?'이 칸 한 층 낮추기':'이 칸 한 층 높이기'):(i?'지을 높이 한 층 낮게':'지을 높이 한 층 높게')));
+    el.setAttribute('aria-label',i?'내리막':'오르막');
   });
   if(selM){root.querySelectorAll('[data-pl="ok"],[data-pl="no"],[data-pl="undo"]').forEach(function(e){e.hidden=true;});root.querySelector('.ppr').hidden=true;return;}
   root.querySelector('[data-pl="ok"]').hidden=false;root.querySelector('[data-pl="no"]').hidden=false;
@@ -264,16 +197,10 @@ function syncPlace(){
   // 못 지을 때도 누를 수는 있게 두고(회색), 누르면 이유를 알려 준다
   ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
   // 바닥 타일: ✓ 왼쪽에 한 칸 값(바꾸면 바꾸는 값)
-  var pr=root.querySelector('.ppr'),fc=tf?floorCostAt():(terT?terCostAt():null);pr.hidden=fc==null;
+  var pr=root.querySelector('.ppr'),fc=tf?floorCostAt():null;pr.hidden=fc==null;
   if(fc!=null){var t=fc.pre!=null?[fc.pre,fc.none?'':fmtS(fc.c)].filter(Boolean).join(' · '):(fc.swap?'바꾸기 ':'')+(fc.c<0?'+':'')+fmtS(Math.abs(fc.c));pr.hidden=!t;if(pr.textContent!==t)pr.textContent=t;pr.classList.toggle('off',!can);
     pr.style.transform='translate('+Math.round(Math.max(60,cl(mid-half,22,vw-22)-23))+'px,'+Math.round(cl(top,22,vh-22))+'px) translate(-100%,-50%)';}
   ok.setAttribute('aria-label',fc!=null?(can?(fc.swap?'바꾸기':'깔기')+' '+fmtS(Math.abs(fc.c))+', 다음 칸으로':'여기에는 깔 수 없어요'):line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmtS(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
-}
-// 지형 미리보기 칸을 바꾸는 값 (이어 짓기면 높이 + 바닥). 못 바꾸는 칸이면 값 없음. 땅 높이는 지을 높이도 함께 보여 준다
-function terCostAt(){
-  var g=UI.ghost;if(!g)return null;
-  var p=UI.ext?extPlan(g.x,g.y):terPlan(g.x,g.y,UI.tool,UI.tlv,UI.fdir),lv=UI.tool==='ter_set'||UI.rdir!=null?lvName(UI.tlv):'';
-  return {c:p.why?0:p.cost,swap:false,pre:lv,none:!!p.why};
 }
 // 미리보기 칸에 바닥을 깔거나 바꿀 때 드는 값
 function floorCostAt(){
@@ -409,11 +336,10 @@ function plOk0(){
   if(k==='path'){UI.pbarOpen=false;var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
   // 바닥: 이 칸을 칠하고 화살표 방향으로 한 칸 나아간다
   if(k==='floor'){
-    var ter=isTerDef(UI.tool),g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':(ter?(UI.ext?extApply(g0.x,g0.y):terApply(g0.x,g0.y,UI.tool,UI.tlv,UI.fdir)):paintFloor(g0.x,g0.y,UI.tool,g0.pid));
+    var g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':paintFloor(g0.x,g0.y,UI.tool,g0.pid);
     if(fw){toast(fw,1400);sfx('error',.4);return;}
-    plLock=now+150;plBuzz();sfx(ter?'place':'floor',.45,90);
+    plLock=now+150;plBuzz();sfx('floor',.45,90);
     UI.flast={x:g0.x,y:g0.y,pid:g0.pid};floorStep(g0,UI.fdir);
-    if(ter&&UI.rdir!=null)UI.tlv=clamp(UI.tlv+(UI.fdir===UI.rdir?1:UI.fdir===OPP[UI.rdir]?-1:0),MINH-1,MAXH-1);
     renderDetail();hud(true);return;
   }
   if(k!=='bld'||!UI.ghost)return;
@@ -473,7 +399,7 @@ function unbuild(u){
   return true;
 }
 // 바닥 타일 깔기: 아래 띠 없이 지도 위 ✓·✕·화살표와 ✓ 옆 값 표시만 쓴다
-function isTileFloor(){return placeKind()==='floor'&&!isTerDef(UI.tool);}
+function isTileFloor(){return placeKind()==='floor';}
 function renderPbar(){
   var el=$('#pbar');if(!el)return;
   var k=placeKind();el.hidden=!k||k==='bld'||isTileFloor();if(el.hidden){plHtml='';syncPlace();return;}
@@ -491,10 +417,6 @@ function renderPbar(){
       segBtns('pkind',c.k,[['stone','돌'],['wood','나무'],['brick','벽돌'],['marble','대리석'],['steel','철'],['arch','아치 다리']])+
       '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=MINH?' disabled':'')+'>▼</button><span class="lvl">'+lv+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
       (c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+'<button class="btn" data-act="pbar" aria-label="접기">⌃</button></div>';
-  }else if(isTerDef(UI.tool)){
-    // 지형은 띠 없이: 지도 위 화살표·▲▼·✓와 ✓ 옆 글씨(높이·값)만 (못 짓는 칸은 ✓를 누르면 이유)
-    h='';
-    if(!h){el.hidden=true;plHtml='';syncPlace();return;}
   }else{
     var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool,UI.ghost.pid):'';
     var fsl=UI.ghost&&floorSlot(UI.ghost.x,UI.ghost.y,UI.ghost.pid),fpv=fsl&&fsl.get(),fnc=fpv&&fpv!==UI.tool&&d.cost?floorSwapCost(fpv,UI.tool):null;
@@ -502,7 +424,7 @@ function renderPbar(){
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)
   if(h!==plHtml){el.innerHTML=h;plHtml=h;}
-  el.className='glass'+(k==='path'&&UI.pbarOpen?' wide':'')+(k==='path'&&!UI.pbarOpen||isTerDef(UI.tool)?' mini':'');
+  el.className='glass'+(k==='path'&&UI.pbarOpen?' wide':'')+(k==='path'&&!UI.pbarOpen?' mini':'');
   syncPlace();
 }
 function setupPlace(){
