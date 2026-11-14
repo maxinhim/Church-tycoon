@@ -147,8 +147,16 @@ function drawMarkers(c){
   S.buildings.forEach(function(b){
     if(b.id===mv)return;
     var bad=needsDoor(b)&&!usable(b),nom=!bad&&!staffed(b);
+    var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),zt=bLevel(b)*LV+bHeight(b);
+    // 건물 위 레벨 아이콘: 별과 레벨 (건물을 먼저 그린 뒤 맨 위에)
+    if(hasLv(b)&&!defOf(b).cell&&s>.3){
+      var lq=P(m[0],m[1],zt+.22),fs=Math.max(8,8.5*s),txt=String(bLv(b));
+      c.font='800 '+fs+'px sans-serif';var tw=c.measureText(txt).width,pw=tw+fs*1.5,ph=fs*1.45;
+      c.fillStyle='rgba(32,44,70,.88)';c.strokeStyle='#fff';c.lineWidth=1.2;c.beginPath();if(c.roundRect)c.roundRect(lq[0]-pw/2,lq[1]-ph/2,pw,ph,ph/2);else c.rect(lq[0]-pw/2,lq[1]-ph/2,pw,ph);c.fill();c.stroke();
+      c.textBaseline='middle';c.textAlign='left';c.fillStyle='#ffd23f';c.fillText('★',lq[0]-pw/2+fs*.32,lq[1]+.5);c.fillStyle='#fff';c.textAlign='right';c.fillText(txt,lq[0]+pw/2-fs*.38,lq[1]+.5);
+    }
     if(!bad&&!nom)return;
-    var dm=bDims(b),m=rotPt(b.x+dm.w/2,b.y+dm.h/2),q=P(m[0],m[1],bLevel(b)*LV+bHeight(b)+.35);
+    var q=P(m[0],m[1],zt+.8);
     // 관리자가 없는 건물: 주황 동그라미에 사람 표시
     if(nom){c.fillStyle='#e08a1e';c.strokeStyle='#fff';c.lineWidth=1.5;c.beginPath();c.arc(q[0],q[1],7.5*s,0,6.283);c.fill();c.stroke();
       c.fillStyle='#fff';c.beginPath();c.arc(q[0],q[1]-2.2*s,2.3*s,0,6.283);c.fill();c.beginPath();c.arc(q[0],q[1]+4.6*s,4.2*s,3.4,6.02);c.fill();return;}

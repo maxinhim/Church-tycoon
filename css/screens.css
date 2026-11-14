@@ -293,3 +293,8 @@
 .enti{font-size:26px;line-height:1}
 .banp{display:block;width:100%;border-radius:8px;background:var(--c);color:#fff;font-weight:700;font-size:12px;padding:8px 6px;box-shadow:0 2px 0 rgba(0,0,0,.2)}
 #gatePop .btn{padding:0 10px}
+
+/* 일괄 심방·선물 아이콘 옆 비용 (할 수 있는 사람 수 × 값, 없으면 한 명 값) */
+.sbulk .bgp{display:inline-flex;align-items:center;gap:3px}
+.bcost{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bcost.on{color:#8a5a00;font-weight:700}

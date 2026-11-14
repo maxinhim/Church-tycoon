@@ -166,8 +166,14 @@ var BATCH_PATIENCE=60;   // 일괄 가동 건물 안에서 정원이 차기를 �
 var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 정원 × BATCH_CAP0 × 레벨 배율 (작게 모여 자주 가동, 레벨이 오를수록 크게)
 var BATCH_SUN_WAIT=3;    // 주일에는 (금·토에 가동하지 않았으면) 모인 사람이 이만큼 기다리면 다시 가동한다
 var SINGLE_ROT=1;        // 한 명씩 건물(매장·편의) Lv 1 회전 시간 배율
-var BLV_MAX=10,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=2,BLV_INVEST=.12,BLV_INVEST_UP=.35;
-var TIER2_K=2.1,TIER1_MAX=1,TIER1_MAX_OPEN=3;
+/* 레벨은 100까지. 효과·정원·회전은 Lv 10까지는 레벨마다 BLV_FX·BLV_CAP·BLV_ROT씩 오르고, 그 뒤로는 오르는 폭이 BLV_TAIL배로 느려진다(lvM).
+   투자 한 번 = 한 레벨(BLV_XP=1), 값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)): Lv 10까지 건물 값의 약 7배, Lv 100까지 약 370배.
+   모습은 3단계: Lv BLV_STAGE[0] 이하 천막, BLV_STAGE[1] 이하 보통, 그 위 큰 시설 */
+var BLV_MAX=100,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=1,BLV_INVEST=.55,BLV_INVEST_UP=.12,BLV_TAIL=.25,BLV_STAGE=[5,20];
+/* 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 12쯤), 값은 티어 1 Lv 10 누적 투자 × TIER2_COST_K만큼 더 (TIER2_INV_LV까지의 투자).
+   값싼 티어 1 여러 개(TIER1_MAX개, 상위가 열리면 TIER1_MAX_OPEN개까지)와 비싼 티어 2 하나 사이: 티어 1은 같은 값에 성능이 더 나오지만 땅·운영비·관리자가 개수만큼 들고,
+   티어 2는 한 칸에 모아 레벨 한도 없이 크게 키운다 */
+var TIER2_K=3.2,TIER2_COST_K=.5,TIER2_INV_LV=10,TIER1_MAX=4,TIER1_MAX_OPEN=6;
 // 같은 기능의 [티어 1, 티어 2]
 var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
 // 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)

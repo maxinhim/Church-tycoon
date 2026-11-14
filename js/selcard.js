@@ -40,6 +40,7 @@ function renderSelCard(){
       var iw=investWhy(b);
       h+='<div class="sclv"><span class="bar"><i style="width:'+Math.round((b.bx||0)/BLV_XP*100)+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
       row+=scBtn('invest','투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
+      if(bLv(b)<BLV_MAX-1)row+=scBtn('invest10','×10',iw?'':'',null,'자금이 되는 만큼 최대 10레벨 투자');
     }
     if(mr&&!S.freeMgr)row+=scBtn('mgr',mw?'👤 관리자':'👤 관리자 필요',mw?'':'pri',null,mw?'관리자 바꾸기':'관리자 배치·청빙');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');

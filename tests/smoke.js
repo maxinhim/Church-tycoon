@@ -1167,10 +1167,25 @@ async function entranceChecks(browser, url) {
     document.querySelector('#scrTabs [data-v="ban"]').click(); o.tabBan = document.querySelectorAll('#scrBody .entc').length === ENT_BANNERS.length;
     document.querySelector('#scrBody [data-act="entban"]').click(); o.clickBan = S.entr.ban === 0 || S.entr.ban === 1;
     closeScreen(); S.entr.ban = 2; draw(); S.entr.st = 'garden'; draw(); S.entr.st = 'basic'; draw(); o.draw = true;
+    // 길 옆에 놓으면 정면이 길 쪽을 향한다 (직접 돌렸으면 그대로, 길이 없으면 그대로)
+    S.unlockAll = true; S.money = 99999; UI.tab = 'build'; UI.fold = false; startPlace('cell');
+    UI.faceHand = false; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fW = UI.face;
+    UI.faceHand = false; UI.face = 2; UI.ghost = { x: 26, y: 40 }; plAutoFace(); const fE = UI.face;
+    UI.faceHand = false; UI.face = 3; UI.ghost = { x: 10, y: 10 }; plAutoFace(); const fN = UI.face;
+    UI.faceHand = true; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fH = UI.face;
+    o.face = fW === 1 && fE === 0 && fN === 3 && fH === 2; endPlace();
+    // 레벨 100·투자 ×10·건물 위 레벨 아이콘, 일괄 심방·선물 옆 비용
+    const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money, got = investMany(rm, 10);
+    o.lv100 = BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
+    draw(); o.badge = hasLv(rm) && !D.tree.fill;
+    S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
+    o.bcost = bc.length === 2 && bc.every(t => /만/.test(t));
     return o; });
   check(r.mainStrong, '대예배당: 같은 예배당보다 성능·정원이 크게(MAIN_K) 시작');
   check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
   check(r.enter0 && r.up && r.style && r.poor, '교회 입구: 기본 Lv 1, 레벨을 올리면 방문자 증가, 모양은 사서 끼움, 자금 부족이면 안 됨');
+  check(r.face, '건축: 길 옆에 놓으면 정면(문)이 길 쪽을 향하고, 직접 돌렸거나 길이 없으면 그대로');
+  check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100(투자 ×10)·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
   check(r.ban && r.banoff && r.scr && r.tabSty && r.tabBan && r.clickBan && r.draw, '교회 입구: 현수막은 사서 걸고 떼며, 입구 화면 탭·그림에 오류 없음');
   check(errs.length === 0, '교회 입구·시작 밸런스: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
@@ -1264,11 +1279,12 @@ async function levelChecks(browser, url) {
     V.length = 0; room.inUse = 0; room.run = 0; S.t = 1;
     // 한 명씩: 화장실은 정원 1명, 레벨이 오를수록 회전 시간이 크게 짧아짐
     const wc = put('wc', 2), rot1 = wc && rotTime(wc);
-    if (wc) { wc.lv = 10; } const rot10 = wc && rotTime(wc); if (wc) wc.lv = 1;
-    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap > 1 && bCap(wc) === 1 && rot10 < rot1 / 2.5 && bCap(room) > 1;
+    if (wc) { wc.lv = 10; } const rot10 = wc && rotTime(wc), cap10 = wc && bCap(wc); if (wc) wc.lv = 1;
+    // 시작 정원: 화장실 2명, 매점 4명, 서점 6명 (이용자 1명은 너무 적다). 레벨이 오르면 정원도 는다
+    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap === 2 && bCap(wc) === 2 && bCap({ def: 'shop', lv: 1, id: 0 }) === 4 && bCap({ def: 'bookstore', lv: 1, id: 0 }) === 6 && cap10 > 2 && rot10 < rot1 / 2.5 && bCap(room) > 1;
     // 문 앞에서 기다리기: 꽉 찼으면 문 앞 길에서 기다리고, 한계를 넘기면 화남 표시·불만, 다른 곳으로
     let soft = false;
-    if (wc) { wc.inUse = 1; spawnV(); const v = V[V.length - 1]; placeAt(v, entNode(wc)); v.target = wc.id; arrive(v); const p0 = nodePos(entNode(wc));
+    if (wc) { wc.inUse = bCap(wc); spawnV(); const v = V[V.length - 1]; placeAt(v, entNode(wc)); v.target = wc.id; arrive(v); const p0 = nodePos(entNode(wc));
       const near = v.state === 'wait' && Math.hypot(v.x - p0.x, v.y - p0.y) < .5 * G, g0 = S.grip.crowd || 0;
       let n = 0; while (v.state === 'wait' && n < (VIS_PATIENCE + 2) * 10) { stepV(v, .1); n++; }
       soft = near && n >= (VIS_PATIENCE - .5) * 10 && v.state === 'idle' && v.angry > 0 && (S.grip.crowd || 0) > g0 && v.blocked[wc.id] > S.clock && !v.dead;
@@ -1284,17 +1300,20 @@ async function levelChecks(browser, url) {
       UI.sel = room.id; UI.fold = true; renderSelCard(); const card = document.getElementById('selCard'), btn = card.querySelector('[data-act="invest"]'), t1 = card.textContent;
       for (let i = 0; i < BLV_XP; i++) document.querySelector('#selCard [data-act="invest"]').click();
       o.invest = !!btn && /Lv 1/.test(t1) && /투자/.test(t1) && bLv(room) === 2 && S.money === m0 - BLV_XP * c1 && bPerf(room) > perf0 && bCap(room) >= cap0 && agg().seats > seat0 && /Lv 2/.test(document.getElementById('selCard').textContent) && /Lv 3까지/.test(document.getElementById('selCard').textContent);
-      const st = [1, 3, 4, 6, 7, 10].map(l => { room.lv = l; return bStage(room); }).join('');
+      const st = [1, 5, 6, 20, 21, 100].map(l => { room.lv = l; return bStage(room); }).join('');
       room.lv = BLV_MAX; o.levels = st === '112233' && investWhy(room) !== '' && !document.querySelector('#selCard [data-act="invest"]') === false;
       renderSelCard(); o.levels = st === '112233' && /최고/.test(investWhy(room)) && !document.querySelector('#selCard [data-act="invest"]');
       for (const l of [1, 5, 9]) { room.lv = l; draw(); } room.lv = 1; room.bx = 0; UI.sel = null; renderSelCard(); recalc(); }
     // 티어: 상위(티어 2)는 티어 1 성능을 이어받아 × TIER2_K, 값은 티어 1의 Lv 10 누적 투자만큼 더. 티어 1은 상위가 열리기 전엔 하나만
-    { let inv = 0; for (let L = 1; L < BLV_MAX; L++) inv += BLV_XP * BLV_INVEST * (1 + BLV_INVEST_UP * (L - 1));
-      const ch = { def: 'chapel', lv: 1, id: 0 }, r6 = { def: 'room', lv: 6, id: 0 }, r7 = { def: 'room', lv: 7, id: 0 }, r10 = { def: 'room', lv: 10, id: 0 }, c10 = { def: 'chapel', lv: 10, id: 0 };
-      o.tier2 = D.chapel.tier === 2 && D.chapel.t1 === 'room' && D.room.tier === 1 && Math.abs(D.chapel.cost - D.room.cost * (1 + inv)) <= 10 && D.chapel.cost > D.room.cost * 5 &&
+    { let inv = 0; for (let L = 1; L < TIER2_INV_LV; L++) inv += BLV_XP * BLV_INVEST * (1 + BLV_INVEST_UP * (L - 1));
+      const ch = { def: 'chapel', lv: 1, id: 0 }, r6 = { def: 'room', lv: 17, id: 0 }, r7 = { def: 'room', lv: 19, id: 0 }, r10 = { def: 'room', lv: 10, id: 0 }, c10 = { def: 'chapel', lv: 10, id: 0 };
+      o.tier2 = D.chapel.tier === 2 && D.chapel.t1 === 'room' && D.room.tier === 1 && Math.abs(D.chapel.cost - D.room.cost * (1 + inv * TIER2_COST_K)) <= 10 && D.chapel.cost > D.room.cost * 4 &&
         bPerf(ch) >= bPerf(r6) && bPerf(ch) <= bPerf(r7) + 1e-9 && bPerf(c10) > bPerf(r10) * 1.5 && D.chapel.seats === D.room.seats && TIER_PAIRS.every(p => D[p[0]] && D[p[1]] && D[p[1]].tier === 2);
-      S.unlockAll = false; S.lvl = 1; if (!S.buildings.some(b => b.def === 'room')) build('room', 2, 6, 2); const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 2, 2, 2);
-      S.unlockAll = true; o.tier1 = isLocked('chapel') === false && /1개까지/.test(lockedWhy) && !again && S.buildings.length === nb && tierWhy('room') === ''; }
+      // 값싼 티어 1은 처음부터 여러 개(TIER1_MAX개까지) 지을 수 있고, 넘으면 막힌다. 상위가 열리면 TIER1_MAX_OPEN개까지
+      S.unlockAll = false; S.lvl = 1; S.money = 99999; const rooms = () => S.buildings.filter(b => b.def === 'room').length; let made = 0;
+      for (let x = 2; x < COLS - 4 && !tierWhy('room'); x += 4) for (let y = 2; y < 20 && !tierWhy('room'); y += 4) if (build('room', x, y, 2)) made++;
+      const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 3, 40, 2);
+      S.unlockAll = true; o.tier1 = isLocked('chapel') === false && made >= 2 && rooms() === TIER1_MAX && new RegExp(TIER1_MAX + '개까지').test(lockedWhy) && !again && S.buildings.length === nb && tierWhy('room') === '' && TIER1_MAX_OPEN > TIER1_MAX; }
     // 매장·편의 종류는 기능별로 줄였다: 더 짓지 않는 것은 목록에 없고 지을 수 없다
     { UI.tab = 'build'; UI.fold = false; UI.bstep = 'items'; UI.cat = 'shop'; renderBuild(); const shopCards = [...document.querySelectorAll('#cards .card')].map(c => c.dataset.v); closeDock();
       o.retired = RETIRED.every(id => !D[id] || (D[id].retired && isLocked(id))) && !shopCards.some(id => RETIRED.indexOf(id) >= 0) && shopCards.includes('shop') && !build('bakery', 2, 2, 2); }
@@ -1553,7 +1572,7 @@ async function gripeChecks(browser, url) {
     // 대예배당(MAIN_K배 좌석)이 있어 좌석은 높게 시작하고, 나머지 항목은 여전히 50% 안팎
     { const c = S.cov; o.start50 = ['spirit', 'past', 'fel', 'park', 'care', 'comf'].every(k => c[k] >= 0.4 && c[k] <= 0.6) && c.seat >= 0.9 && S.mood >= 40 && S.mood <= 90 && BLD_SAT === 0.6 && MOOD_LEAVE === 45 && MOOD_GAIN === 50;
       o.start50d = ['seat', 'spirit', 'past', 'fel', 'park', 'care', 'comf'].map(k => k + Math.round(c[k] * 100)).join(' ') + ' mood' + Math.round(S.mood); }
-    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.room.cost === 1800 && D.chapel.cost > D.room.cost * 5 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && QID.g1.m === 800 && LOANS.big.amt === 40000;
+    o.price = S.money === 20000 && DIFF.hard.money === 14000 && D.wc.cost === 720 && D.room.cost === 1800 && D.chapel.cost > D.room.cost * 4 && D.bench.cost === 160 && D.tree.cost === 110 && D.f_block.cost === 8 && QID.g1.m === 800 && LOANS.big.amt === 40000;
     // 편의 소품: 벤치·쓰레기통·식수대 등은 편의 분류, 값은 그대로, 꾸미기처럼 이어 놓기
     o.props = ['bench', 'picnic', 'parasol', 'swing', 'drinkfount', 'bin', 'gazebo'].every(id => D[id].cat === 'comfort' && D[id].prop && isDecoCat(D[id])) && D.bin.cost === 50 && D.gazebo.cost === 900 && !isDecoCat(D.wc);
     S.money = 999999; levelTick(true); S.unlockAll = true; recalc();
@@ -1610,7 +1629,7 @@ async function gripeChecks(browser, url) {
     o.spread = toCafe >= 9 && toCafe2 <= 3 && NEED_OK >= 85 && VIS_PATIENCE > 5 && CROWD_ANNOY > 0 && GRIPE_W.crowd >= 1;
     // 편의 시설도 정면 문 하나로 옆 길에서 바로 쓰고, 한 명씩 쓴다
     { const w2 = put('lounge'); recalc(); const lk = linkDoor(w2); recalc();
-      o.wcFree = (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && bCap(w2) === 1 && bMode(D.wc) === 'single';
+      o.wcFree = (lk === '' || /이미/.test(lk)) && usable(w2) && !!w2.door && bCap(w2) >= 2 && bMode(D.wc) === 'single';
       o.wcDbg = [lk, usable(w2), JSON.stringify(w2.door), JSON.stringify(w2.acc)]; }
     o.fixes = gripeFixes(D.boardgame).includes('외로움') && gripeFixes(D.cell).includes('외로움') && gripeFixes(D.bakery).includes('배고픔') && gripeFixes(D.cafe).includes('목마름') && /외로움/.test(effText(D.futsal));
     // 소모임 분류: 제목 줄에 운동·취미·음악 칩, 고른 묶음만 목록에

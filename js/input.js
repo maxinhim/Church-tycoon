@@ -39,7 +39,7 @@ function onTap(px,py){
   // 바닥: 누른 칸으로 시작 자리만 옮긴다 (칠하기는 ✓)
   if(isFloorDef(UI.tool)||isTerDef(UI.tool)){var ft=groundTile(px,py);UI.ghost={x:clamp(ft.x,0,COLS-1),y:clamp(ft.y,0,ROWS-RD-1)};if(ft.pid&&isFloorDef(UI.tool))UI.ghost.pid=ft.pid;if(!UI.fold)renderDetail();return;}
   if(UI.tool==='path'){pcStartAt(px,py);if(!UI.fold)renderDetail();return;}
-  if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py))placeGhost(groundTile(px,py));if(!UI.fold)renderDetail();return;}
+  if(UI.tool&&D[UI.tool]){if(!ghostHit(px,py)){placeGhost(groundTile(px,py));plAutoFace();}if(!UI.fold)renderDetail();return;}
   // 지은 것을 누르면 패널을 열지 않고 그 위에 작은 카드만 띄운다 (열려 있던 패널은 닫는다)
   var dem=UI.tool==='demolish',sel=pickBuilding(px,py),pp=sel?null:pickPieceAt(px,py);
   // 건물·길이 아니면 땅 칸 카드 (바닥 깔기·바꾸기, 땅 높이기, 경사로). 다른 카드가 열려 있으면 이번 누름은 닫기만 한다
@@ -85,6 +85,7 @@ function setupInput(){
   var end=function(e){
     if(!ptrs.has(e.pointerId))return;
     ptrs.delete(e.pointerId);
+    if(gest&&gest.mode==='ghost'&&ptrs.size===0&&UI.tool&&UI.ghost){plAutoFace();renderDetail();}   // 끌어서 옮긴 자리에서 길 쪽으로
     if(gest&&gest.mode==='tap'&&ptrs.size===0&&e.type==='pointerup')onTap(e.clientX,e.clientY);
     if(ptrs.size===0){gest=null;cv.style.cursor='grab';}
     else if(ptrs.size===1){var a=pts()[0];gest={mode:'pan',sx:a.x,sy:a.y,lx:a.x,ly:a.y};}
@@ -127,7 +128,8 @@ function onPanel0(e){
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
   else if(a==='pslope'){UI.pc.slope=+v;UI.pbarOpen=false;renderDetail();}
   else if(a==='mgr'){var mb0=UI.sel;if(mb0&&mgrRole(bById(mb0))){openScreen('mgr');UI.mgrB=mb0;renderScreen();}}
-  else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){investBld(ib);if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==(il0<=3?1:il0<=6?2:3)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
+  else if(a==='invest10'){var jb=bById(UI.sel),jw=jb&&investWhy(jb);if(jw){toast(jw,1600);sfx('error',.4);}else if(jb){var jl0=bLv(jb),jg=investMany(jb,10);toast(defOf(jb).name+' Lv '+bLv(jb)+(jg?' (+'+jg+')':'')+(bStage(jb)!==stageOf(jl0)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);renderSelCard();hud(true);}}
+  else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){investBld(ib);if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==stageOf(il0)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
   else if(a==='pkind'){UI.pc.k=v;UI.pbarOpen=false;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}

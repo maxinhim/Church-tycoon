@@ -61,7 +61,7 @@ function placeWhy(d,x,y,face){
 }
 function startPlace(id){
   UI.bstep='items';if(UI.cat)(UI.lastPick||(UI.lastPick={}))[UI.cat]=id;
-  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;
+  UI.pbarOpen=false;UI.ext=false;UI.rdir=null;UI.tfloor=null;UI.twall=null;UI.plLow=false;UI.flast=null;UI.moving=null;UI.tool=id;UI.sel=null;UI.selPiece=null;UI.undo=[];UI.lastBuilt=null;UI.faceHand=false;
   if(UI.fdir==null)UI.fdir=screenToWorldDir(3);
   if(D[id]&&isLineKind(D[id]))UI.face=UI.fdir<2?2:0;
   var c=viewCenter();
@@ -73,6 +73,7 @@ function startPlace(id){
     // 사람이 다니는 바닥 위도 피한다 (그대로 ✓를 누르면 길이 끊기므로). 끌어서 바닥 위에 놓는 것은 막지 않는다
     if(!isFloorDef(id)&&!isTerDef(id)&&(!canPlace(d,UI.ghost.x,UI.ghost.y,UI.face)||onFloorAt(d,UI.ghost.x,UI.ghost.y,UI.face))){
       var nf=plNear(d,UI.ghost.x,UI.ghost.y,10,true)||plNear(d,UI.ghost.x,UI.ghost.y,8);if(nf){UI.ghost.x=nf.x;UI.ghost.y=nf.y;}}
+    plAutoFace();
   }
   renderPanel();
 }
@@ -301,10 +302,36 @@ function plDir(d){
   var df=D[UI.tool];
   if(arrowMode(df)==='line'){UI.fdir=d;if(isLineKind(df))UI.face=d<2?2:0;renderDetail();return;}
   var o=faceDims(df,UI.face),n=faceDims(df,d),g=UI.ghost;
-  UI.face=d;
+  UI.face=d;UI.faceHand=true;   // 직접 돌렸으면 자동 방향은 멈춘다
   // 가로세로가 바뀌면 가운데를 지키며 돌린다
   if(g){g.x=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w);g.y=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-RD-n.h);}
   renderDetail();
+}
+/* 길 옆에 놓으면 정면(문)이 저절로 길 쪽을 본다 (사람이 화살표로 돌렸으면 그대로 둔다: UI.faceHand).
+   네 방향마다 문 앞 칸을 재서 점수를 매긴다:
+   · 입구 아치에서 닿는 길이면 크게(1000), 걸을 수는 있지만 이어지지 않은 바닥이면 조금(300), 길이 아니면 0
+   · 닿는 길끼리는 그 방향(문이 바라보는 쪽 절반 평면)에 이미 지은 건물이 많을수록(건물당 +20, 한 건물이 아니라 길이 몰린 쪽), 입구 아치에 가까울수록(칸당 −1) 앞선다
+   길이 하나도 없으면 방향을 바꾸지 않는다. 바꾸면 가로세로가 달라지는 건물은 가운데를 지키며 돌린다 (plDir과 같게) */
+function plFaceScore(d,x,y,f){
+  var fake={def:d.id,x:x,y:y,face:f},sp=frontDoor(fake);if(!sp)return -1;
+  var o=doorOut(sp);if(o.x<0||o.y<0||o.x>=COLS||o.y>=ROWS||!groundOk(o.x,o.y))return 0;
+  var n=gid(o.x,o.y),sc=(NAV.reach&&NAV.reach[n])?1000:300;
+  var cnt=0,dm=faceDims(d,f),cx=x+dm.w/2,cy=y+dm.h/2;
+  S.buildings.forEach(function(b){var bd=defOf(b);if(bd.kind!=='bld'&&!bd.fill)return;var bm=bDims(b),bx=b.x+bm.w/2-cx,by=b.y+bm.h/2-cy;
+    if(Math.abs(bx)+Math.abs(by)>24)return;if(DIRS[f][0]*bx+DIRS[f][1]*by>0)cnt++;});
+  return sc+cnt*20-(Math.abs(o.x-ENT)+Math.abs(o.y-(PZ-1)))*1;
+}
+function plAutoFace(){
+  var d=D[UI.tool];if(!d||!UI.ghost||movingId()||UI.faceHand||!d.fill||d.prop||arrowMode(d)!=='face')return;
+  var g=UI.ghost,cur=UI.face,o=faceDims(d,cur),best=-1,bf=cur,bg=null;
+  for(var f=0;f<4;f++){
+    var n=faceDims(d,f),gx=clamp(Math.round(g.x+o.w/2-n.w/2),0,COLS-n.w),gy=clamp(Math.round(g.y+o.h/2-n.h/2),0,ROWS-RD-n.h);
+    if(f!==cur&&!canPlace(d,gx,gy,f))continue;
+    var sc=plFaceScore(d,gx,gy,f);
+    if(sc>best||(sc===best&&f===cur)){best=sc;bf=f;bg={x:gx,y:gy};}
+  }
+  if(best<=0||bf===cur)return;   // 길이 없으면 그대로
+  UI.face=bf;g.x=bg.x;g.y=bg.y;
 }
 function plTurn(){plDir(screenToWorldDir((worldToScreenDir(plCur())+1)%4));}
 // 이어 짓기 한 걸음: 'line'은 화살표 쪽, 'face'(벤치 등)는 옆으로 (화면 오른쪽으로 늘어서게)

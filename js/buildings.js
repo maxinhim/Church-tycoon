@@ -34,7 +34,7 @@ mk('hall','친교실','fellow',3,2,2600,28,'bld','#eadfcd','#a0603f',{H:1.0,roof
 mk('books','북카페','shop',2,2,1400,14,'bld','#f1e7d6','#6b8f71',{H:.95,roof:'flat',bigwin:1,deco:'awning',fcap:14,ccap:4,fill:{fel:40,word:12},cap:10,dur:5,income:5,desc:'책과 커피가 있는 쉼과 교제. 책과 음료를 팔아요'});
 mk('dining','식당','shop',3,2,2200,22,'bld','#f2e3cf','#b5654a',{H:1.0,roof:'gable',rh:.5,bigwin:1,fcap:28,ccap:4,fill:{fel:54,comf:14},cap:20,dur:6,income:8,desc:'함께 밥을 먹는 식탁 교제. 주일 점심이 잘 팔려요'});
 mk('bakery','빵집','shop',2,1,800,8,'bld','#f6ead4','#c9853a',{H:.8,roof:'flat',deco:'awning',ccap:6,fcap:2,fill:{comf:34,fel:12},cap:5,dur:3,income:4,desc:'갓 구운 빵 냄새가 나는 작은 빵집'});
-mk('bookstore','기독교 서점','shop',2,1,1100,9,'bld','#eef0e6','#4f6db0',{H:.85,roof:'flat',bigwin:1,deco:'awning',ccap:4,fill:{word:20,comf:18},cap:5,dur:4,income:6,desc:'성경과 신앙 서적, 작은 선물을 파는 서점'});
+mk('bookstore','기독교 서점','shop',2,1,1100,9,'bld','#eef0e6','#4f6db0',{H:.85,roof:'flat',bigwin:1,deco:'awning',ccap:4,fill:{word:20,comf:18},cap:6,dur:4,income:6,desc:'성경과 신앙 서적, 작은 선물을 파는 서점'});
 mk('market','나눔장터','shop',3,2,1300,10,'market','#c9b38a','#d65a6e',{fcap:10,ccap:6,fill:{fel:30,comf:22},cap:10,dur:4,income:5,rep:0.2,desc:'중고 물건과 손수 만든 먹거리를 나누는 장터. 수익 일부로 이웃을 도와 평판이 조금 오릅니다'});
 mk('youth','청년부실','fellow',2,2,1500,14,'bld','#e3eef2','#2f8f9d',{H:.95,roof:'flat',deco:'dots',fcap:18,fill:{fel:48,word:12},cap:12,dur:5,desc:'청년들이 모이고 어울리는 방'});
 mk('gym','체육관','club',4,3,4200,40,'bld','#e6e9ec','#5a6b7c',{sub:'sport',H:1.4,roof:'flat',bigwin:1,fcap:40,ccap:6,fill:{fel:60,comf:10},cap:30,dur:6,desc:'운동과 큰 행사를 함께하는 넓은 공간'});
@@ -47,14 +47,14 @@ mk('clinic','의료 봉사실','care',2,1,1300,14,'bld','#f4f6f7','#4f9a83',{H:.
 mk('study','공부방','care',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:10},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
 mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H:1.0,roof:'gable',rh:.55,deco:'barn',kcap:22,fill:{care:52},cap:14,dur:5,rep:1.0,desc:'이웃에게 따뜻한 한 끼를 나누는 곳. 평판이 크게 오릅니다'});
 mk('playground','놀이터','care',2,2,900,4,'playground','#e0c48a','#e8892c',{kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
-mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',ccap:12,fill:{comf:60},cap:3,dur:3,desc:'꼭 필요한 편의시설'});
+mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',ccap:12,fill:{comf:60},cap:2,dur:3,desc:'꼭 필요한 편의시설'});
 mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
 mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
 mk('info','안내실','comfort',1,1,500,5,'bld','#e8eef2','#3f5ea3',{H:.75,roof:'flat',deco:'info',ccap:6,fill:{comf:30,fel:10},cap:3,dur:3,vis:0.03,desc:'처음 온 사람을 맞이하는 안내 창구. 방문자 +3%'});
 mk('nurse','수유실','comfort',1,1,600,5,'bld','#f6eef0','#c77d8f',{H:.75,roof:'hip',rh:.45,ccap:4,kcap:2,fill:{comf:44,care:16},cap:2,dur:4,desc:'아기와 부모를 위한 조용한 방'});
 mk('lounge','휴게실','comfort',2,1,800,7,'bld','#e9efe6','#5c8a5a',{H:.8,roof:'flat',bigwin:1,ccap:10,fill:{comf:50,fel:8},cap:6,dur:4,desc:'잠시 앉아 쉬어가는 실내 공간'});
 mk('wc2','화장실 동','comfort',2,1,800,7,'bld','#dfe6ea','#6c8794',{H:.8,roof:'flat',deco:'wc',bigwin:1,ccap:12,fill:{comf:60},cap:3,dur:3,desc:'넓고 깨끗한 화장실 건물'});
-mk('shop','매점','shop',1,1,450,3,'bld','#f2ede4','#d1a02e',{H:.7,roof:'flat',deco:'awning',ccap:4,fill:{comf:30,fel:6},cap:3,dur:3,income:3,desc:'간식과 음료를 파는 작은 매점'});
+mk('shop','매점','shop',1,1,450,3,'bld','#f2ede4','#d1a02e',{H:.7,roof:'flat',deco:'awning',ccap:4,fill:{comf:30,fel:6},cap:4,dur:3,income:3,desc:'간식과 음료를 파는 작은 매점'});
 mk('parktower','주차 타워','park',2,2,3000,18,'bld','#c9ced3','#59626b',{H:1.6,roof:'flat',deco:'park',park:24,desc:'좁은 땅에 많은 차를 세우는 주차 타워. 층을 올리면 더 늘어나요'});
 mk('busstop','버스 정류장','comfort',1,1,300,2,'busstop','#3f5ea3','#d6e2ea',{dir:'face',vis:0.05,desc:'교회 앞 버스 정류장. 방문자 +5%'});
 mk('tree','나무','garden',1,1,110,0,'tree','#3d7a3d','#3d7a3d',{beauty:1,desc:'부지 분위기가 좋아집니다'});

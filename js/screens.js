@@ -225,8 +225,8 @@ function bulkBar(){
   var gh=Object.keys(gr).map(function(k){var x=gr[k],tr=x.k==='tr';
     return '<button class="btn'+(tr?' pri':' pri claim')+'" data-act="bulkgrow" data-k="'+x.k+'" data-to="'+x.to+'">전체 '+(tr?nodeTr(x.to,x.g)+' 시작':nodeDone(x.to,x.g))+' · '+x.n+'명'+(tr?' · '+fmt(x.n*PP_TREE[x.to].cost):'')+'</button>';}).join('');
   return '<div class="sbulk"><span>이 목록 '+L.length+'명</span>'+
-    '<button class="bic'+(nv?' on':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+' aria-label="모두 심방 '+nv+'명, '+fmt(nv*PP_VISIT.cost)+'" title="모두 심방 · '+fmt(PP_VISIT.cost)+'씩">💬'+(nv?'<i>'+nv+'</i>':'')+'</button>'+
-    '<button class="bic'+(ng?' on':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+' aria-label="모두 선물 '+ng+'명, '+fmt(ng*PP_GIFT.cost)+'" title="모두 선물 · '+fmt(PP_GIFT.cost)+'씩">🎁'+(ng?'<i>'+ng+'</i>':'')+'</button>'+gh+'</div>';
+    '<div class="bgp"><button class="bic'+(nv?' on':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+' aria-label="모두 심방 '+nv+'명, '+fmt(nv*PP_VISIT.cost)+'" title="모두 심방 · '+fmt(PP_VISIT.cost)+'씩">💬'+(nv?'<i>'+nv+'</i>':'')+'</button><small class="bcost'+(nv?' on':'')+'">'+fmtS(nv?nv*PP_VISIT.cost:PP_VISIT.cost)+'</small></div>'+
+    '<div class="bgp"><button class="bic'+(ng?' on':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+' aria-label="모두 선물 '+ng+'명, '+fmt(ng*PP_GIFT.cost)+'" title="모두 선물 · '+fmt(PP_GIFT.cost)+'씩">🎁'+(ng?'<i>'+ng+'</i>':'')+'</button><small class="bcost'+(ng?' on':'')+'">'+fmtS(ng?ng*PP_GIFT.cost:PP_GIFT.cost)+'</small></div>'+gh+'</div>';
 }
 function peopleHtml(){
   var all=(S.people||[]),tab=UI.scrTab,L=scrPeople();
