@@ -646,7 +646,14 @@ function drawCutaway(b){
   var body=function(){
     // 바닥, 뒤쪽 두 벽
     quad([[r.x0,r.y0,fz],[r.x1,r.y0,fz],[r.x1,r.y1,fz],[r.x0,r.y1,fz]],K.fl);
+    // 나무 마루: 판 사이 가는 어두운 줄 (화면 가로 방향)
+    for(var pk=r.y0+.2;pk<r.y1-.02;pk+=.2)quad([[r.x0,pk,fz+.002],[r.x1,pk,fz+.002],[r.x1,pk+.014,fz+.002],[r.x0,pk+.014,fz+.002]],'rgba(92,58,28,.32)');
+    // 입구 표시: 정면 벽 가운데 바닥의 나무 문턱 판 (문짝은 없다)
+    if(b.door&&b.door.ent&&!d.prop){var ds=b.door.ent,dd=ds.d,gx=(ds.x+.5)/G+DIRS[dd][0]*(.5/G)-DIRS[dd][0]*.16,gy=(ds.y+.5)/G+DIRS[dd][1]*(.5/G)-DIRS[dd][1]*.16,al=DIRS[dd][0]?[.1,.24]:[.24,.1];
+      box(rrect(gx-al[0],gy-al[1],gx+al[0],gy+al[1]),fz,fz+.035,'#8a5a2b','#c08a56');}
     box({x0:r.x0,y0:r.y0,x1:r.x1,y1:r.y0+T},.05,H,wall,shade(wall,.9));box({x0:r.x0,y0:r.y0+T,x1:r.x0+T,y1:r.y1},.05,H,wall,shade(wall,.9));
+    // 벽 윗면 나무 테두리
+    box({x0:r.x0,y0:r.y0,x1:r.x1,y1:r.y0+T},H,H+.04,'#a07a52','#c08a56');box({x0:r.x0,y0:r.y0+T,x1:r.x0+T,y1:r.y1},H,H+.04,'#a07a52','#c08a56');
     if(tent)quad([[r.x0,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H],[r.x0,r.y0+T+.005,H]],shade(d.roofc||'#c4503a',1));
     var mx=cx,my=r.y0+.27,i,j,yy,xx;
     if(d.cat==='worship'){
@@ -684,6 +691,7 @@ function drawCutaway(b){
     if(act){if(ph%2===0)drawBubble(mt,K.say[0]);else if(ut)drawBubble(ut,K.say[1]);}
     // 앞쪽 두 벽은 낮게
     box({x0:r.x1-T,y0:r.y0,x1:r.x1,y1:r.y1},.05,LO,wall,shade(wall,.92));box({x0:r.x0,y0:r.y1-T,x1:r.x1-T,y1:r.y1},.05,LO,wall,shade(wall,.92));
+    box({x0:r.x1-T,y0:r.y0,x1:r.x1,y1:r.y1},LO,LO+.04,'#a07a52','#c08a56');box({x0:r.x0,y0:r.y1-T,x1:r.x1-T,y1:r.y1},LO,LO+.04,'#a07a52','#c08a56');
   };
   if(d.deco==='tower'&&!tent){
     var tr=towerRect(b.face,x,y,w,h),TH=d.towerH;
