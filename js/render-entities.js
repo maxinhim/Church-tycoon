@@ -610,9 +610,9 @@ function drawWear(b){
    안에서 기다리는 관리자(발밑 고리: 기른 사람 금빛·청빙한 사람 푸른빛), 가동 중이면 이용자 몇 사람과 번갈아 뜨는 말풍선을 그린다.
    (legacy() 안에서 부른다: 좌표는 예전 칸 단위, r은 화면 방향으로 돌린 사각형이라 x1·y1 쪽이 앞이다) */
 function cutOn(b){var d=D[b.def];return !!(d&&d.kind==='bld');}
-function drawFig(rx,ry,z,sp,bob,ring,pose){
+function drawFig(rx,ry,z,sp,bob,ring,pose,view,flip){
   var q=P(rx,ry,z),s=PJ.s;
-  return chrPerson(PJ.c,q[0],q[1]-(bob||0)*s*.5,s,sp,'f',pose||'stand',0,false,ring);
+  return chrPerson(PJ.c,q[0],q[1]-(bob||0)*s*.5,s,sp,view||'f',pose||'stand',0,!!flip,ring);
 }
 function drawBubble(at,txt){
   var c=PJ.c,s=Math.max(.7,PJ.s),w=13*s,h=9*s,x=at[0]-w/2,y=at[1]-h-4*s;
@@ -627,6 +627,8 @@ function drawCutaway(b){
   var wall=tent?'#efe6d2':d.wall,H=tent?.42:big?1.0:Math.min(.8,d.H*.72),HB=big?1.55:H,LO=.14,T=.06,K=CUT_LOOK[d.cat]||CUT_LOOK.fellow,mg=typeof mgrOf==='function'?mgrOf(b):null,LK=ROOM_LOOK[b.def],bid=b.id||7;
   box(rrect(x+.03,y+.03,x+w-.03,y+h-.03),0,.05,'#cfc8b8');
   var r=rrect(x+.1,y+.1,x+w-.1,y+h-.1),cx=(r.x0+r.x1)/2,W=r.x1-r.x0,Dp=r.y1-r.y0,fz=.06;
+  // 내부는 지도 방위(남쪽이 아래) 그대로 고정: 가구·사람은 r0(회전하지 않은 좌표)로 배치하고 WLD로 돌려서 그린다
+  var r0={x0:x+.1,y0:y+.1,x1:x+w-.1,y1:y+h-.1},cx0=(r0.x0+r0.x1)/2,W0=r0.x1-r0.x0,Dp0=r0.y1-r0.y0,ra=rotPt(0,0),rb=rotPt(0,1),fsx=(rb[0]-rb[1])-(ra[0]-ra[1]),fsy=(rb[0]+rb[1])-(ra[0]+ra[1]),fview=fsy<0?'b':'f',fflip=fview==='b'?fsx>0:fsx<0;
   var act=(b.inUse>0||b.run>0),nu=act?Math.max(1,Math.min(4,b.inUse||1)):0,figs=[],parts=[];
   var body=function(){
     // 바닥: 나무 마루(두 가지 색 판, 이음새 어긋남) · 매장은 체크무늬 타일
@@ -654,33 +656,45 @@ function drawCutaway(b){
     box({x0:r.x0,y0:r.y0,x1:r.x1,y1:r.y0+T},HB,HB+.04,'#a07a52','#c08a56');box({x0:r.x0,y0:r.y0+T,x1:r.x0+T,y1:r.y1},H,H+.04,'#a07a52','#c08a56');
     var BIG_COLS=[];
     if(big){   // 뒷벽 대형 스크린과 기둥·조명
-      var sw=Math.min(2.6,W*.42),zs0=.5,zs1=HB-.22;
-      chScreen(null,'L',r.y0+T,cx-sw/2,cx+sw/2,zs0,zs1,S.name,'☩ 예배에 오신 것을 환영합니다');
+      var sw=Math.min(2.6,W0*.42),zs0=.5,zs1=HB-.22;
       chStrip('L',r.y0+T,r.x0+T,r.x1,.2,.23,CH_WOOD_D);chStrip('R',r.x0+T,r.y0+T,r.y1,.2,.23,CH_WOOD_D);
-      for(var sp=0;sp<3;sp++){var spx=cx-sw/2+sw*(sp+.5)/3;box({x0:spx-.03,y0:r.y0+T,x1:spx+.03,y1:r.y0+T+.05},HB-.16,HB-.08,'#15171b');chGlow(spx,r.y0+T+.1,HB-.2,18);}
-      [[r.x0+.07,r.y0+.07,HB],[r.x1-.07,r.y0+.07,HB],[cx-sw/2-.28,r.y0+.07,HB],[cx+sw/2+.28,r.y0+.07,HB],[r.x0+.07,r.y0+Dp/3,H+.04],[r.x0+.07,r.y0+Dp*2/3,H+.04]].forEach(function(cl){chColumn(cl[0],cl[1],cl[2]);});
+      if(ROT===0||ROT===3){   // 북쪽 벽(강대상 뒤)이 안쪽 벽일 때만 스크린과 양옆 기둥이 보인다
+        WLD=1;WLD_FR=r;
+        try{
+          chScreen(null,'L',r0.y0+T,cx0-sw/2,cx0+sw/2,zs0,zs1,S.name,'☩ 예배에 오신 것을 환영합니다');
+          for(var sp=0;sp<3;sp++){var spx=cx0-sw/2+sw*(sp+.5)/3;box({x0:spx-.03,y0:r0.y0+T,x1:spx+.03,y1:r0.y0+T+.05},HB-.16,HB-.08,'#15171b');chGlow(spx,r0.y0+T+.1,HB-.2,18);}
+          chColumn(cx0-sw/2-.28,r0.y0+.07,HB);chColumn(cx0+sw/2+.28,r0.y0+.07,HB);
+        }finally{WLD=0;WLD_FR=null;}
+      }
+      [[r.x0+.07,r.y0+.07,HB],[r.x1-.07,r.y0+.07,HB],[r.x0+.07,r.y0+Dp/3,H+.04],[r.x0+.07,r.y0+Dp*2/3,H+.04]].forEach(function(cl){chColumn(cl[0],cl[1],cl[2]);});
       chSconce(r.x0+T+.05,r.y0+Dp/6,.78);chSconce(r.x0+T+.05,r.y0+Dp/2,.78);chSconce(r.x0+T+.05,r.y0+Dp*5/6,.78);
       chSconce(r.x0+W*.2,r.y0+T+.05,.78);chSconce(r.x1-W*.2,r.y0+T+.05,.78);
     }
     if(tent)quad([[r.x0,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H],[r.x0,r.y0+T+.005,H]],shade(d.roofc||'#c4503a',1));
-    var mx=cx,my=r.y0+.27,i,j,yy,xx;
-    var staff=null;
-    if(ROOMS[b.def]){
-      var rc=rmCtx(b,d,r,T,fz,parts,figs,nu),mp=ROOMS[b.def](rc);
-      if(mp){mx=rc.X(mp[0]);my=rc.Y(mp[1]);staff=1;}
-    }else{
-      var wm=chWorship({b:b,r:r,T:T,fz:fz,cx:cx,W:W,Dp:Dp,parts:parts,figs:figs,nu:nu,big:big});mx=wm[0];my=wm[1];staff=1;
-    }
-    for(i=figs.length;i<nu;i++)figs.push([r.x0+.2+hh(b.id,i)*(W-.4),r.y1-.2,i]);
-    parts.forEach(function(p){p.k=p.r.y1+p.r.x1+(p.o||0);});parts.sort(function(a,c2){return a.k-c2.k;}).forEach(function(p){if(p.f){p.f();return;}box(p.r,p.z0,p.z1,p.c,p.t);if(p.cross)chPulpitCross(p.cross[0],(p.r.x0+p.r.x1)/2,p.cross[1],p.cross[2]);});
+    var mx=cx0,my=r0.y0+.27,i,staff=null;
+    WLD=1;WLD_FR=r;
+    try{
+      if(ROOMS[b.def]){
+        var rc=rmCtx(b,d,r0,T,fz,parts,figs,nu),mp=ROOMS[b.def](rc);
+        if(mp){mx=rc.X(mp[0]);my=rc.Y(mp[1]);staff=1;}
+      }else{
+        var wm=chWorship({b:b,r:r0,T:T,fz:fz,cx:cx0,W:W0,Dp:Dp0,parts:parts,figs:figs,nu:nu,big:big});mx=wm[0];my=wm[1];staff=1;
+      }
+      for(i=figs.length;i<nu;i++)figs.push([r0.x0+.2+hh(b.id,i)*(W0-.4),r0.y1-.2,i]);
+      parts.forEach(function(p){var m=rrect(p.r.x0,p.r.y0,p.r.x1,p.r.y1);p.k=m.y1+m.x1+(p.o||0);});
+      parts.sort(function(a,c2){return a.k-c2.k;}).forEach(function(p){if(p.f){p.f();return;}box(p.r,p.z0,p.z1,p.c,p.t);if(p.cross&&(ROT===0||ROT===3))chPulpitCross(p.cross[0],(p.r.x0+p.r.x1)/2,p.cross[1],p.cross[2]);});
+    }finally{WLD=0;WLD_FR=null;}
+    // 사람 자리를 화면 좌표(돌린 좌표)로
+    figs.forEach(function(f){var m=rotPt(f[0],f[1]);f[0]=m[0];f[1]=m[1];});
+    var mm=rotPt(mx,my);mx=mm[0];my=mm[1];
     // 담당자(기능마다 한 사람으로 고정, 대예배당은 담임목사)와 이용자: 가동 중이면 서로 번갈아 말한다 (말풍선)
     // 관리자를 배치해야 하는 건물은 관리자가 있을 때만 담당자가 선다 (발밑 고리: 기른 사람 금빛 · 청빙 푸른빛)
     var ph=Math.floor(S.clock*.9+bid*.37),sway=act?Math.abs(Math.sin(S.clock*5+bid))*.9:Math.sin(S.clock*1.6+bid)*.25+.25;
     var need=b.uses!=null&&!big&&typeof mgrRole==='function'&&mgrRole(b),mt=null,ut=null;
     if(staff&&(!need||mg))figs.push([mx,my,-1,0,big?CHR_SPECS.pastor:chrStaffSpec(d.cat),mg?(mg.key==='me'?'#f2c230':mg.src==='in'?'#e3a521':'#3f7fd6'):null]);
     figs.sort(function(a,c2){return (a[0]+a[1])-(c2[0]+c2[1]);}).forEach(function(f,fi){
-      if(f[2]<0){mt=drawFig(f[0],f[1],fz+(f[3]||0),f[4],sway,f[5]);return;}
-      var t2=drawFig(f[0],f[1],fz+(f[3]||0),chrVisSpec(f[2]*.173+bid*.071),Math.abs(Math.sin(S.clock*4+f[2]*1.7))*.5);if(f[2]===ph%Math.max(1,nu))ut=t2;});
+      if(f[2]<0){mt=drawFig(f[0],f[1],fz+(f[3]||0),f[4],sway,f[5],'stand',fview,fflip);return;}
+      var t2=drawFig(f[0],f[1],fz+(f[3]||0),chrVisSpec(f[2]*.173+bid*.071),Math.abs(Math.sin(S.clock*4+f[2]*1.7))*.5,null,'stand',fview,fflip);if(f[2]===ph%Math.max(1,nu))ut=t2;});
     if(act){if(ph%2===0&&mt)drawBubble(mt,K.say[0]);else if(ut)drawBubble(ut,K.say[1]);}
     // 앞쪽 두 벽은 낮게
     wS({x0:r.x1-T,y0:r.y0,x1:r.x1,y1:r.y1},.05,LO,5);wS({x0:r.x0,y0:r.y1-T,x1:r.x1-T,y1:r.y1},.05,LO,11);

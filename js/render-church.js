@@ -217,7 +217,8 @@ function chScreen(c,pl,at,a0,a1,z0,z1,txt,sub){
   gr.addColorStop(0,'#2b4fb0');gr.addColorStop(.55,'#5a43b5');gr.addColorStop(1,'#b24a9c');
   quad([pt(a0,z0),pt(a1,z0),pt(a1,z1),pt(a0,z1)],gr);
   quad([pt(a0,z1-.02),pt(a1,z1-.02),pt(a1,z1),pt(a0,z1)],'rgba(255,255,255,.16)');
-  var l=chP3(pl,at+.008,a0,(z0+z1)/2),r2=chP3(pl,at+.008,a1,(z0+z1)/2),cxs=(l[0]+r2[0])/2,cys=(l[1]+r2[1])/2,dx=r2[0]-l[0],dy=r2[1]-l[1],len=Math.hypot(dx,dy)||1,sk=dy/(len||1);
+  var l=chP3(pl,at+.008,a0,(z0+z1)/2),r2=chP3(pl,at+.008,a1,(z0+z1)/2),cxs=(l[0]+r2[0])/2,cys=(l[1]+r2[1])/2,dx=r2[0]-l[0],dy=r2[1]-l[1],len=Math.hypot(dx,dy)||1;
+  if(dx<0){dx=-dx;dy=-dy;}   // 돌려 보아도 글씨가 거꾸로 서지 않게
   if(PJ.s>.4){
     g.save();g.transform(dx/len,dy/len,0,1,cxs,cys);
     g.textAlign='center';g.textBaseline='middle';g.fillStyle='#fff';

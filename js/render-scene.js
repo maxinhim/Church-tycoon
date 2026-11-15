@@ -70,11 +70,12 @@ function draw(){
     var low=h<0||[0,1,2,3].some(function(d){return th(t.x+DIRS[d][0],t.y+DIRS[d][1])<0;});
     rt.f=low?function(){pitClip(rt,function(){drawTerCell(t.x,t.y);});}:function(){drawTerCell(t.x,t.y);};E.push(rt);
   });
+  var WQ={};V.forEach(function(v){if(v.state==='wait'&&v.target)WQ[v.target]=(WQ[v.target]||0)+1;});   // 문 앞에서 기다리는 사람 수
   S.buildings.forEach(function(b){
     if(b.id===mvId)return;
     var d=D[b.def],dm=bDims(b),r=rrect(b.x,b.y,b.x+dm.w,b.y+dm.h),bz=bZ(b);
     r.zb=bz;if(b.z==null&&ceilOver(b)<99)r.zt=Math.min(bz+bHeight(b),ceilOver(b)*LV-.15);
-    r.f=d.cell?function(){atZ(bz,function(){cellDraw(b,function(){drawEntity(b,0);});});}:function(){atZ(bz,function(){legacy(function(){var lb=legB(b);drawEntity(lb,d.kind==='lot'?Math.round(use*d.park):0);drawWear(lb);});});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
+    r.f=d.cell?function(){atZ(bz,function(){cellDraw(b,function(){drawEntity(b,0);});});}:function(){atZ(bz,function(){bldRing(b,WQ);legacy(function(){var lb=legB(b);drawEntity(lb,d.kind==='lot'?Math.round(use*d.park):0);drawWear(lb);});bldGlow(b);});};if(bz<0){var f1=r.f;r.f=function(){pitClip(r,f1);};}E.push(r);
   });
   S.paths.forEach(function(p){
     var pg=(p.x<COLS&&p.y<ROWS)?th(p.x,p.y):0;
@@ -182,4 +183,41 @@ function iconCanvas(d,k){
   });
   ROT=rot;PJ.c=keep.c;PJ.ox=keep.ox;PJ.oy=keep.oy;PJ.s=keep.s;
   return cvs;
+}
+
+/* 건물 바닥 테두리 효과 (건물을 그리기 전/후, 바닥 높이에서)
+   · 정원이 꽉 차 있고 문 앞에서 기다리는 방문자가 있으면 빨갛게 반짝인다
+   · 레벨이 오르면(BFX) 황금빛 테두리가 짧고 강하게 빛나고, 그 빛이 건물 테두리 벽을 타고 올라온다 */
+function bldPoly(b,z,e){
+  var dm=bDims(b),r=rrect(b.x-e,b.y-e,b.x+dm.w+e,b.y+dm.h+e);
+  return [P(r.x0,r.y0,z),P(r.x1,r.y0,z),P(r.x1,r.y1,z),P(r.x0,r.y1,z)];
+}
+function bldStroke(c,pts,col,lw,blur){
+  c.save();c.strokeStyle=col;c.lineWidth=lw;c.lineJoin='round';if(blur){c.shadowColor=col;c.shadowBlur=blur;}
+  c.beginPath();pts.forEach(function(q,i){if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);});c.closePath();c.stroke();c.restore();
+}
+function bldRing(b,WQ){
+  var d=defOf(b);if(!d||!d.fill||d.cell||!WQ||!WQ[b.id])return;
+  if(!(b.inUse>=bCap(b)||b.run>0))return;   // 자리가 남으면 곧 들어간다
+  var c=PJ.c,s=Math.max(.6,PJ.s),k=.5+.5*Math.sin(performance.now()/130),pts=bldPoly(b,.012,.02);
+  bldStroke(c,pts,'rgba(255,60,50,'+(.35+.6*k).toFixed(3)+')',(3+2*k)*s,8+10*k);
+  bldStroke(c,pts,'rgba(255,200,190,'+(.25+.5*k).toFixed(3)+')',1*s,0);
+}
+function bldGlow(b){
+  var t0=BFX[b.id];if(t0==null)return;
+  var a=(performance.now()-t0)/1000;if(a>1.7){delete BFX[b.id];return;}
+  var c=PJ.c,s=Math.max(.6,PJ.s),H=Math.max(.9,Math.min(2.2,bHeight(b)+.1)),gold='rgb(255,205,70)';
+  // 바닥 테두리: 짧고 강하게
+  if(a<.6){var f=1-a/.6;bldStroke(c,bldPoly(b,.012,.03),'rgba(255,214,80,'+Math.min(1,f*1.3).toFixed(3)+')',(6+4*f)*s,26*f+6);bldStroke(c,bldPoly(b,.012,.03),'rgba(255,250,220,'+f.toFixed(3)+')',1.6*s,0);}
+  // 테두리 벽을 타고 올라오는 빛: 네 모서리의 세로선과 올라가는 고리
+  if(a>.12){
+    var k=Math.min(1,(a-.12)/1.2),z=k*H,fade=1-Math.max(0,(a-1.0)/.7),g,i,p0=bldPoly(b,.012,.02),p1=bldPoly(b,z,.02);
+    c.save();c.globalAlpha=Math.max(0,fade);
+    for(i=0;i<4;i++){
+      g=c.createLinearGradient(p0[i][0],p0[i][1],p1[i][0],p1[i][1]);g.addColorStop(0,'rgba(255,205,70,.15)');g.addColorStop(1,'rgba(255,240,170,1)');
+      c.strokeStyle=g;c.lineWidth=3*s;c.shadowColor=gold;c.shadowBlur=12;c.beginPath();c.moveTo(p0[i][0],p0[i][1]);c.lineTo(p1[i][0],p1[i][1]);c.stroke();
+    }
+    bldStroke(c,p1,'rgba(255,225,110,1)',4*s,16);bldStroke(c,p1,'rgba(255,255,230,.9)',1.4*s,0);
+    c.restore();
+  }
 }

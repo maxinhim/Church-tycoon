@@ -8,15 +8,15 @@
 var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 
 /* 수입 */
-var VIS_RATE=0.85;        // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
-var SHOP_K=8;            // 한 번 살 때 = 건물 income × SHOP_K
+var VIS_RATE=0.4;         // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
+var SHOP_K=14;           // 한 번 살 때 = 건물 income × SHOP_K
 var SHOP_COST=0.25;      // 매장 재료비 비율 (판매 순간 빠진다)
 var OFFER_PER=30;        // 주일 헌금: 출석 한 명당
-var VIS_GIVE=3;          // 방문자 헌금: 한 명당
+var VIS_GIVE=6;          // 방문자 헌금: 한 명당
 var SPONSOR0=600,SPONSOR_DROP=6;   // 개척 후원: 시작 금액, 주마다 줄어드는 양
 
 /* 성도 수: 정착·이탈 */
-var JOIN_P=0.1;          // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
+var JOIN_P=0.18;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
 var REFER_K=0.015;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
 var MOOD_LEAVE=45;       // 만족도가 이보다 낮으면 떠나는 성도가 는다
 var MOOD_GAIN=50;        // 만족도가 이보다 높으면 소개로 새 성도가 온다
@@ -159,7 +159,7 @@ var TEAM_MAX=5,TALENT_PER_LV=1,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9];
      레벨마다 효과 +BLV_FX, 정원·좌석·수용 +BLV_CAP, 회전 속도 +BLV_ROT (한 명씩 건물)
    · 같은 기능의 기본(티어 1)·상위(티어 2) 건물: 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 6~7), 값은 티어 1의 Lv 10 누적 투자만큼 더 비싸다.
      티어 1은 티어 2가 열리기 전엔 TIER1_MAX개, 열린 뒤엔 TIER1_MAX_OPEN개까지 */
-var VIS_SPEED=.5;       // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
+var VIS_SPEED=.32;      // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
 var TEMPO_ROT=1.4;       // 건물 안에 머무는 시간 배율
 var VIS_PATIENCE=14;     // 문 앞 길에서 기다리는 한계(초). 넘으면 화남 표시·불만·다른 곳으로
 var ANGRY_T=9;           // 화남 표시가 떠 있는 시간(초). 이 동안 방문자를 누르면 불만 사유가 보인다
@@ -169,24 +169,24 @@ var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 �
 var BATCH_SUN_WAIT=3;    // 주일에는 (금·토에 가동하지 않았으면) 모인 사람이 이만큼 기다리면 다시 가동한다
 var SINGLE_ROT=1;        // 한 명씩 건물(매장·편의) Lv 1 회전 시간 배율
 /* 레벨은 100까지. 효과·정원·회전은 Lv 10까지는 레벨마다 BLV_FX·BLV_CAP·BLV_ROT씩 오르고, 그 뒤로는 오르는 폭이 BLV_TAIL배로 느려진다(lvM).
-   투자 한 번 = 한 레벨(BLV_XP=1), 값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)): Lv 10까지 건물 값의 약 7배, Lv 100까지 약 370배.
+   투자 BLV_XP(10)번 = 한 레벨(한 번은 경험치 10%라 게이지가 눈에 띄게 오른다), 투자 한 번의 값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)): 한 레벨 약 건물 값의 1/3, Lv 10까지 약 4배.
    모습은 3단계: Lv BLV_STAGE[0] 이하 천막, BLV_STAGE[1] 이하 보통, 그 위 큰 시설 */
-var BLV_MAX=100,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=1,BLV_INVEST=.55,BLV_INVEST_UP=.12,BLV_TAIL=.25,BLV_STAGE=[5,20];
+var BLV_MAX=100,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=10,BLV_INVEST=.033,BLV_INVEST_UP=.09,BLV_TAIL=.25,BLV_STAGE=[5,20];
 /* 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 12쯤), 값은 티어 1 Lv 10 누적 투자 × TIER2_COST_K만큼 더 (TIER2_INV_LV까지의 투자).
    값싼 티어 1 여러 개(TIER1_MAX개, 상위가 열리면 TIER1_MAX_OPEN개까지)와 비싼 티어 2 하나 사이: 티어 1은 같은 값에 성능이 더 나오지만 땅·운영비·관리자가 개수만큼 들고,
    티어 2는 한 칸에 모아 레벨 한도 없이 크게 키운다 */
-var TIER2_K=3.2,TIER2_COST_K=.5,TIER2_INV_LV=10,TIER1_MAX=4,TIER1_MAX_OPEN=6;
+var TIER2_K=3.2,TIER2_COST_K=.9,TIER2_INV_LV=10,TIER1_MAX=4,TIER1_MAX_OPEN=6;
 // 같은 기능의 [티어 1, 티어 2]
 var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
 // 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)
 var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop'];
 
-var VIS_LIFE=[110,50];     // 방문자가 머무는 시간(초): 최소, 더해지는 폭. 걸음이 느려진 만큼 길게
+var VIS_LIFE=[150,70];     // 방문자가 머무는 시간(초): 최소, 더해지는 폭. 걸음이 느려진 만큼 길게
 var VIS_IDLE_LEAVE=.4;    // 들를 곳이 없을 때 바로 돌아가는 확률 (낮을수록 더 둘러보고 더 들른다)
 var VIS_STROLL=.3;        // 건물을 고르기 전에 길을 한 바퀴 거닐 확률 (곳곳의 길을 고루 다니게)
 var VIS_STROLL_MAX=3;     // 한 방문에서 거니는 최대 횟수
 var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은 길을 피하는 무게, 가까움을 따지는 무게
-var VIS_MAX=110;         // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
+var VIS_MAX=60;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
 
 /* 직분자·교역자 행사 (ministry.js): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 호감·경험치 xp (+ 신뢰도 trust)
    직분자 = 직분 갈래(집사·장로·권사·교회직원), 교역자 = 교역 갈래 성도 + 부교역자. 쉬는 기간 cd(주), 소요 시간 dur(주) */

@@ -7,6 +7,7 @@
    · 외형은 3단계(bStage): Lv 1~3 천막·가건물 → 4~6 보통 건물 → 7~10 큰 시설
    · 티어: 같은 기능의 기본(1)·상위(2). 티어 2는 티어 1의 효과·정원·회전을 이어받고 × TIER2_K. 값은 티어 1 Lv 10까지의 투자만큼 더
    수치는 balance.js */
+var BFX={};   // 건물 레벨업 빛이 시작된 시각 (id → ms)
 function retired(id){return RETIRED.indexOf(id)>=0;}
 (function(){
   RETIRED.forEach(function(id){if(D[id])D[id].retired=true;});
@@ -62,11 +63,9 @@ function investWhy(b){
 function investBld(b){
   if(investWhy(b))return 0;
   S.money-=investCost(b);b.lv=bLv(b);b.bx=(b.bx||0)+1;
-  if(b.bx>=BLV_XP){b.bx=0;b.lv++;}
+  if(b.bx>=BLV_XP){b.bx=0;b.lv++;BFX[b.id]=(typeof performance!=='undefined'?performance.now():Date.now());}   // 레벨이 오르면 황금빛 효과(render-scene.js bldGlow)
   recalc();save();return b.lv;
 }
-// 여러 번 한꺼번에 투자: 자금이 되는 만큼 최대 n번. 오른 레벨 수를 돌려준다 (레벨이 100이라 한 번씩은 너무 많다)
-function investMany(b,n){var l0=bLv(b),k=0;while(k<n&&!investWhy(b)){investBld(b);k++;}return bLv(b)-l0;}
 /* 티어 1 개수 제한 */
 function tierWhy(id){
   var d=D[id];if(!d||d.tier!==1||d.nolimit)return '';   // nolimit: 개수 제한 없음 (벤치)

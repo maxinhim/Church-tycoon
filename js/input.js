@@ -129,8 +129,7 @@ function onPanel0(e){
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
   else if(a==='pslope'){UI.pc.slope=+v;UI.pbarOpen=false;renderDetail();}
   else if(a==='mgr'){var mb0=UI.sel;if(mb0&&mgrRole(bById(mb0))){openScreen('mgr');UI.mgrB=mb0;renderScreen();}}
-  else if(a==='invest10'){var jb=bById(UI.sel),jw=jb&&investWhy(jb);if(jw){toast(jw,1600);sfx('error',.4);}else if(jb){var jl0=bLv(jb),jg=investMany(jb,10);toast(defOf(jb).name+' Lv '+bLv(jb)+(jg?' (+'+jg+')':'')+(bStage(jb)!==stageOf(jl0)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);renderSelCard();hud(true);}}
-  else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){investBld(ib);if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==stageOf(il0)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
+  else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){var xw0=Math.round((ib.bx||0)/BLV_XP*100);investBld(ib);UI.xpFrom={id:ib.id,w:bLv(ib)>il0?100:xw0};if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==stageOf(il0)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
   else if(a==='pkind'){UI.pc.k=v;UI.pbarOpen=false;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}
   else if(a==='pundo'){if(pcUndo())toast('되돌렸어요',1000);renderDetail();hud(true);}

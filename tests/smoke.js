@@ -1187,9 +1187,9 @@ async function entranceChecks(browser, url) {
       if (bn2) { demolish(bn2.id); } }
     { const bn3 = build('bench', 2, 2, 2); o.sitDraw = !!bn3 || true; draw(); if (bn3) { const b3 = S.buildings.find(x => x.def === 'bench'); if (b3) demolish(b3.id); } }
 
-    // 레벨 100·투자 ×10·건물 위 레벨 아이콘, 일괄 심방·선물 옆 비용
-    const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money, got = investMany(rm, 10);
-    o.lv100 = BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
+    // 레벨 100·건물 위 레벨 아이콘, 일괄 심방·선물 옆 비용
+    const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money; for (let k = 0; k < BLV_XP * 10; k++) investBld(rm); const got = bLv(rm) - lv0;
+    o.lv100 = typeof investMany === 'undefined' && BLV_XP >= 5 && BFX[rm.id] > 0 && BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
     draw(); o.badge = hasLv(rm) && !D.tree.fill;
     S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
     o.bcost = bc.length === 2 && bc.every(t => /만/.test(t));
@@ -1202,7 +1202,7 @@ async function entranceChecks(browser, url) {
   check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 20명마다 한 자리, 최대 없음');
   check(r.propTile && r.propCut, '소품: 벤치·쓰레기통 밑에도 바닥을 깔 수 있고, 길을 끊는 자리에는 소품을 놓지 못함');
   check(r.face, '건축: 길 옆에 놓으면 정면(문)이 길 쪽을 향하고, 직접 돌렸거나 길이 없으면 그대로');
-  check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100(투자 ×10)·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
+  check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
   check(r.ban && r.deco && r.dock && r.tabSign && r.clickSign && r.tabDeco && r.clickDeco && r.invest && r.invest10 && r.clickStyle && r.tabClose && r.draw, '교회 입구: 안내문은 사서 걸고 꾸미기는 켜고 끄며, 작은 건축 패널 모양의 창(컨셉·안내문·꾸미기 칩, 그림 카드, 투자)이 열리고 모든 조합 그림에 오류 없음');
   check(errs.length === 0, '교회 입구·시작 밸런스: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();

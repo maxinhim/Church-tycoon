@@ -38,9 +38,8 @@ function renderSelCard(){
     // 레벨 올리기: 투자 게이지와 버튼
     if(hasLv(b)&&bLv(b)<BLV_MAX){
       var iw=investWhy(b);
-      h+='<div class="sclv"><span class="bar"><i style="width:'+Math.round((b.bx||0)/BLV_XP*100)+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
+      h+='<div class="sclv"><span class="bar xp"><i data-w="'+Math.round((b.bx||0)/BLV_XP*100)+'" style="width:'+(UI.xpFrom&&UI.xpFrom.id===b.id?UI.xpFrom.w:Math.round((b.bx||0)/BLV_XP*100))+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
       row+=scBtn('invest','투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
-      if(bLv(b)<BLV_MAX-1)row+=scBtn('invest10','×10',iw?'':'',null,'자금이 되는 만큼 최대 10레벨 투자');
     }
     if(mr&&!S.freeMgr)row+=scBtn('mgr',mw?'👤 관리자':'👤 관리자 필요',mw?'':'pri',null,mw?'관리자 바꾸기':'관리자 배치·청빙');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
@@ -78,6 +77,7 @@ function renderSelCard(){
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
   h+='<div class="scb">'+row+'</div>'+(scMore?more:'');
   if(h!==scHtml){el.innerHTML=h;scHtml=h;}
+  var xi=el.querySelector('.xp i');if(xi&&xi.dataset.w!=null&&UI.xpFrom){var xw=xi.dataset.w;UI.xpFrom=null;setTimeout(function(){xi.style.width=xw+'%';},30);}
 }
 // 매 프레임: 고른 것 바로 위에 붙인다. 위쪽에 자리가 없으면 아래로
 function syncSelCard(){
