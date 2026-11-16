@@ -145,3 +145,11 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .sdt h3,.pasx h3{font-weight:700}
 .mgrc.away{opacity:.62}
 .mgrc.away small{color:var(--bad);font-weight:700}
+/* 잠긴 탭·잠긴 기능 버튼 (교회 Level에 열림) */
+.stabs button.lock{background:color-mix(in srgb,var(--card) 55%,#8aa39a);color:#5f7a70;display:inline-flex;align-items:center;gap:3px;opacity:.9}
+.stabs button.lock i{font-style:normal;font-size:.85em}
+.stabs button.lock small{font-size:.72em;background:rgba(0,0,0,.14);border-radius:999px;padding:0 5px;margin-left:2px}
+.lockn{font-size:11.5px;color:var(--muted)}
+.fab.lock .fc{filter:grayscale(.75) brightness(.92)}
+.fab.lock .fc::after{content:'🔒';position:absolute;right:-5px;bottom:-4px;font-size:13px;filter:drop-shadow(0 1px 0 rgba(0,0,0,.3))}
+.fab.lock .fl{background:#8aa39a;border-color:#5f7a70;box-shadow:0 2px 0 #5f7a70}

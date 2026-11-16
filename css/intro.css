@@ -1,0 +1,42 @@
+/* ---------- 인트로 화면 · 스테이지 고르기 (js/intro.js) ---------- */
+#intro-screen{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;justify-content:space-between;align-items:center;
+  padding:5vh 4vw 7vh;background:#cfe6c4 url(../assets/intro/intro_bg.webp) center/cover no-repeat;background-size:cover;background-position:center;
+  opacity:1;transition:opacity .6s ease;cursor:pointer;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#intro-screen.out{opacity:0;pointer-events:none}
+.intro-logo{display:block;height:min(42vh,27vw);width:auto;max-width:92vw;pointer-events:none;filter:drop-shadow(0 .8vh 0 rgba(60,35,20,.18)) drop-shadow(0 1.6vh 2.4vh rgba(60,35,20,.28));
+  animation:introFloat 3s ease-in-out infinite alternate;will-change:transform}
+.intro-btn{border:0;background:none;padding:0;cursor:pointer;animation:introPulse 1.5s ease-in-out infinite alternate;will-change:transform;
+  filter:drop-shadow(0 0 1.6vh rgba(255,236,170,.95)) drop-shadow(0 .9vh 1vh rgba(70,40,10,.35))}
+.intro-btn img{display:block;height:min(20vh,11.5vw);width:auto;max-width:70vw;pointer-events:none}
+#intro-screen.press .intro-btn{animation:none;transform:scale(.95);transition:transform .12s ease-out}
+@keyframes introFloat{from{transform:translateY(0px) scale(1)}to{transform:translateY(-14px) scale(1.02)}}
+@keyframes introPulse{from{transform:scale(1)}to{transform:scale(1.05)}}
+
+#stage-screen{position:fixed;inset:0;z-index:9998;display:flex;flex-direction:column;align-items:center;gap:1.6vh;padding:2.4vh max(3vw,env(safe-area-inset-right,0px)) 2.4vh max(3vw,env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,rgba(234,243,234,.9),rgba(214,234,226,.94)),#cfe6c4 url(../assets/intro/intro_bg.webp) center/cover no-repeat;
+  opacity:1;transition:opacity .45s ease;overflow:hidden;color:var(--ink)}
+#stage-screen[hidden]{display:none}
+#stage-screen.out{opacity:0;pointer-events:none}
+.sthead{flex:none;display:flex;flex-direction:column;align-items:center;gap:.2vh}
+.sthead h2{margin:0;font-family:var(--f-cozy,sans-serif);font-weight:400;font-size:min(6.4vh,3.4vw);color:#fff;background:linear-gradient(180deg,#5fb09e,#3f8a7a);border:.5vh solid #2f6f62;border-radius:999px;padding:.4vh 4vw;box-shadow:0 .7vh 0 #2f6f62;text-shadow:0 .3vh 0 rgba(0,0,0,.2)}
+.sthead p{margin:.8vh 0 0;font-size:min(3.4vh,1.7vw);color:var(--muted)}
+#stage-grid{flex:1;min-height:0;width:min(100%,178vh);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:2.2vh 2vw}
+.stcard{position:relative;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:.3vh;padding:1vh 1vh 1.2vh;text-align:left;color:var(--ink);cursor:pointer;
+  background:var(--card,#fbfdf6);border:.5vh solid #2f6f62;border-radius:2.6vh;box-shadow:0 .9vh 0 #2f6f62,0 2vh 2.4vh rgba(30,70,55,.22);transition:transform .12s}
+.stcard:not(.lock):hover{transform:translateY(-.5vh)}
+.stcard:not(.lock):active{transform:translateY(.6vh);box-shadow:0 .3vh 0 #2f6f62}
+.stcard:not(.lock){border-color:#e0703f;box-shadow:0 .9vh 0 #b8502a,0 2vh 2.4vh rgba(120,60,20,.25)}
+.stpic{position:relative;flex:1;min-height:0;border-radius:1.6vh;overflow:hidden;background:#cfe6c4;border:.3vh solid rgba(47,111,98,.35)}
+.stpic svg,.stphoto{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stphoto{background:url(../assets/intro/intro_bg.webp) 62% 46%/190% auto no-repeat}
+.stno{font-family:var(--f-cozy,sans-serif);font-size:min(2.6vh,1.3vw);letter-spacing:.08em;color:#e0703f;margin-top:.5vh}
+.stcard b{font-family:var(--f-cozy,sans-serif);font-weight:400;font-size:min(4.6vh,2.3vw);line-height:1.1}
+.stcard small{font-size:min(2.8vh,1.4vw);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stcard.lock{cursor:not-allowed;background:#e9eeea}
+.stcard.lock .stpic svg{filter:saturate(.55) brightness(.92)}
+.stcard.lock .stno,.stcard.lock b{color:#7d8f86}
+.stlock{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4vh;background:rgba(24,40,36,.24);color:#fff;font-family:var(--f-cozy,sans-serif);font-size:min(3.4vh,1.7vw);text-shadow:0 .3vh 0 rgba(0,0,0,.35)}
+.stlock i{font-style:normal;font-size:min(8vh,4vw);line-height:1;filter:drop-shadow(0 .4vh 0 rgba(0,0,0,.3))}
+.stcard.shake{animation:stShake .35s}
+@keyframes stShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1vh)}75%{transform:translateX(1vh)}}
+#rotate{z-index:10000}

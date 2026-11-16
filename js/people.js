@@ -99,7 +99,7 @@ function delegHelpers(){return (S.assoc||[]).length+leaders().length;}
 function delegPool(){var L=delegState().lv;return (S.people||[]).filter(function(p){return p.lv<L;});}
 function delegWeek(){
   var d=delegState();d.last=null;
-  if(!d.on||!delegHelpers())return;
+  if(!d.on||!delegHelpers()||!featOk('deleg'))return;
   var cap=delegCap(),n=0,cost=0,up=0;
   delegPool().sort(function(a,b){return a.lv-b.lv||a.vw-b.vw;}).forEach(function(p){
     if(n>=cap)return;var did=false;
@@ -115,6 +115,7 @@ function ppCareCost(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return chea
 function ppCareXp(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.xp*DELEG_XP_K):c.xp;}
 function ppCareWhy(p,kind,cheap){
   var c=kind==='gift'?PP_GIFT:PP_VISIT,last=kind==='gift'?p.gw:p.vw;
+  if(kind==='gift'&&!featOk('gift'))return '선물은 '+featWhy('gift');
   if(p.lv>=PP_LV_MAX)return '이미 가장 깊은 사이예요';
   if(S.week-last<c.cd)return (c.cd-(S.week-last))+'주 뒤에 다시 할 수 있어요';
   if(S.money<ppCareCost(kind,cheap))return '자금이 부족해요';
@@ -156,13 +157,14 @@ function ppAppointAll(list,to){
 /* 다음 단계: 갈래가 여럿이면 하나를 고른다. 교육을 시작하고(값), 다 차면 임명한다 */
 function ppNexts(p){return ppNode(p).next||[];}
 // 다음 단계 중 레벨이 된 것이 있는지 (카드 '가능' 표시용)
-function ppCanStep(p){return !p.tr&&ppNexts(p).some(function(id){return p.lv>=PP_TREE[id].lv;});}
+function ppCanStep(p){return !p.tr&&ppNexts(p).some(function(id){return p.lv>=PP_TREE[id].lv&&ppNodeOpen(id);});}
 function ppTrainWhy(p,to){
   var nx=ppNexts(p);if(!nx.length)return '더 오를 단계가 없어요';
   if(to==null)to=nx[0];
   if(nx.indexOf(to)<0)return '이 성도의 다음 단계가 아니에요';
   var st=PP_TREE[to];
   if(p.tr)return p.tr.ready?'임명을 기다리고 있어요':'교육 중이에요';
+  if(!ppNodeOpen(to))return '교회 Lv '+ppNodeLv(to)+'부터 할 수 있어요';
   if(p.lv<st.lv)return '호감 Lv '+st.lv+'부터 할 수 있어요';
   if(to==='assoc'&&S.assoc.length>=assocSlots())return '부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)';
   if(S.money<st.cost)return '자금이 부족해요';

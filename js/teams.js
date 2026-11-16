@@ -47,8 +47,11 @@ function fitTalents(){
   return moved;
 }
 // 팀에 달란트를 하나 넣거나(d=1) 뺀다(d=−1). 안 되면 까닭
+// 사역팀이 열리는 단계 (교회 Lv − 1). 표는 balance.js TEAM_LV
+for(var tmk in TEAM_LV)if(STAFF[tmk])STAFF[tmk].goal=TEAM_LV[tmk]-1;
 function teamAdd(k,d){
   var t=STAFF[k];if(!t)return '없는 사역팀이에요';
+  if(d>0&&!featOk('teams'))return '사역팀은 '+featWhy('teams');
   var lv=S.staff[k]||0;
   if(d>0){
     if(!tierOk(t.goal||0))return lockText(t.goal)+' 꾸릴 수 있어요';

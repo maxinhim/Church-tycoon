@@ -39,7 +39,7 @@ function frame(ts){
   var dt=Math.min(0.25,(ts-last)/1000||0);last=ts;
   stepFx(dt);stepWx(dt);stepAudio(dt);
   // 목회 고민 카드가 열려 있으면 시간이 멈춘다
-  if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*gameSpeed();while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
+  if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg&&!UI.intro){var sim=dt*gameSpeed();while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
   draw();syncPlace();syncGate();syncSelCard();hud(false);
   requestAnimationFrame(frame);
 }
@@ -74,14 +74,14 @@ function init(){
   // 주일 정산 화면은 어디를 눌러도 그냥 사라진다 (재정 내역은 현황 › 재정에서 본다)
   $('#rcpt').addEventListener('click',function(){$('#rcpt').hidden=true;});
   if(!S.open&&qDone('f6'))setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
-  setupInput();setupPlace();setupSelCard();setupScreens();setupAudio();loadSprites();
+  setupInput();setupPlace();setupSelCard();setupScreens();setupAudio();loadSprites();setupIntro();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
   if(portraitMQ.addEventListener)portraitMQ.addEventListener('change',syncOrientation);else portraitMQ.addListener(syncOrientation);
   syncOrientation();lockLandscape();
   document.addEventListener('pointerdown',lockLandscape,{once:true});
   document.addEventListener('visibilitychange',function(){if(document.hidden)save();});
-  resize();renderPanel();hud(true);
+  resize();renderPanel();hud(true);syncEvBadge();
   if(S.over)showOver();
   if(S.dlg)showDlg();
   requestAnimationFrame(frame);

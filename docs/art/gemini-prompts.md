@@ -168,3 +168,10 @@ Row 6: white cross sculpture on a stone base; wooden garden pergola arch with cl
 
 ## 문 없는 건물 (입구·출구 건물 도입 후)
 입구·출구가 건물 1층 둘레에 붙는 작은 현관 건물이 되면서, 방문 건물 그림에서 문·계단·현관을 뺀다. 이미 쓰는 고화질 그림(W1 작은 예배실, W3 예배당, W2 대예배당)은 쓰는 한 쌍만 잘라 `edit-src/`에 두고 문만 지우는 수정 프롬프트(R1~R3)로 고친다. 나머지 예배 건물은 W4~W6에서 문 없이 새로 받는다. 프롬프트는 `sheet-prompts.md`.
+
+## 인트로 화면 (`sheets/intro-bg.webp`·`sheets/intro-ui.webp`)
+- 두 장 모두 Gemini로 생성해 받은 그림이다 (2000×1116, 오른쪽 아래에 Gemini의 작은 별 모양 표시가 있다). 생성 프롬프트 원문은 저장소에 받지 못해 적지 못했다 — 다시 만들 때 여기에 적을 것.
+  - `intro-bg.webp`: 벚꽃 핀 시골 마을과 작은 교회, 길에서 인사하는 사람들 (손그림풍 아이소메트릭, 따뜻한 노을빛).
+  - `intro-ui.webp`: 같은 배경 위에 'Church Tycoon' 로고와 'Tap to Start' 단추를 얹고, 위쪽을 마젠타(#FF00FF)로 덮은 그림.
+- 쓰는 법: `python3 tools/intro_assets.py` → `assets/intro/intro_bg.webp`(표시가 들어가지 않게 1776×999로 자름)·`intro_logo.png`·`intro_btn.png`.
+  로고·단추는 'UI 시트의 화소가 배경 그림과 마젠타를 섞은 색으로 설명되면 바탕'이라는 기준으로 떼어 내고, 가장자리의 분홍 물은 안쪽 색을 번지게 해 없앤다. 단추는 짙은 바깥선 안쪽만 쓴다(둘레의 빛은 CSS).

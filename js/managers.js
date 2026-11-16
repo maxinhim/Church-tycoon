@@ -88,6 +88,7 @@ function genVol(t){return [makeVol(t,(S.hireN||0)<HIRE_EARLY),makeVol(t),makeVol
 function volCands(t){S.vc=S.vc||{};return S.vc[t]||(S.vc[t]=genVol(t));}
 // 새 후보 찾기: 봉사자 세 갈래와 부교역자 후보를 모두 새로
 function volReroll(){
+  if(!featOk('hire'))return '청빙은 '+featWhy('hire');
   if(S.money<HIRE_REROLL)return '자금이 부족해요';
   S.money-=HIRE_REROLL;S.vc={};VOL_TYPES.forEach(volCands);refreshCands();save();return '';
 }
@@ -99,6 +100,7 @@ function volJoin(c){
 }
 // 청빙: 갈래 t의 후보 i를 들이고, bid가 있고 맡을 수 있으면 그 건물에 바로 배치한다. 못 하면 이유
 function volHire(t,i,bid){
+  if(!featOk('hire'))return '청빙은 '+featWhy('hire');
   var c=volCands(t)[i];if(!c)return '후보가 없어요';
   if(S.money<c.fee)return '청빙 비용이 부족해요';
   S.money-=c.fee;S.hireN=(S.hireN||0)+1;S.vc[t].splice(i,1);if(!S.vc[t].length)S.vc[t]=null;

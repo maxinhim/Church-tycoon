@@ -283,6 +283,7 @@ function renderEntrDetail(){
 function entrAct(a,v){
   if(a==='esub'){if(UI.entr){UI.entr.sub=v;UI.entrF=null;renderPanel();}return true;}
   if(a==='epick'&&UI.entr){
+    if(!featOk('entr')){toast('입구 꾸미기는 '+featWhy('entr'),1800);sfx('error',.4);return true;}
     var sub=UI.entr.sub,why=sub==='style'?entrStyle(v):sub==='sign'?entrSign(v):entrDeco(v);
     UI.entrF={sub:sub,id:v};
     if(why){toast(why,1600);sfx('error',.4);}else sfx('click',.5);

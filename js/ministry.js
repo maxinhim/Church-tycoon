@@ -13,14 +13,21 @@ var DIFF={
 function curDiff(){return DIFF[S.diff]||DIFF.normal;}
 
 function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
-// 목표를 n개 이루면 열리는 것들 (건물 id)
-var UNLOCK={
-  chapel:1,hall:1,kids:1,kinder:1,lot:1,praise:1,books:1,nursery:1,picnic:1,
-  dining:2,teens:2,youth:2,elder:2,counsel:2,lounge:2,nurse:2,spire:2,study:2,gazebo:2,playground:2,
-  badminton:1,jokgu:1,gateball:1,calli:1,art:1,
-  hoops:2,craft:2,cook:2,band:2,choir:2,
-  futsal:3,grand:3,clinic:3,dawn:3,mission:3,gym:3,foodbank:3,parktower:3,outdoor:3
-};
+// 건물이 열리는 단계 (교회 Lv − 1). 표는 balance.js BLD_LV
+var UNLOCK={};for(var ubk in BLD_LV)UNLOCK[ubk]=BLD_LV[ubk]-1;
+/* 그 밖의 기능 잠금 (balance.js FEAT_LV·PP_CLV): 교회 Level이 되어야 쓴다. S.unlockAll이면 모두 열린다 */
+var FEAT_NAME={gift:'선물',hire:'청빙·봉사자 화면',entr:'입구 꾸미기',teams:'사역팀',bulk:'일괄 심방·교육',care:'성도의 고민 상담',vol:'봉사자 세우기(직분자·리더·섬김이)',deleg:'성도 돌봄 맡기기'};
+function featLv(k){return FEAT_LV[k]||1;}
+function featOk(k){return unlockLevel()>=featLv(k);}
+function featWhy(k){return featOk(k)?'':'교회 Lv '+featLv(k)+'에 열려요';}
+function ppNodeLv(id){return PP_CLV[id]||1;}
+function ppNodeOpen(id){return unlockLevel()>=ppNodeLv(id);}
+// Level L에 새로 열리는 기능·성장 단계 이름
+function featNames(L){
+  var o=[],k;for(k in FEAT_LV)if(FEAT_LV[k]===L)o.push(FEAT_NAME[k]||k);
+  var seen={};for(k in PP_CLV)if(PP_CLV[k]===L&&L>1&&typeof PP_TREE!=='undefined'&&PP_TREE[k]){var n=k==='elder'?'장로·권사':PP_TREE[k].n;if(!seen[n]){seen[n]=1;o.push(n);}}
+  return o;
+}
 /* 교회 Level이 오르면 열리는 꾸미기: 목표는 기능 건물을, Level은 아름다움이 큰 꾸미기를 연다.
    값싼 기본 꾸미기(화단·나무·울타리 등)는 처음부터 열려 있다 */
 var LV_UNLOCK={
@@ -49,13 +56,13 @@ function lvUnlockNames(L){var o=[];for(var id in LV_UNLOCK)if(LV_UNLOCK[id]===L&
 // 단계 n이 열릴 때 새로 열리는 것들의 이름
 function unlockNames(n){
   var out=[];
-  for(var id in UNLOCK)if(UNLOCK[id]===n)out.push(D[id]?D[id].name:id);
+  for(var id in UNLOCK)if(UNLOCK[id]===n&&D[id]&&!D[id].retired&&!D[id].hidden)out.push(D[id].name);
   for(var k in STAFF)if((STAFF[k].goal||0)===n&&n>0)out.push(STAFF[k].name);
   for(var e in EVENTS)if((EVENTS[e].goal||0)===n&&n>0&&!EVENTS[e].hidden)out.push(EVENTS[e].name);
   return out;
 }
 // 교회 Level L에 열리는 단계의 이름들
-function tierNames(L){var out=[];for(var t=1;t<LV_TIER.length;t++)if(LV_TIER[t]===L)out=out.concat(unlockNames(t));return out;}
+function tierNames(L){var out=featNames(L);for(var t=1;t<LV_TIER.length;t++)if(LV_TIER[t]===L)out=out.concat(unlockNames(t));return out;}
 
 /* ---------- 부교역자 청빙 ---------- */
 var FIELDS={
@@ -76,6 +83,7 @@ function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.
 function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}
 function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}
 function hireAssoc(i,bid){
+  if(!featOk('hire'))return '청빙은 '+featWhy('hire');
   var c=S.cands[i];if(!c)return '후보가 없어요';
   if(S.assoc.length>=assocSlots())return '지금 성도 수로는 부교역자를 '+assocSlots()+'명까지 청빙할 수 있어요';
   if(S.money<c.fee)return '청빙 비용이 부족해요';
@@ -198,6 +206,8 @@ var EVENTS={
   christmas:{name:'성탄 축하 예배',ic:'🎄',col:'#3f7a52',season:[12,12],cost:800,cd:20,dur:1,goal:0,desc:'성탄의 기쁨을 온 동네와 나눠요',fx:'방문자 +80%, 만족 +6',rwt:'평판 +3',mods:function(m){m.vis*=1.8;m.mood+=6;},rw:function(){return [rwRep(3)];}},
   joint:{name:'연합 행사',hidden:true,auto:true,cost:0,cd:0,dur:2,goal:0,desc:'',mods:function(m){m.vis*=1.2;}}
 };
+// 행사가 열리는 단계 (교회 Lv − 1). 표는 balance.js EV_LV
+for(var evk in EV_LV)if(EVENTS[evk])EVENTS[evk].goal=EV_LV[evk]-1;
 // 달력 (balance.js WEEKS_PER_MONTH·YEAR_WEEKS): 몇 년차 몇 월 몇 주
 function weekOfYear(w){return (w==null?S.week:w)%YEAR_WEEKS+1;}
 function monthOf(w){return Math.floor((weekOfYear(w)-1)/WEEKS_PER_MONTH)+1;}

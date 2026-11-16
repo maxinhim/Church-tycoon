@@ -186,7 +186,7 @@ function caresWeek(){
     addLog(CARES[c.k].t+' · 돌보지 못해 마음이 멀어졌어요');return false;
   });
   var P=(S.people||[]).filter(function(p){return !careOf(p);});
-  if(P.length<CARE_MIN_MEM||S.cares.length>=CARE_MAX)return;
+  if(P.length<CARE_MIN_MEM||S.cares.length>=CARE_MAX||!featOk('care'))return;
   if(Math.random()>=Math.min(CARE_P_MAX,S.members*CARE_P_PER))return;
   var ks=Object.keys(CARES).filter(function(k){var t=CARES[k];if(t.pair&&P.length<CARE_MIN_MEM+2)return false;return !t.min||P.some(function(p){return ppDepth(p)>=t.min;});});
   var k=ks[Math.floor(Math.random()*ks.length)],t=CARES[k];

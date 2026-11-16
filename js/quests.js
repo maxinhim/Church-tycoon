@@ -27,17 +27,17 @@ var QUESTS=[
   {id:'g6',g:'goal',after:'g5',n:'지역을 섬기는 교회',d:'성도 220명 · 신뢰도 지수 80',ok:function(){return S.members>=220&&trustIdx()>=80;},p:function(){return Math.min(S.members/220,trustIdx()/80);},m:6000,xp:80,rep:5},
   {id:'g7',g:'goal',after:'g6',n:'부흥하는 교회',d:'성도 350명 · 만족도 70%',ok:function(){return S.members>=350&&S.mood>=70;},p:function(){return Math.min(S.members/350,S.mood/70);},m:10000,xp:100,rep:5},
   // 건축·사역 안내: 첫 걸음을 마치면 지금 할 수 있는 것부터 뜬다 (순서 없음)
-  {id:'u1',g:'guide',after:'f6',n:'교제 공간 짓기',d:'건축 › 교제에서 교제실이나 카페를 지어 성도들이 어울리게 해요',ok:function(){return hasCat('fellow');},m:200,xp:6},
-  {id:'u2',g:'guide',after:'f6',n:'기도실 짓기',d:'기도실을 지으면 영성의 기도 자리가 늘어요',ok:function(){return hasBuilt(['pray','dawn']);},m:200,xp:6},
-  {id:'u3',g:'guide',after:'f6',n:'주차장 짓기',d:'도로 위 주차 구역에 주차장을 지어 편의를 높여요',need:function(){return !isLocked('lot');},ok:function(){return hasCat('park');},m:250,xp:6},
+  {id:'u1',g:'guide',after:'f6',n:'교제 공간 짓기',d:'건축 › 교제에서 교제실이나 카페를 지어 성도들이 어울리게 해요',need:function(){return !isLocked('cell');},ok:function(){return hasCat('fellow');},m:200,xp:6},
+  {id:'u2',g:'guide',after:'f6',n:'기도실 짓기',d:'기도실을 지으면 영성의 기도 자리가 늘어요',need:function(){return !isLocked('pray');},ok:function(){return hasBuilt(['pray','dawn']);},m:200,xp:6},
+  {id:'u3',g:'guide',after:'f6',n:'주차장 짓기',d:'도로 위 주차 구역에 주차장을 지어 편의를 높여요',ok:function(){return hasCat('park');},m:250,xp:6},
   {id:'u4',g:'guide',after:'f6',n:'부서실 짓기',d:'영유아실·유치부실·초등부실로 성도 가정을 돌봐요',ok:function(){return hasBuilt(['nursery','kinder','kids','teens','study','playground','elder','clinic','pantry','counsel','foodbank']);},need:function(){return !isLocked('nursery');},m:250,xp:6},
-  {id:'u5',g:'guide',after:'f6',n:'소모임 열기',d:'건축 › 소모임에서 운동·취미·음악 모임 하나를 시작해요',ok:function(){return hasCat('club');},m:200,xp:6},
-  {id:'u6',g:'guide',after:'f6',n:'사역팀 꾸리기',d:'행사 › 사역팀에서 달란트를 넣어 첫 사역팀을 꾸려요',ok:function(){for(var k in S.staff)if(S.staff[k]>0)return true;return false;},m:200,xp:8},
+  {id:'u5',g:'guide',after:'f6',n:'소모임 열기',d:'건축 › 소모임에서 운동·취미·음악 모임 하나를 시작해요',need:function(){return !isLocked('pingpong');},ok:function(){return hasCat('club');},m:200,xp:6},
+  {id:'u6',g:'guide',after:'f6',n:'사역팀 꾸리기',d:'행사 › 사역팀에서 달란트를 넣어 첫 사역팀을 꾸려요',need:function(){return featOk('teams');},ok:function(){for(var k in S.staff)if(S.staff[k]>0)return true;return false;},m:200,xp:8},
   {id:'u7',g:'guide',after:'f6',n:'첫 세례 주기',d:'성도 화면에서 세례 교육을 마친 성도에게 세례를 줘요',ok:function(){return (S.people||[]).some(function(p){return p.node!=='new';});},m:200,xp:8},
-  {id:'u8',g:'guide',after:'g1',n:'성도의 고민 들어 주기',d:'성도 화면 › 고민에서 한 성도의 사연을 들어 주고 풀어 줘요',ok:function(){return (S.careDone||0)>=1;},m:300,xp:10},
+  {id:'u8',g:'guide',after:'g1',n:'성도의 고민 들어 주기',d:'성도 화면 › 고민에서 한 성도의 사연을 들어 주고 풀어 줘요',need:function(){return featOk('care');},ok:function(){return (S.careDone||0)>=1;},m:300,xp:10},
   {id:'u9',g:'guide',after:'g1',n:'매장 열기',d:'카페·서점 같은 매장을 지어 수익을 만들어요',need:function(){return !isLocked('shop');},ok:function(){return hasCat('shop');},m:300,xp:8},
-  {id:'u10',g:'guide',after:'g2',n:'첫 직분자 세우기',d:'성도를 길러 집사·소그룹 리더·섬김이를 세워요',ok:function(){return (S.people||[]).some(function(p){return PP_TREE[p.node].d>=4;});},m:350,xp:12},
-  {id:'u11',g:'guide',after:'g2',n:'부교역자 모시기',d:'봉사자 화면 › 청빙에서 부교역자를 청빙해요',ok:function(){return S.assoc.length>0;},m:350,xp:12}
+  {id:'u10',g:'guide',after:'g2',n:'첫 직분자 세우기',d:'성도를 길러 집사·소그룹 리더·섬김이를 세워요',need:function(){return featOk('vol');},ok:function(){return (S.people||[]).some(function(p){return PP_TREE[p.node].d>=4;});},m:350,xp:12},
+  {id:'u11',g:'guide',after:'g2',n:'부교역자 모시기',d:'봉사자 화면 › 청빙에서 부교역자를 청빙해요',need:function(){return featOk('hire');},ok:function(){return S.assoc.length>0;},m:350,xp:12}
 ];
 var QID={};QUESTS.forEach(function(q){QID[q.id]=q;});
 var QG={first:'첫 걸음',goal:'교회의 성장',guide:'건축·사역 안내'};

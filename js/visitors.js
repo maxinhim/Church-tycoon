@@ -109,8 +109,16 @@ function goLeave(v){
   v.path=p;v.pi=0;v.state='leave';v.target=0;
   if(!p.length)depart(v);
 }
-// 평균 욕구: 말씀에 더 큰 무게
-function needAvg(v){var w=0,s=0;NEEDS.forEach(function(n){var k=n==='word'?NEED_W_WORD:1;s+=k*v.needs[n];w+=k;});return s/w;}
+/* 지금 교회에서 채울 수 있는 욕구인지: 그 욕구를 채워 주는 건물이 아직 하나도 열리지 않았으면(교회 Level 잠금) 방문자는 그것을 바라지 않는다.
+   말씀은 언제나 바란다. recalc 때 다시 본다 (gripes.js rebuildDecor가 NEED_ON을 비운다) */
+var NEED_ON={};
+function needOn(n){
+  if(n==='word')return true;
+  if(NEED_ON[n]!=null)return NEED_ON[n];
+  return (NEED_ON[n]=DEFS.some(function(d){return d.kind==='bld'&&!d.hidden&&!d.retired&&d.fill&&d.fill[n]&&!isLocked(d.id);}));
+}
+// 평균 욕구: 말씀에 더 큰 무게, 아직 채울 길이 없는 욕구는 뺀다
+function needAvg(v){var w=0,s=0;NEEDS.forEach(function(n){if(!needOn(n))return;var k=n==='word'?NEED_W_WORD:1;s+=k*v.needs[n];w+=k;});return s/w;}
 function depart(v){
   v.dead=true;gripeLeave(v);
   var avg=needAvg(v)-v.annoy*5;
@@ -135,7 +143,7 @@ function decide(v){
   var order=NEEDS.slice().sort(function(a,b){return nr[a]-nr[b];});
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
-    if(v.needs[n]>=NEED_OK)continue;
+    if(v.needs[n]>=NEED_OK||!needOn(n))continue;
     var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&bOpen(b)&&!(v.blocked[b.id]>S.clock)&&wxOpen(d);});
     // 지갑에 돈이 있으면 매장에 조금 더 끌린다
     // 모든 건물을 골고루: 거리보다 '이번 주에 얼마나 쓰였나(자리 대비)'와 '지금 붐비나'를 더 크게 본다.

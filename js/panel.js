@@ -51,6 +51,7 @@ function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'
 function openGroup(g){
   UI.lastBuilt=null;var wasEntr=!!UI.entr;UI.entr=null;
   // 행사는 화면 전체를 쓴다 (screens.js)
+  if(g==='officers'&&!featOk('hire')){toast('봉사자 화면은 '+featWhy('hire')+' (부교역자·직원 청빙)',2200);sfx('error',.4);return;}
   if(g==='minis'){openScreen('events');return;}
   if(SCREENS[g]){openScreen(g);return;}
   if(UI.scr)closeScreen();

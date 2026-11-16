@@ -139,11 +139,34 @@ var TRUST_REP=1,TRUST_LV=1.5,TRUST_OFF=2,TRUST_PAST=20,TRUST_VIS=2,TRUST_VIS_MAX
 var IND_B={sp:26,mood:50,conv:40,trust:50,xp:10},IND_U={sp:14,mood:24,conv:12,trust:14,xp:30},IND_P=1.2,IND_MAX=50;
 var IND_GIFT0=40,IND_GIFT_K=25;
 /* 교회 Level = 다섯 지표 점수의 합. L이 되려면 합 ≥ LV_BASE + LV_K × (L−1)^LV_P (한 번 오른 Level은 내려가지 않는다) */
-var LV_MAX=100,LV_BASE=200,LV_K=36,LV_P=1.4;
+var LV_MAX=100,LV_BASE=150,LV_K=36,LV_P=1.4;   // 처음 점수는 150 안팎: 첫 걸음 퀘스트와 편의 시설만으로 Lv 2(186)에 닿는다
 // Level이 오를 때 축하금 = LV_GIFT0 + LV_GIFT_K × 새 Level (Lv 2는 250, Lv 10은 650)
 var LV_GIFT0=150,LV_GIFT_K=50;
-// 건물·사역팀·행사가 열리는 교회 Level (예전 목표 1·2·3개째)
-var LV_TIER=[1,2,3,5];
+// 건물·사역팀·행사의 잠금 단계 n은 교회 Lv n+1에 열린다 (LV_TIER[n])
+var LV_TIER=[];for(var lvT=0;lvT<40;lvT++)LV_TIER.push(lvT+1);
+/* ---------- 교회 Level에 열리는 것 ----------
+   처음(Lv 1)에는 대예배당과 편의·조경, 심방·세례, 행사 몇 개만 열려 있고, 교회 Level이 오르면서 기능이 하나씩 열린다.
+   적혀 있지 않은 것은 Lv 1부터 쓴다. (꾸미기는 ministry.js LV_UNLOCK)
+   BLD_LV 건물 · EV_LV 행사 · TEAM_LV 사역팀 · PP_CLV 성도의 성장 단계 · FEAT_LV 그 밖의 기능
+   관리자가 필요한 건물(매장·교제·예배)은 청빙(FEAT_LV.hire)이 열리는 Lv 2부터 */
+var BLD_LV={
+  shop:2,coffeecart:2,cell:2,pray:2,nursery:2,bench_stone:2,bench_iron:2,lot:2,
+  room:3,bible:3,kinder:3,bookstore:3,pantry:3,pingpong:3,fitness:3,boardgame:3,guitar:3,bench_back:3,bench_round:3,wc2:3,grill:3,library:3,
+  kids:4,cafe:4,hall:4,praise:4,badminton:4,jokgu:4,gateball:4,calli:4,art:4,gazebo:4,counsel:4,bench_flower:4,lectern:4,
+  chapel:5,books:5,teens:5,youth:5,study:5,playground:5,dining:5,lounge:5,elder:5,hoops:5,craft:5,cook:5,band:5,choir:5,spire:5,
+  dawn:6,mission:6,clinic:6,foodbank:6,gym:6,futsal:6,parktower:6,outdoor:6,
+  grand:8
+};
+var EV_LV={
+  bible:1,street:1,communion:2,smallgroup:2,christmas:2,easter:2,thanks:2,creed:3,bazaar:3,service:4,vbs:4,training:5,retreat:6,revival:8,
+  pbook:1,pstudy:1,pmemo:2,ppray:3,psem:5,pconf:8,pdeg:10,
+  abook:2,astudy:3,amemo:3,minedu:4,minfel:5,asem:6,adeg:10,
+  offvow:4,leadtea:4,servtool:4,volpray:4,offsem:5,leadsch:5,servws:5,volpic:6,leadmt:6,servthx:6,offret:7,volfeast:8
+};
+var TEAM_LV={evang:3,praise:3,care:3,newcomer:4,edu:4,prayer:5,admin:6,media:7,mission:8};
+var PP_CLV={bapt:1,nurture:2,disciple:3,devoted:4,sgl:4,server:4,deacon:6,cml:6,tlead:6,elder:8,kanji:8,dlead:8,seminary:10,cstaff:10,assoc:12};
+// gift 선물 · hire 청빙(부교역자·직원)과 봉사자 화면 · entr 입구 꾸미기 · teams 사역팀 · bulk 일괄 심방·교육 · care 성도의 고민 · vol 봉사자 갈래(직분자·리더·섬김이) · deleg 성도 돌봄 맡기기
+var FEAT_LV={gift:2,hire:2,entr:2,teams:3,bulk:3,care:3,vol:4,deleg:5};
 // 퀘스트 한 칸마다 받는 돈은 퀘스트 목록(quests.js)에 있다
 
 /* 사역팀과 달란트 (teams.js): 사역 경험 지표 레벨 1당 달란트 1개(TALENT_PER_LV).
@@ -192,9 +215,11 @@ var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은
    정착 확률은 SPIRIT_JOIN0 + SPIRIT_JOIN1 × 영성배이고 말씀 욕구가 안 채워지면 WORD_JOIN_LOW배만 */
 var VIS_WORD0=[8,26],VIS_OTHER0=[26,56],VIS_WORD_FIRST=26,NEED_W_WORD=2.5,VIS_WORD_PULL=5;
 var SPIRIT_VIS0=.45,SPIRIT_VIS1=.95,SPIRIT_JOIN0=.5,SPIRIT_JOIN1=.9,WORD_JOIN_LOW=.1;
-/* 설교·영성 불만: 예배를 마친 방문자가 설교가 와닿지 않으면(말씀 효과 × 맡은 사람의 성능 < SERMON_OK) 그 차이 × SERMON_K 확률(최대 SERMON_MAX)로 불만,
-   떠날 때 영성 점수가 SPIRIT_OK보다 낮으면 그 차이 × SPIRIT_K 확률로 불만. 말씀 욕구가 WORD_UNMET 아래인 채 떠나면 '예배를 못 드린' 불만 */
-var SERMON_OK=1.15,SERMON_K=1.3,SERMON_MAX=.6,SPIRIT_OK=.7,SPIRIT_K=1.3,WORD_UNMET=40;
+/* 설교·영성 불만: 예배를 마친 방문자가 설교가 와닿지 않으면(말씀 효과 × 맡은 사람의 성능 < 기대) 그 차이 × SERMON_K 확률(최대 SERMON_MAX)로 불만,
+   떠날 때 영성 점수가 기대보다 낮으면 그 차이 × SPIRIT_K 확률로 불만. 말씀 욕구가 WORD_UNMET 아래인 채 떠나면 '예배를 못 드린' 불만.
+   기대는 교회 Level을 따라 오른다 (갓 개척한 교회에는 너그럽고, 커질수록 설교·영성을 더 바란다):
+   설교 기대 = SERMON_OK0 + SERMON_OK_LV × (Lv−1) (최대 SERMON_OK_MAX), 영성 기대 = SPIRIT_OK0 + SPIRIT_OK_LV × (Lv−1) (최대 SPIRIT_OK_MAX) */
+var SERMON_OK0=.95,SERMON_OK_LV=.03,SERMON_OK_MAX=1.5,SERMON_K=1.3,SERMON_MAX=.6,SPIRIT_OK0=.4,SPIRIT_OK_LV=.04,SPIRIT_OK_MAX=.8,SPIRIT_K=1.3,WORD_UNMET=40;
 var VIS_MAX=60;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
 
 /* 봉사자·부교역자 행사 (ministry.js offEv): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 경험치 xp (+ 신뢰도 trust)

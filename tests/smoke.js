@@ -16,7 +16,8 @@ catch (e) {
 const ROOT = path.resolve(__dirname, '..');
 let failures = 0;
 function check(cond, msg) { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!cond) failures++; }
-async function skipSteps(page) { /* 첫 걸음은 퀘스트라 따로 건너뛰지 않는다 */ }
+// 인트로·스테이지 고르기는 건너뛴다 (인트로 자체는 introChecks에서 따로 본다). 첫 걸음은 퀘스트라 따로 건너뛰지 않는다
+async function skipSteps(page) { await page.evaluate(() => { if (typeof introSkip === 'function') introSkip(); if (typeof S !== 'undefined' && S && !window.__CT_LOCKS) { S.unlockAll = true; recalc(); if (typeof hud === 'function') hud(true); } }); }
 
 /* ---------- 정적 검사 ---------- */
 function staticChecks() {
@@ -492,7 +493,7 @@ async function ministryChecks(browser, url) {
     const m0 = S.money, r0 = S.rep, x0 = S.qxp || 0, wk0 = S.week; S.t = 1; S.members = 12; recalc(); S.goalAcc = 0; update(0.6);
     o.goalMid = qDone('g1') && S.week === wk0;
     o.goal = qDone('g1') && S.money === m0 + QID.g1.m && S.qxp === x0 + QID.g1.xp && S.rep >= r0 + QID.g1.rep - 0.001 && isLocked('chapel') && !document.getElementById('cele').hidden && CF.length > 0 && /퀘스트 완료/.test(document.getElementById('cele').textContent);
-    S.lvl = 2; o.goal = o.goal && !isLocked('chapel') && isLocked('dining'); S.lvl = 1;
+    S.lvl = BLD_LV.cell; o.goal = o.goal && !isLocked('cell') && isLocked('chapel'); S.lvl = BLD_LV.chapel; o.goal = o.goal && !isLocked('chapel') && isLocked('grand'); S.lvl = 1;
     // 부지: 산 땅 밖에는 못 짓고, 사면 넓어진다
     S.money = 99999; levelTick(true);
     // 부지 사기는 없앴다: 지도 어디에나(도로 줄 제외) 지을 수 있다
@@ -500,12 +501,14 @@ async function ministryChecks(browser, url) {
     o.noStamina = S.stam === undefined && typeof restWeek === 'undefined';
     // 사역팀·부교역자·직분자
     const cap0 = MOD.cap;
+    S.unlockAll = true; recalc();
     { const mt = S.money; o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); }
     refreshCands(); const fee = S.cands[0].fee, mA = S.money;
     o.assoc = hireAssoc(0) === '' && S.assoc.length === 1 && S.money === mA - fee && MOD.cap >= cap0 + 35 && assocPay() > 0;
     { const mm = S.members; S.members = ASSOC_PER - 1; recalc(); o.assocLimit = hireAssoc(0) !== '' && /명까지/.test(hireAssoc(0)); S.members = mm; recalc(); }
     S.members = 16; if (ASSOC_PER < 16) S.assoc.push({ name: '채움', title: '전도사', field: 'edu', skill: 1, pay: 0, fee: 0 }); recalc();   // 자리를 하나만 남기도록 채운다
     // 성도 한 사람 한 사람: 명단은 성도 수를 따르고, 심방 → 호감 레벨 → 교육 → 임명으로 세례·집사·장로/권사·신학 수료·부교역자까지
+    S.unlockAll = true; recalc();
     { const P = S.people, pe = {}; o.pe = pe;
       pe.roster = P.length === 16 && P.every(q => q.n && q.lv === 1 && q.node === 'new' && (q.g === 'm' || q.g === 'f')) && ppGiveK() === 1 && new Set(P.map(q => q.id)).size === 16;
       const p = P[0], cash = () => S.money; p.g = 'm';
@@ -762,7 +765,7 @@ async function ministryChecks(browser, url) {
       document.querySelector('#scrTabs [data-v="C"]').click(); const cc = document.querySelectorAll('#scrBody .hcard'); o.hireTab = cc.length === 3 && [...cc].every(c => c.classList.contains('tC'));
       const c0 = volCands('C')[0]; cc[0].click(); const hd = document.getElementById('scrDlg'); o.hireDlg = !hd.hidden && hd.textContent.includes(c0.name) && /“.+”/.test(hd.textContent);
       hd.querySelector('[data-act="hctake"]').click(); const np = S.people[S.people.length - 1];
-      o.hired = S.people.length === n0 + 1 && S.members === m0 + 1 && np.n === c0.name && np.node === 'cstaff' && !!np.ext && ppTrack(np) === 'C' && S.money === 99999 - c0.fee && hirePay() === c0.pay && volCands('C').length === 2;
+      o.hired = S.people.length === n0 + 1 && S.members === m0 + 1 && np.n === c0.name && np.node === 'cstaff' && !!np.ext && ppTrack(np) === 'C' && S.money >= 99999 - c0.fee && S.money <= 99999 - c0.fee + 1000 && hirePay() === c0.pay && volCands('C').length === 2;   // 퀘스트 보상이 함께 들어올 수 있다
       const before = JSON.stringify(S.vc); document.querySelector('#scrBody [data-act="hcreroll"]').click(); o.hireReroll = JSON.stringify(S.vc) !== before && volCands('C').length === 3;
       scrBack(); document.querySelector('#scrTabs [data-v="C"]').click(); o.hiredTab = UI.scr === 'officers' && document.querySelectorAll('#scrBody .ppc.ext').length === 1;
       hireFire(np.id); o.fired = S.people.length === n0 && S.members === m0 && hirePay() === 0; S.money = mm; renderScreen(); }
@@ -1164,7 +1167,15 @@ async function entranceChecks(browser, url) {
     o.flatStart = START_TERRAIN === 'flat' && Object.keys(S.hgt).length === 0 && Object.keys(S.slp).length === 0 && Object.keys(S.water).length === 0 && typeof terApply === 'function' && typeof startTerrain === 'function';
     o.mainStrong = bCapK(mn) === MAIN_K && bPerf(mn) > bPerf({ def: 'room', lv: 1, id: 0, x: 0, y: 0 }) * 1.5 && bCap(mn) > bCap({ def: 'room', lv: 1, id: 0, x: 0, y: 0, face: 2 }) * 1.5;
     const cats = ['worship', 'fellow', 'shop', 'care', 'comfort', 'club', 'park'];
-    o.tier1 = cats.every(c => DEFS.some(d => d.cat === c && !d.retired && !d.hidden && d.tier !== 2 && !isLocked(d.id))) && !isLocked('shop') && !isLocked('room') && !isLocked('cell') && !isLocked('wc');
+    o.tier1 = ['wc', 'bench', 'lots', 'tree', 'flower', 'bin'].every(id => !isLocked(id)) && ['shop', 'cell', 'pray', 'nursery', 'room', 'kids', 'chapel', 'grand'].every(id => isLocked(id)) &&
+      ['gift', 'hire', 'entr', 'teams', 'bulk', 'care', 'vol', 'deleg'].every(k => !featOk(k)) && !ppNodeOpen('nurture') && ppNodeOpen('bapt') && evBlock('bible') === '' && /Lv 2/.test(evBlock('communion')) && evBlock('pbook') === '' && /Lv/.test(evBlock('pdeg')) && /Lv 2/.test(lockLabel('shop'));
+    { S.lvl = 2; const l2 = ['shop', 'cell', 'pray', 'nursery', 'coffeecart'].every(id => !isLocked(id)) && isLocked('room') && featOk('gift') && featOk('hire') && !featOk('teams') && ppNodeOpen('nurture') && !ppNodeOpen('disciple') && evBlock('communion') !== lockText(1) + ' 열 수 있어요';
+      S.lvl = 4; const l4 = !isLocked('room') && !isLocked('kids') && isLocked('chapel') && featOk('vol') && featOk('teams') && !featOk('deleg') && ppNodeOpen('sgl') && !ppNodeOpen('deacon') && tierNames(4).includes('초등부실') && tierNames(4).some(n => /봉사자/.test(n));
+      S.lvl = 12; const l12 = !isLocked('grand') && ppNodeOpen('assoc') && Object.keys(FEAT_LV).every(featOk) && Object.keys(EV_LV).every(id => tierOk(EVENTS[id].goal));
+      // 관리자가 필요한 건물은 청빙이 열리는 Lv보다 먼저 열리지 않는다
+      const mgrOk = DEFS.filter(d => d.kind === 'bld' && !d.hidden && !d.retired && mgrRole({ def: d.id })).every(d => (BLD_LV[d.id] || 1) >= FEAT_LV.hire);
+      o.tierD = JSON.stringify([o.tier1, l2, l4, l12, mgrOk]);
+      S.lvl = 1; o.tier1 = o.tier1 && l2 && l4 && l12 && mgrOk && Object.keys(BLD_LV).every(id => D[id]) && Object.keys(EV_LV).every(id => EVENTS[id]) && Object.keys(PP_CLV).every(id => PP_TREE[id]) && Object.keys(TEAM_LV).every(id => STAFF[id]); S.unlockAll = true; recalc(); }
     o.enter0 = (recalc(), S.entr.lv === 1 && S.entr.st === 'brick' && S.entr.sg === 'm0' && entrVis() === 1 && ENT_MAX === 100);
     S.money = 99999999; const m0 = S.money, v0 = MOD.vis;
     // 투자는 레벨이 오를수록 가파르게 비싸다 (Lv 100까지)
@@ -1233,7 +1244,8 @@ async function entranceChecks(browser, url) {
     return o; });
   check(r.flatStart, '시작 지도: 평지로 시작 (땅 높이·경사·물 없음), 지형 시스템 함수는 그대로');
   check(r.mainStrong, '대예배당: 같은 예배당보다 성능·정원이 크게(MAIN_K) 시작');
-  check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
+  if (!r.tier1) console.log('TIER', r.tierD);
+  check(r.tier1, '잠금: Lv 1에는 대예배당·편의·조경·심방·세례·행사 몇 개만 열려 있고, 교회 Level이 오르며 건물·행사·성장 단계·기능(선물·청빙·사역팀·봉사자 등)이 차례로 열림');
   check(r.enter0 && r.cost && r.up && r.style && r.poor && r.name, '교회 입구: 기본 Lv 1, 최대 Lv 100·투자는 가파르게 비쌈, 컨셉은 사서 끼움, 자금 부족이면 안 됨, 교회 이름은 12글자까지');
   check(r.benchNoLimit, '벤치: 개수 제한 없이 여러 개 지을 수 있음');
   check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 ASSOC_PER명마다 한 자리, 최대 없음');
@@ -1291,17 +1303,18 @@ async function mgrChecks(browser, url) {
     // 방문자는 예배를 보러 온다: 말씀 욕구가 가장 낮게 시작, 설교·영성·예배 불만이 불편 목록에 들어감
     { const rnd = Math.random; let ws = 0, os = 0; V.length = 0; for (let i = 0; i < 40; i++) spawnV(false); V.forEach(v => { ws += v.needs.word; os += (v.needs.fel + v.needs.care + v.needs.comf) / 3; });
       o.wordFirst = ws / 40 < os / 40 - 8 && needAvg({ needs: { word: 10, fel: 50, care: 50, comf: 50 } }) < needAvg({ needs: { word: 50, fel: 10, care: 50, comf: 50 } });
-      Math.random = () => 0; S.grip = {}; const v = V[0]; v.worshiped = false; const m0 = MOD.word; MOD.word = 1.0; const q0 = sermonQ(mn);
-      gripeUsed(v, mn); o.sermon = !!S.grip.sermon && v.angry > 0 && /설교/.test(GRIPES.sermon.n) && v.worshiped === true && q0 < SERMON_OK;
-      S.grip = {}; MOD.word = 1.6; const w2 = V[1]; gripeUsed(w2, mn); o.sermonOk = !S.grip.sermon && sermonQ(mn) > SERMON_OK; MOD.word = m0;
+      Math.random = () => 0; S.grip = {}; const v = V[0]; v.worshiped = false; const m0 = MOD.word, lv0 = S.lvl; S.lvl = 12; MOD.word = 1.0; const q0 = sermonQ(mn);
+      gripeUsed(v, mn); o.sermon = !!S.grip.sermon && v.angry > 0 && /설교/.test(GRIPES.sermon.n) && v.worshiped === true && q0 < sermonOk();
+      S.grip = {}; MOD.word = 1.6; const w2 = V[1]; gripeUsed(w2, mn); o.sermonOk = !S.grip.sermon && sermonQ(mn) > sermonOk(); MOD.word = m0; S.lvl = 1; o.sermonOk = o.sermonOk && sermonOk() < 1 && spiritOk() < .5 && (S.lvl = 12, sermonOk() > 1.2 && spiritOk() > .7);
       S.grip = {}; S.cov.spirit = .3; const w3 = V[2]; w3.worshiped = true; gripeLeave(w3); o.spiritG = !!S.grip.spirit;
       S.grip = {}; S.cov.spirit = 1; const w4 = V[3]; w4.worshiped = true; gripeLeave(w4); o.spiritOk = !S.grip.spirit;
       S.grip = {}; const w5 = V[4]; w5.worshiped = false; w5.needs.word = 5; gripeLeave(w5); o.wordG = !!S.grip.word;
       Math.random = rnd; S.grip = { sermon: 9, spirit: 9, word: 9 }; S.gripN = 20; const gl = gripeList().map(x => x.k); o.gripList = ['sermon', 'spirit', 'word'].every(k => gl.includes(k)) && GRIPE_ORDER[0] === 'sermon';
-      const sv = S.cov.spirit; S.cov.spirit = .3; const jl = SPIRIT_JOIN0 + SPIRIT_JOIN1 * .3, jh = SPIRIT_JOIN0 + SPIRIT_JOIN1 * 1; S.cov.spirit = sv; o.spiritJoin = jh > jl * 1.5 && SPIRIT_VIS1 > 0 && WORD_JOIN_LOW < .25;
+      const sv = S.cov.spirit; S.cov.spirit = .3; const jl = SPIRIT_JOIN0 + SPIRIT_JOIN1 * .3, jh = SPIRIT_JOIN0 + SPIRIT_JOIN1 * 1; S.cov.spirit = sv; o.spiritJoin = jh > jl * 1.5 && SPIRIT_VIS1 > 0 && WORD_JOIN_LOW < .25; S.lvl = lv0;
+      { const ua = S.unlockAll; S.unlockAll = false; S.lvl = 1; recalc(); o.gripeLock = !gripeOn('food') && !gripeOn('lonely') && gripeOn('wc') && gripeOn('seat'); S.lvl = 2; recalc(); o.gripeLock = o.gripeLock && gripeOn('food'); S.lvl = lv0; S.unlockAll = ua; recalc(); }
       S.grip = {}; S.gripN = 0; V.length = 0; recalc(); }
     return o; });
-  check(r.wordFirst && r.sermon && r.sermonOk && r.spiritG && r.spiritOk && r.wordG && r.gripList && r.spiritJoin, '방문자: 말씀 욕구가 가장 급해 예배 건물을 먼저 찾고, 설교(말씀 효과×맡은 사람 성능)·영성이 모자라면 불만(챙길 일 맨 위), 영성이 방문자 수·정착을 좌우');
+  check(r.wordFirst && r.sermon && r.sermonOk && r.spiritG && r.spiritOk && r.wordG && r.gripList && r.spiritJoin && r.gripeLock, '방문자: 말씀 욕구가 가장 급해 예배 건물을 먼저 찾고, 설교(말씀 효과×맡은 사람 성능)·영성이 모자라면 불만(챙길 일 맨 위), 영성이 방문자 수·정착을 좌우, 기대는 교회 Level을 따라 오르고 잠긴 시설 때문에 생기는 불편은 치지 않음');
   check(r.main, '대예배당: 지도 가운데에 고정으로 서 있고(목록에 없음) 문 앞에서 입구까지 길이 이어져 바로 가동');
   check(r.need, '관리자: 예배·교제 건물(부서실 포함)은 부교역자, 매장은 직원이 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
   check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 청빙 화면의 큰 카드 후보 3명(그림·별·등급, 누르면 사연), 초반엔 값싼 별 1개 후보가 반드시');
@@ -1312,6 +1325,64 @@ async function mgrChecks(browser, url) {
   check(r.cut && r.auto && r.old, '내부 투시: 모든 건물을 단면으로 그리고(건물마다 내부 소품, 방문객 6명·기능별 담당자) 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
   if (!Object.values(r).every(Boolean)) console.log('MGR', JSON.stringify(r));
   check(errs.length === 0, '관리자: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
+// 인트로 화면 → 스테이지 고르기 → 게임, 그리고 Lv 1에서 잠긴 탭·버튼
+async function introChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 } });
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.addInitScript(() => { try { localStorage.clear(); } catch (e) {} });
+  await page.goto(url); await page.waitForTimeout(500);
+  const a = await page.evaluate(() => { const el = document.getElementById('intro-screen'), cs = getComputedStyle(el), lg = el.querySelector('.intro-logo'), bt = el.querySelector('.intro-btn'), ls = getComputedStyle(lg), bs = getComputedStyle(bt);
+    const cv2 = document.createElement('canvas'); cv2.width = lg.naturalWidth; cv2.height = lg.naturalHeight; const g = cv2.getContext('2d'); g.drawImage(lg, 0, 0); const px = (x, y) => [...g.getImageData(x, y, 1, 1).data];
+    // 로고 그림에 마젠타가 남아 있지 않은지: 불투명한 화소 가운데 마젠타에 가까운 것의 수
+    const d = g.getImageData(0, 0, cv2.width, cv2.height).data; let mag = 0, opq = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40) { opq++; if (d[i] > 200 && d[i + 2] > 200 && d[i + 1] < 110) mag++; }
+    const r = lg.getBoundingClientRect(), rb = bt.getBoundingClientRect();
+    return { lay: cs.position === 'fixed' && cs.zIndex === '9999' && cs.display === 'flex' && cs.flexDirection === 'column' && cs.justifyContent === 'space-between' && cs.alignItems === 'center' && /intro_bg/.test(cs.backgroundImage) && cs.backgroundSize === 'cover',
+      logo: lg.naturalWidth > 600 && px(0, 0)[3] === 0 && px(cv2.width - 1, cv2.height - 1)[3] === 0 && opq > 100000 && mag < opq * .002 && r.top < innerHeight * .3 && Math.abs(r.left + r.width / 2 - innerWidth / 2) < 6 && r.height < innerHeight * .6,
+      btn: bt.querySelector('img').naturalWidth > 300 && rb.bottom > innerHeight * .75 && rb.bottom <= innerHeight && Math.abs(rb.left + rb.width / 2 - innerWidth / 2) < 6 && bs.cursor === 'pointer',
+      anim: ls.animationName === 'introFloat' && ls.animationDuration === '3s' && ls.animationDirection === 'alternate' && ls.animationIterationCount === 'infinite' && bs.animationName === 'introPulse' && bs.animationDuration === '1.5s' && bs.animationDirection === 'alternate' && bs.animationIterationCount === 'infinite',
+      wait: UI.intro === true && document.getElementById('stage-screen').hidden, t0: S.t }; });
+  await page.waitForTimeout(400);
+  const paused = await page.evaluate(t0 => S.t === t0, a.t0);
+  await page.click('#intro-screen'); await page.waitForTimeout(60);
+  const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.intro-btn')).transform) || el.classList.contains('out'); });
+  await page.waitForTimeout(260);
+  const fading = await page.evaluate(() => { const el = document.getElementById('intro-screen'), o = +getComputedStyle(el).opacity; return el.classList.contains('out') && o < 1 && o > 0 && /0\.6s/.test(getComputedStyle(el).transitionDuration) && !document.getElementById('stage-screen').hidden; });
+  await page.waitForTimeout(650);
+  const st = await page.evaluate(() => { const el = document.getElementById('intro-screen'), g = document.getElementById('stage-grid'), cards = [...g.querySelectorAll('.stcard')], cs = getComputedStyle(g);
+    const ys = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().top)))], xs = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().left)))];
+    return { gone: getComputedStyle(el).display === 'none', grid: cards.length === 6 && ys.length === 2 && xs.length === 3 && cards.every(c => { const r = c.getBoundingClientRect(); return r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1 && !!c.querySelector('.stpic'); }),
+      names: cards.map(c => c.querySelector('b').textContent).join() === '농촌 목회,산촌 목회,어촌 목회,도시 목회,선교지 1,선교지 2', locks: cards.filter(c => c.classList.contains('lock')).length === 5 && !cards[0].classList.contains('lock') && cards.slice(1).every(c => !!c.querySelector('.stlock') && !!c.querySelector('svg')), still: UI.intro === true }; });
+  await page.click('[data-stage="city"]', { force: true }); await page.waitForTimeout(100);
+  const locked = await page.evaluate(() => UI.intro === true && !document.getElementById('stage-screen').classList.contains('out'));
+  await page.click('[data-stage="rural"]'); await page.waitForTimeout(700);
+  const game = await page.evaluate(() => { const o = { in: UI.intro === false && S.stage === 'rural' && getComputedStyle(document.getElementById('stage-screen')).display === 'none', t0: S.t }; return o; });
+  await page.waitForTimeout(400);
+  const runs = await page.evaluate(t0 => S.t > t0, game.t0);
+  // Lv 1: 봉사자 버튼과 여러 탭이 잠겨 있고, 누르면 몇 Lv에 열리는지 알려 준다
+  const lk = await page.evaluate(() => { const o = {}; const fab = document.querySelector('#fab [data-fab="officers"]'); hud(true); syncEvBadge();
+    o.fab = fab.classList.contains('lock'); fab.click(); o.fabBlock = !UI.scr && /Lv 2/.test(document.getElementById('toast').textContent);
+    openScreen('events'); const tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')], tl = v => tabs.find(x => x.dataset.v === v);
+    o.tabs = !tl('events').classList.contains('lock') && !tl('pastor').classList.contains('lock') && tl('assoc').classList.contains('lock') && tl('vol').classList.contains('lock') && tl('staff').classList.contains('lock') && /Lv 3/.test(tl('staff').textContent);
+    tl('staff').click(); o.tabBlock = UI.scrTab === 'events' && /Lv 3/.test(document.getElementById('scrToast').textContent);
+    const evs = [...document.querySelectorAll('#scrBody .evc')]; o.evs = evs.filter(e => !e.classList.contains('lock')).length <= 3 && evs.filter(e => e.classList.contains('lock')).length >= 8 && /Lv 2/.test(document.querySelector('#scrBody [data-v="communion"]').textContent);
+    openScreen('people'); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.find(x => x.dataset.v === 'care').classList.contains('lock') && pt.find(x => x.dataset.v === 'lead').classList.contains('lock') && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
+    const p = S.people[0]; document.querySelector('#scrBody [data-act="ppopen"]').click(); const dl = document.getElementById('scrDlg'); o.gift = dl.querySelector('[data-act="ppgift"]').disabled && !dl.querySelector('[data-act="ppvisit"]').disabled && /Lv 2/.test(ppCareWhy(p, 'gift'));
+    p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
+    o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
+    S.lvl = 2; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'assoc' && document.querySelector('#scrTabs [data-v="off"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
+  if (!(a.lay && a.logo && a.btn && a.anim && a.wait && paused && pressed && fading && Object.values(st).every(Boolean) && locked && game.in && runs)) console.log('INTRO', JSON.stringify({ a, paused, pressed, fading, st, locked, game, runs }));
+  check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·시작 단추(아래 가운데), 로고·단추 그림은 투명 바탕에 마젠타가 남지 않음');
+  check(a.anim, '인트로: 로고는 3초, 단추는 1.5초 주기로 오가며 끝없이 움직임');
+  check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐');
+  check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함), 첫 스테이지만 열려 있고 잠긴 것은 눌러도 그대로, 고르면 게임이 시작됨');
+  if (!Object.values(lk).every(Boolean)) console.log('LOCKUI', JSON.stringify(lk));
+  check(lk.fab && lk.fabBlock && lk.fabOpen && lk.offScr, '잠금: Lv 1에는 봉사자 버튼이 잠겨 있고(누르면 Lv 안내), Lv 2에 부교역자·청빙 탭부터 열림');
+  check(lk.tabs && lk.tabBlock && lk.evs && lk.ppTabs, '잠금: 행사·성도 화면의 잠긴 탭과 행사 카드에 자물쇠와 Lv가 보이고 눌러도 열리지 않음');
+  check(lk.gift && lk.node && lk.hire, '잠금: 선물·다음 성장 단계·청빙·사역팀은 교회 Lv가 되어야 쓸 수 있음');
+  check(errs.length === 0, '인트로·잠금: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
 async function levelChecks(browser, url) {
@@ -1385,7 +1456,7 @@ async function levelChecks(browser, url) {
       o.tier2 = D.chapel.tier === 2 && D.chapel.t1 === 'room' && D.room.tier === 1 && Math.abs(D.chapel.cost - D.room.cost * (1 + inv * TIER2_COST_K)) <= 10 && D.chapel.cost > D.room.cost * 4 &&
         bPerf(ch) >= bPerf(r6) && bPerf(ch) <= bPerf(r7) + 1e-9 && bPerf(c10) > bPerf(r10) * 1.5 && D.chapel.seats === D.room.seats && TIER_PAIRS.every(p => D[p[0]] && D[p[1]] && D[p[1]].tier === 2);
       // 값싼 티어 1은 처음부터 여러 개(TIER1_MAX개까지) 지을 수 있고, 넘으면 막힌다. 상위가 열리면 TIER1_MAX_OPEN개까지
-      S.unlockAll = false; S.lvl = 1; S.money = 99999; const rooms = () => S.buildings.filter(b => b.def === 'room').length; let made = 0;
+      S.unlockAll = false; S.lvl = BLD_LV.room; S.money = 99999; const rooms = () => S.buildings.filter(b => b.def === 'room').length; let made = 0;
       for (let x = 2; x < COLS - 4 && !tierWhy('room'); x += 4) for (let y = 2; y < 20 && !tierWhy('room'); y += 4) if (build('room', x, y, 2)) made++;
       const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 3, 40, 2);
       S.unlockAll = true; o.tier1 = isLocked('chapel') === false && made >= 2 && rooms() === TIER1_MAX && new RegExp(TIER1_MAX + '개까지').test(lockedWhy) && !again && S.buildings.length === nb && tierWhy('room') === '' && TIER1_MAX_OPEN > TIER1_MAX; }
@@ -1841,7 +1912,7 @@ async function earlyChecks(browser, url) {
     S.lvl = 1; o.curve = levelOf(churchScore()) === 1 && lvNeed(2) > churchScore() && levelOf(lvNeed(100)) === 100 && lvNeed(9) < 1300;
     // Level 잠금: 벚나무는 Lv 2, 분수는 Lv 6 전에는 못 지음, 이유에 Lv가 보임. 기능 건물도 교회 Level로 열린다
     S.unlockAll = false; S.lvl = 1;
-    o.lock = isLocked('cherry') && isLocked('fountain') && /Lv 2/.test(lockLabel('cherry')) && !isLocked('tree') && !isLocked('planter') && isLocked('chapel') && /Lv 2/.test(lockLabel('chapel')) && isLocked('dining') && /Lv 3/.test(lockLabel('dining')) && isLocked('futsal') && /Lv 5/.test(lockLabel('futsal'));
+    o.lock = isLocked('cherry') && isLocked('fountain') && /Lv 2/.test(lockLabel('cherry')) && !isLocked('tree') && !isLocked('planter') && isLocked('chapel') && new RegExp('Lv ' + BLD_LV.chapel).test(lockLabel('chapel')) && isLocked('shop') && /Lv 2/.test(lockLabel('shop')) && isLocked('futsal') && new RegExp('Lv ' + BLD_LV.futsal).test(lockLabel('futsal'));
     S.unlockAll = true;
     // Level이 오르면 축하금(건너뛴 단계 몫까지)과 새로 열린 것
     const m1 = S.money; S.lvl = 1; S.unlockAll = false; S.qxp = 5000; recalc(); const m2 = S.money; levelTick();
@@ -2018,6 +2089,7 @@ async function earlyChecks(browser, url) {
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
     await waterChecks(browser, url);
+    await introChecks(browser, url);
     await levelChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);

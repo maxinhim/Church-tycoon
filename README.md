@@ -31,6 +31,7 @@
 ## 출처
 - 건물·방문자·길 등 대부분의 그래픽과 시스템은 이 프로젝트의 코드로 새로 그렸습니다.
 - 조경·꾸미기·건물·바닥 그림 조각(`assets/`)은 Google Gemini로 생성한 이미지(`docs/art/sheets/`)를 잘라 썼습니다. 생성 프롬프트는 `docs/art/gemini-prompts.md`에 있습니다.
+- 인트로 화면 그림(`assets/intro/`: 마을 배경·'Church Tycoon' 로고·'Tap to Start' 단추)은 Google Gemini로 생성한 이미지 두 장(`docs/art/sheets/intro-bg.webp`·`intro-ui.webp`)에서 `python3 tools/intro_assets.py`로 떼어 냈습니다 (`docs/art/gemini-prompts.md`의 '인트로 화면' 참고). 스테이지 고르기의 잠긴 스테이지 예시 그림은 코드로 그린 SVG입니다
 - 배경 음악·효과음(`assets/audio/`)은 OpenGameArt.org의 CC0 음원입니다. 곡·효과음마다 만든 사람과 주소는 `docs/audio.md`에 있습니다.
 - 폰트: Google Fonts (Gowun Batang, IBM Plex Sans KR)
 - 참고 자료: Kenney 아이소메트릭 에셋(CC0), OpenGameArt(라이선스 확인 필요), OpenRCT2

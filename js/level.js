@@ -19,7 +19,7 @@ function levelTick(quiet){
     for(var k=from+1;k<=L;k++){gift+=lvGift(k);opened=opened.concat(lvUnlockNames(k),tierNames(k));}
     S.lvl=L;S.money+=gift;
     addLog('교회 Lv '+L+' · 축하금 +'+fmt(gift)+(opened.length?' · 새로 열림 '+opened.join(', '):''));
-    syncLevel(true);showLevelUp(L,from,gift,opened);save();
+    syncLevel(true);showLevelUp(L,from,gift,opened);save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();
   }
   else syncLevel();
 }

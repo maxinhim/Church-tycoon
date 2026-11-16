@@ -14,12 +14,18 @@ var SCREENS={
   hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','직원']]},
   mgr:{title:'관리자 배치',tabs:[['pool','인력']]}
 };
+// 교회 Level이 되어야 열리는 탭 (balance.js FEAT_LV): 잠긴 탭은 자물쇠로 보이고 누르면 몇 Lv에 열리는지 알려 준다
+var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','events:staff':'teams','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
+function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
+function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
 var PP_PAGE=60;
 var RING_C=2*Math.PI*46;
 function openScreen(k,tab){
   // 지도에서 하던 일(짓기·고르기·작은 창)은 정리한다
   UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.choose=null;UI.sel=null;UI.selPiece=null;UI.selFloor=null;UI.fold=true;UI.lastBuilt=null;
-  UI.scr=k;UI.scrTab=tab||SCREENS[k].tabs[0][0];UI.scrSel=null;UI.ppMore=PP_PAGE;
+  var tabs=SCREENS[k].tabs,want=tab||tabs[0][0];
+  if(tabLocked(k,want)){var ft=tabs.filter(function(x){return !tabLocked(k,x[0])&&x[0]!=='cands';})[0];want=ft?ft[0]:want;}   // 잠긴 탭이면 열린 첫 탭으로
+  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ppMore=PP_PAGE;
   sfx('page',.35);renderPanel();renderScreen();
 }
 function closeScreen(){UI.scr=null;UI.scrSel=null;renderScreen();syncTabs();}
@@ -67,7 +73,7 @@ function renderScreen(){
   if(!UI.scr)return;
   var sc=SCREENS[UI.scr];
   $('#scrTitle').textContent=sc.title;
-  $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0];return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+'">'+t[1]+'</button>';}).join(''):'';
+  $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
   $('#scrMoney').textContent=fmt(S.money);
   var body=$('#scrBody'),top=body.scrollTop;
   if(UI.scr==='events'&&UI.scrTab==='staff'){
@@ -134,6 +140,7 @@ function syncEvBadge(){
   var b=$('#evBadge');if(!b)return;var n=evReadyCount();
   b.hidden=!n;if(n)b.textContent=n;
   var pb=$('#ppBadge'),pn=ppReadyCount()+caresCount();if(pb){pb.hidden=!pn;if(pn)pb.textContent=pn;}
+  var of=document.querySelector('#fab [data-fab="officers"]');if(of)of.classList.toggle('lock',!featOk('hire'));
   var sb=$('#stBadge'),sn=indReadyCount();if(sb){sb.hidden=!sn;if(sn)sb.textContent=sn;}
 }
 function scrToast(msg,ms){
@@ -149,6 +156,7 @@ function scrClick(e){
   if(scrPeopleClick(el.dataset.act,el.dataset.v,el))return;
   var a=el.dataset.act,v=el.dataset.v;
   if(a==='scrclose'){scrBack();return;}
+  if(a==='scrtab'&&tabLocked(UI.scr,v)){scrToast('이 탭은 '+featWhy(tabFeat(UI.scr,v)),1800);sfx('error',.4);return;}
   if(a==='scrtab'&&UI.scr==='officers'&&v==='cands'){openHire('all');return;}
   if(scrHireClick(a,v))return;
   if(a==='scrtab'){UI.scrTab=v;UI.scrSel=null;UI.ppMore=PP_PAGE;$('#scrBody').scrollTop=0;renderScreen();return;}
@@ -237,6 +245,7 @@ function bulkBar(){
     return '<div class="sbulk"><span>부교역자 '+S.assoc.length+'명</span><button class="btn'+(na?' pri':'')+'" data-act="bulk" data-v="cheer"'+(na?'':' disabled')+'>모두 격려 · '+na+'명 · '+fmt(na*ASSOC_CHEER.cost)+'</button></div>';
   }
   var L=scrPeople();if(!L.length)return '';
+  if(!featOk('bulk'))return '<div class="sbulk"><span>이 목록 '+L.length+'명</span><span class="lockn">🔒 한꺼번에 심방·교육하기는 '+featWhy('bulk')+'</span></div>';
   var nv=L.filter(function(p){return ppCareOk(p,'visit');}).length,ng=L.filter(function(p){return ppCareOk(p,'gift');}).length;
   var gr={};   // 일괄 성장 단추: 다음 단계마다 하나
   L.forEach(function(p){
@@ -282,6 +291,7 @@ function nodeEff(id){
 function asSeed(a){if(a.seed)return a.seed;var s=7;for(var i=0;i<a.name.length;i++)s=(s*31+a.name.charCodeAt(i))%999983;return s;}
 // 부교역자 탭 맨 위: 성도 돌봄 맡기기 (켜고 끄기, 맡길 호감 Lv)
 function delegHtml(){
+  if(!featOk('deleg'))return '<div class="sdeleg"><div><b>성도 돌봄 맡기기</b><small>🔒 부교역자·소그룹 리더에게 심방을 맡기는 기능은 '+featWhy('deleg')+'</small></div></div>';
   var d=delegState(),cap=delegCap(),pool=delegPool().length,L=d.lv;
   var who=[S.assoc.length?'부교역자 '+S.assoc.length+'명':'',leaders().length?'소그룹 리더 '+leaders().length+'명':''].filter(Boolean).join('·');
   return '<div class="sdeleg"><div><b>성도 돌봄 맡기기</b><small>'+who+'이 매주 호감 Lv '+L+' 아래 성도를 심방하고 선물해요 · 한 주 '+cap+'명까지 · 값 '+Math.round(DELEG_COST_K*100)+'%·호감 '+Math.round(DELEG_XP_K*100)+'% · 자금 '+fmt(ASSOC_CARE_RES)+' 아래면 멈춤'+
@@ -343,6 +353,7 @@ function scrPeopleClick(a,v,el){
   if(a==='ppopen'){UI.scrSel={t:'pp',id:+v};sfx('click',.4);renderScreen();return true;}
   if(a==='ppfire'){var fp=ppById(+v);if(fp&&fp.ext){hireFire(+v);UI.scrSel=null;scrToast(fp.n+'님을 내보냈어요 · 주급이 더 나가지 않아요',2000);}renderScreen();hud(true);return true;}
   if(a==='asopen'){UI.scrSel={t:'as',id:+v};sfx('click',.4);renderScreen();return true;}
+  if((a==='bulk'||a==='bulkgrow')&&!featOk('bulk')){scrToast('일괄 처리는 '+featWhy('bulk'),1800);sfx('error',.4);return true;}
   if(a==='bulk'){
     var o=v==='cheer'?asCheerAll():ppCareAll(scrPeople(),v),nm={visit:'심방',gift:'선물',cheer:'격려'}[v];
     if(!o.done){scrToast(o.poor?'자금이 부족해요':'지금 '+nm+'할 사람이 없어요',2000);sfx('error',.4);}
@@ -361,6 +372,7 @@ function scrPeopleClick(a,v,el){
     else{sfx(careLastOk?'join':'error',.6,0);UI.scrSel={t:'cr'};}
     renderScreen();hud(true);return true;
   }
+  if((a==='deleg'||a==='delegLv')&&!featOk('deleg')){scrToast('성도 돌봄 맡기기는 '+featWhy('deleg'),1800);sfx('error',.4);return true;}
   if(a==='deleg'){var d=delegState();d.on=!d.on;sfx('click',.4);scrToast(d.on?'부교역자·소그룹 리더가 매주 호감 Lv '+d.lv+' 아래 성도를 돌봐요 (한 주 '+delegCap()+'명까지)':'성도 돌봄 맡기기를 껐어요',2400);save();renderScreen();return true;}
   if(a==='delegLv'){var d2=delegState();d2.lv=clamp(d2.lv+(+v)*DELEG_STEP,DELEG_STEP,PP_LV_MAX);save();renderScreen();return true;}
   if(a==='ppmore'){UI.ppMore=(UI.ppMore||PP_PAGE)+PP_PAGE;renderScreen();return true;}
