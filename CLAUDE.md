@@ -32,6 +32,7 @@
 - 챙길 일(경고·진행 중 행사·낡은 건물)은 지도 위 붉은 "!" 단추(`#alert`)로 두고, 누르면 작은 카드(`#alertCard`, `js/effects.js`)에 목록과 '모두 수리'가 뜬다. 주간 수입·지출 그래프는 재정 탭(점 그래프)에 있다
 - 고민에 답하면 결과 창(`careResHtml`, `#scrDlg`)에 효과를 보여 준다. 행사 정보 창 아래에는 비용과 '실행' 단추. 사역팀 카드는 달란트 보석 5칸과 ＋/－ 단추(`teamCardHtml`)
 - 성도·직분자 화면 위 줄: 심방·선물 아이콘(할 수 있으면 색이 켜지고 누르면 바로 적용)과 '전체 ○○' 일괄 성장 단추(`ppTrainAll`·`ppAppointAll`). 일괄 처리는 모두 호감 레벨이 낮은 사람부터, 자금이 되는 만큼(`byLow`)
+- 레벨이 없는 요소(`nolv`, buildings.js `NOLV`: 벤치 6종·화장실·그릴·피크닉 등 건물이 아닌 것)는 투자·레벨 아이콘이 없고 회전만 `NOLV_ROT`배로 빠르다(`hasLv`·`rotTime`). 벤치 종류는 `bench`·`bench_stone`·`bench_iron`·`bench_back`·`bench_round`·`bench_flower`(그림은 `drawBench`, 모두 `SIT_DEFS`에 들어 앉을 수 있다)
 - 개방형 소품(`prop`: 식수대·쓰레기통·파라솔·정자·벤치 등)은 문 방향이 없다: 둘레 어느 길 칸에서든 닿고 쓴다(`openNodes`·`entNodes`, pathfinding.js). 방문자가 불만을 겪으면 머리 위에 😠가 `ANGRY_T`초 떠 있고(`vexed`, gripes.js) 누르면 사유가 알림으로 뜬다(`pickAngry`, input.js). 방문자는 건물을 고르기 전에 가끔 길을 거닌다(`stroll`, `VIS_STROLL`)
 - 직분자·교역자 행사(`OFF_EV`, ministry.js `offEv`): 직분자 세미나·수련회, 교역자 연수·교제의 밤. 행사 화면에도 있고, 직분자 화면의 직분 탭(직분자 행사)·교역·부교역자 탭(교역자 행사) 위 아이콘(`evIcons`, `evquick`)으로 바로 열고 보상도 받는다. 대상(직분 갈래 성도 / 교역 갈래 성도+부교역자)에게 경험치와 신뢰도를 준다
 - 건축 목록의 기능 분류(예배·교제·매장·돌봄·편의·소모임)는 기능별 하위 묶음 아이콘 칩으로 나눈다(`CAT_SUBS` panel.js, 건물의 묶음은 `SUB_OF` buildings.js → `d.sub`). 새 건물을 넣으면 `SUB_OF`에도 적는다

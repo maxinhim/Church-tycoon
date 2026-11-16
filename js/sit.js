@@ -2,7 +2,7 @@
 /* ---------- 벤치에 앉기 ----------
    앉는 소품(벤치 등 SIT_DEFS)을 쓰는 방문자는 그 자리에 앉은 모습으로 그린다. 한 벤치에 둘까지 나란히 앉는다.
    정렬 순서는 벤치보다 뒤(벤치 그림 위)가 되도록 칸보다 조금 크게 잡는다 */
-var SIT_DEFS={bench:1};
+var SIT_DEFS={bench:1,bench_stone:1,bench_iron:1,bench_back:1,bench_flower:1};
 function isSitDef(b){return !!b&&!!SIT_DEFS[b.def];}
 function sitEntry(b,k){
   var z=bZ(b)+.3,r=rrect(b.x-.02,b.y-.02,b.x+1.02,b.y+1.02);

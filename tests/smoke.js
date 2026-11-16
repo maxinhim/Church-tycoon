@@ -1294,11 +1294,11 @@ async function levelChecks(browser, url) {
     const two = mk(); arrive(two); S.t = WEEK * 6.2 / 7; batchSunday(); const skip = room.run === 0;
     o.sunday = notYet && sun && fri && skip && two.state === 'inside';
     V.length = 0; room.inUse = 0; room.run = 0; S.t = 1;
-    // 한 명씩: 화장실은 정원 1명, 레벨이 오를수록 회전 시간이 크게 짧아짐
+    // 한 명씩: 화장실은 레벨이 없는 요소(회전만 빠름), 매점은 레벨이 오를수록 회전 시간이 크게 짧아짐
     const wc = put('wc', 2), rot1 = wc && rotTime(wc);
-    if (wc) { wc.lv = 10; } const rot10 = wc && rotTime(wc), cap10 = wc && bCap(wc); if (wc) wc.lv = 1;
+    const shopB = put('shop', 2); const rotS1 = shopB && rotTime(shopB); if (shopB) shopB.lv = 10; const rot10 = shopB && rotTime(shopB), cap10 = shopB && bCap(shopB); if (shopB) shopB.lv = 1;
     // 시작 정원: 화장실 2명, 매점 4명, 서점 6명 (이용자 1명은 너무 적다). 레벨이 오르면 정원도 는다
-    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap === 2 && bCap(wc) === 2 && bCap({ def: 'shop', lv: 1, id: 0 }) === 4 && bCap({ def: 'bookstore', lv: 1, id: 0 }) === 6 && cap10 > 2 && rot10 < rot1 / 2.5 && bCap(room) > 1;
+    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap === 2 && bCap(wc) === 2 && bCap({ def: 'shop', lv: 1, id: 0 }) === 4 && bCap({ def: 'bookstore', lv: 1, id: 0 }) === 6 && cap10 > 4 && rot10 < rotS1 / 2.5 && bCap(room) > 1 && !hasLv(wc) && rot1 < rotS1 && !hasLv(D.bench) && bCap(room) > 1;
     // 문 앞에서 기다리기: 꽉 찼으면 문 앞 길에서 기다리고, 한계를 넘기면 화남 표시·불만, 다른 곳으로
     let soft = false;
     if (wc) { wc.inUse = bCap(wc); spawnV(); const v = V[V.length - 1]; placeAt(v, entNode(wc)); v.target = wc.id; arrive(v); const p0 = nodePos(entNode(wc));

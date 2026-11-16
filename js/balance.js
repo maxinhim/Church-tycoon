@@ -167,6 +167,7 @@ var BATCH_ROT=.6;       // 일괄 가동 시간 = dur × STAY × TEMPO_ROT × BA
 var BATCH_PATIENCE=60;   // 일괄 가동 건물 안에서 정원이 차기를 기다리는 한계(초). 한 주(48초)보다 길어 늦어도 주일 예배는 드린다
 var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 정원 × BATCH_CAP0 × 레벨 배율 (작게 모여 자주 가동, 레벨이 오를수록 크게)
 var BATCH_SUN_WAIT=3;    // 주일에는 (금·토에 가동하지 않았으면) 모인 사람이 이만큼 기다리면 다시 가동한다
+var NOLV_ROT=0.5;        // 레벨이 없는 요소(벤치·화장실·그릴 등, buildings.js NOLV)의 회전 시간 배율: 짧을수록 빨리 돈다
 var SINGLE_ROT=1;        // 한 명씩 건물(매장·편의) Lv 1 회전 시간 배율
 /* 레벨은 100까지. 효과·정원·회전은 Lv 10까지는 레벨마다 BLV_FX·BLV_CAP·BLV_ROT씩 오르고, 그 뒤로는 오르는 폭이 BLV_TAIL배로 느려진다(lvM).
    투자 BLV_XP(10)번 = 한 레벨(한 번은 경험치 10%라 게이지가 눈에 띄게 오른다), 투자 한 번의 값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)): 한 레벨 약 건물 값의 1/3, Lv 10까지 약 4배.

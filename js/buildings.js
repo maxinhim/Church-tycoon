@@ -80,6 +80,11 @@ mk('urn','돌 화분','garden',1,1,150,0,'planter','#b8b2a6','#5a9a4f',{beauty:1
 mk('basket','걸이 화분','garden',1,1,120,0,'planter','#3d4650','#e57a95',{beauty:0.8,desc:'쇠기둥에 매단 꽃바구니'});
 mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe0',{beauty:1.6,desc:'수련이 떠 있는 둥근 돌 물그릇'});
 mk('bench','벤치','comfort',1,1,160,0,'bench','#8a6a46','#8a6a46',{prop:1,dir:'face',nolimit:1,ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
+mk('bench_stone','돌 벤치','comfort',1,1,220,0,'bench','#c9c2b6','#c9c2b6',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:0.6,fill:{comf:22,fel:10},cap:2,dur:4,desc:'화강암을 깎은 든든한 돌 벤치'});
+mk('bench_iron','철제 벤치','comfort',1,1,240,0,'bench','#2f343a','#2f343a',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:0.5,fill:{comf:22,fel:10},cap:2,dur:4,desc:'검은 철제 프레임의 시원한 벤치'});
+mk('bench_back','등받이 벤치','comfort',1,1,260,0,'bench','#8a6844','#8a6844',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:0.6,fill:{comf:26,fel:10},cap:2,dur:4,desc:'등받이가 있어 편하게 기대 쉬는 공원 벤치'});
+mk('bench_round','둥근 돌 의자','comfort',1,1,200,0,'bench','#d8d1c2','#d8d1c2',{prop:1,dir:'face',nolimit:1,ccap:1,hgt:.45,beauty:0.5,fill:{comf:14,fel:6},cap:1,dur:3,desc:'나무 그늘 아래 둥글게 놓은 돌 의자'});
+mk('bench_flower','꽃 벤치','comfort',1,1,300,0,'bench','#a07a52','#a07a52',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:1.1,fill:{comf:24,fel:12},cap:2,dur:4,desc:'양끝에 화분을 얹은 꽃 벤치'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
 mk('wfount','물 분수','garden',1,1,250,2,'wfount','#c9c2b6','#7fb7d9',{beauty:1.2,water:true,cell:true,desc:'호수·강 위에 띄우는 분수. 물이 찬 칸에만 놓아요'});
@@ -167,8 +172,11 @@ var SUB_OF={room:'service',chapel:'service',grand:'service',outdoor:'service',pr
   cell:'group',youth:'group',hall:'hall',
   shop:'food',dining:'food',bakery:'food',market:'food',cafe:'cafe',coffeecart:'cafe',vending:'cafe',books:'book',bookstore:'book',flowercart:'book',
   kids:'kids',nursery:'kids',study:'kids',playground:'kids',pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
-  wc:'toilet',wc2:'toilet',bench:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
+  wc:'toilet',wc2:'toilet',bench:'rest',bench_stone:'rest',bench_iron:'rest',bench_back:'rest',bench_round:'rest',bench_flower:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
 for(var sk in SUB_OF)if(D[sk])D[sk].sub=SUB_OF[sk];
+/* 레벨이 없는 요소: 벤치·화장실·그릴처럼 건물이 아닌 것은 투자·레벨업이 없고, 회전만 NOLV_ROT배로 빨라진다 */
+var NOLV=['bench','bench_stone','bench_iron','bench_back','bench_round','bench_flower','wc','wc2','grill','picnic','parasol','gazebo','bin','drinkfount','swing','library','lectern','piano','speaker','mixer','drums','offering','board','bell','bikerack','busstop'];
+NOLV.forEach(function(id){if(D[id])D[id].nolv=1;});
 // 한 칸짜리 소품은 그림을 절반 크기로 그리므로 높이도 절반 (입구·출구는 제 높이)
 function heightOf(id){var d=D[id];return heightOfDef(d)*(d.cell&&d.kind!=='gate'?CELL_K:1);}
 function heightOfDef(d){

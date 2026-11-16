@@ -122,6 +122,30 @@ function drawFlower(b){
 }
 // 벤치: 등받이가 뒤, 앉는 쪽이 정면
 function drawBench(b){
+  var st=b.def||'bench';
+  if(st==='bench_stone'){drawParts([
+    {r:fRect(b,.22,.36,.3,.6),z0:0,z1:.16,c:'#a9a294'},{r:fRect(b,.7,.36,.78,.6),z0:0,z1:.16,c:'#a9a294'},
+    {r:fRect(b,.18,.34,.82,.62),z0:.16,z1:.26,c:'#d8d1c2',t:'#ebe6da'}]);return;}
+  if(st==='bench_iron'){var ps=[];
+    [.2,.74].forEach(function(u){ps.push({r:fRect(b,u,.38,u+.06,.44),z0:0,z1:.26,c:'#2f343a'});});
+    for(var i=0;i<4;i++)ps.push({r:fRect(b,.18,.4+i*.05,.82,.43+i*.05),z0:.26,z1:.3,c:'#4a505a'});
+    [.2,.74].forEach(function(u){ps.push({r:fRect(b,u,.3,u+.06,.34),z0:.3,z1:.36,c:'#2f343a'});});
+    for(var j=0;j<3;j++)ps.push({r:fRect(b,.18,.3,.82,.33),z0:.36+j*.12,z1:.4+j*.12,c:'#2f343a'});
+    drawParts(ps);return;}
+  if(st==='bench_back'){drawParts([
+    {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
+    {r:fRect(b,.2,.4,.8,.62),z0:.14,z1:.2,c:'#a07a52'},
+    {r:fRect(b,.22,.3,.28,.36),z0:.2,z1:.6,c:'#6b4f32'},{r:fRect(b,.72,.3,.78,.36),z0:.2,z1:.6,c:'#6b4f32'},
+    {r:fRect(b,.2,.3,.8,.36),z0:.44,z1:.5,c:'#8a6844'},{r:fRect(b,.2,.3,.8,.36),z0:.56,z1:.6,c:'#8a6844'}]);return;}
+  if(st==='bench_round'){drawParts([
+    {r:fRect(b,.32,.36,.68,.62),z0:0,z1:.3,c:'#c9c2b6',t:'#e6e0d4'},
+    {r:fRect(b,.38,.4,.62,.58),z0:.3,z1:.32,c:'#b9b2a4',t:'#d8d1c2'}]);return;}
+  if(st==='bench_flower'){drawParts([
+    {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
+    {r:fRect(b,.2,.34,.8,.4),z0:.14,z1:.46,c:'#8a6844'},
+    {r:fRect(b,.2,.4,.8,.62),z0:.14,z1:.2,c:'#a07a52'},
+    {r:fRect(b,.04,.36,.2,.6),z0:0,z1:.3,c:'#b9694c',t:'#c97a58'},{r:fRect(b,.8,.36,.96,.6),z0:0,z1:.3,c:'#b9694c',t:'#c97a58'},
+    {r:fRect(b,.02,.34,.22,.62),z0:.3,z1:.46,c:'#5aa85c',t:'#7cc276'},{r:fRect(b,.78,.34,.98,.62),z0:.3,z1:.46,c:'#5aa85c',t:'#7cc276'}]);return;}
   drawParts([
     {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
     {r:fRect(b,.2,.34,.8,.4),z0:.14,z1:.46,c:'#8a6844'},

@@ -27,7 +27,7 @@ function bMode(d){
   return 'multi';
 }
 // 레벨이 있는 건물: 이용 효과가 있는 건물
-function hasLv(b){var d=defOf(b);return !!(d&&d.fill);}
+function hasLv(b){var d=defOf(b);return !!(d&&d.fill&&!d.nolv);}   // 레벨이 없는 요소(nolv)는 투자·레벨 아이콘이 없다
 function bLv(b){return hasLv(b)?Math.max(1,Math.min(BLV_MAX,b.lv||1)):1;}
 function tierK(b){var d=defOf(b);return d&&d.tier===2?TIER2_K:1;}
 // 레벨 L에서 올라간 정도: Lv 10까지는 L−1, 그 뒤는 BLV_TAIL배로 느리게
@@ -46,7 +46,7 @@ function bCap(b){
 }
 // 한 사람(또는 한 번 가동)이 머무는 시간
 function rotTime(b){
-  var d=defOf(b),m=bMode(d),t=d.dur*STAY*TEMPO_ROT;
+  var d=defOf(b),m=bMode(d),t=d.dur*STAY*TEMPO_ROT*(d.nolv?NOLV_ROT:1);
   if(m==='batch')return t*BATCH_ROT;
   if(m==='single')return t*SINGLE_ROT/(tierK(b)*(1+BLV_ROT*lvM(bLv(b)))*mgrK(b));
   return t;
