@@ -255,13 +255,13 @@ async function pathChecks(browser, url) {
     connect(X + 1, Y + 3);
     // 문은 1층 정면 한 칸: 다리 데크(2층 높이)가 붙어도 문은 1층에 있고, 문 앞 길로 이어진다
     o.connected = !!room.door && room.door.ent.l === 0 && room.acc.ok;
-    // 정면 방향: 예배당(3×2)을 오른쪽(+x)을 향해 지으면 2×3을 차지하고 출입구도 그쪽
+    // 방향 없음: 예배당(3×2)을 다른 방향으로 지으려 해도 언제나 6×4칸이고 문은 남쪽(2)
     let fb = null;
     for (let y = 0; y < ROWS - 4 && !fb; y++) for (let x = 0; x < COLS - 3; x++) {
-      if (canPlace(D.chapel, x, y, 0) && free(x + 4, y + 1)) { build('chapel', x, y, 0); fb = S.buildings[S.buildings.length - 1]; break; }
+      if (canPlace(D.chapel, x, y, 0) && free(x + 6, y + 1)) { build('chapel', x, y, 0); fb = S.buildings[S.buildings.length - 1]; break; }
     }
-    o.facing = !!fb && fb.face === 0 && bDims(fb).w === 4 && bDims(fb).h === 6 && !!fb.door &&
-      [0, 1, 2, 3].every(i => [0, 1, 2, 3, 4, 5].every(j => occ[fb.y + j][fb.x + i] === fb.id));
+    o.facing = !!fb && fb.face === 2 && bDims(fb).w === 6 && bDims(fb).h === 4 && !!fb.door && fb.door.ent.d === 2 &&
+      [0, 1, 2, 3, 4, 5].every(i => [0, 1, 2, 3].every(j => occ[fb.y + j][fb.x + i] === fb.id));
     // 방문자가 쓰는 모든 건물에 정면 1층 가운데 문이 하나 있다
     o.allDoors = S.buildings.filter(b => defOf(b).fill).every(b => !!b.door && b.door.ent.d === (b.face == null ? 2 : b.face) && b.door.ent.l === 0 && sameSpot(b.door.ent, b.door.ext));
     return o;
@@ -274,7 +274,7 @@ async function pathChecks(browser, url) {
   check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
   check(r.ground, '길: 다리 아래와 철골 계단 밑 땅으로 걸어 다닐 수 있음');
   check(r.connected, '문: 정면 1층 문 하나가 길과 이어짐');
-  check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
+  check(r.facing, '방향 없음: 건물은 어느 쪽으로 지으려 해도 같은 자리 크기이고 문은 언제나 남쪽');
   check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 정면 1층 가운데 문 하나');
   check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -740,7 +740,7 @@ async function ministryChecks(browser, url) {
   await page.click('#dock [data-act="cat"][data-v="worship"]');
   await page.click('#cards [data-v="room"]');
   // 고르면 패널이 닫히고, 미리보기 둘레에 ✓·✕와 방향 화살표 4개 (건물은 안내 띠 없음)
-  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 4 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
+  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 0 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
   const btnPos = await page.evaluate(() => { syncPlace(); const r = s => document.querySelector(s).getBoundingClientRect(); const ok = r('#place [data-pl="ok"]'), no = r('#place [data-pl="no"]'); const bx = plBox(); return ok.left < no.left && ok.bottom <= bx.t + 4 && no.bottom <= bx.t + 4; });
   const effCard = await page.evaluate(() => /좌석 \+24/.test(document.querySelector('#cards [data-v="room"]').textContent));
   await page.click('#fab [data-fab="minis"]');
@@ -749,7 +749,7 @@ async function ministryChecks(browser, url) {
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="cat"][data-v="worship"]'); await page.click('#cards [data-v="room"]');
   const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   // 화살표로 정면 방향 바꾸기
-  const faced = await page.evaluate(() => { syncPlace(); const el = [...document.querySelectorAll('#place .parr')].find(e => +e.dataset.v !== UI.face); const want = +el.dataset.v; el.click(); syncPlace(); return UI.face === want && el.classList.contains('on'); });
+  const faced = await page.evaluate(() => { syncPlace(); UI.face = 0; return plFace() === 2 && !turnable(D.room) && !turnable(D.bench) && turnable(D.fence_w) && fixFace(D.fence_w, 0) === 0 && fixFace(D.room, 0) === 2 && (UI.face = 2, true); });
   const barQuiet = await page.evaluate(() => { renderPbar(); return document.getElementById('pbar').hidden; });
   const blockedTip = await page.evaluate(() => { const g = { ...UI.ghost }; UI.ghost = { x: S.buildings[0].x, y: S.buildings[0].y }; syncPlace(); const ok = document.querySelector('#place [data-pl="ok"]'); const off = ok.classList.contains('off'); plLock = 0; ok.click(); const t = document.getElementById('toast'); const said = !t.hidden && t.textContent.length > 0; UI.ghost = g; syncPlace(); return off && said; });
   // 길·바닥을 깔 때: 바닥은 아래 띠 없이 ✓ 옆 값만, 길은 안내 문장 없이 이름·값·고르는 버튼만
@@ -849,7 +849,7 @@ async function ministryChecks(browser, url) {
     const cv2 = document.createElement('canvas'); cv2.width = 200; cv2.height = 200; const g2 = cv2.getContext('2d');
     const keep = { c: PJ.c, ox: PJ.ox, oy: PJ.oy, s: PJ.s };
     const shot = (id, f) => { g2.clearRect(0, 0, 200, 200); PJ.c = g2; PJ.ox = 100; PJ.oy = 60; PJ.s = 1.4; const b = { x: 0, y: 0, def: id, id: 3, face: f }; ensureDoors(b); drawEntity(b, 0); return cv2.toDataURL(); };
-    const out = ['bench', 'room', 'lamp2', 'wc', 'pray'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, f))).size >= 2 && shot(id, 0) !== shot(id, 2));
+    const out = ['bench', 'room', 'wc', 'pray'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, 2) && (() => { const b = { x: 0, y: 0, def: id, id: 3, face: f }; ensureDoors(b); return JSON.stringify([bDims(b), b.door && b.door.ent.d]); })())).size === 1) && new Set([0, 2].map(f => shot('fence_w', f))).size === 2;
     PJ.c = keep.c; PJ.ox = keep.ox; PJ.oy = keep.oy; PJ.s = keep.s;
     return out;
   });
@@ -868,11 +868,11 @@ async function ministryChecks(browser, url) {
   check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');
   check(evFlow.claimAll, '행사 화면: 끝난 행사가 여럿이면 모두 보상 수령 버튼으로 한꺼번에 받음');
   check(evFlow.claimBtn && evFlow.claimed && evFlow.bazaar && evFlow.old, '행사 화면: 보상 수령을 눌러야 보상을 받고 그때부터 쉬는 기간, 예전 저장도 이어짐');
-  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개, 건물은 안내 띠 없음');
+  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕ (건물은 방향 화살표·안내 띠 없음)');
   check(btnPos, '지도에서 짓기: ✓는 왼쪽 위, ✕는 오른쪽 위 (미리보기보다 위)');
   check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
-  check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
+  check(faced, '지도에서 짓기: 건물·소품은 돌릴 수 없고(언제나 남쪽), 울타리처럼 놓는 방향이 모양인 것만 돌림');
   check(quietLine, '길·바닥 깔기: 안내 문구 박스 없음 (바닥은 ✓ 옆 값만, 길은 고르는 버튼만)');
   check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨·안내 띠를 띄우지 않음 (효과는 건축 카드에서만)');
   check(card === 'ok', '지은 것 누르기: 패널 대신 건물 위 작은 카드, 철거는 두 번 눌러야 (' + card + ')');
@@ -897,7 +897,7 @@ async function ministryChecks(browser, url) {
   check(twoStep, '건축: 고른 분류의 건물은 가로 한 줄, 취소하면 직전에 고른 것이 보이고, 뒤로는 분류 목록');
   check(pathOk && escEnds, '지도에서 짓기: 길은 ✓로 한 칸씩 잇고 띠에서 종류를 고름, Esc로 끝냄');
   check(floorDir && floorTap, '지도에서 짓기: 바닥은 화살표 방향으로 ✓마다 한 칸씩 깔리고, 지도를 누르면 자리만 옮김');
-  check(rotates, '건물 방향: 화살표로 정면을 바꾸면 벤치·예배실·쌍등·정류장·피크닉 테이블 그림이 돎');
+  check(rotates, '건물 방향: 벤치·예배실·화장실·기도실은 방향 값과 상관없이 같은 자리·남쪽 문, 울타리는 놓는 방향대로 그려짐');
   // 꾸미기 이어 짓기: 울타리는 짓는 방향을 따라 눕고, 벤치는 화살표가 정면이고 옆으로 늘어서고, 파라솔은 화살표 없이 입구 쪽을 봄
   const decoLine = await page.evaluate(() => {
     const spot = id => { for (let y = 14; y < PZ - 3; y++) for (let x = 3; x < COLS - 6; x++) { let ok = true; for (let i = 0; i < 8; i++) for (let j = -2; j < 4; j++) if (!canPlace(D[id], x + i, y + j, 2)) ok = false; if (ok) return { x, y }; } return null; };
@@ -906,15 +906,15 @@ async function ministryChecks(browser, url) {
     plLock = 0; plOk(); plLock = 0; plOk();
     const f2 = S.buildings.slice(-2); if (!(f2[0].def === 'fence_w' && f2[1].x === f2[0].x + 1 && f2[1].face === 2)) return 'fence line';
     endPlace(); startPlace('bench'); p = spot('bench'); UI.ghost = { ...p }; syncPlace();
-    if (arrowMode(D.bench) !== 'face') return 'bench mode'; plDir(2); plLock = 0; plOk();
+    if (arrowMode(D.bench) !== 'line') return 'bench mode'; plDir(2); plLock = 0; plOk();
     const bn = S.buildings[S.buildings.length - 1]; if (bn.face !== 2 || (UI.ghost.x === p.x && UI.ghost.y === p.y)) return 'bench';
     endPlace(); startPlace('planter'); p = spot('planter'); UI.ghost = { ...p }; syncPlace();
     const noArr = arrowMode(D.planter) === 'line'; plLock = 0; plOk(); const pa = S.buildings[S.buildings.length - 1];
-    endPlace(); if (!noArr || pa.face !== gateFace(D.planter, pa.x, pa.y)) return 'planter';
-    if (turnable(D.tree) || !turnable(D.fence_w) || !turnable(D.bench)) return 'turnable';
+    endPlace(); if (!noArr || pa.face !== 2) return 'planter';
+    if (turnable(D.tree) || !turnable(D.fence_w) || turnable(D.bench)) return 'turnable';
     return 'ok';
   });
-  check(decoLine === 'ok', '꾸미기 이어 짓기: 울타리는 짓는 방향대로, 벤치는 정면 화살표, 방향 없는 것은 입구 쪽 자동 (' + decoLine + ')');
+  check(decoLine === 'ok', '꾸미기 이어 짓기: 울타리는 짓는 방향대로, 벤치·화분은 이어 놓는 화살표만(방향은 남쪽 고정) (' + decoLine + ')');
   check(smallBtns, '지도에서 짓기: ✓·✕ 38px, 화살표 32px로 작아짐');
   // 그림 조각: 모두 불러와 쓰고, 그림이 없으면 벡터로 그린다
   await page.waitForFunction(() => SPR_N === SPR_TOTAL, null, { timeout: 8000 }).catch(() => {});
@@ -1163,10 +1163,10 @@ async function entranceChecks(browser, url) {
     UI.faceHand = false; UI.face = 3; UI.ghost = { x: 10, y: 10 }; plAutoFace(); const fN = UI.face;
     UI.faceHand = true; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fH = UI.face;
     UI.faceHand = false; UI.face = 2; UI.ghost = { x: 33, y: 40 }; plAutoFace(); const fG = UI.face;   // 한 칸 떨어져 있어도 길 쪽
-    o.face = fW === 1 && fE === 0 && fN === 3 && fH === 2 && fG === 1; endPlace();
+    o.face = [fW, fE, fH, fG].every(f => fixFace(D.cell, f) === 2) && plFace() === 2 && plAutoFace() === null; endPlace();
     // 벤치도 길 쪽을 본다
     startPlace('bench'); UI.faceHand = false; UI.face = 2; UI.ghost = { x: 32, y: 42 }; plAutoFace(); const bW = UI.face; UI.face = 2; UI.ghost = { x: 29, y: 42 }; plAutoFace(); const bE = UI.face; endPlace();
-    o.face = o.face && bW === 1 && bE === 0;
+    o.face = o.face && fixFace(D.bench, bW) === 2 && fixFace(D.bench, bE) === 2;
     // 화장실도 개수 제한이 없고, 부교역자 정원은 성도 ASSOC_PER명마다 한 자리(최대 없음)
     { let wcs = 0; for (let x = 4; x < 60 && wcs < 7; x += 2) for (let y = 40; y < 56 && wcs < 7; y += 2) { if (build('wc', x, y, 2)) wcs++; }
       const m0 = S.members; S.members = 20; const s20 = assocSlots(); S.members = 200; const s200 = assocSlots(); S.members = m0;
@@ -1201,7 +1201,7 @@ async function entranceChecks(browser, url) {
   check(r.benchNoLimit, '벤치: 개수 제한 없이 여러 개 지을 수 있음');
   check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 20명마다 한 자리, 최대 없음');
   check(r.propTile && r.propCut, '소품: 벤치·쓰레기통 밑에도 바닥을 깔 수 있고, 길을 끊는 자리에는 소품을 놓지 못함');
-  check(r.face, '건축: 길 옆에 놓으면 정면(문)이 길 쪽을 향하고, 직접 돌렸거나 길이 없으면 그대로');
+  check(r.face, '건축: 길 옆에 놓아도 방향은 바뀌지 않음 (자동 방향 없음, 문은 남쪽)');
   check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
   check(r.ban && r.deco && r.dock && r.tabSign && r.clickSign && r.tabDeco && r.clickDeco && r.invest && r.invest10 && r.clickStyle && r.tabClose && r.draw, '교회 입구: 안내문은 사서 걸고 꾸미기는 켜고 끄며, 작은 건축 패널 모양의 창(컨셉·안내문·꾸미기 칩, 그림 카드, 투자)이 열리고 모든 조합 그림에 오류 없음');
   check(errs.length === 0, '교회 입구·시작 밸런스: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
@@ -1273,7 +1273,7 @@ async function levelChecks(browser, url) {
     // 문은 정면 1층 가운데 한 칸, 방향을 돌리면 문도 돈다
     const pr = put('pray', 2);
     o.front = !!pr && pr.door.ent.d === 2 && pr.door.ent.l === 0 && sameSpot(pr.door.ent, pr.door.ext);
-    if (pr) { pr.face = 0; recalc(); o.front = o.front && pr.door.ent.d === 0; pr.face = 2; recalc(); linkDoor(pr); recalc(); }
+    if (pr) { pr.face = 0; recalc(); o.front = o.front && pr.door.ent.d === 2; pr.face = 2; recalc(); linkDoor(pr); recalc(); }
     // 짓고 나면 입구·출구 놓기로 이어지지 않고 건물 카드가 뜬다
     { UI.tab = 'build'; UI.fold = false; UI.cat = 'worship'; startPlace('bible'); let g = null; for (let y = 4; y < PZ - 8 && !g; y += 2) for (let x = 4; x < COLS - 10; x += 2) if (!placeWhy(D.bible, x, y, UI.face) && !onFloorAt(D.bible, x, y, UI.face)) { g = { x, y }; break; }
       UI.ghost = g; plLock = 0; plOk(); const nb = S.buildings[S.buildings.length - 1]; o.noGateFlow = !!g && nb.def === 'bible' && !isPlacing() && UI.sel === nb.id; UI.sel = null; }
@@ -1341,7 +1341,7 @@ async function levelChecks(browser, url) {
     return o;
   });
   if (!(r.start && r.front && r.noGateFlow && r.invest && r.levels)) console.log('LV', JSON.stringify([r.start, r.front, r.noGateFlow, r.invest, r.levels]));
-  check(r.start && r.front && r.noGateFlow, '문: 대기줄·입구·출구 건물이 없고, 건물마다 정면 1층 가운데 문 하나(돌리면 문도 돎), 짓고 나면 바로 건물 카드');
+  check(r.start && r.front && r.noGateFlow, '문: 대기줄·입구·출구 건물이 없고, 건물마다 남쪽 1층 가운데 문 하나(방향 값을 바꿔도 남쪽), 짓고 나면 바로 건물 카드');
   check(r.batch, '일괄 가동: 예배실은 정원이 찰 때까지 안에서 기다렸다가 한꺼번에 가동 후 함께 나오고, 가동 중엔 문 앞에서 기다림');
   check(r.sunday, '일괄 가동: 주일이 되면 정원이 덜 차도 가동하되, 같은 주 금·토에 가동했으면 건너뜀');
   check(r.single, '한 명씩: 매장·편의 시설은 정원 1명, 레벨이 오를수록 회전 시간이 짧아짐');
@@ -1805,7 +1805,7 @@ async function earlyChecks(browser, url) {
       o.fixdoor = unusable && /문 앞까지 길/.test(why) && !!btn && lw === '' && usable(pb);
       o.fd = [unusable, why, !!btn, lw, usable(pb)];
       { const px = spot.x + 6, py = spot.y - 2; build('pray', px + 2, py, 1); const pr = S.buildings[S.buildings.length - 1]; recalc();
-        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 1 && pr.face === 1; demolish(pr.id); recalc(); }
+        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 2 && pr.face === 2; demolish(pr.id); recalc(); }
       UI.sel = null; renderSelCard(); }
     // 영수증: 패널이 열려 있으면 옆으로 비켜 뜨고, 눌러도 탭이 바뀌지 않음
     S.rcpt = S.rcpt || { net: 0, inc: 0, exp: 0 }; openGroup('build'); const tab0 = UI.tab; showReceipt(); const rc = document.getElementById('rcpt');
@@ -1933,7 +1933,7 @@ async function earlyChecks(browser, url) {
     check(n.quest, '퀘스트 탭: 지금 할 수 있는 퀘스트만 보이고, 마치면 마친 목록으로');
     check(n.decay, '심방 활동은 주마다 식음');
     if (!(n.sum && n.curve && n.trust && n.build && n.claim && n.chips && n.ui && n.quest && n.decay)) console.log('NI', JSON.stringify(n)); }
-  check(r.autoDoor, '문: 지을 때 고른 방향(정면)에 문이 남');
+  check(r.autoDoor, '문: 다른 방향으로 지으려 해도 문은 남쪽에 남');
   check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
   check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');
   check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');

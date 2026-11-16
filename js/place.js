@@ -23,14 +23,9 @@ function placeKind(){
    방향이 상관없는 것(나무·분수·파라솔 등)은 입구 아치 쪽을 보게 저절로 정한다 (문이 있으면 문도 그쪽) */
 // 조경·꾸미기와 편의 소품(벤치·쓰레기통 등)은 이어 놓기·방향 화살표로 놓는다
 function isDecoCat(d){return REPEAT_CATS.indexOf(d.cat)>=0||!!d.prop;}
-function isLineKind(d){return LINE_KINDS.indexOf(d.kind)>=0||d.dir==='axis';}
-function faceMatters(d){
-  // 이용하는 건물은 모두 바라보는 방향(정면 = 문)이 있다
-  if(d.fill&&d.dir!=='axis')return true;
-  if(d.dir)return d.dir==='face';
-  if(isDecoCat(d))return d.w!==d.h||FRONT_KINDS.indexOf(d.kind)>=0;
-  return !!d.fill||d.w!==d.h||d.towerH>0||['stage','busstop'].indexOf(d.kind)>=0;
-}
+function isLineKind(d){return dirKept(d);}
+// 정면이 따로 있는 것은 없다: 건물·소품의 방향 개념을 없앴다 (문은 언제나 남쪽)
+function faceMatters(d){return false;}
 // 돌릴 수 있는 것 (옮기기 카드의 이름에 씀)
 function turnable(d){return faceMatters(d)||isLineKind(d);}
 function arrowMode(d){
@@ -46,8 +41,8 @@ function gateFace(d,x,y){
 }
 // 지금 미리보기가 실제로 지어질 방향
 function plFace(){
-  var d=D[UI.tool];if(!d||!UI.ghost||movingId()||turnable(d))return UI.face;
-  return gateFace(d,UI.ghost.x,UI.ghost.y);
+  var d=D[UI.tool];if(!d||!UI.ghost)return 2;
+  return fixFace(d,UI.face);
 }
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 // 한 칸 소품을 길 칸에 놓으면 그 칸이 막힌다. 막아서 문 앞까지 길이 끊기는 건물이 생기면 그 자리에는 놓지 못한다
