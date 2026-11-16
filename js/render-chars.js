@@ -170,7 +170,7 @@ function chrCandSpec(seed,g,t){
   var pk=function(k,a){return a[Math.floor(chrRnd(seed,k)*a.length)%a.length];},sk=pk(1,CHR_SKINS),f=g==='f',dark=sk[0]==='#8a5a3c';
   var o={skin:sk[0],skinS:sk[1],hair:pk(2,CHR_HAIRC),hairStyle:f?pk(3,['bob','long','pony','bun']):pk(3,['short','part','short','afro']),smile:chrRnd(seed,4)<.6?1:0,shoe:'#2b2b33'};
   if(dark){o.blush='#a5644a';o.lip='#5a2f24';}
-  if(!f&&chrRnd(seed,5)<.18)o.beard=1;if(chrRnd(seed,6)<.2)o.glasses=1;if(f&&(o.hairStyle==='pony'||o.hairStyle==='bun'))o.pin=pk(7,['#e8b93a','#d6453a','#f29cc0','#3f6fe0']);
+  if(!f&&chrRnd(seed,5)<.18)o.beard=1;if(f&&(o.hairStyle==='pony'||o.hairStyle==='bun'))o.pin=pk(7,['#e8b93a','#d6453a','#f29cc0','#3f6fe0']);
   if(t==='assoc'){o.outfit='suit';o.collar=1;o.top='#27314f';o.bottom='#1f2740';o.shoe='#121216';}
   else if(t==='A'){if(f){o.outfit='cardigan';o.top=pk(8,['#7a4fb0','#3f5ea3','#8a3b4a']);o.inner='#ffffff';o.bottom='#3d3d46';}else{o.outfit='suit';o.top=pk(8,['#4a4a55','#5b4a3a','#2f3e5c']);o.tie=pk(9,['#c4503a','#3f6fe0','#e8b93a']);o.bottom='#2b2f36';}o.badge='#f2c230';}
   else if(t==='B'){o.outfit=chrRnd(seed,8)<.5?'cardigan':'hoodie';o.top=pk(9,['#7fb8e6','#f2b632','#6fa86a','#e57a95','#2f9e8a']);o.inner='#ffffff';o.bottom=pk(10,['#48689a','#5b5148','#3b4252']);o.bag='#9a6532';o.shoe='#f4efe6';}
