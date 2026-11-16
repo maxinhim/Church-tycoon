@@ -69,17 +69,19 @@ var SURN=['김','이','박','최','정','강','조','윤','장','임','한','오
 var GIVEN=['민준','서연','도윤','하은','지호','수빈','예준','지우','현우','유진','성민','은지','동현','혜린','준혁','다은','시온','하람','은혜','소망'];
 function makeCand(){
   var sk=1+Math.floor(Math.pow(Math.random(),1.5)*5),fk=Object.keys(FIELDS)[Math.floor(Math.random()*5)];
-  var pay=50+sk*30;
-  return {name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],title:sk>=3?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4};
+  var pay=50+sk*30,g=Math.random()<.5?'m':'f',st=typeof HIRE_STORY!=='undefined'?HIRE_STORY.pastor:[''];
+  return {name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],title:sk>=3?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4,g:g,seed:1+Math.floor(Math.random()*99990),story:st[Math.floor(Math.random()*st.length)]};
 }
 function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
 function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}
 function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}
-function hireAssoc(i){
+function hireAssoc(i,bid){
   var c=S.cands[i];if(!c)return '후보가 없어요';
-  if(S.assoc.length>=assocSlots())return '지금 성도 수로는 '+assocSlots()+'명까지 청빙할 수 있어요';
+  if(S.assoc.length>=assocSlots())return '지금 성도 수로는 부교역자를 '+assocSlots()+'명까지 청빙할 수 있어요';
   if(S.money<c.fee)return '청빙 비용이 부족해요';
-  S.money-=c.fee;S.assoc.push(c);S.cands.splice(i,1);recalc();save();return '';
+  S.money-=c.fee;S.assoc.push(c);S.cands.splice(i,1);S.hireN=(S.hireN||0)+1;addLog(c.name+' '+c.title+'님을 청빙했어요');recalc();
+  if(bid&&bById(bid)&&mgrRole(bById(bid))==='pastor')mgrSet(bid,'a'+asUid(c));
+  save();return '';
 }
 function dismissAssoc(i){
   var a=S.assoc[i];if(!a)return false;
@@ -107,23 +109,69 @@ function rwMoney(v){v=Math.round(v);S.money+=v;S.weekInc+=v;return '자금 +'+fm
 function rwRep(v){gainRep(v);return '평판 +'+v;}
 function rwMood(v){S.tempMood+=v;return '만족 +'+v;}
 function eduRw(k){var x=EDU_EV[k].xp,n=ppGainAll(x);return '모든 성도 경험치 +'+x+(n?' ('+n+'명 레벨 업)':'');}
-// 직분자·교역자 행사: 대상(직분자 / 교역 갈래 성도+부교역자)에게 경험치를 준다
-function offTargets(){return (S.people||[]).filter(function(p){return ppTrack(p)==='A';});}
-function minTargets(){return (S.people||[]).filter(function(p){return ppTrack(p)==='B';});}
-function offEvN(g){return g==='off'?offTargets().length:minTargets().length+(S.assoc||[]).length;}
+/* 담임목사: 레벨과 학위 (수치는 balance.js PAS_*) */
+var PAS_DEG=['목회학 석사','신학 석사','목회학 박사'];
+function pastorSt(){return S.pastor||(S.pastor={lv:1,xp:0,deg:0});}
+function pasNeed(lv){return PAS_XP0+PAS_XP_K*lv;}
+function pasGain(xp){var p=pastorSt(),up=0;p.xp+=xp;while(p.lv<PAS_LV_MAX&&p.xp>=pasNeed(p.lv)){p.xp-=pasNeed(p.lv);p.lv++;up++;}if(p.lv>=PAS_LV_MAX)p.xp=Math.min(p.xp,pasNeed(p.lv));return up;}
+function pastorK(){return 1+PAS_LV_K*(pastorSt().lv-1);}
+function pastorTitle(){var d=pastorSt().deg;return d?PAS_DEG[Math.min(d,PAS_DEG.length)-1]:'';}
+// 담임목사 행사 (행사 › 담임목사 탭): 마치면 담임목사 경험치. o.after()가 있으면 덧붙는 보상
+function pasEv(k,o){var c=PAS_EV[k];
+  return Object.assign({cost:c.cost,cd:c.cd,dur:c.dur,goal:c.goal,grp:'pas',rwt:'담임목사 경험치 +'+c.xp+(o.rwx?', '+o.rwx:''),
+    rw:function(){var up=pasGain(c.xp),out=['담임목사 경험치 +'+c.xp+(up?' (Lv '+pastorSt().lv+')':'')];return o.after?out.concat(o.after()):out;}},o);}
+// 부교역자 행사 (행사 › 부교역자 탭): 마치면 부교역자 모두 경험치
+function ascEv(k,o){var c=ASC_EV[k];
+  return Object.assign({cost:c.base,cd:c.cd,dur:c.dur,goal:c.goal,grp:'asc',costFn:function(){return c.base+(S.assoc||[]).length*c.per;},
+    need:function(){return (S.assoc||[]).length?'':'부교역자가 한 명 이상 있어야 해요';},rwt:'부교역자 모두 경험치 +'+c.xp,
+    rw:function(){var up=0;(S.assoc||[]).forEach(function(a){if(asGain(a,c.xp))up++;});return ['부교역자 '+S.assoc.length+'명 경험치 +'+c.xp+(up?' ('+up+'명 레벨 업)':'')];}},o);}
+/* 봉사자 행사 (행사 › 봉사자 탭): 대상 갈래(OFF_EV의 g: A 직분자·B 리더·C 섬김이·ABC 모두)의 성도에게 경험치와 신뢰도.
+   g가 없는 것(교역자 연수·교제의 밤)은 부교역자 탭: 부교역자 모두와 담임목사에게 경험치 */
+var VOL_NAME={A:'직분자',B:'리더',C:'섬김이',ABC:'봉사자',min:'부교역자'};
+function volTargets(g){return (S.people||[]).filter(function(p){var t=ppTrack(p);return !!t&&g.indexOf(t)>=0;});}
+function offTargets(){return volTargets('A');}
+function offEvN(g){return g==='min'?(S.assoc||[]).length:volTargets(g).length;}
 function offEvRw(k,g){var c=OFF_EV[k],up=0,n=0;
-  (g==='off'?offTargets():minTargets()).forEach(function(p){n++;if(ppGain(p,c.xp))up++;});
-  if(g==='min')(S.assoc||[]).forEach(function(a){n++;if(asGain(a,Math.max(1,Math.round(c.xp/4))))up++;});
-  trustAct(c.trust);return (g==='off'?'직분자 ':'교역자 ')+n+'명 경험치 +'+c.xp+(up?' ('+up+'명 레벨 업)':'');}
-function offEv(k,g,o){var c=OFF_EV[k];
-  return Object.assign({cost:c.base,cd:c.cd,dur:c.dur,goal:c.goal,grp:g,costFn:function(){return c.base+offEvN(g)*c.per;},
-    need:function(){return offEvN(g)>0?'':(g==='off'?'직분자':'교역자')+'가 한 명 이상 있어야 해요';},
-    rwt:(g==='off'?'직분자':'교역자')+' 모두 경험치 +'+c.xp+', 신뢰도 ↑',rw:function(){return [offEvRw(k,g)];}},o);}
+  if(g==='min'){(S.assoc||[]).forEach(function(a){n++;if(asGain(a,c.xp))up++;});pasGain(c.xp);}
+  else volTargets(g).forEach(function(p){n++;if(ppGain(p,c.xp))up++;});
+  trustAct(c.trust);return VOL_NAME[g]+' '+n+'명 경험치 +'+c.xp+(up?' ('+up+'명 레벨 업)':'')+(g==='min'?' · 담임목사 +'+c.xp:'');}
+function offEv(k,o){var c=OFF_EV[k],g=c.g||'min',nm=VOL_NAME[g];
+  return Object.assign({cost:c.base,cd:c.cd,dur:c.dur,goal:c.goal,grp:g==='min'?'asc':'vol',vg:g,costFn:function(){return c.base+offEvN(g)*c.per;},
+    need:function(){return offEvN(g)>0?'':nm+'가 한 명 이상 있어야 해요';},
+    rwt:nm+' 모두 경험치 +'+c.xp+', 신뢰도 ↑',rw:function(){return [offEvRw(k,g)];}},o);}
 var EVENTS={
-  offsem:offEv('offsem','off',{name:'직분자 세미나',ic:'📚',col:'#7a62b8',desc:'집사·장로·권사를 모시고 직분의 사명을 배워요',fx:'말씀 효과 +8%',mods:function(m){m.word*=1.08;}}),
-  offret:offEv('offret','off',{name:'직분자 수련회',ic:'🏕️',col:'#4d8f6a',desc:'직분자들이 함께 떠나 기도하고 교제해요',fx:'만족 +4, 헌금 +10%',mods:function(m){m.mood+=4;m.offer*=1.1;}}),
-  minedu:offEv('minedu','min',{name:'교역자 연수',ic:'🎓',col:'#3a7fb0',desc:'부교역자·교역 성도를 위한 신학·목회 교육이에요',fx:'말씀 효과 +8%',mods:function(m){m.word*=1.08;}}),
-  minfel:offEv('minfel','min',{name:'교역자 교제의 밤',ic:'🍵',col:'#c07a4a',desc:'사역자들이 서로 격려하고 쉼을 나눠요',fx:'만족 +4, 돌봄 효과 +10%',mods:function(m){m.mood+=4;m.care*=1.1;}}),
+  // --- 담임목사
+  pbook:pasEv('pbook',{name:'서적 구매',ic:'📚',col:'#8a6a46',desc:'신학 서적과 주석을 사서 서재를 채워요'}),
+  pstudy:pasEv('pstudy',{name:'말씀 연구',ic:'🔎',col:'#5a74b8',desc:'한 주 동안 본문을 깊이 파고들어 설교를 준비해요',fx:'말씀 효과 +6%',mods:function(m){m.word*=1.06;}}),
+  pmemo:pasEv('pmemo',{name:'말씀 암송',ic:'🕯️',col:'#c08a2e',desc:'매일 말씀을 외우며 마음에 새겨요'}),
+  ppray:pasEv('ppray',{name:'기도원 묵상',ic:'⛰️',col:'#4d8f6a',desc:'기도원에 올라 홀로 기도하고 묵상해요',fx:'만족 +2',mods:function(m){m.mood+=2;}}),
+  psem:pasEv('psem',{name:'세미나 참석',ic:'🎤',col:'#7a62b8',desc:'목회 세미나에 여러 주 참석해 배우고 돌아와요 (기간이 길어요)',rwx:'평판 +1',after:function(){return [rwRep(1)];}}),
+  pconf:pasEv('pconf',{name:'목회자 컨퍼런스',ic:'🌍',col:'#2f8f9d',desc:'여러 교회 목회자들과 두 달 동안 교류하며 시야를 넓혀요',rwx:'평판 +2',after:function(){return [rwRep(2)];}}),
+  pdeg:pasEv('pdeg',{name:'학위 획득',ic:'🎓',col:'#b0763f',desc:'신학대학원에서 학위 과정을 밟아요 (기간이 매우 길어요). 학위마다 말씀 효과가 영구히 올라요',
+    rwx:'학위 (말씀 효과 +'+Math.round(PAS_DEG_WORD*100)+'%), 평판 +'+PAS_DEG_REP,
+    need:function(){return pastorSt().deg>=PAS_DEG_MAX?'이미 모든 학위를 마쳤어요':'';},
+    after:function(){var p=pastorSt();p.deg=Math.min(PAS_DEG_MAX,p.deg+1);return [pastorTitle()+' 학위',rwRep(PAS_DEG_REP)];}}),
+  // --- 부교역자
+  abook:ascEv('abook',{name:'서적 구매',ic:'📚',col:'#8a6a46',desc:'부교역자들에게 필요한 책을 사 줘요'}),
+  astudy:ascEv('astudy',{name:'말씀 연구 모임',ic:'🔎',col:'#5a74b8',desc:'부교역자들이 함께 본문을 연구해요',fx:'말씀 효과 +4%',mods:function(m){m.word*=1.04;}}),
+  amemo:ascEv('amemo',{name:'말씀 암송',ic:'🕯️',col:'#c08a2e',desc:'부교역자들이 함께 말씀을 외워요'}),
+  asem:ascEv('asem',{name:'세미나 참석',ic:'🎤',col:'#7a62b8',desc:'부교역자들을 사역 세미나에 보내요 (기간이 길어요)'}),
+  adeg:ascEv('adeg',{name:'학위 과정 지원',ic:'🎓',col:'#b0763f',desc:'부교역자들의 대학원 학위 과정을 도와요 (기간이 매우 길어요)'}),
+  minedu:offEv('minedu',{name:'교역자 연수',ic:'🏫',col:'#3a7fb0',desc:'담임목사와 부교역자가 함께 신학·목회 교육을 받아요',fx:'말씀 효과 +8%',mods:function(m){m.word*=1.08;}}),
+  minfel:offEv('minfel',{name:'교역자 교제의 밤',ic:'🍵',col:'#c07a4a',desc:'사역자들이 서로 격려하고 쉼을 나눠요',fx:'만족 +4, 돌봄 효과 +10%',mods:function(m){m.mood+=4;m.care*=1.1;}}),
+  // --- 봉사자 (직분자·리더·섬김이)
+  offvow:offEv('offvow',{name:'제직 헌신예배',ic:'🙏',col:'#b98bd6',desc:'직분자들이 한 해의 섬김을 다짐하며 예배드려요'}),
+  offsem:offEv('offsem',{name:'직분자 세미나',ic:'📖',col:'#7a62b8',desc:'집사·장로·권사를 모시고 직분의 사명을 배워요',fx:'말씀 효과 +8%',mods:function(m){m.word*=1.08;}}),
+  offret:offEv('offret',{name:'직분자 수련회',ic:'🏕️',col:'#4d8f6a',desc:'직분자들이 함께 떠나 기도하고 교제해요',fx:'만족 +4, 헌금 +10%',mods:function(m){m.mood+=4;m.offer*=1.1;}}),
+  leadtea:offEv('leadtea',{name:'리더 다과 나눔',ic:'🍪',col:'#d98a3a',desc:'소그룹 리더들이 차를 마시며 모임 이야기를 나눠요'}),
+  leadsch:offEv('leadsch',{name:'리더 훈련학교',ic:'🧭',col:'#3a7fb0',desc:'소그룹을 이끄는 법을 두 주 동안 배워요',fx:'이탈 -10%',mods:function(m){m.loss*=.9;}}),
+  leadmt:offEv('leadmt',{name:'리더 MT',ic:'🚌',col:'#2f8f9d',desc:'리더들이 함께 떠나 서로를 알아 가요',fx:'만족 +3',mods:function(m){m.mood+=3;}}),
+  servtool:offEv('servtool',{name:'섬김 도구 나눔',ic:'🧰',col:'#8a6a46',desc:'앞치마·장갑·청소 도구를 새로 마련해 나눠요'}),
+  servws:offEv('servws',{name:'섬김이 워크숍',ic:'🛠️',col:'#5c8a48',desc:'안내·주방·시설 섬김의 요령을 함께 익혀요',fx:'운영비 -3%',mods:function(m){m.upkeep*=.97;}}),
+  servthx:offEv('servthx',{name:'섬김이 감사의 밤',ic:'💐',col:'#c9627a',desc:'보이지 않는 곳에서 섬긴 손길에 감사를 전해요',fx:'만족 +3',mods:function(m){m.mood+=3;}}),
+  volpray:offEv('volpray',{name:'봉사자 기도회',ic:'🕊️',col:'#6fa86a',desc:'모든 봉사자가 모여 교회와 서로를 위해 기도해요'}),
+  volpic:offEv('volpic',{name:'봉사자 야유회',ic:'🧺',col:'#e0a030',desc:'봉사자들이 가족과 함께 소풍을 떠나요',fx:'만족 +4',mods:function(m){m.mood+=4;}}),
+  volfeast:offEv('volfeast',{name:'봉사자 위로 만찬',ic:'🍽️',col:'#d65a4a',desc:'한 해 동안 수고한 봉사자 모두를 초대해 식탁을 차려요',fx:'만족 +5, 헌금 +8%',mods:function(m){m.mood+=5;m.offer*=1.08;}}),
   smallgroup:{name:'소그룹 모임',ic:'🫖',col:'#6fa86a',cost:150,cd:2,dur:2,goal:0,desc:'가정과 교회에서 모여 삶을 나눠요',fx:'만족 +6, 이탈 -30%',rwt:'만족 +2',
     need:function(){var n=Math.ceil(Math.min(20,S.members*0.25));return A.fcap>=n?'':'교제 공간이 '+n+' 이상 필요해요';},mods:function(m){m.mood+=6;m.loss*=0.7;},rw:function(){return [rwMood(2)];}},
   bible:{name:'성경공부',ic:'📖',col:'#5a74b8',cost:EDU_EV.bible.base,cd:3,dur:1,goal:0,edu:'bible',desc:'함께 말씀을 읽고 나눠요',fx:'말씀 효과 +10%',rwt:'모든 성도 경험치 +'+EDU_EV.bible.xp,
@@ -187,11 +235,11 @@ function runEvent(id){
   var e=EVENTS[id];
   S.money-=evCost(e);
   if(e.now)e.now();
-  evBegin(id);if(!e.hidden)S.lastEv=S.week;
+  evBegin(id);if(!e.hidden&&!e.grp)S.lastEv=S.week;
   // 영성(성례)은 언제 열었는지로 계산한다
   S.evW=S.evW||{};S.evW[id]=S.week;
   // 지난번과 다른 행사면 '새로 한 일', 바람으로 바라던 행사면 들어준 것
-  if(!e.hidden){if(S.lastEvId!==id)noteNew();S.lastEvId=id;if(S.wish&&S.wish.t==='event'&&S.wish.id===id)S.wishRan=id;}
+  if(!e.hidden&&!e.grp){if(S.lastEvId!==id)noteNew();S.lastEvId=id;if(S.wish&&S.wish.t==='event'&&S.wish.id===id)S.wishRan=id;}
   addLog(e.name+'을(를) 열었어요');recalc();save();return '';
 }
 // 0.5초마다: 시간이 다 찬 행사는 효과를 멈추고 보상 대기로 (자동 행사는 그냥 끝난다)
@@ -245,6 +293,7 @@ function refreshMods(){
     else if(a.field==='admin'){m.upkeep*=1-0.03*k;m.decay*=1-0.06*k;}
     else if(a.field==='mission'){m.vis*=1+0.04*k;m.rep+=0.15*k;}
   });
+  var pst=pastorSt();m.cap+=PAS_CAP*(pst.lv-1);m.word*=1+PAS_DEG_WORD*pst.deg;   // 담임목사 레벨·학위
   var o=S.off;
   m.cap+=6*o.deacon+10*o.kwonsa+18*o.elder+PA.cap;
   m.offer*=ppGiveK();

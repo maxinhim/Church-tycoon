@@ -88,7 +88,7 @@ var PP_TREE={
   dlead:{n:'사역부장',act:'사역부장',tr:'부장 훈련',done:'사역부장 임명',lv:55,cost:700,dur:8,d:6,t:'C',give:5,sp:.6,cap:6,upk:.015,dec:.03,next:['cstaff']},
   cstaff:{n:'교회직원',act:'교회직원 임명',tr:'직원 수습',done:'교회직원 임명',lv:70,cost:1500,dur:10,d:7,t:'C',give:8,sp:.8,cap:8,upk:.03,dec:.05,next:[]}
 };
-var PP_TRACK={A:{n:'직분',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'교역',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김'}};
+var PP_TRACK={A:{n:'직분자',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'리더',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김이',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김이'}};
 var PP_UPK_MAX=.25,PP_DEC_MAX=.4;
 var PP_GIVE_LV=.005;
 // 교육 행사: 보상 수령 때 모든 성도 경험치 + xp. 값 = base + 성도 × per
@@ -106,7 +106,7 @@ var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
 var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
 /* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
 var ASSOC_PER=20;
-var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
+var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.04,ASSOC_LV_MAX=20,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
 var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만
 var NEED_OK=88;          // 욕구가 이만큼 차면 됐다고 본다 (높을수록 건물을 더 많이 들른다)
@@ -189,14 +189,47 @@ var VIS_STROLL_MAX=3;     // 한 방문에서 거니는 최대 횟수
 var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은 길을 피하는 무게, 가까움을 따지는 무게
 var VIS_MAX=60;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
 
-/* 직분자·교역자 행사 (ministry.js): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 호감·경험치 xp (+ 신뢰도 trust)
-   직분자 = 직분 갈래(집사·장로·권사·교회직원), 교역자 = 교역 갈래 성도 + 부교역자. 쉬는 기간 cd(주), 소요 시간 dur(주) */
+/* 봉사자·부교역자 행사 (ministry.js offEv): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 경험치 xp (+ 신뢰도 trust)
+   g = 대상 갈래: 'A' 직분자 · 'B' 리더 · 'C' 섬김이 · 'ABC' 봉사자 모두. g가 없으면 부교역자(와 담임목사). 쉬는 기간 cd(주), 소요 시간 dur(주) */
 var OFF_EV={
-  offsem:{base:300,per:30,xp:30,trust:1,cd:6,dur:1,goal:1},
-  offret:{base:900,per:70,xp:60,trust:2,cd:12,dur:2,goal:2},
-  minedu:{base:400,per:50,xp:30,trust:1,cd:6,dur:1,goal:1},
-  minfel:{base:1000,per:90,xp:60,trust:2,cd:12,dur:2,goal:2}
+  offsem:{g:'A',base:300,per:30,xp:30,trust:1,cd:6,dur:1,goal:1},
+  offret:{g:'A',base:900,per:70,xp:60,trust:2,cd:12,dur:2,goal:2},
+  offvow:{g:'A',base:100,per:10,xp:12,trust:1,cd:3,dur:3/7,goal:0},
+  leadtea:{g:'B',base:80,per:10,xp:10,trust:1,cd:2,dur:3/7,goal:0},
+  leadsch:{g:'B',base:300,per:30,xp:30,trust:1,cd:6,dur:2,goal:1},
+  leadmt:{g:'B',base:500,per:50,xp:40,trust:2,cd:8,dur:1,goal:1},
+  servtool:{g:'C',base:80,per:10,xp:10,trust:1,cd:2,dur:3/7,goal:0},
+  servws:{g:'C',base:250,per:25,xp:28,trust:1,cd:6,dur:1,goal:1},
+  servthx:{g:'C',base:400,per:40,xp:36,trust:2,cd:8,dur:3/7,goal:1},
+  volpray:{g:'ABC',base:200,per:10,xp:14,trust:1,cd:4,dur:1,goal:0},
+  volpic:{g:'ABC',base:600,per:30,xp:24,trust:2,cd:10,dur:1,goal:1},
+  volfeast:{g:'ABC',base:1500,per:60,xp:60,trust:3,cd:16,dur:3/7,goal:2},
+  minedu:{base:400,per:150,xp:14,trust:1,cd:6,dur:1,goal:1},
+  minfel:{base:1000,per:200,xp:24,trust:2,cd:12,dur:2,goal:2}
 };
+/* 담임목사 (ministry.js pastorSt): 행사 › 담임목사 탭의 행사로 경험치를 쌓아 레벨이 오른다 (다음 레벨까지 PAS_XP0 + PAS_XP_K × 레벨).
+   레벨마다 대예배당 성능 +PAS_LV_K, 목양 수용력 +PAS_CAP. 학위(최대 PAS_DEG_MAX)마다 말씀 효과 +PAS_DEG_WORD, 받을 때 평판 +PAS_DEG_REP.
+   행사: cost 값, xp 경험치, cd 쉬는 주, dur 걸리는 주(세미나는 길고 학위는 매우 길다), goal 열리는 단계 */
+var PAS_LV_MAX=50,PAS_XP0=40,PAS_XP_K=12,PAS_LV_K=.03,PAS_CAP=3,PAS_DEG_WORD=.05,PAS_DEG_REP=4,PAS_DEG_MAX=3;
+var PAS_EV={
+  pbook:{cost:60,xp:12,cd:1,dur:3/7,goal:0},
+  pstudy:{cost:40,xp:20,cd:2,dur:1,goal:0},
+  pmemo:{cost:30,xp:16,cd:2,dur:1,goal:0},
+  ppray:{cost:120,xp:36,cd:4,dur:1,goal:0},
+  psem:{cost:900,xp:180,cd:8,dur:5,goal:1},
+  pconf:{cost:1800,xp:320,cd:12,dur:8,goal:2},
+  pdeg:{cost:6000,xp:900,cd:20,dur:24,goal:2}
+};
+/* 부교역자 행사: 값 = base + 부교역자 수 × per, 부교역자 모두 경험치 xp. 부교역자 레벨은 1~ASSOC_LV_MAX, 다음 레벨까지 AS_XP0 + AS_XP_K × 레벨 */
+var AS_XP0=10,AS_XP_K=4;
+var ASC_EV={
+  abook:{base:40,per:40,xp:6,cd:1,dur:3/7,goal:0},
+  astudy:{base:40,per:30,xp:10,cd:2,dur:1,goal:0},
+  amemo:{base:30,per:20,xp:8,cd:2,dur:1,goal:0},
+  asem:{base:500,per:300,xp:60,cd:8,dur:4,goal:1},
+  adeg:{base:3000,per:1500,xp:250,cd:20,dur:20,goal:2}
+};
+
 
 /* 건물 관리자 (managers.js)
    · 관리자가 있어야 가동하는 건물: 예배(추가 예배당) → 부교역자, 교제(소그룹실·친교실) → 직분자·리더, 매장 → 직원. 처음부터 있는 대예배당은 담임목사가 맡는다

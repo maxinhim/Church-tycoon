@@ -70,6 +70,7 @@ function draw(){
     var low=h<0||[0,1,2,3].some(function(d){return th(t.x+DIRS[d][0],t.y+DIRS[d][1])<0;});
     rt.f=low?function(){pitClip(rt,function(){drawTerCell(t.x,t.y);});}:function(){drawTerCell(t.x,t.y);};E.push(rt);
   });
+  FIGHIT.length=0;
   var WQ={};V.forEach(function(v){if(v.state==='wait'&&v.target)WQ[v.target]=(WQ[v.target]||0)+1;});   // 문 앞에서 기다리는 사람 수
   S.buildings.forEach(function(b){
     if(b.id===mvId)return;

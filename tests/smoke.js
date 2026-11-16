@@ -654,7 +654,7 @@ async function ministryChecks(browser, url) {
   const toggled = await page.evaluate(() => document.getElementById('dock').hidden && document.getElementById('scr').hidden);
   await page.click('#fab [data-fab="minis"]');
   // 행사 버튼은 화면 전체를 쓰는 행사 화면을 연다 (지도 위 창은 닫힘). 탭: 행사·사역자
-  const minis = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && r.height >= innerHeight - 1 && /행사/.test(document.getElementById('scrTabs').textContent) && /사역팀/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .evc').length === Object.keys(EVENTS).filter(k => !EVENTS[k].hidden).length; });
+  const minis = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && r.height >= innerHeight - 1 && /행사/.test(document.getElementById('scrTabs').textContent) && /사역팀/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .evc').length === Object.keys(EVENTS).filter(k => !EVENTS[k].hidden && !EVENTS[k].grp).length && document.querySelectorAll('#scrTabs [role="tab"]').length === 5 && ['pas', 'asc', 'vol'].every(g => Object.keys(EVENTS).filter(k => EVENTS[k].grp === g).length >= 7) && EVENTS.minedu.grp === 'asc' && EVENTS.offsem.grp === 'vol'; });
   // 행사 카드 → 정보 창 → 행사 시작 → 원형 게이지가 차오름 → 다 차면 보상 수령을 눌러야 보상
   const evFlow = await page.evaluate(() => { const o = {}; const m0 = S.money, r0 = S.rep;
     document.querySelector('#scrBody .evc[data-v="street"]').click();
@@ -680,6 +680,31 @@ async function ministryChecks(browser, url) {
     // 예전 저장(남은 주 left)은 진행 중으로 이어진다
     S.ev.smallgroup = { cd: 0, left: 2 }; o.old = evRunning('smallgroup') === false && (evState('smallgroup'), evRunning('smallgroup')) && S.ev.smallgroup.left === undefined;
     S.ev = {}; recalc(); renderScreen(); return o; });
+  const pasTab = await page.evaluate(() => { const o = {}, ua = S.unlockAll, mm = S.money; S.unlockAll = true; S.money = 99999; S.pastor = null;
+    document.querySelector('#scr [data-act="scrtab"][data-v="pastor"]').click();
+    const ids = [...document.querySelectorAll('#scrBody .evc')].map(e => e.dataset.v);
+    o.tab = !!document.querySelector('#scrBody .pashd') && ['pbook', 'pstudy', 'pmemo', 'psem', 'pdeg'].every(i => ids.includes(i)) && !ids.includes('minedu') && EVENTS.psem.dur >= 4 && EVENTS.pdeg.dur >= 20;
+    const k0 = pastorK(), le = S.lastEv; runEvent('pstudy'); S.ev.pstudy.end = evNow() - .01; evTick(); const g = claimEvent('pstudy');
+    o.xp = pastorSt().xp === PAS_EV.pstudy.xp && /담임목사 경험치/.test(g.join()) && S.lastEv === le;
+    pasGain(pasNeed(1)); o.lv = pastorSt().lv === 2 && pastorK() > k0 && Math.abs(mgrK(S.buildings.find(b => b.fixed)) - pastorK()) < 1e-9;
+    runEvent('pdeg'); S.ev.pdeg.end = evNow() - .01; evTick(); claimEvent('pdeg'); recalc(); o.deg = pastorSt().deg === 1 && pastorTitle() === PAS_DEG[0] && MOD.word > 1;
+    document.querySelector('#scr [data-act="scrtab"][data-v="assoc"]').click(); const ai = [...document.querySelectorAll('#scrBody .evc')].map(e => e.dataset.v);
+    o.asc = ['abook', 'astudy', 'asem', 'adeg', 'minedu', 'minfel'].every(i => ai.includes(i)) && evBlock('abook') !== '';
+    S.assoc.push({ name: '박요한', title: '전도사', field: 'edu', skill: 2, pay: 110, fee: 440 }); recalc(); S.ev.abook = { cd: 0 }; const m1 = S.money; runEvent('abook'); S.ev.abook.end = evNow() - .01; evTick(); claimEvent('abook');
+    o.ascXp = S.money === m1 - (ASC_EV.abook.base + ASC_EV.abook.per) && S.assoc[0].xp === ASC_EV.abook.xp; S.assoc.length = 0;
+    document.querySelector('#scr [data-act="scrtab"][data-v="vol"]').click(); const vi = [...document.querySelectorAll('#scrBody .evc')].map(e => e.dataset.v);
+    o.vol = ['offsem', 'offret', 'leadsch', 'leadmt', 'servws', 'servthx', 'volpic'].every(i => vi.includes(i)) && document.querySelectorAll('#scrBody .ssec').length === 4;
+    const p = S.people[0], n0 = p.node, l0 = p.lv; p.node = 'server'; p.lv = 25; const x0 = p.xp; S.ev.servws = { cd: 0 }; runEvent('servws'); S.ev.servws.end = evNow() - .01; evTick(); claimEvent('servws');
+    o.volXp = p.xp + (p.lv - 25) * 1e3 > x0 && volTargets('A').length === 0 && volTargets('ABC').length === 1; p.node = n0; p.lv = l0; p.xp = 0;
+    // 지도에서 담임목사를 누르면 이 탭이 열린다
+    closeScreen(); draw(); const f = FIGHIT.find(h => h.k === 'pastor'), cr = cv.getBoundingClientRect();
+    if (f) onTap(cr.left + f.x, cr.top + f.y + f.h / 2); o.tap = !!f && UI.scr === 'events' && UI.scrTab === 'pastor';
+    S.ev = {}; S.pastor = null; S.unlockAll = ua; S.money = mm; recalc(); openScreen('events'); return o; });
+  if (!Object.values(pasTab).every(Boolean)) console.log('PAS', JSON.stringify(pasTab));
+  check(pasTab.tab && pasTab.xp && pasTab.lv && pasTab.deg, '행사 › 담임목사 탭: 서적·말씀 연구·암송·세미나(김)·학위(매우 김), 마치면 담임목사 경험치·레벨(대예배당 성능)·학위');
+  check(pasTab.asc && pasTab.ascXp, '행사 › 부교역자 탭: 부교역자 행사와 교역자 연수·교제의 밤, 마치면 부교역자 모두 경험치');
+  check(pasTab.vol && pasTab.volXp, '행사 › 봉사자 탭: 직분자·리더·섬김이·모두 묶음, 그 갈래 봉사자에게 경험치');
+  check(pasTab.tap, '지도에서 담임목사를 누르면 행사 › 담임목사 탭이 열림');
   await page.click('#scr [data-act="scrtab"][data-v="staff"]');
   const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && document.querySelectorAll('#scrBody .teamc').length === Object.keys(STAFF).length && /달란트/.test(document.getElementById('scrBody').textContent) && !document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]'));
   await page.keyboard.press('Escape');
@@ -730,7 +755,17 @@ async function ministryChecks(browser, url) {
     const ac = document.querySelector('#scrBody [data-act="asopen"]'); o.assoc = !!ac && /김시온/.test(ac.textContent); ac.click();
     const dl = document.getElementById('scrDlg'); o.asDlg = !dl.hidden && !!dl.querySelector('[data-act="ascheer"]') && !!dl.querySelector('[data-act="dismiss"]');
     dl.querySelector('[data-act="dismiss"]').click(); o.dismiss = S.assoc.length === 0 && document.getElementById('scrDlg').hidden;
-    document.querySelector('#scrTabs [data-v="cands"]').click(); o.cands = !!document.querySelector('#scrBody [data-act="searchA"]');
+    document.querySelector('#scrTabs [data-v="cands"]').click();
+    { const mm = S.money, n0 = S.people.length, m0 = S.members; S.money = 99999;
+      const cards = [...document.querySelectorAll('#scrBody .hcard')];
+      o.cands = UI.scr === 'hire' && cards.length === 9 + S.cands.length && cards.every(c => !!c.querySelector('img.pxart') && !!c.querySelector('.hc-grade') && !!c.querySelector('.hc-name')) && document.querySelectorAll('#scrTabs [role="tab"]').length === 5;
+      document.querySelector('#scrTabs [data-v="C"]').click(); const cc = document.querySelectorAll('#scrBody .hcard'); o.hireTab = cc.length === 3 && [...cc].every(c => c.classList.contains('tC'));
+      const c0 = volCands('C')[0]; cc[0].click(); const hd = document.getElementById('scrDlg'); o.hireDlg = !hd.hidden && hd.textContent.includes(c0.name) && /“.+”/.test(hd.textContent);
+      hd.querySelector('[data-act="hctake"]').click(); const np = S.people[S.people.length - 1];
+      o.hired = S.people.length === n0 + 1 && S.members === m0 + 1 && np.n === c0.name && np.node === 'server' && !!np.ext && ppTrack(np) === 'C' && S.money === 99999 - c0.fee && hirePay() === c0.pay && volCands('C').length === 2;
+      const before = JSON.stringify(S.vc); document.querySelector('#scrBody [data-act="hcreroll"]').click(); o.hireReroll = JSON.stringify(S.vc) !== before && volCands('C').length === 3;
+      scrBack(); document.querySelector('#scrTabs [data-v="C"]').click(); o.hiredTab = UI.scr === 'officers' && document.querySelectorAll('#scrBody .ppc.ext').length === 1;
+      hireFire(np.id); o.fired = S.people.length === n0 && S.members === m0 && hirePay() === 0; S.money = mm; renderScreen(); }
     p.lv = 1; S.people.forEach(q => { q.node = 'new'; q.tr = null; }); S.tempMood = 0; recalc(); return o; });
   await page.keyboard.press('Escape');
   const scrClosed = await page.evaluate(() => document.getElementById('scr').hidden && !UI.scr);
@@ -855,6 +890,7 @@ async function ministryChecks(browser, url) {
   });
   const smallBtns = await page.evaluate(() => { startPlace('bench'); syncPlace(); const r = document.querySelector('#place [data-pl="ok"]').getBoundingClientRect(); const a = document.querySelector('#place .parr').getBoundingClientRect(); endPlace(); return r.width <= 40 && a.width <= 34; });
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼은 지표·퀘스트가 있는 전체 화면을 열고 ✕로 닫힘');
+  if (!(minis && staffTab && scrClosed)) console.log('SCR', minis, staffTab, scrClosed);
   check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(행사·사역자 탭), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
@@ -862,8 +898,9 @@ async function ministryChecks(browser, url) {
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
-  check(offScr.offIc && offScr.offRun && offScr.offReady && offScr.offDone, '직분자 탭: 직분자 행사 아이콘으로 바로 열고 보상을 받으며, 교역자 행사는 직분 탭에 나오지 않음');
-  check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');
+  check(offScr.offIc && offScr.offRun && offScr.offReady && offScr.offDone, '봉사자 화면 직분자 탭: 직분자 행사 아이콘으로 바로 열고 보상을 받으며, 교역자 행사는 나오지 않음');
+  check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss, '봉사자 화면: 직분자·리더·섬김이 목록, 부교역자 카드·격려·사임');
+  check(offScr.cands && offScr.hireTab && offScr.hireDlg && offScr.hired && offScr.hireReroll && offScr.hiredTab && offScr.fired, '청빙 화면: 청빙 탭을 누르면 큰 카드 화면으로 바뀌고, 청빙한 봉사자는 성도 명단과 그 갈래 탭에 들어감(주급·내보내기)');
   check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
   check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');
   check(evFlow.claimAll, '행사 화면: 끝난 행사가 여럿이면 모두 보상 수령 버튼으로 한꺼번에 받음');
@@ -1225,17 +1262,19 @@ async function mgrChecks(browser, url) {
     // 선택 카드 → 관리자 화면 → 외부 청빙 창
     UI.sel = shop.id; renderSelCard(); const sc = document.getElementById('selCard'); o.card = /관리자 필요/.test(sc.textContent); sc.querySelector('[data-act="mgr"]').click();
     o.scr = UI.scr === 'mgr' && UI.mgrB === shop.id && /없음/.test(document.getElementById('scrBody').textContent); document.querySelector('#scrBody [data-act="hireopen"]').click();
-    const dl = document.getElementById('scrDlg'), cheap = (HIRE_PAY0 + HIRE_PAY_K) * HIRE_FEE_K, hc = () => [...dl.querySelectorAll('.hc')];
-    o.dlg = !dl.hidden && hc().length === 3 && hc().every(c => !!c.querySelector('svg') && c.querySelector('p').textContent.length > 10 && !!c.querySelector('.hst')) && hireCands('staff')[0].skill === 1 && hireCands('staff')[0].fee === cheap;
-    const m0 = S.money, before = JSON.stringify(hireCands('staff')); dl.querySelector('[data-act="hirereroll"]').click();
-    o.reroll = S.money === m0 - HIRE_REROLL && HIRE_REROLL > cheap * 4 && JSON.stringify(hireCands('staff')) !== before && hireCands('staff').some(c => c.skill === 1);
-    const m1 = S.money, pay0 = assocPay(); dl.querySelector('[data-act="hiretake"]').click();
-    o.hire = S.hires.length === 1 && shop.mgr === 'h' + S.hires[0].id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + S.hires[0].pay && dl.hidden && mgrOf(shop).src === 'ex';
+    const dl = document.getElementById('scrDlg'), cheap = (HIRE_PAY0 + HIRE_PAY_K) * HIRE_FEE_K, hc = () => [...document.querySelectorAll('#scrBody .hcard')];
+    o.dlg = UI.scr === 'hire' && UI.scrTab === 'C' && UI.hireFor === shop.id && hc().length === 3 && hc().every(c => !!c.querySelector('img.pxart') && !!c.querySelector('.hst') && !!c.querySelector('.hc-grade')) && volCands('C')[0].skill === 1 && volCands('C')[0].fee === cheap;
+    const m0 = S.money, before = JSON.stringify(volCands('C')); document.querySelector('#scrBody [data-act="hcreroll"]').click();
+    const mR = S.money; volReroll();   // 단추로 한 번(퀘스트 보상이 함께 들어올 수 있다), 함수로 한 번 더 정확히
+    o.reroll = S.money === mR - HIRE_REROLL && mR < m0 && HIRE_REROLL > cheap * 4 && JSON.stringify(volCands('C')) !== before && volCands('C').some(c => c.skill === 1); renderScreen();
+    const m1 = S.money, pay0 = assocPay(), n0 = S.people.length, mem0 = S.members; hc()[0].click(); o.dlg = o.dlg && !dl.hidden && dl.querySelector('.say').textContent.length > 10; dl.querySelector('[data-act="hctake"]').click();
+    const hp = S.people[S.people.length - 1];
+    o.hire = S.people.length === n0 + 1 && S.members === mem0 + 1 && !!hp.ext && hp.node === 'server' && ppTrack(hp) === 'C' && shop.mgr === 'p' + hp.id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + hp.ext.pay && dl.hidden && mgrOf(shop).src === 'ex' && UI.scr === 'mgr' && S.hires.length === 0;
     // 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르다
     const p1 = S.people[0], p2 = S.people[1]; p1.node = 'server'; p1.lv = 30; p2.node = 'sgl'; p2.lv = 30; recalc(); renderScreen();
     const cards = [...document.querySelectorAll('#scrBody .mgrc')], pool = mgrPool('staff'), inn = pool.find(w => w.src === 'in'), ex = pool.find(w => w.src === 'ex');
-    o.pool = cards.length === 2 && !!document.querySelector('#scrBody .mgrc.in') && !!document.querySelector('#scrBody .mgrc.ex') && inn.k > exK(5) && ex.k === exK(1) && getComputedStyle(document.querySelector('#scrBody .mgrc.in .ppi')).boxShadow !== getComputedStyle(document.querySelector('#scrBody .mgrc.ex .ppi')).boxShadow;
-    const rt0 = rotTime(shop); document.querySelector('#scrBody .mgrc.in').click(); o.swap = shop.mgr === 'p' + p1.id && rotTime(shop) < rt0 && mgrAt('h' + S.hires[0].id) === 0;
+    o.pool = cards.length === 2 && !!document.querySelector('#scrBody .mgrc.in') && !!document.querySelector('#scrBody .mgrc.ex') && inn.k > exK(5) && Math.abs(ex.k - exK(1) * (1 + MGR_PLV_K * hp.lv)) < 1e-9 && getComputedStyle(document.querySelector('#scrBody .mgrc.in .ppi')).boxShadow !== getComputedStyle(document.querySelector('#scrBody .mgrc.ex .ppi')).boxShadow;
+    const rt0 = rotTime(shop); document.querySelector('#scrBody .mgrc.in').click(); o.swap = shop.mgr === 'p' + p1.id && rotTime(shop) < rt0 && mgrAt('p' + hp.id) === 0;
     // 건물을 맡으면 성도 돌봄(자동 심방)에서 빠진다
     const cap0 = delegCap(); mgrSet(cell.id, 'p' + p2.id); const cap1 = delegCap(); mgrClear(cell.id); o.excl = cap0 > 0 && cap1 === cap0 - leadCare(p2) && delegCap() === cap0 && mgrSet(cell.id, 'p' + p1.id) !== '' ;
     mgrSet(cell.id, 'p' + p2.id); p2.node = 'new'; recalc(); o.fit = !cell.mgr && !staffed(cell);
@@ -1247,7 +1286,7 @@ async function mgrChecks(browser, url) {
     return o; });
   check(r.main, '대예배당: 지도 가운데에 고정으로 서 있고(목록에 없음) 문 앞에서 입구까지 길이 이어져 바로 가동');
   check(r.need, '관리자: 추가 예배당·교제 공간·매장은 관리자가 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
-  check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 외부 청빙 창에 후보 3명(얼굴·별·사연), 초반엔 값싼 별 1개 후보가 반드시');
+  check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 청빙 화면의 큰 카드 후보 3명(그림·별·등급, 누르면 사연), 초반엔 값싼 별 1개 후보가 반드시');
   check(r.reroll && r.hire, '외부 청빙: 다시 뽑기는 큰돈이 들고, 청빙하면 바로 배치되어 가동·주급 지출');
   check(r.pool && r.swap, '관리자: 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르며, 바꿔 배치하면 회전이 빨라짐');
   check(r.excl && r.fit, '관리자: 건물을 맡은 리더는 성도 돌봄에서 빠지고(한 사람 한 건물), 자격을 잃으면 건물에서 빠짐');

@@ -159,4 +159,29 @@ function chrPerson(c,x,y,s,sp,view,pose,fr,flip,ring){
   chrDraw(c,x,y,k,sp,view,pose,fr,flip);
   return [x,y-CHR_H*k];
 }
+/* ---------- 카드·초상화용 그림 ----------
+   chrCandSpec(seed,g,t): 씨앗 값으로 사람마다 다른 생김새(피부·머리 모양과 색)를, 갈래 t로 옷차림을 정한다
+     A 직분자: 정장(넥타이)·단정한 가디건 / B 리더: 가디건·후드에 가방 / C 섬김이: 앞치마 / assoc 부교역자: 남색 정장에 흰 칼라
+   chrArtUrl(sp,k): 그 사람을 한 칸 k픽셀로 그린 그림(data URL, 한 번 그리면 간직해 둔다). 나중에 생성 이미지로 바꿀 자리 */
+var CHR_SKINS=[['#f6d6b2','#e0b48c'],['#fbe3cf','#e8c2a6'],['#e9bd94','#cf9f76'],['#c99a6e','#ab7d54'],['#8a5a3c','#6f452c']];
+var CHR_HAIRC=['#2b2b33','#3a2a22','#6b4226','#1d1a1c','#a8742f','#8a8a92','#5a3a26'];
+function chrRnd(seed,k){var x=Math.sin(seed*12.9898+k*78.233)*43758.5453;return x-Math.floor(x);}
+function chrCandSpec(seed,g,t){
+  var pk=function(k,a){return a[Math.floor(chrRnd(seed,k)*a.length)%a.length];},sk=pk(1,CHR_SKINS),f=g==='f',dark=sk[0]==='#8a5a3c';
+  var o={skin:sk[0],skinS:sk[1],hair:pk(2,CHR_HAIRC),hairStyle:f?pk(3,['bob','long','pony','bun']):pk(3,['short','part','short','afro']),smile:chrRnd(seed,4)<.6?1:0,shoe:'#2b2b33'};
+  if(dark){o.blush='#a5644a';o.lip='#5a2f24';}
+  if(!f&&chrRnd(seed,5)<.18)o.beard=1;if(chrRnd(seed,6)<.2)o.glasses=1;if(f&&(o.hairStyle==='pony'||o.hairStyle==='bun'))o.pin=pk(7,['#e8b93a','#d6453a','#f29cc0','#3f6fe0']);
+  if(t==='assoc'){o.outfit='suit';o.collar=1;o.top='#27314f';o.bottom='#1f2740';o.shoe='#121216';}
+  else if(t==='A'){if(f){o.outfit='cardigan';o.top=pk(8,['#7a4fb0','#3f5ea3','#8a3b4a']);o.inner='#ffffff';o.bottom='#3d3d46';}else{o.outfit='suit';o.top=pk(8,['#4a4a55','#5b4a3a','#2f3e5c']);o.tie=pk(9,['#c4503a','#3f6fe0','#e8b93a']);o.bottom='#2b2f36';}o.badge='#f2c230';}
+  else if(t==='B'){o.outfit=chrRnd(seed,8)<.5?'cardigan':'hoodie';o.top=pk(9,['#7fb8e6','#f2b632','#6fa86a','#e57a95','#2f9e8a']);o.inner='#ffffff';o.bottom=pk(10,['#48689a','#5b5148','#3b4252']);o.bag='#9a6532';o.shoe='#f4efe6';}
+  else{o.outfit='apron';o.top='#ffffff';o.apron=pk(8,['#c4503a','#3f8a5a','#e8762c','#4a78c7']);o.apronS='#f6e3b0';o.bottom='#3d4650';if(chrRnd(seed,9)<.5){o.hairStyle='cap';o.cap=o.apron;}}
+  return chrMk(o);
+}
+var CHR_ART={};
+function chrArtUrl(sp,k){
+  var key=JSON.stringify(sp)+k;if(CHR_ART[key])return CHR_ART[key];
+  var cv=document.createElement('canvas');cv.width=(CHR_W+2)*k;cv.height=(CHR_H+4)*k;
+  chrDraw(cv.getContext('2d'),cv.width/2,cv.height-k,k,sp,'f','stand',0,false);
+  return (CHR_ART[key]=cv.toDataURL());
+}
 chrInit();

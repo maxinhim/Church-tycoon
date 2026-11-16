@@ -37,7 +37,7 @@ var QUESTS=[
   {id:'u8',g:'guide',after:'g1',n:'성도의 고민 들어 주기',d:'성도 화면 › 고민에서 한 성도의 사연을 들어 주고 풀어 줘요',ok:function(){return (S.careDone||0)>=1;},m:300,xp:10},
   {id:'u9',g:'guide',after:'g1',n:'매장 열기',d:'카페·서점 같은 매장을 지어 수익을 만들어요',need:function(){return !isLocked('shop');},ok:function(){return hasCat('shop');},m:300,xp:8},
   {id:'u10',g:'guide',after:'g2',n:'첫 직분자 세우기',d:'성도를 길러 집사·소그룹 리더·섬김이를 세워요',ok:function(){return (S.people||[]).some(function(p){return PP_TREE[p.node].d>=4;});},m:350,xp:12},
-  {id:'u11',g:'guide',after:'g2',n:'부교역자 모시기',d:'직분자 화면 › 청빙에서 부교역자를 청빙해요',ok:function(){return S.assoc.length>0;},m:350,xp:12}
+  {id:'u11',g:'guide',after:'g2',n:'부교역자 모시기',d:'봉사자 화면 › 청빙에서 부교역자를 청빙해요',ok:function(){return S.assoc.length>0;},m:350,xp:12}
 ];
 var QID={};QUESTS.forEach(function(q){QID[q.id]=q;});
 var QG={first:'첫 걸음',goal:'교회의 성장',guide:'건축·사역 안내'};

@@ -325,7 +325,7 @@ function moodWhy(k){
     cap('past','돌볼 수 있는 성도');
     var st=teamEff(),o=S.off,as=Math.round(S.assoc.reduce(function(t,a){return t+35+(a.field==='visit'?12*asSkill(a):0);},0));
     L.push('담임 목사 25'+(st.care?' + 돌봄팀 '+Math.round(8*st.care):'')+(as?' + 부교역자 '+as:'')+(PA.cap?' + 세례교인·신학 수료 '+Math.round(PA.cap):'')+(o.deacon?' + 집사 '+6*o.deacon:'')+(o.kwonsa?' + 권사 '+10*o.kwonsa:'')+(o.elder?' + 장로 '+18*o.elder:''));
-    L.push('성도 화면에서 세례·직분 임명, 직분자 화면에서 부교역자 청빙, 행사 › 사역팀의 돌봄팀으로 늘려요');
+    L.push('성도 화면에서 세례·직분 임명, 봉사자 화면에서 부교역자 청빙, 행사 › 사역팀의 돌봄팀으로 늘려요');
   }
   if(w)L.unshift('만족도 비중 '+Math.round(w*100)+'%');
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');

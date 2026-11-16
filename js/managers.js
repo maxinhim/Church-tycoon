@@ -21,8 +21,8 @@ function mgrPool(role){
   else{
     var nodes=role==='leader'?MGR_LEADER_NODES:MGR_STAFF_NODES;
     (S.people||[]).forEach(function(p){if(nodes.indexOf(p.node)<0)return;
-      L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
-    (S.hires||[]).forEach(function(h){if(h.role!==role)return;L.push({key:'h'+h.id,name:h.name,g:h.g,seed:h.seed,src:'ex',k:exK(h.skill),sub:'★'+h.skill+' · 주 '+fmtS(h.pay)});});
+      if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv),sub:'★'+p.ext.skill+' · 주 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
+      else L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
   }
   L.forEach(function(w){w.at=MGB[w.key]||0;});
   return L.sort(function(a,b){return b.k-a.k;});
@@ -32,6 +32,11 @@ function fitMgrs(){
   if(!S.hires){S.hires=[];S.hireId=1;S.hireN=0;S.hcand={};}
   if(!S.hrV){S.hrV=1;S.buildings.forEach(function(b){if(mgrRole(b)&&!b.mgr)b.mgr='v';});
     var b0=S.buildings[0];if(b0&&!S.buildings.some(function(b){return b.fixed;})&&isHall(b0))b0.fixed=true;}
+  if(S.hires.length){   // 예전 저장: 따로 두던 청빙 직원을 성도 명단의 봉사자로 옮긴다
+    S.hires.forEach(function(h){var p=volJoin({t:h.role==='staff'?'C':'B',name:h.name,g:h.g,seed:h.seed,skill:h.skill,pay:h.pay,story:h.story});
+      S.buildings.forEach(function(b){if(b.mgr==='h'+h.id)b.mgr='p'+p.id;});});
+    S.hires=[];syncPeople();
+  }
   MGC={};MGB={};
   var pools={};
   S.buildings.forEach(function(b){
@@ -48,7 +53,7 @@ function fitMgrs(){
 function mgrOf(b){return (b&&MGC[b.id])||null;}
 function mgrAt(key){return MGB[key]||0;}
 function staffed(b){return !mgrRole(b)||!!S.freeMgr||!!MGC[b.id];}
-function mgrK(b){var w=mgrRole(b)&&MGC[b.id];return w?w.k:1;}
+function mgrK(b){if(b&&b.fixed)return pastorK();var w=mgrRole(b)&&MGC[b.id];return w?w.k:1;}   // 대예배당은 담임목사 레벨만큼
 // 가동하는 건물: 문 앞까지 길이 닿고(usable), 관리자가 있다
 function bOpen(b){return usable(b)&&staffed(b);}
 function unstaffed(){return S.freeMgr?[]:S.buildings.filter(function(b){return mgrRole(b)&&!MGC[b.id];});}
@@ -61,44 +66,54 @@ function mgrSet(bid,key){
 }
 function mgrClear(bid){var b=bById(bid);if(b&&b.mgr){delete b.mgr;recalc();save();}}
 
-/* ---------- 외부 청빙 ---------- */
+/* ---------- 외부 청빙 ----------
+   봉사자 후보는 갈래마다 3명(S.vc: A 직분자 · B 리더 · C 섬김이), 부교역자 후보는 S.cands(ministry.js).
+   청빙한 봉사자는 성도 명단(S.people)에 들어간다(p.ext = {skill, pay, story}): 그 갈래의 첫 직책(VOL_NODE)으로 시작하고,
+   봉사자 화면의 해당 탭에 나오며, 여느 성도처럼 심방·교육으로 더 기를 수 있다. 주급(p.ext.pay)은 사례비에 더한다 */
+var VOL_NODE={A:'deacon',B:'sgl',C:'server'},VOL_TYPES=['A','B','C'];
 var HIRE_STORY={
-  pastor:['신학교를 갓 졸업하고 첫 사역지를 찾고 있어요. 서툴지만 새벽마다 기도로 하루를 열어요.','개척교회에서 오래 섬기다 교회가 합쳐지며 사역지를 잃었어요. 작은 교회의 사정을 잘 알아요.','선교지에서 돌아와 다시 목회를 시작하려 해요. 낯선 이를 맞는 일에 익숙해요.','청년부를 맡아 두 배로 키운 적이 있어요. 설교보다 듣는 일을 먼저 해요.','늦깎이로 신학을 공부했어요. 직장 생활을 오래 해서 성도들의 한 주를 잘 헤아려요.'],
-  leader:['이웃 교회에서 구역장으로 십 년을 섬겼어요. 이사 와서 섬길 자리를 찾고 있어요.','대학 선교단체 간사 출신이에요. 처음 온 사람이 말문을 열게 하는 재주가 있어요.','어려운 시절 소그룹에서 받은 사랑을 갚고 싶어 해요. 아직 인도는 서툴러요.','은퇴한 교사예요. 아이부터 어르신까지 이름을 금세 외워요.','기도 모임을 스스로 꾸려 본 적이 있어요. 조용하지만 꾸준해요.'],
-  staff:['동네 분식집을 오래 꾸렸어요. 손이 빠르고 계산이 정확해요.','취업 준비 중인 청년이에요. 일은 처음이지만 인사성이 밝아요.','카페에서 일하며 신앙을 갖게 됐어요. 손님 얼굴을 잘 기억해요.','아이들을 다 키우고 다시 일을 찾고 있어요. 살림 솜씨가 야무져요.','작은 가게를 접고 쉬던 중이에요. 물건 정리와 장부에 밝아요.']
+  pastor:['신학교를 갓 졸업하고 첫 사역지를 찾고 있어요. 서툴지만 새벽마다 기도로 하루를 열어요.','개척교회에서 오래 섬기다 교회가 합쳐지며 사역지를 잃었어요. 작은 교회의 사정을 잘 알아요.','선교지에서 돌아와 다시 목회를 시작하려 해요. 낯선 사람과 금세 친해져요.','대형 교회 교육부서에서 일했어요. 체계 잡는 일에 밝아요.'],
+  A:['이웃 교회에서 집사로 오래 섬겼어요. 이사 와서 새 교회를 찾고 있어요.','은퇴 뒤 고향으로 돌아왔어요. 교회 살림을 꼼꼼히 챙기던 분이에요.','젊은 날 받은 은혜를 갚고 싶어 해요. 궂은일에 먼저 손을 들어요.','새벽기도를 한 번도 거르지 않는다는 소문이 자자해요.'],
+  B:['이웃 교회에서 구역장으로 십 년을 섬겼어요. 이사 와서 섬길 자리를 찾고 있어요.','대학 선교단체 간사 출신이에요. 처음 온 사람이 말문을 열게 하는 재주가 있어요.','어려운 시절 소그룹에서 받은 사랑을 갚고 싶어 해요. 아직 인도는 서툴러요.','청년부 리더로 오래 섬겼어요. 모임을 따뜻하게 이끌어요.'],
+  C:['동네 분식집을 오래 꾸렸어요. 손이 빠르고 계산이 정확해요.','취업 준비 중인 청년이에요. 일은 처음이지만 인사성이 밝아요.','카페에서 일하며 신앙을 갖게 됐어요. 손님 얼굴을 잘 기억해요.','아이들을 다 키우고 다시 일을 찾고 있어요. 살림 솜씨가 좋아요.']
 };
-function makeHire(role,cheap){
-  var sk=cheap?1:1+Math.floor(Math.pow(Math.random(),1.3)*5),st=HIRE_STORY[role];
-  var pay=role==='pastor'?50+sk*30:HIRE_PAY0+HIRE_PAY_K*sk;
-  var h={role:role,name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],g:Math.random()<.5?'m':'f',seed:1+Math.floor(Math.random()*99990),
-    skill:sk,pay:pay,fee:pay*HIRE_FEE_K,story:st[Math.floor(Math.random()*st.length)]};
-  if(role==='pastor'){h.title=sk>=3?'부목사':'전도사';h.field=Object.keys(FIELDS)[Math.floor(Math.random()*5)];}
-  return h;
+function hirePick(a){return a[Math.floor(Math.random()*a.length)];}
+function makeVol(t,cheap){
+  var sk=cheap?1:1+Math.floor(Math.pow(Math.random(),1.3)*5),pay=HIRE_PAY0+HIRE_PAY_K*sk,g=Math.random()<.5?'m':'f';
+  return {t:t,name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),g:g,seed:1+Math.floor(Math.random()*99990),skill:sk,pay:pay,fee:pay*HIRE_FEE_K,story:hirePick(HIRE_STORY[t])};
 }
 // 후보 3명. 처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 낀다
-function genHire(role){var L=[makeHire(role,(S.hireN||0)<HIRE_EARLY),makeHire(role),makeHire(role)];return L.sort(function(a,b){return a.fee-b.fee;});}
-function hireCands(role){S.hcand=S.hcand||{};return S.hcand[role]||(S.hcand[role]=genHire(role));}
-function hireReroll(role){
+function genVol(t){return [makeVol(t,(S.hireN||0)<HIRE_EARLY),makeVol(t),makeVol(t)].sort(function(a,b){return a.fee-b.fee;});}
+function volCands(t){S.vc=S.vc||{};return S.vc[t]||(S.vc[t]=genVol(t));}
+// 새 후보 찾기: 봉사자 세 갈래와 부교역자 후보를 모두 새로
+function volReroll(){
   if(S.money<HIRE_REROLL)return '자금이 부족해요';
-  S.money-=HIRE_REROLL;S.hcand[role]=genHire(role);save();return '';
+  S.money-=HIRE_REROLL;S.vc={};VOL_TYPES.forEach(volCands);refreshCands();save();return '';
 }
-// 청빙: 후보 i를 들이고, bid가 있으면 그 건물에 바로 배치한다. 못 하면 이유
-function hireTake(role,i,bid){
-  var c=hireCands(role)[i];if(!c)return '후보가 없어요';
+// 후보를 성도 명단에 넣는다 (사람 수도 함께 는다)
+function volJoin(c){
+  var p=makePerson(),node=VOL_NODE[c.t];
+  p.n=c.name;p.g=c.g;p.seed=c.seed;p.node=node;p.lv=PP_TREE[node].lv+2*(c.skill-1);p.ext={skill:c.skill,pay:c.pay,story:c.story,w:S.week};
+  S.people.push(p);S.members=Math.round(S.members)+1;return p;
+}
+// 청빙: 갈래 t의 후보 i를 들이고, bid가 있고 맡을 수 있으면 그 건물에 바로 배치한다. 못 하면 이유
+function volHire(t,i,bid){
+  var c=volCands(t)[i];if(!c)return '후보가 없어요';
   if(S.money<c.fee)return '청빙 비용이 부족해요';
-  var key;
-  if(role==='pastor'){
-    if(S.assoc.length>=assocSlots())return '지금 성도 수로는 부교역자를 '+assocSlots()+'명까지 청빙할 수 있어요';
-    var a={name:c.name,title:c.title,field:c.field,skill:c.skill,pay:c.pay,fee:c.fee,g:c.g,seed:c.seed,story:c.story};S.assoc.push(a);key='a'+asUid(a);
-  }else{var h={id:S.hireId++,role:role,name:c.name,g:c.g,seed:c.seed,skill:c.skill,pay:c.pay,story:c.story};S.hires.push(h);key='h'+h.id;}
-  S.money-=c.fee;S.hireN=(S.hireN||0)+1;S.hcand[role]=null;
-  addLog(c.name+'님을 '+MGR_ROLE[role].n+'(으)로 청빙했어요');
+  S.money-=c.fee;S.hireN=(S.hireN||0)+1;S.vc[t].splice(i,1);if(!S.vc[t].length)S.vc[t]=null;
+  var p=volJoin(c);
+  addLog(c.name+'님을 '+PP_TRACK[t].n+'(으)로 청빙했어요');noteNew();
   recalc();
-  if(bid&&bById(bid)&&mgrRole(bById(bid))===role)mgrSet(bid,key);
+  if(bid&&bById(bid)&&mgrPool(mgrRole(bById(bid))||'x').some(function(w){return w.key==='p'+p.id;}))mgrSet(bid,'p'+p.id);
   save();return '';
 }
-function hireFire(id){S.hires=(S.hires||[]).filter(function(h){return h.id!==id;});recalc();save();}
-function hirePay(){return (S.hires||[]).reduce(function(t,h){return t+h.pay;},0);}
+// 예전 이름으로도 부를 수 있게 (봇·도구): 역할 → 후보 목록 / 청빙
+function hireCands(role){return role==='pastor'?S.cands:volCands(role==='staff'?'C':'B');}
+function hireReroll(){return volReroll();}
+function hireTake(role,i,bid){return role==='pastor'?hireAssoc(i,bid):volHire(role==='staff'?'C':'B',i,bid);}
+// 내보내기: 청빙한 봉사자(성도 id)를 명단에서 뺀다
+function hireFire(pid){var p=ppById(pid);if(!p||!p.ext)return;S.people=S.people.filter(function(q){return q!==p;});S.members=Math.max(0,Math.round(S.members)-1);addLog(p.n+' '+ppRankName(p)+'님을 내보냈어요');recalc();save();}
+function hirePay(){return (S.people||[]).reduce(function(t,p){return t+(p.ext?p.ext.pay:0);},0);}
 /* 봇·도구용: 관리자가 없는 건물에 비어 있는 사람을 배치하고, 없으면 자금(reserve를 남기고)이 되는 대로 가장 싼 후보를 청빙한다. 배치한 수 */
 function autoStaff(reserve){
   var n=0;

@@ -28,8 +28,15 @@ function pickAngry(px,py){
   V.forEach(function(v){if(!(v.angry>0)||v.dead)return;var w=toWorld(px,py,(v.z||0)+.9),d=Math.hypot(w[0]-v.x,w[1]-v.y);if(d<bd){bd=d;best=v;}});
   return best;
 }
+// 지도에 서 있는 담임목사·부교역자를 눌렀는지 (화면 좌표)
+function pickFig(px,py){
+  var r=cv.getBoundingClientRect(),x=px-r.left,y=py-r.top;
+  for(var i=FIGHIT.length-1;i>=0;i--){var f=FIGHIT[i];if(Math.abs(x-f.x)<=f.w+4&&y>=f.y-6&&y<=f.y+f.h+6)return f;}
+  return null;
+}
 function onTap(px,py){
   if(S.over)return;
+  if(!isPlacing()&&UI.tool!=='demolish'){var fg=pickFig(px,py);if(fg){openScreen('events',fg.k);return;}}
   if(!isPlacing()){var av=pickAngry(px,py);if(av){toast('😠 '+(av.why||'불만이 있어요'),3600);sfx('click',.4);return;}}
   // 교회 입구를 누르면 문 열기·닫기 카드. 다른 곳을 누르면 카드는 닫힌다
   var popOpen=!$('#gatePop').hidden;

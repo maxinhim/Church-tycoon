@@ -234,7 +234,7 @@ function portraitSvg(o){
   return h+'</svg>';
 }
 /* 부교역자의 레벨: 격려하면 오르고, 레벨마다 효과가 커진다 */
-function asNeed(lv){return PP_XP0+PP_XP_K*lv;}
+function asNeed(lv){return AS_XP0+AS_XP_K*lv;}
 function asGain(a,xp){
   if(a.lv==null){a.lv=1;a.xp=0;a.cw=-99;}
   a.xp+=xp;var up=0;while(a.lv<ASSOC_LV_MAX&&a.xp>=asNeed(a.lv)){a.xp-=asNeed(a.lv);a.lv++;up++;}

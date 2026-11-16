@@ -634,6 +634,7 @@ function drawWear(b){
    안에서 기다리는 관리자(발밑 고리: 기른 사람 금빛·청빙한 사람 푸른빛), 가동 중이면 이용자 몇 사람과 번갈아 뜨는 말풍선을 그린다.
    (legacy() 안에서 부른다: 좌표는 예전 칸 단위, r은 화면 방향으로 돌린 사각형이라 x1·y1 쪽이 앞이다) */
 function cutOn(b){var d=D[b.def];return !!(d&&d.kind==='bld');}
+var FIGHIT=[];   // 이번 프레임에 그린, 누를 수 있는 사람들의 화면 자리
 function drawFig(rx,ry,z,sp,bob,ring,pose,view,flip){
   var q=P(rx,ry,z),s=PJ.s;
   return chrPerson(PJ.c,q[0],q[1]-(bob||0)*s*.5,s,sp,view||'f',pose||'stand',0,!!flip,ring);
@@ -717,7 +718,10 @@ function drawCutaway(b){
     var need=b.uses!=null&&!big&&typeof mgrRole==='function'&&mgrRole(b),mt=null,ut=null;
     if(staff&&(!need||mg))figs.push([mx,my,-1,0,big?CHR_SPECS.pastor:chrStaffSpec(d.cat),mg?(mg.key==='me'?'#f2c230':mg.src==='in'?'#e3a521':'#3f7fd6'):null]);
     figs.sort(function(a,c2){return (a[0]+a[1])-(c2[0]+c2[1]);}).forEach(function(f,fi){
-      if(f[2]<0){mt=drawFig(f[0],f[1],fz+(f[3]||0),f[4],sway,f[5],'stand',fview,fflip);return;}
+      if(f[2]<0){mt=drawFig(f[0],f[1],fz+(f[3]||0),f[4],sway,f[5],'stand',fview,fflip);
+        // 누를 수 있는 사람: 담임목사, 예배당을 맡은 부교역자 (input.js pickFig → 행사 화면의 그 탭)
+        if(typeof ctx!=='undefined'&&PJ.c===ctx&&b.uses!=null&&(big||(d.cat==='worship'&&mg))){var fk=Math.max(.55,.78*PJ.s);FIGHIT.push({x:mt[0],y:mt[1],w:8*fk,h:CHR_H*fk,k:big?'pastor':'assoc'});}
+        return;}
       var t2=drawFig(f[0],f[1],fz+(f[3]||0),chrVisSpec(f[2]*.173+bid*.071),Math.abs(Math.sin(S.clock*4+f[2]*1.7))*.5,null,'stand',fview,fflip);if(f[2]===ph%Math.max(1,nu))ut=t2;});
     if(act){if(ph%2===0&&mt)drawBubble(mt,K.say[0]);else if(ut)drawBubble(ut,K.say[1]);}
     // 앞쪽 두 벽은 낮게
