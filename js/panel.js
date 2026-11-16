@@ -40,10 +40,10 @@ var SUBTABS={minis:[['events','행사'],['staff','사역자']]};
 var CLUB_SUBS=[['sport','운동','⚽'],['hobby','취미','🎨'],['music','음악','🎵']];
 // 기능이 섞인 분류는 기능별 하위 묶음(아이콘 칩)으로 나눈다. 건물의 묶음은 d.sub (buildings.js SUB_OF)
 var CAT_SUBS={club:CLUB_SUBS,
-  worship:[['service','예배','⛪'],['pray','기도·말씀','🙏']],
+  worship:[['service','예배','⛪'],['pray','기도·말씀','🙏'],['dept','부서실','🧸']],
   fellow:[['group','소그룹','🫂'],['hall','친교','🍽️']],
   shop:[['food','먹거리','🍙'],['cafe','카페','☕'],['book','서점','📚']],
-  care:[['kids','아이','🧸'],['neighbor','이웃 섬김','🤲'],['mind','상담·어르신','💬']],
+  care:[['neighbor','이웃 섬김','🤲'],['mind','상담·어르신','💬']],
   comfort:[['toilet','화장실','🚻'],['rest','쉼터','🪑'],['etc','기타','🗑️']]};
 function curSub(cat){var L=CAT_SUBS[cat];if(!L)return null;for(var i=0;i<L.length;i++)if(L[i][0]===UI.csub)return UI.csub;return L[0][0];}
 function inSub(d,cat){var cs=curSub(cat);return !cs||(d.sub||CAT_SUBS[cat][0][0])===cs;}
@@ -318,7 +318,7 @@ function moodWhy(k){
     L.push('필요는 성도 '+m+'명에 맞춰'+ek+' 늘어요 (말씀 × '+SPIRIT_NEED.w.r+', 기도 × '+SPIRIT_NEED.p.r+', 찬양 × '+SPIRIT_NEED.r.r+', 최소 '+SPIRIT_NEED.w.f+'·'+SPIRIT_NEED.p.f+'·'+SPIRIT_NEED.r.f+')');
   }else if(k==='seat'){cap('seat','좌석');L.push('좌석이 많은 곳: '+topCap('seats'));L.push('모자라면 남는 성도만큼 매주 떠나요. 예배당·예배실 칸·층 올리기로 늘려요');}
   else if(k==='fel'){cap('fel','교제 수용');L.push('교제 수용이 큰 곳: '+topCap('fcap'));L.push('교제실·소그룹실·카페·식당으로 늘려요');}
-  else if(k==='care'){cap('care','돌봄 수용');L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('돌봄실·어린이부실·유아방·경로 쉼터로 늘려요');}
+  else if(k==='care'){cap('care','돌봄 수용');L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('부서실(영유아·유치부·초등부·중고등부)·경로 쉼터로 늘려요');}
   else if(k==='comf'){cap('comf','편의 수용');L.push('편의 수용이 큰 곳: '+topCap('ccap'));L.push('화장실·편의실·휴게실·벤치·식수대·쓰레기통으로 늘려요');}
   else if(k==='park'){cap('park','주차 자리');L.push('주차 자리가 많은 곳: '+topCap('park'));L.push('주차 구역에 주차장·주차 타워·자전거 거치대를 지어요');}
   else if(k==='past'){

@@ -40,13 +40,15 @@ mk('youth','청년부실','fellow',2,2,1500,14,'bld','#e3eef2','#2f8f9d',{H:.95,
 mk('gym','체육관','club',4,3,4200,40,'bld','#e6e9ec','#5a6b7c',{sub:'sport',H:1.4,roof:'flat',bigwin:1,fcap:40,ccap:6,fill:{fel:60,comf:10},cap:30,dur:6,desc:'운동과 큰 행사를 함께하는 넓은 공간'});
 mk('pantry','구제창고','care',2,1,850,12,'bld','#c99a64','#8a5a2b',{H:.85,roof:'gable',rh:.5,deco:'barn',kcap:8,fill:{care:56},cap:4,dur:4,rep:0.5,desc:'이웃을 돕는 나눔. 평판이 천천히 오릅니다'});
 mk('counsel','상담실','care',1,1,650,8,'bld','#ece5d6','#7b6aa5',{H:.85,roof:'hip',rh:.5,kcap:4,fill:{care:44,word:10},cap:2,dur:6,rep:0.2,desc:'마음을 들어주는 작은 방'});
-mk('kids','어린이부실','care',2,2,1600,18,'bld','#f6e3b0','#e08a2c',{H:.95,roof:'gable',rh:.55,deco:'dots',kcap:16,ccap:4,fill:{care:20,comf:34,fel:14},cap:10,dur:6,desc:'아이들을 맡기고 마음 놓는 공간'});
-mk('nursery','유아방','care',2,1,900,10,'bld','#fbe7ef','#d9709a',{H:.8,roof:'gable',rh:.45,deco:'dots',kcap:8,ccap:2,fill:{care:30,comf:28},cap:6,dur:5,desc:'영아·유아를 돌보는 아늑한 방'});
+mk('kids','초등부실','worship',2,2,1600,18,'bld','#f6e3b0','#e08a2c',{H:.95,roof:'gable',rh:.55,deco:'dots',kcap:16,ccap:4,fill:{care:20,comf:34,fel:14,word:12},cap:10,dur:6,desc:'초등학생 아이들이 예배하고 어울리는 부서실. 부모가 마음 놓고 예배드려요'});
+mk('kinder','유치부실','worship',2,2,1200,12,'bld','#fff0c4','#f0a030',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:12,ccap:3,fill:{care:24,comf:30,fel:12,word:10},cap:8,dur:5,desc:'유치원 또래 아이들이 율동하며 예배하는 부서실'});
+mk('teens','중고등부실','worship',2,2,1800,16,'bld','#e6e2f6','#6a5bb5',{H:1.0,roof:'flat',deco:'dots',kcap:6,fcap:14,fill:{fel:34,word:24,care:10},cap:12,dur:6,desc:'중·고등학생들이 찬양하고 말씀 나누는 부서실'});
+mk('nursery','영유아실','worship',2,1,900,10,'bld','#fbe7ef','#d9709a',{H:.8,roof:'gable',rh:.45,deco:'dots',kcap:8,ccap:2,fill:{care:30,comf:28,word:8},cap:6,dur:5,desc:'영아·유아를 돌보며 부모가 함께 예배하는 아늑한 방'});
 mk('elder','경로 쉼터','care',2,2,1500,14,'bld','#efe7d8','#8a6b4a',{H:.9,roof:'hip',rh:.55,kcap:12,fill:{care:46,fel:12},cap:8,dur:6,rep:0.3,desc:'어르신들이 쉬고 이야기 나누는 곳. 평판이 천천히 오릅니다'});
 mk('clinic','의료 봉사실','care',2,1,1300,14,'bld','#f4f6f7','#4f9a83',{H:.85,roof:'flat',deco:'clinic',kcap:6,fill:{care:58},cap:4,dur:6,rep:0.6,desc:'이웃을 위한 무료 진료 봉사. 평판이 오릅니다'});
-mk('study','공부방','care',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:10},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
+mk('study','공부방','worship',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:14},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
 mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H:1.0,roof:'gable',rh:.55,deco:'barn',kcap:22,fill:{care:52},cap:14,dur:5,rep:1.0,desc:'이웃에게 따뜻한 한 끼를 나누는 곳. 평판이 크게 오릅니다'});
-mk('playground','놀이터','care',2,2,900,4,'playground','#e0c48a','#e8892c',{kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
+mk('playground','놀이터','worship',2,2,900,4,'playground','#e0c48a','#e8892c',{nomgr:1,sub:'dept',kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
 mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',nolimit:1,ccap:12,fill:{comf:60},cap:2,dur:3,desc:'꼭 필요한 편의시설'});
 mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
 mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
@@ -171,8 +173,8 @@ var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 var SUB_OF={room:'service',chapel:'service',grand:'service',outdoor:'service',praise:'service',pray:'pray',bible:'pray',dawn:'pray',mission:'pray',
   cell:'group',youth:'group',hall:'hall',
   shop:'food',dining:'food',bakery:'food',market:'food',cafe:'cafe',coffeecart:'cafe',vending:'cafe',books:'book',bookstore:'book',flowercart:'book',
-  kids:'kids',nursery:'kids',study:'kids',playground:'kids',pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
-  wc:'toilet',wc2:'toilet',bench:'rest',bench_stone:'rest',bench_iron:'rest',bench_back:'rest',bench_round:'rest',bench_flower:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
+  pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
+  wc:'toilet',wc2:'toilet',nursery:'dept',kinder:'dept',kids:'dept',teens:'dept',study:'dept',playground:'dept',bench:'rest',bench_stone:'rest',bench_iron:'rest',bench_back:'rest',bench_round:'rest',bench_flower:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
 for(var sk in SUB_OF)if(D[sk])D[sk].sub=SUB_OF[sk];
 /* 레벨이 없는 요소: 벤치·화장실·그릴처럼 건물이 아닌 것은 투자·레벨업이 없고, 회전만 NOLV_ROT배로 빨라진다 */
 var NOLV=['bench','bench_stone','bench_iron','bench_back','bench_round','bench_flower','wc','wc2','grill','picnic','parasol','gazebo','bin','drinkfount','swing','library','lectern','piano','speaker','mixer','drums','offering','board','bell','bikerack','busstop'];

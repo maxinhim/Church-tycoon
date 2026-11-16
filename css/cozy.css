@@ -2,26 +2,27 @@
    지도의 픽셀 그림과 어울리게: 크림색 종이·나무 판자·버터빛 꼬리표, 굵은 갈색 테두리와 아래로 딱 떨어지는 그림자(픽셀 느낌),
    둥글둥글한 제목 글씨(Jua). 색은 변수로 바꾸고, 모양은 아래에서 덧입힌다 */
 :root{
-  --bg:#f6ead3; --glass:rgba(255,249,236,.97); --glass-line:#c9a877;
-  --ink:#4a3322; --muted:#8c7460; --line:#e2cfa9; --chip:#f3e3c3; --card:#fffaf0;
-  --accent:#e07a4d; --accent-ink:#ffffff; --gold:#b0731a; --good:#4d8f4a; --bad:#cf5b4a;
-  --wood:#b98450; --wood-d:#8a5a2b; --butter:#ffd76a; --edge:#b08d5a;
-  --shadow:0 3px 0 var(--edge),0 7px 14px rgba(70,45,20,.22);
+  --bg:#eaf3ea; --glass:rgba(251,253,246,.97); --glass-line:#9cc4b4;
+  --ink:#2f4a40; --muted:#6c8a7b; --line:#cfe3d4; --chip:#e3efe2; --card:#fbfdf6;
+  --accent:#ef7d57; --accent-ink:#ffffff; --gold:#b0791a; --good:#3f9a5a; --bad:#d4574a;
+  --wood:#4f9a8a; --wood-d:#2f6f62; --butter:#ffd76a; --edge:#a9c9ba;
+  --shadow:0 3px 0 var(--edge),0 7px 14px rgba(30,70,55,.2);
   --f-cozy:"Jua","IBM Plex Sans KR","Apple SD Gothic Neo",system-ui,sans-serif;
+  --pat:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='%234f9a8a' fill-opacity='.13'%3E%3Cpath d='M12 8h4v4h-4zM8 12h4v4H8zM16 12h4v4h-4zM12 16h4v4h-4z'/%3E%3Cpath d='M36 32h4v4h-4zM32 36h4v4h-4zM40 36h4v4h-4zM36 40h4v4h-4z' fill-opacity='.09'/%3E%3C/g%3E%3Cg fill='%23ffd76a' fill-opacity='.35'%3E%3Crect x='34' y='10' width='4' height='4'/%3E%3Crect x='10' y='34' width='4' height='4'/%3E%3C/g%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#2a211b; --glass:rgba(54,43,35,.97); --glass-line:#6b533f;
-    --ink:#f3e6d2; --muted:#bda68c; --line:#5a4636; --chip:#43342a; --card:#382c24;
-    --accent:#f09a6c; --accent-ink:#2a1a10; --gold:#f2c14e; --good:#8fd08a; --bad:#ff9a86;
-    --wood:#7a5634; --wood-d:#4f3620; --butter:#e8b93a; --edge:#1c1511; color-scheme:dark;
+    --bg:#1d2926; --glass:rgba(31,45,41,.97); --glass-line:#46705f;
+    --ink:#e4f2ea; --muted:#9bb8a8; --line:#35544a; --chip:#2a403a; --card:#25382f;
+    --accent:#f59a76; --accent-ink:#2a1a10; --gold:#f2c14e; --good:#8fd8a0; --bad:#ff9a86;
+    --wood:#3d7d6f; --wood-d:#1e4a40; --butter:#e8b93a; --edge:#0f1b17; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#2a211b; --glass:rgba(54,43,35,.97); --glass-line:#6b533f;
-  --ink:#f3e6d2; --muted:#bda68c; --line:#5a4636; --chip:#43342a; --card:#382c24;
-  --accent:#f09a6c; --accent-ink:#2a1a10; --gold:#f2c14e; --good:#8fd08a; --bad:#ff9a86;
-  --wood:#7a5634; --wood-d:#4f3620; --butter:#e8b93a; --edge:#1c1511; color-scheme:dark;
+  --bg:#1d2926; --glass:rgba(31,45,41,.97); --glass-line:#46705f;
+  --ink:#e4f2ea; --muted:#9bb8a8; --line:#35544a; --chip:#2a403a; --card:#25382f;
+  --accent:#f59a76; --accent-ink:#2a1a10; --gold:#f2c14e; --good:#8fd8a0; --bad:#ff9a86;
+  --wood:#3d7d6f; --wood-d:#1e4a40; --butter:#e8b93a; --edge:#0f1b17; color-scheme:dark;
 }
 .pxart,svg.pix{image-rendering:pixelated;image-rendering:crisp-edges}
 
@@ -37,36 +38,34 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .btn.bad{background:linear-gradient(180deg,#f08a78,var(--bad));border-color:#9c3a2c;box-shadow:0 3px 0 #9c3a2c}
 
 /* 아래 기능 버튼: 둥근 네모 딱지에 픽셀 그림 */
-.fab .fc{border-radius:16px;background:linear-gradient(180deg,#fffaf0,#f3e3c3);border:2px solid var(--wood-d);box-shadow:0 3px 0 var(--wood-d),0 6px 10px rgba(70,45,20,.25);-webkit-backdrop-filter:none;backdrop-filter:none}
+.fab .fc{border-radius:16px;background:linear-gradient(180deg,#ffffff,var(--chip));border:2px solid var(--wood-d);box-shadow:0 3px 0 var(--wood-d),0 6px 10px rgba(30,70,55,.25);-webkit-backdrop-filter:none;backdrop-filter:none}
 .fab svg.pix{width:74%;height:74%}
-.fab .fl{background:var(--wood);color:#fff8e6;border:1.5px solid var(--wood-d);box-shadow:0 2px 0 var(--wood-d);text-shadow:0 1px 0 rgba(0,0,0,.25);padding:0 9px}
+.fab .fl{background:var(--wood);color:#fff;border:1.5px solid var(--wood-d);box-shadow:0 2px 0 var(--wood-d);text-shadow:0 1px 0 rgba(0,0,0,.25);padding:0 9px}
 .fab.on .fc{background:linear-gradient(180deg,#fff0b8,var(--butter));border-color:var(--wood-d);color:var(--ink);transform:translateY(-2px)}
 .fab.on .fl{background:var(--accent);border-color:color-mix(in srgb,var(--accent) 65%,#000);color:#fff}
 .fbadge{border:1.5px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.25)}
 
 /* 지도 위 창(건축 등) */
 #dock{border-radius:16px}
-.dhead{background:repeating-linear-gradient(90deg,var(--wood) 0 38px,color-mix(in srgb,var(--wood) 88%,#000) 38px 40px);border-bottom:3px solid var(--wood-d);color:#fff8e6}
+.dhead{background:linear-gradient(180deg,color-mix(in srgb,var(--wood) 80%,#fff),var(--wood));border-bottom:3px solid var(--wood-d);color:#fff8e6}
 .dhead h2{font-weight:700;color:#fffdf5;text-shadow:0 2px 0 var(--wood-d)}
 .dhead .dclose,.dhead .bback{color:#fff8e6}
 .subtabs button{border:2px solid var(--glass-line);background:var(--card);color:var(--muted);border-radius:999px}
-.subtabs button.on,.subtabs button[aria-selected="true"]{background:var(--butter);border-color:var(--wood-d);color:#4a3322}
+.subtabs button.on,.subtabs button[aria-selected="true"]{background:var(--butter);border-color:var(--wood-d);color:#33493f}
 .card,.btile{border:2px solid var(--line);background:var(--card);border-radius:12px;box-shadow:0 2px 0 var(--line)}
 .card.sel,#panel.build .card.focus{border-color:var(--accent);background:color-mix(in srgb,var(--butter) 30%,var(--card));box-shadow:0 0 0 1.5px var(--accent),0 3px 0 color-mix(in srgb,var(--accent) 60%,#000)}
 .btile:active,.card:active{transform:translateY(2px);box-shadow:none}
 
 /* 전체 화면: 체크무늬 식탁보 바탕, 나무 판자 머리, 꼬리표 탭 */
-#scr{background-color:var(--bg);
-  background-image:linear-gradient(color-mix(in srgb,var(--accent) 9%,transparent) 50%,transparent 50%),linear-gradient(90deg,color-mix(in srgb,var(--accent) 9%,transparent) 50%,transparent 50%);
-  background-size:26px 26px}
+#scr{background-color:var(--bg);background-image:var(--pat),linear-gradient(180deg,color-mix(in srgb,var(--bg) 82%,#fff),var(--bg) 40%,color-mix(in srgb,var(--bg) 88%,var(--wood)));background-size:48px 48px,100% 100%}
 .shead{margin:0 -4px;padding:7px 10px 8px;border-bottom:4px solid var(--wood-d);border-radius:0 0 16px 16px;
-  background:repeating-linear-gradient(90deg,var(--wood) 0 54px,color-mix(in srgb,var(--wood) 86%,#000) 54px 56px);box-shadow:0 4px 0 rgba(70,45,20,.18)}
+  background:linear-gradient(180deg,color-mix(in srgb,var(--wood) 80%,#fff),var(--wood));box-shadow:0 4px 0 rgba(30,70,55,.16)}
 .shead h2{font-size:19px;font-weight:700;color:#fffdf5;text-shadow:0 2px 0 var(--wood-d)}
 .stabs{gap:5px;overflow-x:auto;scrollbar-width:none}
 .stabs::-webkit-scrollbar{display:none}
-.stabs button{flex:none;height:28px;padding:0 13px;font-size:13.5px;border:2px solid var(--wood-d);background:#fff3d6;color:#7a5a3c;border-radius:10px 10px 10px 3px;box-shadow:0 2px 0 var(--wood-d)}
+.stabs button{flex:none;height:28px;padding:0 13px;font-size:13.5px;border:2px solid var(--wood-d);background:var(--card);color:var(--muted);border-radius:10px 10px 10px 3px;box-shadow:0 2px 0 var(--wood-d)}
 .stabs button.on{background:var(--butter);color:#4a3322;transform:translateY(-2px);box-shadow:0 4px 0 var(--wood-d)}
-.smoney{background:#fff8e6;border:2px solid var(--wood-d);box-shadow:0 2px 0 var(--wood-d);color:#4a3322;font-weight:700}
+.smoney{background:var(--card);border:2px solid var(--wood-d);box-shadow:0 2px 0 var(--wood-d);color:var(--ink);font-weight:700}
 .sclose{border:2px solid #9c3a2c;border-radius:11px;background:linear-gradient(180deg,#f08a78,#cf5b4a);box-shadow:0 3px 0 #9c3a2c}
 .sclose:active{transform:translateY(2px);box-shadow:none}
 .sbody{padding:10px 4px 14px}
@@ -89,8 +88,8 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .ppc.ext .ppi{box-shadow:0 2px 5px rgba(0,0,0,.22),0 0 0 4px #3f7fd6}
 
 /* 정보 창: 바느질 선이 있는 쪽지 */
-#scrDlg{background:rgba(60,38,20,.5)}
-.sdlg{background:var(--card);border:3px solid var(--glass-line);border-radius:18px;box-shadow:0 5px 0 var(--edge),0 14px 30px rgba(50,30,10,.4);outline:2px dashed color-mix(in srgb,var(--glass-line) 60%,transparent);outline-offset:-9px;padding:16px 18px 14px}
+#scrDlg{background:rgba(20,45,38,.5)}
+.sdlg{background:var(--card);border:3px solid var(--glass-line);border-radius:18px;box-shadow:0 5px 0 var(--edge),0 14px 30px rgba(10,40,30,.4);outline:2px dashed color-mix(in srgb,var(--glass-line) 60%,transparent);outline-offset:-9px;padding:16px 18px 14px}
 .sx{border:2px solid var(--glass-line);background:var(--chip);border-radius:9px;box-shadow:0 2px 0 var(--glass-line)}
 .sdr>div{border-bottom:1.5px dashed var(--line)}
 
@@ -144,3 +143,5 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
   .pashd{padding:5px 10px}.pashd .ppi{width:48px;height:58px}.pashd .ppi img{height:54px}
 }
 .sdt h3,.pasx h3{font-weight:700}
+.mgrc.away{opacity:.62}
+.mgrc.away small{color:var(--bad);font-weight:700}

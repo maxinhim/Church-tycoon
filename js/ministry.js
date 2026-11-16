@@ -15,8 +15,8 @@ function curDiff(){return DIFF[S.diff]||DIFF.normal;}
 function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 // 목표를 n개 이루면 열리는 것들 (건물 id)
 var UNLOCK={
-  chapel:1,hall:1,kids:1,lot:1,praise:1,books:1,nursery:1,picnic:1,
-  dining:2,youth:2,elder:2,counsel:2,lounge:2,nurse:2,spire:2,study:2,gazebo:2,playground:2,
+  chapel:1,hall:1,kids:1,kinder:1,lot:1,praise:1,books:1,nursery:1,picnic:1,
+  dining:2,teens:2,youth:2,elder:2,counsel:2,lounge:2,nurse:2,spire:2,study:2,gazebo:2,playground:2,
   badminton:1,jokgu:1,gateball:1,calli:1,art:1,
   hoops:2,craft:2,cook:2,band:2,choir:2,
   futsal:3,grand:3,clinic:3,dawn:3,mission:3,gym:3,foodbank:3,parktower:3,outdoor:3

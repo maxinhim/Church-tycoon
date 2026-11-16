@@ -503,8 +503,8 @@ async function ministryChecks(browser, url) {
     { const mt = S.money; o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); }
     refreshCands(); const fee = S.cands[0].fee, mA = S.money;
     o.assoc = hireAssoc(0) === '' && S.assoc.length === 1 && S.money === mA - fee && MOD.cap >= cap0 + 35 && assocPay() > 0;
-    o.assocLimit = hireAssoc(0) !== '';
-    S.members = 16; recalc();
+    { const mm = S.members; S.members = ASSOC_PER - 1; recalc(); o.assocLimit = hireAssoc(0) !== '' && /명까지/.test(hireAssoc(0)); S.members = mm; recalc(); }
+    S.members = 16; if (ASSOC_PER < 16) S.assoc.push({ name: '채움', title: '전도사', field: 'edu', skill: 1, pay: 0, fee: 0 }); recalc();   // 자리를 하나만 남기도록 채운다
     // 성도 한 사람 한 사람: 명단은 성도 수를 따르고, 심방 → 호감 레벨 → 교육 → 임명으로 세례·집사·장로/권사·신학 수료·부교역자까지
     { const P = S.people, pe = {}; o.pe = pe;
       pe.roster = P.length === 16 && P.every(q => q.n && q.lv === 1 && q.node === 'new' && (q.g === 'm' || q.g === 'f')) && ppGiveK() === 1 && new Set(P.map(q => q.id)).size === 16;
@@ -529,7 +529,7 @@ async function ministryChecks(browser, url) {
       // 교역 갈래: 신학교 → 부교역자로 섭외 (자리가 있어야 하고, 명단에서 빠져 별 5개 사역자가 된다)
       const t3 = P[3]; t3.node = 'kanji'; t3.lv = 70; recalc(); const sOk = ppTrain(t3.id, 'seminary') === ''; t3.tr.end = evNow() - .01; peopleTick(); ppAppoint(t3.id);
       pe.grad = sOk && t3.node === 'seminary' && PA.grad === 1 && PA.flat >= PP_TREE.seminary.give;
-      pe.slot = /자리가 없어요/.test(ppTrainWhy(t3, 'assoc')); dismissAssoc(0); S.tempMood = 0;
+      pe.slot = /자리가 없어요/.test(ppTrainWhy(t3, 'assoc')); while (S.assoc.length) dismissAssoc(0); S.tempMood = 0;
       const mem0 = S.members, tname = t3.n, aOk = ppTrain(t3.id, 'assoc') === ''; t3.tr.end = evNow() - .01; peopleTick(); const am = ppAppoint(t3.id);
       pe.assoc = aOk && !!am && S.assoc.length === 1 && S.assoc[0].home && S.assoc[0].skill === 5 && S.assoc[0].name === tname && S.members === mem0 - 1 && S.people.length === mem0 - 1 && !ppById(t3.id) && Math.abs(asSkill(S.assoc[0]) - 5 * ASSOC_HOME_K) < .01;
       // 부교역자 격려: 레벨이 오르면 실력이 커진다
@@ -758,11 +758,11 @@ async function ministryChecks(browser, url) {
     document.querySelector('#scrTabs [data-v="cands"]').click();
     { const mm = S.money, n0 = S.people.length, m0 = S.members; S.money = 99999;
       const cards = [...document.querySelectorAll('#scrBody .hcard')];
-      o.cands = UI.scr === 'hire' && cards.length === 9 + S.cands.length && cards.every(c => !!c.querySelector('img.pxart') && !!c.querySelector('.hc-grade') && !!c.querySelector('.hc-name')) && document.querySelectorAll('#scrTabs [role="tab"]').length === 5;
+      o.cands = UI.scr === 'hire' && cards.length === 3 + S.cands.length && cards.every(c => !!c.querySelector('img.pxart') && !!c.querySelector('.hc-grade') && !!c.querySelector('.hc-name')) && document.querySelectorAll('#scrTabs [role="tab"]').length === 3;
       document.querySelector('#scrTabs [data-v="C"]').click(); const cc = document.querySelectorAll('#scrBody .hcard'); o.hireTab = cc.length === 3 && [...cc].every(c => c.classList.contains('tC'));
       const c0 = volCands('C')[0]; cc[0].click(); const hd = document.getElementById('scrDlg'); o.hireDlg = !hd.hidden && hd.textContent.includes(c0.name) && /“.+”/.test(hd.textContent);
       hd.querySelector('[data-act="hctake"]').click(); const np = S.people[S.people.length - 1];
-      o.hired = S.people.length === n0 + 1 && S.members === m0 + 1 && np.n === c0.name && np.node === 'server' && !!np.ext && ppTrack(np) === 'C' && S.money === 99999 - c0.fee && hirePay() === c0.pay && volCands('C').length === 2;
+      o.hired = S.people.length === n0 + 1 && S.members === m0 + 1 && np.n === c0.name && np.node === 'cstaff' && !!np.ext && ppTrack(np) === 'C' && S.money === 99999 - c0.fee && hirePay() === c0.pay && volCands('C').length === 2;
       const before = JSON.stringify(S.vc); document.querySelector('#scrBody [data-act="hcreroll"]').click(); o.hireReroll = JSON.stringify(S.vc) !== before && volCands('C').length === 3;
       scrBack(); document.querySelector('#scrTabs [data-v="C"]').click(); o.hiredTab = UI.scr === 'officers' && document.querySelectorAll('#scrBody .ppc.ext').length === 1;
       hireFire(np.id); o.fired = S.people.length === n0 && S.members === m0 && hirePay() === 0; S.money = mm; renderScreen(); }
@@ -1206,8 +1206,8 @@ async function entranceChecks(browser, url) {
     o.face = o.face && fixFace(D.bench, bW) === 2 && fixFace(D.bench, bE) === 2;
     // 화장실도 개수 제한이 없고, 부교역자 정원은 성도 ASSOC_PER명마다 한 자리(최대 없음)
     { let wcs = 0; for (let x = 4; x < 60 && wcs < 7; x += 2) for (let y = 40; y < 56 && wcs < 7; y += 2) { if (build('wc', x, y, 2)) wcs++; }
-      const m0 = S.members; S.members = 20; const s20 = assocSlots(); S.members = 200; const s200 = assocSlots(); S.members = m0;
-      o.wcUnl = wcs >= 7 && !tierWhy('wc') && s20 === 2 && s200 === 11 && ASSOC_PER === 20;
+      const m0 = S.members; S.members = ASSOC_PER; const s20 = assocSlots(); S.members = 10 * ASSOC_PER; const s200 = assocSlots(); S.members = m0;
+      o.wcUnl = wcs >= 7 && !tierWhy('wc') && s20 === 2 && s200 === 11 && ASSOC_PER === 10;
       S.buildings.filter(b => b.def === 'wc').forEach(b => demolish(b.id)); }
     // 벤치는 처음부터 개수 제한이 없다 (라운지의 티어 1이지만 묶음 한도를 받지 않는다)
     { const n0 = S.buildings.length; let made = 0; for (let x = 4; x < 60 && made < 8; x += 2) for (let y = 60 - 14; y < 60 && made < 8; y += 2) { if (build('bench', x, y, 2)) made++; }
@@ -1236,7 +1236,7 @@ async function entranceChecks(browser, url) {
   check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
   check(r.enter0 && r.cost && r.up && r.style && r.poor && r.name, '교회 입구: 기본 Lv 1, 최대 Lv 100·투자는 가파르게 비쌈, 컨셉은 사서 끼움, 자금 부족이면 안 됨, 교회 이름은 12글자까지');
   check(r.benchNoLimit, '벤치: 개수 제한 없이 여러 개 지을 수 있음');
-  check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 20명마다 한 자리, 최대 없음');
+  check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 ASSOC_PER명마다 한 자리, 최대 없음');
   check(r.propTile && r.propCut, '소품: 벤치·쓰레기통 밑에도 바닥을 깔 수 있고, 길을 끊는 자리에는 소품을 놓지 못함');
   check(r.face, '건축: 길 옆에 놓아도 방향은 바뀌지 않음 (자동 방향 없음, 문은 남쪽)');
   check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
@@ -1258,7 +1258,7 @@ async function mgrChecks(browser, url) {
     o.main = mn.def === 'main' && mn.fixed === true && Math.abs(mn.x + md.w / 2 - COLS / 2) <= 2 && Math.abs(mn.y + md.h / 2 - (ROWS - RD) / 2) <= 3 && pathOk && usable(mn) && bOpen(mn) && !S.freeMgr && !mgrRole(mn) && mgrOf(mn).name === '담임목사' && !DEFS.some(d => d.id === 'main' && !d.hidden) && !build('main', 2, 2, 2);
     const put = id => { build(id, id === 'shop' ? 36 : id === 'cell' ? 20 : 38, id === 'room' ? 22 : 34, 2); const b = S.buildings[S.buildings.length - 1]; const lp = linkPlan(b); if (lp && !lp.why) lp.tiles.forEach(t => { S.floor[t.x + ',' + t.y] = 'f_block'; }); recalc(); return b; };
     const c0 = A.ccap, shop = put('shop'), cell = put('cell'), room = put('room');
-    o.need = mgrRole(shop) === 'staff' && mgrRole(cell) === 'leader' && mgrRole(room) === 'pastor' && !mgrRole({ def: 'wc' }) && !mgrRole({ def: 'kids' }) && unstaffed().length === 3 && usable(shop) && !bOpen(shop) && !staffed(cell) && A.ccap === c0 && warnings().some(w => /관리자가 없는 건물/.test(w));
+    o.need = mgrRole(shop) === 'staff' && mgrRole(cell) === 'pastor' && mgrRole(room) === 'pastor' && !mgrRole({ def: 'wc' }) && mgrRole({ def: 'kids' }) === 'pastor' && mgrRole({ def: 'nursery' }) === 'pastor' && !mgrRole({ def: 'playground' }) && !mgrRole({ def: 'pantry' }) && unstaffed().length === 3 && usable(shop) && !bOpen(shop) && !staffed(cell) && A.ccap === c0 && warnings().some(w => /관리자가 없는 건물/.test(w));
     // 선택 카드 → 관리자 화면 → 외부 청빙 창
     UI.sel = shop.id; renderSelCard(); const sc = document.getElementById('selCard'); o.card = /관리자 필요/.test(sc.textContent); sc.querySelector('[data-act="mgr"]').click();
     o.scr = UI.scr === 'mgr' && UI.mgrB === shop.id && /없음/.test(document.getElementById('scrBody').textContent); document.querySelector('#scrBody [data-act="hireopen"]').click();
@@ -1269,27 +1269,46 @@ async function mgrChecks(browser, url) {
     o.reroll = S.money === mR - HIRE_REROLL && mR < m0 && HIRE_REROLL > cheap * 4 && JSON.stringify(volCands('C')) !== before && volCands('C').some(c => c.skill === 1); renderScreen();
     const m1 = S.money, pay0 = assocPay(), n0 = S.people.length, mem0 = S.members; hc()[0].click(); o.dlg = o.dlg && !dl.hidden && dl.querySelector('.say').textContent.length > 10; dl.querySelector('[data-act="hctake"]').click();
     const hp = S.people[S.people.length - 1];
-    o.hire = S.people.length === n0 + 1 && S.members === mem0 + 1 && !!hp.ext && hp.node === 'server' && ppTrack(hp) === 'C' && shop.mgr === 'p' + hp.id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + hp.ext.pay && dl.hidden && mgrOf(shop).src === 'ex' && UI.scr === 'mgr' && S.hires.length === 0;
+    o.hire = S.people.length === n0 + 1 && S.members === mem0 + 1 && !!hp.ext && hp.node === 'cstaff' && ppTrack(hp) === 'C' && shop.mgr === 'p' + hp.id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + hp.ext.pay && dl.hidden && mgrOf(shop).src === 'ex' && UI.scr === 'mgr' && S.hires.length === 0;
     // 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르다
-    const p1 = S.people[0], p2 = S.people[1]; p1.node = 'server'; p1.lv = 30; p2.node = 'sgl'; p2.lv = 30; recalc(); renderScreen();
+    const p1 = S.people[0]; p1.node = 'cstaff'; p1.lv = 30; recalc(); renderScreen();
     const cards = [...document.querySelectorAll('#scrBody .mgrc')], pool = mgrPool('staff'), inn = pool.find(w => w.src === 'in'), ex = pool.find(w => w.src === 'ex');
     o.pool = cards.length === 2 && !!document.querySelector('#scrBody .mgrc.in') && !!document.querySelector('#scrBody .mgrc.ex') && inn.k > exK(5) && Math.abs(ex.k - exK(1) * (1 + MGR_PLV_K * hp.lv)) < 1e-9 && getComputedStyle(document.querySelector('#scrBody .mgrc.in .ppi')).boxShadow !== getComputedStyle(document.querySelector('#scrBody .mgrc.ex .ppi')).boxShadow;
     const rt0 = rotTime(shop); document.querySelector('#scrBody .mgrc.in').click(); o.swap = shop.mgr === 'p' + p1.id && rotTime(shop) < rt0 && mgrAt('p' + hp.id) === 0;
     // 건물을 맡으면 성도 돌봄(자동 심방)에서 빠진다
-    const cap0 = delegCap(); mgrSet(cell.id, 'p' + p2.id); const cap1 = delegCap(); mgrClear(cell.id); o.excl = cap0 > 0 && cap1 === cap0 - leadCare(p2) && delegCap() === cap0 && mgrSet(cell.id, 'p' + p1.id) !== '' ;
-    mgrSet(cell.id, 'p' + p2.id); p2.node = 'new'; recalc(); o.fit = !cell.mgr && !staffed(cell);
+    const a1 = { name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }; S.assoc.push(a1); recalc(); const k1 = 'a' + asUid(a1);
+    const cap0 = delegCap(); o.excl = mgrSet(cell.id, k1) === '' && delegCap() === cap0 - asCare(a1) && cap0 > 0;
+    // 이미 다른 건물을 맡은 사람은 그 건물에서 먼저 빼야 다른 건물에 배정할 수 있다
+    const why = mgrSet(room.id, k1); o.taken = /이미/.test(why) && !room.mgr && cell.mgr === k1 && !mgrPool('pastor').some(w => w.key === k1 && !w.at);
+    mgrClear(cell.id); o.moved = mgrSet(room.id, k1) === '' && room.mgr === k1 && !cell.mgr;
+    UI.mgrB = cell.id; openScreen('mgr'); const away = [...document.querySelectorAll('#scrBody .mgrc.away')]; o.away = away.length === 1; away[0].click(); o.awayBlock = !cell.mgr && room.mgr === k1; closeScreen();
+    dismissAssoc(0); recalc(); o.fit = !room.mgr && !staffed(room);
     // 내부 투시: 관리자가 있는 건물과 대예배당만, 그려도 오류가 없다
     closeScreen(); shop.inUse = 1; o.cut = cutOn(shop) && cutOn(mn) && cutOn(cell) && cutOn(room) && cutOn({ def: 'shop', id: shop.id, x: 0, y: 0 }) && !cutOn({ def: 'bench', id: 3, x: 0, y: 0 }) && DEFS.filter(d => d.kind === 'bld' && !d.retired).every(d => ROOMS[d.id] || d.cat === 'worship') && CHR_VISITORS.length === 6 && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(k => CHR_STAFF[k]); draw(); shop.inUse = 0;
     // 봇용 자동 배치, 예전 저장은 자원봉사자로 이어진다
-    o.auto = autoStaff(0) >= 1 && staffed(cell);
+    const un0 = unstaffed().length; o.auto = autoStaff(0) >= 1 && unstaffed().length < un0;
     delete S.hrV; room.mgr = undefined; delete room.mgr; recalc(); o.old = room.mgr === 'v' && bOpen(room) && mgrOf(room).name === '자원봉사자';
+    // 방문자는 예배를 보러 온다: 말씀 욕구가 가장 낮게 시작, 설교·영성·예배 불만이 불편 목록에 들어감
+    { const rnd = Math.random; let ws = 0, os = 0; V.length = 0; for (let i = 0; i < 40; i++) spawnV(false); V.forEach(v => { ws += v.needs.word; os += (v.needs.fel + v.needs.care + v.needs.comf) / 3; });
+      o.wordFirst = ws / 40 < os / 40 - 8 && needAvg({ needs: { word: 10, fel: 50, care: 50, comf: 50 } }) < needAvg({ needs: { word: 50, fel: 10, care: 50, comf: 50 } });
+      Math.random = () => 0; S.grip = {}; const v = V[0]; v.worshiped = false; const m0 = MOD.word; MOD.word = 1.0; const q0 = sermonQ(mn);
+      gripeUsed(v, mn); o.sermon = !!S.grip.sermon && v.angry > 0 && /설교/.test(GRIPES.sermon.n) && v.worshiped === true && q0 < SERMON_OK;
+      S.grip = {}; MOD.word = 1.6; const w2 = V[1]; gripeUsed(w2, mn); o.sermonOk = !S.grip.sermon && sermonQ(mn) > SERMON_OK; MOD.word = m0;
+      S.grip = {}; S.cov.spirit = .3; const w3 = V[2]; w3.worshiped = true; gripeLeave(w3); o.spiritG = !!S.grip.spirit;
+      S.grip = {}; S.cov.spirit = 1; const w4 = V[3]; w4.worshiped = true; gripeLeave(w4); o.spiritOk = !S.grip.spirit;
+      S.grip = {}; const w5 = V[4]; w5.worshiped = false; w5.needs.word = 5; gripeLeave(w5); o.wordG = !!S.grip.word;
+      Math.random = rnd; S.grip = { sermon: 9, spirit: 9, word: 9 }; S.gripN = 20; const gl = gripeList().map(x => x.k); o.gripList = ['sermon', 'spirit', 'word'].every(k => gl.includes(k)) && GRIPE_ORDER[0] === 'sermon';
+      const sv = S.cov.spirit; S.cov.spirit = .3; const jl = SPIRIT_JOIN0 + SPIRIT_JOIN1 * .3, jh = SPIRIT_JOIN0 + SPIRIT_JOIN1 * 1; S.cov.spirit = sv; o.spiritJoin = jh > jl * 1.5 && SPIRIT_VIS1 > 0 && WORD_JOIN_LOW < .25;
+      S.grip = {}; S.gripN = 0; V.length = 0; recalc(); }
     return o; });
+  check(r.wordFirst && r.sermon && r.sermonOk && r.spiritG && r.spiritOk && r.wordG && r.gripList && r.spiritJoin, '방문자: 말씀 욕구가 가장 급해 예배 건물을 먼저 찾고, 설교(말씀 효과×맡은 사람 성능)·영성이 모자라면 불만(챙길 일 맨 위), 영성이 방문자 수·정착을 좌우');
   check(r.main, '대예배당: 지도 가운데에 고정으로 서 있고(목록에 없음) 문 앞에서 입구까지 길이 이어져 바로 가동');
-  check(r.need, '관리자: 추가 예배당·교제 공간·매장은 관리자가 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
+  check(r.need, '관리자: 예배·교제 건물(부서실 포함)은 부교역자, 매장은 직원이 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
   check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 청빙 화면의 큰 카드 후보 3명(그림·별·등급, 누르면 사연), 초반엔 값싼 별 1개 후보가 반드시');
   check(r.reroll && r.hire, '외부 청빙: 다시 뽑기는 큰돈이 들고, 청빙하면 바로 배치되어 가동·주급 지출');
   check(r.pool && r.swap, '관리자: 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르며, 바꿔 배치하면 회전이 빨라짐');
-  check(r.excl && r.fit, '관리자: 건물을 맡은 리더는 성도 돌봄에서 빠지고(한 사람 한 건물), 자격을 잃으면 건물에서 빠짐');
+  check(r.excl && r.fit, '관리자: 건물을 맡은 부교역자는 성도 돌봄에서 빠지고, 자격을 잃으면 건물에서 빠짐');
+  check(r.taken && r.moved && r.away && r.awayBlock, '관리자: 이미 다른 건물을 맡은 사람은 그 건물에서 먼저 빼야 배정할 수 있음 (배치 화면에 흐리게 표시)');
   check(r.cut && r.auto && r.old, '내부 투시: 모든 건물을 단면으로 그리고(건물마다 내부 소품, 방문객 6명·기능별 담당자) 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
   if (!Object.values(r).every(Boolean)) console.log('MGR', JSON.stringify(r));
   check(errs.length === 0, '관리자: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
@@ -1697,10 +1716,10 @@ async function gripeChecks(browser, url) {
     o.club = o.club && subs === 'sport,hobby,music' && sport.includes('futsal') && sport.includes('gym') && !sport.includes('choir') && music.length === 3 && music.includes('choir');
     { UI.cat = 'worship'; UI.csub = null; renderPanel(); const wsub = [...document.querySelectorAll('#subtabs [data-act="csub"]')];
     const ids = () => [...document.querySelectorAll('#cards [data-v]')].map(c => c.dataset.v);
-    const wo1 = ids(); wsub[1].click(); const wo2 = ids();
+    const wo1 = ids(); wsub[1].click(); const wo2 = ids(); document.querySelector('#subtabs [data-v="dept"]').click(); const dep = ids(); UI.cat = 'care'; renderPanel(); const careKids = !!document.querySelector('#subtabs [data-v="kids"]');
     UI.cat = 'shop'; renderPanel(); const ssub = [...document.querySelectorAll('#subtabs [data-act="csub"]')].map(x => x.dataset.v).join(); const sh1 = ids();
     document.querySelector('#subtabs [data-act="csub"][data-v="cafe"]').click(); const sh2 = ids();
-    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray' && wsub.every(x => !!x.querySelector('i') && x.querySelector('i').textContent.length > 0) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
+    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray,dept' && dep.includes('nursery') && dep.includes('kinder') && dep.includes('kids') && dep.includes('teens') && !dep.includes('room') && !careKids && wsub.every(x => !!x.querySelector('i') && x.querySelector('i').textContent.length > 0) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
       ssub === 'food,cafe,book' && sh1.includes('shop') && !sh1.includes('coffeecart') && sh2.includes('coffeecart') && !sh2.includes('shop') && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(c => DEFS.filter(d => d.cat === c && !d.hidden).every(d => CAT_SUBS[c].some(x => x[0] === d.sub)));
     }
     UI.cat = 'path'; renderPanel(); o.club = o.club && !document.querySelector('#subtabs [data-act="csub"]');

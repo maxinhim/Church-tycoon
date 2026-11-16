@@ -16,7 +16,7 @@ var VIS_GIVE=6;          // 방문자 헌금: 한 명당
 var SPONSOR0=600,SPONSOR_DROP=6;   // 개척 후원: 시작 금액, 주마다 줄어드는 양
 
 /* 성도 수: 정착·이탈 */
-var JOIN_P=0.18;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
+var JOIN_P=0.15;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
 var REFER_K=0.015;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
 var MOOD_LEAVE=45;       // 만족도가 이보다 낮으면 떠나는 성도가 는다
 var MOOD_GAIN=50;        // 만족도가 이보다 높으면 소개로 새 성도가 온다
@@ -49,7 +49,7 @@ var SACRAMENT={communion:{span:8,w:.6},baptism:{span:12,w:.35},retreat:{span:16,
 var BEAUTY_K=0.15,FRESH_K=1,FRESH_DECAY=0.85;
 
 /* 방문자 불편 */
-var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};   // 불편마다 무게
+var GRIPE_W={sermon:1.4,spirit:1,word:1.2,wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};   // 불편마다 무게
 var GRIPE_MAX=8;         // 만족도를 깎는 최대치
 var GRIPE_K=11;          // 불편 비율 × 이 값만큼 깎는다
 var GRIPE_N0=14;         // 방문자가 이보다 적으면 이 수로 나눈다 (초반에 몇 명에 크게 흔들리지 않게)
@@ -105,7 +105,7 @@ var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
    맡아서 하는 심방·선물은 값이 DELEG_COST_K배, 호감 경험치가 DELEG_XP_K배 (직접 하는 것보다 싸고 효과는 조금 작다) */
 var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
 /* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
-var ASSOC_PER=20;
+var ASSOC_PER=10;
 var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.04,ASSOC_LV_MAX=20,ASSOC_CHEER={cost:100,xp:8,cd:2};
 var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
 var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만
@@ -187,6 +187,14 @@ var VIS_IDLE_LEAVE=.4;    // 들를 곳이 없을 때 바로 돌아가는 확률
 var VIS_STROLL=.3;        // 건물을 고르기 전에 길을 한 바퀴 거닐 확률 (곳곳의 길을 고루 다니게)
 var VIS_STROLL_MAX=3;     // 한 방문에서 거니는 최대 횟수
 var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은 길을 피하는 무게, 가까움을 따지는 무게
+/* 방문자는 예배를 보러 온다: 새 방문자의 말씀 욕구가 가장 낮게 시작하고(VIS_WORD0) 예배 건물부터 찾는다(VIS_WORD_FIRST: 클수록 먼저).
+   평균 욕구는 말씀에 NEED_W_WORD배 무게. 오는 사람 수는 영성 점수로 SPIRIT_VIS0 + SPIRIT_VIS1 × 영성(0~1)배,
+   정착 확률은 SPIRIT_JOIN0 + SPIRIT_JOIN1 × 영성배이고 말씀 욕구가 안 채워지면 WORD_JOIN_LOW배만 */
+var VIS_WORD0=[8,26],VIS_OTHER0=[26,56],VIS_WORD_FIRST=26,NEED_W_WORD=2.5,VIS_WORD_PULL=5;
+var SPIRIT_VIS0=.45,SPIRIT_VIS1=.95,SPIRIT_JOIN0=.5,SPIRIT_JOIN1=.9,WORD_JOIN_LOW=.1;
+/* 설교·영성 불만: 예배를 마친 방문자가 설교가 와닿지 않으면(말씀 효과 × 맡은 사람의 성능 < SERMON_OK) 그 차이 × SERMON_K 확률(최대 SERMON_MAX)로 불만,
+   떠날 때 영성 점수가 SPIRIT_OK보다 낮으면 그 차이 × SPIRIT_K 확률로 불만. 말씀 욕구가 WORD_UNMET 아래인 채 떠나면 '예배를 못 드린' 불만 */
+var SERMON_OK=1.15,SERMON_K=1.3,SERMON_MAX=.6,SPIRIT_OK=.7,SPIRIT_K=1.3,WORD_UNMET=40;
 var VIS_MAX=60;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
 
 /* 봉사자·부교역자 행사 (ministry.js offEv): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 경험치 xp (+ 신뢰도 trust)
@@ -237,8 +245,8 @@ var ASC_EV={
    · 건물을 맡은 사람은 성도 돌봄(자동 심방)에서 빠진다 — 둘 중 하나만
    · 외부 청빙: 후보 3명. 주급 = HIRE_PAY0 + 별 × HIRE_PAY_K (부교역자는 50 + 별 × 30), 청빙비 = 주급 × HIRE_FEE_K, 다시 뽑기 HIRE_REROLL.
      처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 나온다 */
-var MGR_NEED={worship:'pastor',fellow:'leader',shop:'staff'};
-var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['server','tlead','dlead','cstaff'];
+var MGR_NEED={worship:'pastor',fellow:'pastor',shop:'staff'};   // 예배·교제 건물은 부교역자만, 매장은 직원(교회직원·청빙한 직원)만
+var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['cstaff'];
 var MGR_IN_K=1.3,MGR_PLV_K=.004,MGR_LV_K=.04,MGR_EX_K0=.7,MGR_EX_STEP=.08;
 var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
 

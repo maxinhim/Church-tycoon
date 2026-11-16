@@ -223,7 +223,7 @@ function chScreen(c,pl,at,a0,a1,z0,z1,txt,sub){
     g.save();g.transform(dx/len,dy/len,0,1,cxs,cys);
     g.textAlign='center';g.textBaseline='middle';g.fillStyle='#fff';
     var fs=Math.max(7,Math.min(len/(txt.length*1.25),(chP3(pl,at,a0,z0)[1]-chP3(pl,at,a0,z1)[1])*.42));
-    g.font='700 '+fs+'px "Gowun Batang","IBM Plex Sans KR",serif';g.fillText(txt,0,-fs*.15);
+    g.font='700 '+fs+'px "Jua","IBM Plex Sans KR",sans-serif';g.fillText(txt,0,-fs*.15);
     g.font='500 '+(fs*.5)+'px "IBM Plex Sans KR",sans-serif';g.globalAlpha=.85;g.fillText(sub,0,fs*.62);g.restore();
   }
 }

@@ -11,7 +11,7 @@ var SCREENS={
   people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'봉사자',tabs:[['off','직분자'],['B','리더'],['C','섬김이'],['assoc','부교역자'],['cands','청빙']]},
-  hire:{title:'청빙',tabs:[['all','전체'],['A','직분자'],['B','리더'],['C','섬김이'],['assoc','부교역자']]},
+  hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','직원']]},
   mgr:{title:'관리자 배치',tabs:[['pool','인력']]}
 };
 var PP_PAGE=60;
@@ -399,11 +399,11 @@ function mgrHtml(){
   var r=mgrRole(b),R=MGR_ROLE[r],cur=mgrOf(b),L=mgrPool(r),dg=delegState().on;
   var h='<div class="sbulk mgrh"><span><b>'+defOf(b).name+'</b> · '+R.sub+' 맡아야 가동해요 · 지금: '+(cur?cur.name+' ('+kText(cur.k)+')':'<em>없음</em>')+'</span>'+
     (cur?'<button class="btn" data-act="mgrclear">관리자 빼기</button>':'')+'<button class="btn pri" data-act="hireopen">＋ 청빙</button></div>'+
-    '<p class="shint"><i class="mk in"></i>교회에서 기른 사람(성능이 높아요) · <i class="mk ex"></i>밖에서 청빙한 사람. 건물을 맡은 사람은 <b>성도 돌봄(자동 심방)</b>에서 빠져요 — 둘 중 하나만 할 수 있어요.</p>';
-  if(!L.length)return h+'<p class="sempty">아직 맡길 '+R.n+'이(가) 없어요. 성도를 길러 세우거나 <b>외부 청빙</b>으로 모셔 오세요.</p>';
+    '<p class="shint"><i class="mk in"></i>교회에서 기른 사람(성능이 높아요) · <i class="mk ex"></i>밖에서 청빙한 사람. 건물을 맡은 사람은 <b>성도 돌봄(자동 심방)</b>에서 빠져요 — 둘 중 하나만 할 수 있어요. 이미 다른 건물을 맡은 분은 그 건물에서 먼저 빼거나 바꿔야 해요.</p>';
+  if(!L.length)return h+'<p class="sempty">아직 맡길 '+R.n+'이(가) 없어요. <b>＋ 청빙</b>으로 '+R.n+'을(를) 모셔 오세요'+(r==='staff'?' (교회직원으로 기른 성도도 맡을 수 있어요)':' (신학교를 마친 성도도 부교역자가 돼요)')+'.</p>';
   return h+'<div class="evg">'+L.map(function(w){
     var here=w.at===b.id,ob=w.at&&!here?bById(w.at):null,st=here?'이 건물 담당':ob?defOf(ob).name+' 담당':(w.carer&&dg?'성도 돌봄 중':'대기 중');
-    return '<div class="mgrw"><button class="evc ppc mgrc '+w.src+(here?' here':'')+'" data-act="mgrset" data-v="'+w.key+'" aria-label="'+w.name+', '+(w.src==='in'?'교회에서 기른 사람':'외부 청빙')+', '+st+'">'+
+    return '<div class="mgrw"><button class="evc ppc mgrc '+w.src+(here?' here':'')+(ob?' away':'')+'" data-act="mgrset" data-v="'+w.key+'" aria-label="'+w.name+', '+(w.src==='in'?'교회에서 기른 사람':'외부 청빙')+', '+st+'">'+
       '<span class="evr">'+ringSvg(0)+'<span class="ppi">'+portraitSvg({seed:w.seed,g:w.g})+'</span></span>'+
       '<span class="evn">'+w.name+'</span><span class="evp">'+kText(w.k)+'</span><small>'+st+'</small></button>'+
       (w.ext?'<button class="mgrx" data-act="hirefire" data-v="'+w.pid+'" aria-label="'+w.name+' 내보내기" title="내보내기 (주급이 더 나가지 않아요)">내보내기</button>':'')+'</div>';}).join('')+'</div>';
@@ -416,7 +416,7 @@ function scrMgrClick(a,v){
     else{why=mgrSet(b.id,v);if(why){scrToast(why,2000);sfx('error',.4);}else{sfx('join',.5,0);scrToast(mgrOf(b).name+'님이 '+defOf(b).name+'을(를) 맡았어요',2200);}}
   }else if(a==='mgrclear'){mgrClear(b.id);scrToast('관리자를 뺐어요',1600);}
   else if(a==='hirefire'){hireFire(+v);scrToast('내보냈어요 · 주급이 더 나가지 않아요',1800);}
-  else if(a==='hireopen'){sfx('click',.4);openHire(r==='pastor'?'assoc':r==='staff'?'C':'B',b.id);return true;}
+  else if(a==='hireopen'){sfx('click',.4);openHire(r==='pastor'?'assoc':'C',b.id);return true;}
   else return false;
   renderScreen();hud(true);return true;
 }
@@ -424,7 +424,7 @@ function scrMgrClick(a,v){
 /* ---------- 청빙 화면 ----------
    큰 카드 한 줄(옆으로 넘김): 갈래 휘장 · 세로 이름 · 등급 · 큰 그림 · 아래 능력과 값. 누르면 사연과 '청빙' 단추가 있는 창.
    그림은 지금은 코드로 그린 캐릭터(chrArtUrl)이고, 나중에 갈래별 카드 그림으로 바꾼다 (.hc-art) */
-var HC_GRADE=['','D','C','B','A','S'],HC_EM={A:'직',B:'리',C:'섬',assoc:'교'};
+var HC_GRADE=['','D','C','B','A','S'],HC_EM={C:'직',assoc:'교'};
 function hcList(){
   var tab=UI.scrTab,L=[];
   VOL_TYPES.forEach(function(t){if(tab==='all'||tab===t)volCands(t).forEach(function(c,i){L.push({id:t+':'+i,t:t,i:i,c:c});});});
@@ -433,7 +433,7 @@ function hcList(){
 }
 function hcFind(id){var s=String(id).split(':'),t=s[0],i=+s[1],c=t==='assoc'?(S.cands||[])[i]:(VOL_TYPES.indexOf(t)>=0?volCands(t)[i]:null);return c?{id:id,t:t,i:i,c:c}:null;}
 function hcSpec(x){var c=x.c,sd=c.seed||asSeed(c);return chrCandSpec(sd,c.g||(sd%2?'m':'f'),x.t);}
-function hcRole(x){return x.t==='assoc'?x.c.title:nodeName(VOL_NODE[x.t],x.c.g);}
+function hcRole(x){return x.t==='assoc'?x.c.title:'교회직원';}
 function hcStars(n){return '<span class="hst" aria-label="능력 별 '+n+'개">'+'★★★★★'.slice(0,n)+'<i>'+'★★★★★'.slice(n)+'</i></span>';}
 function hcCardHtml(x){
   var c=x.c,poor=S.money<c.fee;
@@ -446,14 +446,14 @@ function hireHtml(){
   var L=hcList(),fb=UI.hireFor&&bById(UI.hireFor);
   var h='<div class="sbulk"><span>'+(fb?'<b>'+defOf(fb).name+'</b>을(를) 맡을 분을 찾는 중 · ':'')+'후보 '+L.length+'명 · 부교역자 '+S.assoc.length+' / '+assocSlots()+'명</span>'+
     '<button class="btn" data-act="hcreroll"'+(S.money<HIRE_REROLL?' disabled':'')+'>🎲 새 후보 찾기 · '+fmt(HIRE_REROLL)+'</button></div>'+
-    '<p class="shint">카드를 눌러 사연을 읽고 청빙하세요. <b>직분자·리더·섬김이</b>로 모신 분은 성도 명단과 봉사자 화면의 그 탭에 들어가요. 교제 건물은 직분자·리더가, 매장은 섬김이가, 추가 예배당은 부교역자가 맡아요.</p>';
+    '<p class="shint">카드를 눌러 사연을 읽고 청빙하세요. 청빙은 <b>부교역자</b>와 <b>직원</b>만 해요. 예배·교제 건물(부서실 포함)은 부교역자가, 매장은 직원이 맡아야 가동돼요. 직원은 성도 명단과 봉사자 › 섬김이 탭에 교회직원으로 들어가요. 직분자·리더·섬김이는 성도를 길러서 세워요.</p>';
   if(!L.length)return h+'<p class="sempty">지금은 후보가 없어요. <b>새 후보 찾기</b>를 눌러 보세요.</p>';
   return h+'<div class="hcards">'+L.map(hcCardHtml).join('')+'</div>';
 }
 function hcDlgHtml(id){
   var x=hcFind(id),c=x.c,as=x.t==='assoc',full=as&&S.assoc.length>=assocSlots(),poor=S.money<c.fee;
-  var rows=as?[['분야',FIELDS[c.field].name+' — '+FIELDS[c.field].desc+' (별마다)'],['맡는 일','추가 예배당 · 성도 돌봄 · 목양 수용력 +35'],['사례비','주 '+fmt(c.pay)]]:
-    [['갈래',PP_TRACK[x.t].n+' · '+hcRole(x)+'(으)로 성도 명단에 들어가요'],['맡는 일',(x.t==='C'?'매장':'교제 건물')+' 관리 · '+kText(exK(c.skill))+' (호감 레벨이 오르면 더 좋아져요)'],['주급','주 '+fmt(c.pay)]];
+  var rows=as?[['분야',FIELDS[c.field].name+' — '+FIELDS[c.field].desc+' (별마다)'],['맡는 일','예배·교제 건물(부서실 포함) 관리 · 성도 돌봄 · 목양 수용력 +35'],['사례비','주 '+fmt(c.pay)]]:
+    [['자리','교회직원으로 성도 명단에 들어가요'],['맡는 일','매장 관리 · '+kText(exK(c.skill))+' (호감 레벨이 오르면 더 좋아져요)'],['주급','주 '+fmt(c.pay)]];
   return '<div class="sdlg hcdlg t'+x.t+'" role="dialog" aria-label="'+c.name+' 청빙"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
     '<div class="sdh"><span class="hc-art big"><img class="pxart" alt="" src="'+chrArtUrl(hcSpec(x),8)+'"></span>'+
     '<div class="sdt"><h3>'+c.name+' <span class="rchip t'+(as?'B':x.t)+'">'+hcRole(x)+'</span></h3>'+hcStars(c.skill)+'<p class="say">“'+(c.story||'새 사역지를 찾고 있어요.')+'”</p></div></div>'+
@@ -472,7 +472,7 @@ function scrHireClick(a,v){
     if(why){scrToast(why,2400);sfx('error',.4);}
     else{UI.scrSel=null;sfx('join',.6,0);var put=fb&&mgrOf(bById(fb));
       if(put){scrBack();scrToast(nm+'님을 모셨어요 · '+defOf(bById(fb)).name+' 가동 시작',2600);hud(true);return true;}
-      scrToast(nm+'님을 '+(x.t==='assoc'?'부교역자':PP_TRACK[x.t].n)+'(으)로 모셨어요'+(x.t==='assoc'?'':' · 성도 명단에 들어갔어요'),2600);}
+      scrToast(nm+'님을 '+(x.t==='assoc'?'부교역자':'직원')+'(으)로 모셨어요'+(x.t==='assoc'?'':' · 성도 명단에 들어갔어요'),2600);}
   }else return false;
   renderScreen();hud(true);return true;
 }

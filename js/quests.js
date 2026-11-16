@@ -30,7 +30,7 @@ var QUESTS=[
   {id:'u1',g:'guide',after:'f6',n:'교제 공간 짓기',d:'건축 › 교제에서 교제실이나 카페를 지어 성도들이 어울리게 해요',ok:function(){return hasCat('fellow');},m:200,xp:6},
   {id:'u2',g:'guide',after:'f6',n:'기도실 짓기',d:'기도실을 지으면 영성의 기도 자리가 늘어요',ok:function(){return hasBuilt(['pray','dawn']);},m:200,xp:6},
   {id:'u3',g:'guide',after:'f6',n:'주차장 짓기',d:'도로 위 주차 구역에 주차장을 지어 편의를 높여요',need:function(){return !isLocked('lot');},ok:function(){return hasCat('park');},m:250,xp:6},
-  {id:'u4',g:'guide',after:'f6',n:'돌봄 공간 짓기',d:'돌봄실이나 유아방으로 성도 가정을 돌봐요',ok:function(){return hasCat('care');},need:function(){return !isLocked('nursery');},m:250,xp:6},
+  {id:'u4',g:'guide',after:'f6',n:'부서실 짓기',d:'영유아실·유치부실·초등부실로 성도 가정을 돌봐요',ok:function(){return hasBuilt(['nursery','kinder','kids','teens','study','playground','elder','clinic','pantry','counsel','foodbank']);},need:function(){return !isLocked('nursery');},m:250,xp:6},
   {id:'u5',g:'guide',after:'f6',n:'소모임 열기',d:'건축 › 소모임에서 운동·취미·음악 모임 하나를 시작해요',ok:function(){return hasCat('club');},m:200,xp:6},
   {id:'u6',g:'guide',after:'f6',n:'사역팀 꾸리기',d:'행사 › 사역팀에서 달란트를 넣어 첫 사역팀을 꾸려요',ok:function(){for(var k in S.staff)if(S.staff[k]>0)return true;return false;},m:200,xp:8},
   {id:'u7',g:'guide',after:'f6',n:'첫 세례 주기',d:'성도 화면에서 세례 교육을 마친 성도에게 세례를 줘요',ok:function(){return (S.people||[]).some(function(p){return p.node!=='new';});},m:200,xp:8},

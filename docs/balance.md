@@ -139,3 +139,10 @@
 - 봉사자 행사 `OFF_EV`: 대상 갈래 `g`(A·B·C·ABC)의 성도에게 경험치와 신뢰도. 교역자 연수·교제의 밤은 부교역자 모두와 담임목사에게.
 - 청빙한 봉사자는 성도 명단에 들어간다: 시작 호감 레벨 = 그 직책의 기준 레벨 + 2 × (별 − 1), 건물 관리 성능 = (`MGR_EX_K0` + `MGR_EX_STEP` × 별) × (1 + `MGR_PLV_K` × 호감 레벨). 주급·청빙 비용은 `HIRE_PAY0`·`HIRE_PAY_K`·`HIRE_FEE_K` 그대로.
 - 52주 시뮬레이션(balanced·wish, seed 7): 성도 35~44명, 자금 약 6,000.
+
+## 예배 중심 방문과 관리자 (최근)
+- 방문자: 말씀 욕구 시작값 `VIS_WORD0`(8~26, 다른 욕구 `VIS_OTHER0` 26~56), 고를 때 말씀에 `VIS_WORD_FIRST`만큼 먼저, 예배 건물에 `VIS_WORD_PULL`만큼 끌림. 평균 욕구는 말씀에 `NEED_W_WORD`(2.5)배 무게.
+- 오는 사람 수 × (`SPIRIT_VIS0` + `SPIRIT_VIS1` × 영성), 정착 확률 × (`SPIRIT_JOIN0` + `SPIRIT_JOIN1` × 영성), 말씀 욕구가 안 채워지면 × `WORD_JOIN_LOW`(0.1). 정착 계수 `JOIN_P` .18 → .15.
+- 불편: 설교(`SERMON_OK`보다 말씀 효과 × 맡은 사람 성능이 낮으면 그 차이 × `SERMON_K`, 최대 `SERMON_MAX`), 영성(`SPIRIT_OK`보다 낮으면 차이 × `SPIRIT_K`), 예배 못 드림(말씀 욕구 `WORD_UNMET` 아래로 떠남). 무게 `GRIPE_W` sermon 1.4 · spirit 1 · word 1.2.
+- 관리자: 교제 건물도 부교역자가 맡으므로 부교역자 정원 `ASSOC_PER` 20 → 10.
+- 52주 시뮬레이션(balanced·wish, seed 7): 성도 약 50~58명, 자금 약 4,000~8,500.

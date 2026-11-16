@@ -3,7 +3,7 @@
   --ink:#14212b; --muted:#566673; --line:#c8d3da; --chip:#e1e8ec; --card:#eef3f5;
   --accent:#2a56c6; --accent-ink:#ffffff; --gold:#93650a; --good:#1f7a52; --bad:#b83a2b;
   --shadow:0 6px 22px rgba(8,18,28,.28);
-  --f-display:"Gowun Batang","Nanum Myeongjo","Noto Serif KR",serif;
+  --f-display:"Jua","IBM Plex Sans KR",system-ui,sans-serif;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){

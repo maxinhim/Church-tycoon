@@ -9,7 +9,7 @@ function update(dt){
   // 초반에도 마당이 비어 보이지 않게 방문자는 넉넉히, 대신 한 사람의 정착 확률은 낮게
   // 교회 문이 닫혀 있으면 아무도 오지 않는다. 주일에는 성도들이 예배하러 온다
   if(S.open){
-    var rate=VIS_RATE*(0.4+trustIdx()/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
+    var spv=(S.cov&&S.cov.spirit!=null)?S.cov.spirit:.6,rate=VIS_RATE*(0.4+trustIdx()/75)*(SPIRIT_VIS0+SPIRIT_VIS1*spv)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
     S.spawnAcc+=rate*dt;
     while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<VIS_MAX)spawnV(false);}
     if(isSunday()){

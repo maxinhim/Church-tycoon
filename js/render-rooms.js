@@ -74,7 +74,7 @@ var ROOM_LOOK={
   cell:['wood','#d8c39a',0,'#5f8a5a'],hall:['wood','#d8c39a',0,'#a0603f'],youth:['tile','#dfeef2','#b8dbe3','#2f8f9d'],
   gym:['wood','#e0b878',0,'#5a6b7c'],boardgame:['wood','#d8c39a',0,'#7a5bc7'],calli:['wood','#d9c9a3',0,'#6b6b74'],art:['tile','#f4efe6','#e6ddcc','#d9567a'],
   craft:['wood','#b98a5a',0,'#8a5a2b'],cook:['tile','#f6ecdc','#f0d9a8','#d1a02e'],guitar:['wood','#c9a877',0,'#c9853a'],band:['tile','#4a5058','#3f454d','#3f4650'],choir:['wood','#c9a877',0,'#3f5ea3'],
-  pantry:['wood','#b98a5a',0,'#8a5a2b'],counsel:['wood','#d8c39a',0,'#7b6aa5'],kids:['tile','#fff3c4','#f6d98a','#e08a2c'],nursery:['tile','#fdeef4','#f9d3e2','#d9709a'],
+  pantry:['wood','#b98a5a',0,'#8a5a2b'],counsel:['wood','#d8c39a',0,'#7b6aa5'],kids:['tile','#fff3c4','#f6d98a','#e08a2c'],kinder:['tile','#fff6d0','#ffe9a0','#f0a030'],teens:['wood','#b8a9d8',0,'#6a5bb5'],nursery:['tile','#fdeef4','#f9d3e2','#d9709a'],
   elder:['wood','#c9a877',0,'#8a6b4a'],clinic:['tile','#f4f6f7','#dfe9ec','#4f9a83'],study:['wood','#d8c39a',0,'#c08a2e'],foodbank:['tile','#f2e6cf','#e0c9a0','#9a5b2b'],
   wc:['tile','#eef3f5','#cfdde3','#6c8794'],wc2:['tile','#eef3f5','#cfdde3','#6c8794'],info:['tile','#eef2f5','#d3dde6','#3f5ea3'],nurse:['wood','#ecd9c9',0,'#c77d8f'],
   lounge:['wood','#c9b48a',0,'#5c8a5a'],parktower:['tile','#8a9299','#8a9299','#8a9096']
@@ -178,6 +178,14 @@ var ROOMS={
     rmB(c,c.X(.84),c.Y(.3),.06,.08,0,.2,'#e8762c','#f2a04a');rmB(c,c.X(.84),c.Y(.3)+.14,.05,.06,0,.1,'#f2c14e','#f6d76a');rmB(c,c.X(.84),c.Y(.3)+.24,.05,.04,0,.04,'#f2c14e','#f6d76a');
     [[.76,.8],[.3,.9]].forEach(function(p){rmTable(c,p[0],p[1],.08,.06,'#f6d76a',.08);rmItem(c,p[0],p[1],.03,.09,.008,'#ffffff');rmStool(c,p[0]-.1/c.W,p[1],'#e0567f');rmStool(c,p[0]+.1/c.W,p[1],'#4a78c7');rmSit(c,p[0]+.11/c.W,p[1]+.04);});
     rmSit(c,.5,.56);rmSit(c,.22,.66);rmCrate(c,.06,.95,.045,'#e0567f');return [.6,.28];},
+  kinder:function(c){['#f0a030','#e0567f','#4a78c7','#3d9b7a'].forEach(function(col,i){rmWall(c,'L',.08+i*.22,.24+i*.22,.24+.03*(i%2),.38,col,'#fffaf0');});
+    rmRug(c,.5,.62,c.W*.34,c.D*.3,'#f6d98a','#fff3c4');rmItem(c,.4,.6,.03,0,.06,'#e0567f');rmItem(c,.5,.66,.03,0,.06,'#4a78c7');rmItem(c,.6,.58,.03,0,.06,'#3d9b7a');
+    [.2,.38,.56,.74].forEach(function(u,i){rmStool(c,u,.86,['#e0567f','#f2c14e','#4a78c7','#3d9b7a'][i]);rmSit(c,u,.9);});
+    rmB(c,c.X(.86),c.Y(.3),.05,.07,0,.18,'#4a78c7','#6f9bd6');rmShelf(c,'R',.3,.14,.2,['#e0567f','#f2c14e','#4a78c7']);rmPlant(c,.05,.95);return [.5,.3];},
+  teens:function(c){rmWall(c,'L',.1,.5,.2,.4,'#2b2f45','#6a5bb5');['#f2c14e','#e0567f','#5ec8e0'].forEach(function(col,i){rmWall(c,'L',.16+i*.1,.2+i*.1,.26,.34,col);});
+    rmWall(c,'L',.62,.92,.22,.38,'#f4efe6','#5e4630');rmWall(c,'L',.7,.84,.28,.3,'#6a5bb5');
+    rmRug(c,.4,.62,c.W*.34,c.D*.3,'#6a5bb5','#a89be0');rmSofa(c,.3,.52,.16,'#e8762c');rmSofa(c,.7,.52,.12,'#3f8a5a');rmTable(c,.5,.7,.1,.06,'#2b2f45',.08);
+    rmGuitar(c,.9,.16,'#c4503a');rmAmp(c,.8,.12);rmMic(c,.12,.2);[[.25,.56],[.7,.56],[.4,.86],[.65,.86]].forEach(function(p){rmSit(c,p[0],p[1]+.04);});rmPlant(c,.05,.95);return [.5,.28];},
   nursery:function(c){rmWall(c,'L',.1,.3,.24,.38,'#fff3c4','#f9d3e2');rmWall(c,'L',.16,.24,.28,.34,'#f2c14e');rmWall(c,'L',.4,.6,.26,.36,'#bfe0f2','#f9d3e2');rmWall(c,'L',.7,.9,.24,.38,'#fff3c4','#f9d3e2');rmWall(c,'L',.76,.84,.28,.34,'#e57a95');
     rmBed(c,.2,.2,'#bfe0f2','#f4efe6');rmBed(c,.56,.2,'#f9d3e2','#f4efe6');rmRug(c,.4,.72,c.W*.26,.14,'#bfe0f2','#fff3c4');rmItem(c,.34,.7,.025,0,.05,'#e57a95');rmItem(c,.44,.76,.022,0,.045,'#f2c14e');rmItem(c,.5,.68,.02,0,.04,'#5aa85c');
     rmChair(c,.86,.6,'#d9709a');rmCrate(c,.94,.92,.05,'#f2c14e');rmSit(c,.86,.64,.04);rmSit(c,.3,.86);rmSit(c,.6,.88);rmLamp(c,.94,.14);return [.84,.26];},

@@ -8,9 +8,9 @@
    · 건물을 맡은 사람은 성도 돌봄 맡기기(자동 심방, people.js delegCap)에서 빠진다 — 둘 중 하나만
    · 시험에서 관리자 없이 가동하려면 S.freeMgr = true (smoke는 기본으로 켠다: __CT_TEST && !__CT_MGR)
    수치는 balance.js MGR_*·HIRE_* */
-var MGR_ROLE={pastor:{n:'부교역자',who:'부교역자를',sub:'부교역자가'},leader:{n:'직분자·리더',who:'직분자나 리더를',sub:'직분자나 리더가'},staff:{n:'직원',who:'직원을',sub:'직원이'}};
+var MGR_ROLE={pastor:{n:'부교역자',who:'부교역자를',sub:'부교역자가'},staff:{n:'직원',who:'직원을',sub:'직원이'}};
 var MGC={},MGB={};   // 건물 id → 관리자, 일꾼 열쇠 → 건물 id (fitMgrs가 다시 만든다)
-function mgrRole(b){var d=b&&defOf(b);if(!d||b.fixed||!d.fill||!d.cap||d.prop)return '';return MGR_NEED[d.cat]||'';}
+function mgrRole(b){var d=b&&defOf(b);if(!d||b.fixed||!d.fill||!d.cap||d.prop||d.nomgr)return '';return MGR_NEED[d.cat]||'';}
 function asUid(a){if(!a.uid){S.uidN=(S.uidN||0)+1;a.uid=S.uidN;}return a.uid;}
 function mgrSeed(a){if(a.seed)return a.seed;var s=7;for(var i=0;i<a.name.length;i++)s=(s*31+a.name.charCodeAt(i))%999983;return s;}
 function exK(skill){return MGR_EX_K0+MGR_EX_STEP*skill;}
@@ -19,7 +19,7 @@ function mgrPool(role){
   if(role==='pastor')(S.assoc||[]).forEach(function(a){var inn=!!a.home,sd=mgrSeed(a);
     L.push({key:'a'+asUid(a),name:a.name+' '+a.title,g:a.g||(sd%2?'m':'f'),seed:sd,src:inn?'in':'ex',k:inn?MGR_IN_K*(1+MGR_LV_K*((a.lv||1)-1)):exK(a.skill),sub:'★'+a.skill,carer:true});});
   else{
-    var nodes=role==='leader'?MGR_LEADER_NODES:MGR_STAFF_NODES;
+    var nodes=MGR_STAFF_NODES;
     (S.people||[]).forEach(function(p){if(nodes.indexOf(p.node)<0)return;
       if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv),sub:'★'+p.ext.skill+' · 주 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
       else L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
@@ -33,7 +33,7 @@ function fitMgrs(){
   if(!S.hrV){S.hrV=1;S.buildings.forEach(function(b){if(mgrRole(b)&&!b.mgr)b.mgr='v';});
     var b0=S.buildings[0];if(b0&&!S.buildings.some(function(b){return b.fixed;})&&isHall(b0))b0.fixed=true;}
   if(S.hires.length){   // 예전 저장: 따로 두던 청빙 직원을 성도 명단의 봉사자로 옮긴다
-    S.hires.forEach(function(h){var p=volJoin({t:h.role==='staff'?'C':'B',name:h.name,g:h.g,seed:h.seed,skill:h.skill,pay:h.pay,story:h.story});
+    S.hires.forEach(function(h){var p=volJoin({t:'C',name:h.name,g:h.g,seed:h.seed,skill:h.skill,pay:h.pay,story:h.story});
       S.buildings.forEach(function(b){if(b.mgr==='h'+h.id)b.mgr='p'+p.id;});});
     S.hires=[];syncPeople();
   }
@@ -61,7 +61,8 @@ function unstaffed(){return S.freeMgr?[]:S.buildings.filter(function(b){return m
 function mgrSet(bid,key){
   var b=bById(bid),r=mgrRole(b);if(!r)return '관리자가 필요 없는 건물이에요';
   if(!mgrPool(r).some(function(w){return w.key===key;}))return '이 건물을 맡을 수 없는 사람이에요';
-  S.buildings.forEach(function(x){if(x.mgr===key)delete x.mgr;});
+  var at=MGB[key]&&MGB[key]!==bid?bById(MGB[key]):null;
+  if(at)return '이미 '+defOf(at).name+'을(를) 맡고 있어요. 그 건물에서 먼저 빼거나 다른 분으로 바꿔 주세요';
   b.mgr=key;recalc();save();return '';
 }
 function mgrClear(bid){var b=bById(bid);if(b&&b.mgr){delete b.mgr;recalc();save();}}
@@ -70,7 +71,7 @@ function mgrClear(bid){var b=bById(bid);if(b&&b.mgr){delete b.mgr;recalc();save(
    봉사자 후보는 갈래마다 3명(S.vc: A 직분자 · B 리더 · C 섬김이), 부교역자 후보는 S.cands(ministry.js).
    청빙한 봉사자는 성도 명단(S.people)에 들어간다(p.ext = {skill, pay, story}): 그 갈래의 첫 직책(VOL_NODE)으로 시작하고,
    봉사자 화면의 해당 탭에 나오며, 여느 성도처럼 심방·교육으로 더 기를 수 있다. 주급(p.ext.pay)은 사례비에 더한다 */
-var VOL_NODE={A:'deacon',B:'sgl',C:'server'},VOL_TYPES=['A','B','C'];
+var VOL_NODE={C:'cstaff'},VOL_TYPES=['C'];   // 청빙할 수 있는 것은 부교역자(ministry.js)와 직원(C, 교회직원으로 성도 명단에 들어간다)뿐
 var HIRE_STORY={
   pastor:['신학교를 갓 졸업하고 첫 사역지를 찾고 있어요. 서툴지만 새벽마다 기도로 하루를 열어요.','개척교회에서 오래 섬기다 교회가 합쳐지며 사역지를 잃었어요. 작은 교회의 사정을 잘 알아요.','선교지에서 돌아와 다시 목회를 시작하려 해요. 낯선 사람과 금세 친해져요.','대형 교회 교육부서에서 일했어요. 체계 잡는 일에 밝아요.'],
   A:['이웃 교회에서 집사로 오래 섬겼어요. 이사 와서 새 교회를 찾고 있어요.','은퇴 뒤 고향으로 돌아왔어요. 교회 살림을 꼼꼼히 챙기던 분이에요.','젊은 날 받은 은혜를 갚고 싶어 해요. 궂은일에 먼저 손을 들어요.','새벽기도를 한 번도 거르지 않는다는 소문이 자자해요.'],
@@ -93,7 +94,7 @@ function volReroll(){
 // 후보를 성도 명단에 넣는다 (사람 수도 함께 는다)
 function volJoin(c){
   var p=makePerson(),node=VOL_NODE[c.t];
-  p.n=c.name;p.g=c.g;p.seed=c.seed;p.node=node;p.lv=PP_TREE[node].lv+2*(c.skill-1);p.ext={skill:c.skill,pay:c.pay,story:c.story,w:S.week};
+  p.n=c.name;p.g=c.g;p.seed=c.seed;p.node=node;p.lv=8+4*(c.skill-1);p.ext={skill:c.skill,pay:c.pay,story:c.story,w:S.week};
   S.people.push(p);S.members=Math.round(S.members)+1;return p;
 }
 // 청빙: 갈래 t의 후보 i를 들이고, bid가 있고 맡을 수 있으면 그 건물에 바로 배치한다. 못 하면 이유
@@ -102,15 +103,15 @@ function volHire(t,i,bid){
   if(S.money<c.fee)return '청빙 비용이 부족해요';
   S.money-=c.fee;S.hireN=(S.hireN||0)+1;S.vc[t].splice(i,1);if(!S.vc[t].length)S.vc[t]=null;
   var p=volJoin(c);
-  addLog(c.name+'님을 '+PP_TRACK[t].n+'(으)로 청빙했어요');noteNew();
+  addLog(c.name+'님을 직원으로 청빙했어요');noteNew();
   recalc();
   if(bid&&bById(bid)&&mgrPool(mgrRole(bById(bid))||'x').some(function(w){return w.key==='p'+p.id;}))mgrSet(bid,'p'+p.id);
   save();return '';
 }
 // 예전 이름으로도 부를 수 있게 (봇·도구): 역할 → 후보 목록 / 청빙
-function hireCands(role){return role==='pastor'?S.cands:volCands(role==='staff'?'C':'B');}
+function hireCands(role){return role==='pastor'?S.cands:volCands('C');}
 function hireReroll(){return volReroll();}
-function hireTake(role,i,bid){return role==='pastor'?hireAssoc(i,bid):volHire(role==='staff'?'C':'B',i,bid);}
+function hireTake(role,i,bid){return role==='pastor'?hireAssoc(i,bid):volHire('C',i,bid);}
 // 내보내기: 청빙한 봉사자(성도 id)를 명단에서 뺀다
 function hireFire(pid){var p=ppById(pid);if(!p||!p.ext)return;S.people=S.people.filter(function(q){return q!==p;});S.members=Math.max(0,Math.round(S.members)-1);addLog(p.n+' '+ppRankName(p)+'님을 내보냈어요');recalc();save();}
 function hirePay(){return (S.people||[]).reduce(function(t,p){return t+(p.ext?p.ext.pay:0);},0);}
