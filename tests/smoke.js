@@ -606,8 +606,8 @@ async function ministryChecks(browser, url) {
     // 사역자·행사·현황 패널이 그려진다
     ['staff', 'events', 'status', 'menu'].forEach(t => { UI.tab = t; UI.fold = false; renderPanel(); });
     o.panels = document.getElementById('panel').textContent.length > 0;
-    // 난이도: 테스트로 새로 시작하면 자금 50,000
-    restart('easy'); o.easy = S.diff === 'easy' && S.money === 50000;
+    // 난이도: 테스트로 새로 시작하면 자금 100억(1,000,000만원)
+    restart('easy'); o.easy = S.diff === 'easy' && S.money === 1000000;
     restart('normal');
     // 균형: 아무것도 하지 않으면 1년 동안 저절로 커지지 않고, 초반에 바로 파산하지도 않는다
     let minMoney = S.money;
@@ -642,7 +642,7 @@ async function ministryChecks(browser, url) {
   check(r.dlgShown && r.dlg, '목회 고민: 카드가 뜨고, 고르면 효과가 나고 닫힘');
   check(r.worn && r.repair, '노후: 낡으면 좌석이 줄고, 수리하면 돌아옴 (한 주 기본 0.8씩 낡고, 수리비는 건물 값의 10%까지)');
   check(r.panels, '패널: 사역자·행사·현황·메뉴 탭이 그려짐');
-  check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 50,000');
+  check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 100억(1,000,000만원)');
   check(r.passive, '균형: 손대지 않으면 30주 동안 저절로 커지지 않고 초반 파산도 없음');
   check(r.lawn, '지도 밖: 빈 공간이 잔디색으로 채워짐');
   // 화면 조작: 동그란 기능 버튼으로 패널 열고 닫기, 건물을 지으면 수치 글씨

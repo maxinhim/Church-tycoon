@@ -6,7 +6,7 @@
 
 /* ---------- 난이도 ---------- */
 var DIFF={
-  easy:{name:'테스트',money:50000,cost:.8,churn:.7,desc:'자금 50,000으로 넉넉하게 시험해 봅니다'},
+  easy:{name:'테스트',money:1000000,cost:.8,churn:.7,desc:'자금 100억으로 넉넉하게 시험해 봅니다'},
   normal:{name:'보통',money:20000,cost:1,churn:1,desc:'적은 자금에서 차근차근 세워 갑니다'},
   hard:{name:'어려움',money:14000,cost:1.2,churn:1.25,desc:'더 적은 자금, 더 높은 운영비와 이탈'}
 };
