@@ -558,3 +558,14 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .sgh.lay{background:linear-gradient(180deg,#f2fbe8,#dff0cf);border-color:#8fbf74;color:#355d24}
 .sgh.vol{background:linear-gradient(180deg,#fff6dd,#fde7b0);border-color:#d6a640;color:#7a5410}
 .evg>.sgh{margin-bottom:0}
+
+/* ---------- 바닥 깔기: 제목 오른쪽 넓이 단추 (가로×세로 칸) ---------- */
+.fszg{display:inline-flex;flex-wrap:wrap;gap:3px;margin:0 4px 0 8px;vertical-align:middle}
+.fszb{min-width:34px;height:24px;padding:0 5px;border-radius:8px;border:2px solid #b8935a;background:linear-gradient(180deg,#fffbf2,#f2dcb2);color:#5a4022;font:400 12.5px/1 var(--f-cozy);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 0 #b8935a;cursor:pointer}
+.fszb.on{background:linear-gradient(180deg,#9fdc8a,#56b44e);border-color:#2f7d34;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.3);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 #2f7d34}
+.fszb:active{transform:translateY(1px);box-shadow:none}
+@media (max-height:480px){.fszb{min-width:30px;height:21px;font-size:11.5px}}
+#dtitle .fszg{display:grid;grid-template-columns:repeat(4,auto);gap:3px;margin:0 0 0 4px;text-shadow:none}
+#dock.bmode .dhead h2:has(.fszg){flex:1 1 auto;min-width:0}
+#dtitle .fszb{min-width:30px;height:20px;padding:0 4px;font-size:11.5px;border-radius:7px}

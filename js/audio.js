@@ -7,7 +7,8 @@
    · 모바일은 사용자가 처음 화면을 눌러야 소리를 낼 수 있어서 첫 터치 때 켠다 (그 전엔 조용히 무시)
    · 설정(톱니바퀴)에서 음악·효과음을 따로 끈다. 선택은 이 기기에만 저장 */
 var SND={sfx:true,music:true,ctx:null,buf:{},unlocked:false,last:{},cur:'',el:{},amb:null,vol:.6,mvol:.15};
-var SFX_LIST=['build','place','floor','coin','coins','bell','join','gate_open','gate_close','demolish','error','page','click'];
+var SFX_LIST=['build','place','floor','coin','coins','bell','join','gate_open','gate_close','demolish','error','page','click',
+  'levelup','reward','done','notify','visit','gift','train','appoint'];   // 뒤 여덟은 귀엽고 가벼운 알림음(교회 Level·보상·완료·심방·선물·교육·임명)
 var BGM_FILE={sun:'bgm_sun',snow:'bgm_snow'},SND_KEY='church-tycoon-sound';
 (function(){try{var v=JSON.parse(localStorage.getItem(SND_KEY)||'{}');if(v.sfx===false)SND.sfx=false;if(v.music===false)SND.music=false;}catch(e){}})();
 function saveSnd(){try{localStorage.setItem(SND_KEY,JSON.stringify({sfx:SND.sfx,music:SND.music}));}catch(e){}}

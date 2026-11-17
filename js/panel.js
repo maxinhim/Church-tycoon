@@ -83,7 +83,7 @@ function renderPanel(){
   var dt=$('#dtitle'),cx=t==='build'&&UI.choose?chooseCtx():null;
   if(UI.entr&&t==='build')dt.textContent='교회 입구';
   else if(cx)dt.innerHTML='<button class="bback" data-act="cback" aria-label="돌아가기">‹</button>'+cx.title;
-  else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]));
+  else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1])+(UI.cat==='floor'?floorSizeBtns():''));   // 바닥: 제목 오른쪽에 한 번에 까는 넓이 단추
   else dt.textContent=GROUP_TITLE[g];
   $('#dock').classList.toggle('bmode',t==='build');
   var cs=curSub(UI.cat);

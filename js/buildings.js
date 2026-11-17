@@ -158,7 +158,7 @@ mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',
 mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.05,desc:'결이 보이는 나무 바닥'});
 mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.08,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
 mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
-mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
+mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'철거비',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 철거비가 들어요(바닥 값의 '+Math.round(FLOOR_DEMO_K*100)+'%)'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{hidden:true,short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{hidden:true,short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
 /* 꾸미기에 마음 쓰도록: 기능 건물(예배·교제·매장·돌봄·편의·주차)은 2배 값.

@@ -71,7 +71,7 @@ function indTick(quiet){
     if(quiet||s.fresh){s.lv=Math.max(s.lv,L);if(s.fresh){s.cl=s.lv;delete s.fresh;}return;}
     if(L>s.lv){
       s.lv=L;
-      toast(d.n+' Lv '+L+'! 현황에서 보상을 받으세요 · +'+fmt(indReward(d.k)),2800);sfx('bell',.5,0);
+      toast(d.n+' Lv '+L+'! 현황에서 보상을 받으세요 · +'+fmt(indReward(d.k)),2800);sfx('notify',.6,0);
       var el=document.querySelector('#inds [data-ind="'+d.k+'"]');
       if(el){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
     }

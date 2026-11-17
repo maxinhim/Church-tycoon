@@ -148,7 +148,7 @@ function scrRosterClick(a,v){
     var r=e.st.rk;S.money-=ST_RANK.cost[r];e.st.rk=r+1;
     if(e.as)e.o.title=ST_RANK.assoc[r+1];
     if(e.pay){var np=Math.round(e.pay*(1+ST_RANK.pay));if(e.as)e.o.pay=np;else e.o.ext.pay=np;}
-    sfx('bell',.5,0);rosDone(e.name+'님이 '+e.ladder[r+1]+'(으)로 승급했어요');return true;
+    sfx('appoint',.6,0);rosDone(e.name+'님이 '+e.ladder[r+1]+'(으)로 승급했어요');return true;
   }
   return false;
 }

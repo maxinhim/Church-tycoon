@@ -192,13 +192,13 @@ function scrClick(e){
   }
   if(a==='evclaimall'){
     var all=claimAllEvents();
-    if(all.n){sfx('coins',.7,0);setTimeout(function(){sfx('join',.6,0);},180);scrToast('행사 '+all.n+'개 마무리 · '+(all.got.join(' · ')||'수고했어요'),3400);UI.scrSel=null;}
+    if(all.n){sfx('reward',.6,0);scrToast('행사 '+all.n+'개 마무리 · '+(all.got.join(' · ')||'수고했어요'),3400);UI.scrSel=null;}
     else{scrToast('받을 보상이 없어요',1600);sfx('error',.4);}
     renderScreen();hud(true);return;
   }
   if(a==='evclaim'){
     var got=claimEvent(v);
-    if(got){sfx('coins',.7,0);setTimeout(function(){sfx('join',.6,0);},180);scrToast(EVENTS[v].name+' 마무리 · '+(got.join(' · ')||'수고했어요'),3000);UI.scrSel=null;}
+    if(got){sfx('reward',.6,0);scrToast(EVENTS[v].name+' 마무리 · '+(got.join(' · ')||'수고했어요'),3000);UI.scrSel=null;}
     renderScreen();hud(true);return;
   }
   // 그 밖(사역팀·청빙의 버튼들)은 패널과 같은 처리기로
@@ -480,7 +480,7 @@ function ofPlace(pid){
 }
 function scrOffClick(a,v){
   if(UI.scr!=='officers')return false;
-  if(a==='disgo'){var q=String(v).split(':'),pp=ppById(+q[0]),w=ppTrain(+q[0],DIS_FIRST[q[1]]);if(w){scrToast(w,2000);sfx('error',.4);}else{sfx('coins',.55,0);scrToast(pp.n+' 성도의 '+nodeTr(pp.tr.to,pp.g)+'을(를) 시작했어요',2200);}}
+  if(a==='disgo'){var q=String(v).split(':'),pp=ppById(+q[0]),w=ppTrain(+q[0],DIS_FIRST[q[1]]);if(w){scrToast(w,2000);sfx('error',.4);}else{sfx('train',.6,0);scrToast(pp.n+' 성도의 '+nodeTr(pp.tr.to,pp.g)+'을(를) 시작했어요',2200);}}
   else if(a==='ofslot'){var s=String(v).split(':');UI.ofPick={t:s[0],v:s[0]==='sup'?+s[1]:s[1]};sfx('click',.4);}
   else if(a==='tmslot'){UI.ofPick={t:'tm',v:v};sfx('click',.4);}
   else if(a==='ofcancel'){UI.ofPick=null;}
@@ -538,13 +538,13 @@ function scrPeopleClick(a,v,el){
   if(a==='bulk'){
     var o=ppCareAll(scrPeople(),v),nm={visit:'심방',gift:'선물'}[v];
     if(!o.done){scrToast(o.poor?'자금이 부족해요':'지금 '+nm+'할 사람이 없어요',2000);sfx('error',.4);}
-    else{sfx('coins',.6,0);if(o.up)setTimeout(function(){sfx('join',.6,0);},160);scrToast(o.done+'명에게 '+nm+'했어요'+(o.up?' · '+o.up+'명 레벨 업':'')+(o.poor?' · '+o.poor+'명은 자금이 모자라 다음에':''),2800);}
+    else{sfx(v,.6,0);if(o.up)setTimeout(function(){sfx('notify',.5,0);},260);scrToast(o.done+'명에게 '+nm+'했어요'+(o.up?' · '+o.up+'명 레벨 업':'')+(o.poor?' · '+o.poor+'명은 자금이 모자라 다음에':''),2800);}
     renderScreen();hud(true);return true;
   }
   if(a==='bulkgrow'){
     var to=el.dataset.to,tr=el.dataset.k==='tr',o2=tr?ppTrainAll(scrPeople(),to):ppAppointAll(scrPeople(),to),g0=scrPeople()[0];
     if(!o2.done){scrToast(o2.poor?(tr?'자금이 모자라요':'자리가 없어요'):'할 수 있는 사람이 없어요',2000);sfx('error',.4);}
-    else{sfx(tr?'coins':'bell',.6,0);if(!tr)setTimeout(function(){sfx('join',.6,0);},180);scrToast(o2.done+'명 '+(tr?nodeTr(to,'m')+' 시작':nodeDone(to,'m'))+(o2.poor?' · '+o2.poor+'명은 '+(tr?'자금이 모자라 다음에':'자리가 없어요'):'')+' (낮은 레벨부터)',2800);}
+    else{sfx(tr?'train':'appoint',.6,0);scrToast(o2.done+'명 '+(tr?nodeTr(to,'m')+' 시작':nodeDone(to,'m'))+(o2.poor?' · '+o2.poor+'명은 '+(tr?'자금이 모자라 다음에':'자리가 없어요'):'')+' (낮은 레벨부터)',2800);}
     renderScreen();hud(true);return true;
   }
   if(a==='carepick'){
@@ -558,14 +558,14 @@ function scrPeopleClick(a,v,el){
     var k=el.dataset.k,L2=scrPeople().filter(function(p){return p.node===v;}),nm2,o3;
     if(k==='visit'||k==='gift'){o3=ppCareAll(L2,k);nm2=k==='visit'?'심방':'선물';
       if(!o3.done){scrToast(o3.poor?'자금이 부족해요':'지금 '+nm2+'할 사람이 없어요',2000);sfx('error',.4);}
-      else{sfx('coins',.6,0);if(o3.up)setTimeout(function(){sfx('join',.6,0);},160);scrToast(nodeName(v,'m')+' '+o3.done+'명에게 '+nm2+'했어요'+(o3.up?' · '+o3.up+'명 레벨 업':'')+(o3.poor?' · '+o3.poor+'명은 자금이 모자라 다음에':''),2800);}}
+      else{sfx(k,.6,0);if(o3.up)setTimeout(function(){sfx('notify',.5,0);},260);scrToast(nodeName(v,'m')+' '+o3.done+'명에게 '+nm2+'했어요'+(o3.up?' · '+o3.up+'명 레벨 업':'')+(o3.poor?' · '+o3.poor+'명은 자금이 모자라 다음에':''),2800);}}
     else if(k==='tr'){var to3=ppSoleNext(L2[0]);o3=to3?ppTrainAll(L2,to3):{done:0,poor:0};
       if(!o3.done){scrToast(o3.poor?'자금이 모자라요':'지금 시작할 수 있는 사람이 없어요',2000);sfx('error',.4);}
-      else{sfx('coins',.6,0);scrToast(o3.done+'명 '+nodeTr(to3,'m')+' 시작'+(o3.poor?' · '+o3.poor+'명은 자금이 모자라 다음에':''),2600);}}
+      else{sfx('train',.6,0);scrToast(o3.done+'명 '+nodeTr(to3,'m')+' 시작'+(o3.poor?' · '+o3.poor+'명은 자금이 모자라 다음에':''),2600);}}
     else if(k==='ap'){var tos={},n3=0,p3=0;L2.forEach(function(p){if(p.tr&&p.tr.ready)tos[p.tr.to]=1;});
       Object.keys(tos).forEach(function(t){var r=ppAppointAll(L2,t);n3+=r.done;p3+=r.poor;});
       if(!n3){scrToast(p3?'자리가 없어요':'임명할 사람이 없어요',2000);sfx('error',.4);}
-      else{sfx('bell',.7,0);setTimeout(function(){sfx('join',.6,0);},180);scrToast(n3+'명을 임명했어요'+(p3?' · '+p3+'명은 자리가 없어요':''),2600);}}
+      else{sfx('appoint',.6,0);scrToast(n3+'명을 임명했어요'+(p3?' · '+p3+'명은 자리가 없어요':''),2600);}}
     renderScreen();hud(true);return true;
   }
   if(a==='carefilter'){UI.careOnly=!UI.careOnly;UI.ppMore=PP_PAGE;sfx('click',.4);renderScreen();return true;}
@@ -573,17 +573,17 @@ function scrPeopleClick(a,v,el){
   if(a==='ppvisit'||a==='ppgift'){
     var p=ppById(+v),r=ppCare(+v,a==='ppgift'?'gift':'visit');
     if(r&&r.charAt(0)!=='+'){scrToast(r,2000);sfx('error',.4);}
-    else{sfx('coins',.5,0);if(r){setTimeout(function(){sfx('join',.6,0);},160);scrToast(p.n+' 성도와 더 가까워졌어요 · 호감 Lv '+p.lv,2400);}else scrToast(a==='ppgift'?p.n+' 성도에게 선물을 전했어요':p.n+' 성도를 심방했어요',1800);}
+    else{sfx(a==='ppgift'?'gift':'visit',.6,0);if(r){setTimeout(function(){sfx('notify',.5,0);},260);scrToast(p.n+' 성도와 더 가까워졌어요 · 호감 Lv '+p.lv,2400);}else scrToast(a==='ppgift'?p.n+' 성도에게 선물을 전했어요':p.n+' 성도를 심방했어요',1800);}
     renderScreen();hud(true);return true;
   }
   if(a==='pptrain'){
     var q=ppById(+v),to=el&&el.dataset.to,w=ppTrain(+v,to||undefined);
-    if(w){scrToast(w,2000);sfx('error',.4);}else{sfx('coins',.55,0);scrToast(q.n+' 성도의 '+nodeTr(q.tr.to,q.g)+'을(를) 시작했어요',2200);}
+    if(w){scrToast(w,2000);sfx('error',.4);}else{sfx('train',.6,0);scrToast(q.n+' 성도의 '+nodeTr(q.tr.to,q.g)+'을(를) 시작했어요',2200);}
     renderScreen();hud(true);return true;
   }
   if(a==='ppappoint'){
     var msg=ppAppoint(+v);
-    if(msg){sfx('bell',.7,0);setTimeout(function(){sfx('join',.7,0);},200);scrToast(msg,3000);if(!ppById(+v))UI.scrSel=null;}
+    if(msg){sfx('appoint',.6,0);scrToast(msg,3000);if(!ppById(+v))UI.scrSel=null;}
     else{scrToast('부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)',2200);sfx('error',.4);}
     renderScreen();hud(true);return true;
   }

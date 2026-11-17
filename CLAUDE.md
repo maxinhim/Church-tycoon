@@ -51,6 +51,8 @@
 - 교회 입구(`js/entrance.js`, `S.entr`): 레벨 1~ENT_MAX(올리면 방문자 `ENT_VIS`씩), 모양 5종(`ENT_STYLES`, 사서 끼움, 그림은 `drawArchStyled`), 현수막 5종(`ENT_BANNERS`, 사서 걸면 아치 위 글씨와 `ENT_BAN_VIS`). 입구 카드의 '꾸미기'(#gpDeco)나 입구 화면(`#scr`의 `gate`, `entrHtml`)에서 고친다. 수치는 `balance.js` ENT_*
 - 대예배당의 성능·정원은 `MAIN_K`배(bldlv.js `mainK`). 예배 분류에는 '부서실' 묶음(`dept`: 영유아실·유치부실·초등부실·중고등부실·공부방·놀이터)이 있다(UNLOCK에 없음)
 - 자동 방향은 없다(`plAutoFace`는 아무 일도 하지 않는다): 건물·소품은 어디에 놓아도 문이 남쪽이다. 성도 화면 일괄 심방·선물 아이콘 옆에는 비용(`bcost`)
+- 바닥 타일(`js/floors.js`): 바닥 창 제목 오른쪽의 넓이 단추(`FLOOR_SIZES` 1×1·2×2·3×3·4×4·3×1·1×3·2×4·4×2, `UI.fsz`, `floorSizeBtns`)로 고른 넓이를 미리보기 칸(왼쪽 위)부터 ✓ 한 번에 깐다(`floorPlan`·`paintFloorArea`, 되돌리기는 한꺼번에, 넓이만큼 화살표 쪽으로 건너감, 데크 위는 한 칸씩). 이미 깔린 다른 바닥 위에 깔면 새 바닥으로 바뀌고 값은 새 바닥 값 + 철거비(`floorDemo` = 기존 바닥 값 × `FLOOR_DEMO_K`), 바닥 지우기도 철거비가 든다(환불 없음)
+- 알림 효과음(CC0, `docs/audio.md`): 교회 Level 업 `levelup` · 보상 받기 `reward` · 완료(행사·교육 끝) `done` · 보상 알림 `notify` · 심방 `visit` · 선물 `gift` · 교육 시작 `train` · 임명·승급 `appoint`. 시끄럽지 않게 평균 약 -21dB로 맞춘다
 - 한 칸짜리 꾸미기·소품(`cell:true`, 벤치 등)이 있는 칸에도 바닥을 깔 수 있다(`oneCellAt`, floors.js). 큰 건물 밑은 여전히 막힌다. 한 칸 소품은 길 칸에 놓을 수 있지만, 놓아서 문 앞까지 길이 끊기는 건물이 생기면 못 놓는다(`propCutWhy`, place.js — 길 막힘 이유를 알린다)
 - 벤치(`SIT_DEFS`, sit.js)에 앉은 방문자는 벤치 위에 앉은 모습으로 그린다(`sitEntry`·`drawSitter`, render-scene.js에서 정렬)
 - 개수 제한: 티어 1(방·소그룹실·매장·커피 카트·기독교 서점·화장실)은 상위가 열리기 전 `TIER1_MAX`(4)개, 열린 뒤 `TIER1_MAX_OPEN`(6)개. 벤치는 `nolimit`이라 제한이 없다. 상위(티어 2)·나머지 건물은 제한이 없고, 대예배당(`main`)은 하나만 있으며 새로 짓지 못한다

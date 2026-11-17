@@ -261,7 +261,7 @@ function evTick(){
   for(var id in S.ev){var st=S.ev[id],e=EVENTS[id];if(!e||!st.run||st.ready||st.end==null||now<st.end)continue;
     ch=true;
     if(e.auto||!e.rw){st.run=false;st.cd=e.cd||0;continue;}
-    st.ready=true;toast(e.name+'이(가) 끝났어요 · 행사에서 보상을 받으세요',2600);sfx('bell',.5,0);
+    st.ready=true;toast(e.name+'이(가) 끝났어요 · 행사에서 보상을 받으세요',2600);sfx('done',.6,0);
   }
   if(ch){recalc();save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();}
 }

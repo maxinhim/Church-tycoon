@@ -1832,19 +1832,28 @@ async function deckChecks(browser, url) {
     setPlaceLevel(tr, D.tree, 5, 3, 2); tr.x = 5; tr.y = 3; rebuildOcc(); o.moved = tr.z == null;
     draw(); ROT = 2; draw(); ROT = 0;
     save(); const L = load(); o.saved = L.buildings.some(b => b.def === 'cafe' && b.z === 1);
-    // 바닥 타일을 누르면 카드가 뜨고 바로 바꾼다 (걷어낸 반값을 뺀 값)
+    // 바닥 타일을 누르면 카드가 뜨고 바로 바꾼다 (새 바닥 값 + 철거비)
     S.floor['8,4'] = 'f_block'; recalc(); UI.fold = true; UI.tool = null;
     const fm = rotPt(8.5, 4.5), fq = toScreen(fm[0], fm[1], 0); onTap(fq[0], fq[1]);
     const card = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
     document.querySelector('#selCard [data-act="choose"][data-v="fswap"]').click();
     const m2 = S.money; document.querySelector('#cards [data-act="cpick"][data-v="f_wood"]').click();
-    o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost - Math.floor(D.f_block.cost * .5);
-    // 바꾸면 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다 (기존 바닥 위는 걷어낸 반값을 뺀 값)
+    o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost + Math.ceil(D.f_block.cost * FLOOR_DEMO_K);
+    // 바꾸면 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다 (기존 바닥 위는 새 바닥 값 + 철거비)
     o.fchain = isPlacing() && UI.tool === 'f_wood' && !!UI.ghost && Math.abs(UI.ghost.x - 8) + Math.abs(UI.ghost.y - 4) === 1;
     S.floor[UI.ghost.x + ',' + UI.ghost.y] = 'f_block'; const m4 = S.money; plOk();
-    o.fchain = o.fchain && S.money === m4 - (D.f_wood.cost - Math.floor(D.f_block.cost * .5));
+    o.fchain = o.fchain && S.money === m4 - (D.f_wood.cost + Math.ceil(D.f_block.cost * FLOOR_DEMO_K));
     endPlace(); UI.fold = true;
-    const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && S.money - m3 === Math.floor(D.f_wood.cost * .5);
+    const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && m3 - S.money === Math.ceil(D.f_wood.cost * FLOOR_DEMO_K);
+    // 넓이 단추: 바닥 창 제목 오른쪽 8개, 3×3이면 한 번에 9칸 · 깔린 다른 바닥은 바뀌고 철거비가 더해짐 · 넓이만큼 건너감 · 되돌리기는 한꺼번에
+    { UI.tab = 'build'; UI.fold = false; UI.bstep = 'items'; UI.cat = 'floor'; UI.tool = null; renderPanel(); const sz = [...document.querySelectorAll('#dtitle .fszb')].map(x => x.dataset.v);
+      document.querySelector('#dtitle .fszb[data-v="3x3"]').click(); const pick = UI.fsz[0] === 3 && UI.fsz[1] === 3;
+      startPlace('f_brick'); UI.fdir = 0; const gx = 20, gy = 30; for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) delete S.floor[(gx + i) + ',' + (gy + j)]; S.floor[(gx + 1) + ',' + (gy + 1)] = 'f_block';
+      UI.ghost = { x: gx, y: gy }; const fc = floorCostAt(), m5 = S.money; plLock = 0; plOk(); let cnt = 0; for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) if (S.floor[(gx + i) + ',' + (gy + j)] === 'f_brick') cnt++;
+      const want = 9 * D.f_brick.cost + Math.ceil(D.f_block.cost * FLOOR_DEMO_K), step = Math.abs(UI.ghost.x - gx) + Math.abs(UI.ghost.y - gy) === 3;
+      const paid = m5 - S.money; floorUndo(); const back = S.money === m5 && S.floor[(gx + 1) + ',' + (gy + 1)] === 'f_block' && !S.floor[gx + ',' + gy];
+      o.farea = sz.join() === '1x1,2x2,3x3,4x4,3x1,1x3,2x4,4x2' && pick && cnt === 9 && paid === want && fc && fc.n === 9 && fc.c === want && fc.swap === 1 && step && back;
+      if (!o.farea) o.fareaDbg = [sz.join(), pick, cnt, paid, want, fc, step, back]; UI.fsz = [1, 1]; endPlace(); UI.fold = true; }
     // 빈 땅을 누르면 바닥 깔기 카드만 (땅 높이기·경사로 없음)
     closeSelCard(); const em = rotPt(6.5, 2.5), eq = toScreen(em[0], em[1], 0); onTap(eq[0], eq[1]);
     const gcard = !document.getElementById('selCard').hidden && !document.querySelector('#selCard [data-act="gter"]') && !document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
@@ -1871,8 +1880,9 @@ async function deckChecks(browser, url) {
   check(r.tree && r.room && r.tile, '데크: 나무·건물·바닥 타일도 데크 위에');
   check(r.cap, '데크: 데크 위에 지은 건물은 데크 높이에 섬');
   check(r.moved && r.saved, '데크: 땅으로 옮기면 데크 높이가 풀리고, 저장 후에도 유지');
-  check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (걷어낸 반값을 뺀 값)');
-  check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(걷어낸 반값을 뺀 값) 걷어낼 수 있음');
+  check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (새 바닥 값 + 철거비)');
+  check(r.farea, '바닥 넓이 단추(1×1~4×2): 고른 넓이를 한 번에 깔고, 겹친 다른 바닥은 새 바닥으로 바뀌며 값은 설치비 + 철거비, 넓이만큼 건너가고 되돌리기는 한꺼번에 ' + JSON.stringify(r.fareaDbg || ''));
+  check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(새 바닥 값 + 철거비) 걷어낼 수 있음(철거비)');
   check(r.order, '건축 목록: 지금 지을 수 있는 것부터 싼 순서로');
   check(r.gcard && r.gclose, '빈 땅: 누르면 바닥 깔기 카드(땅 높이기·경사로 없음), 카드가 열려 있으면 닫기만');
   check(r.novel && r.wander, '방문자: 새 건물에 끌리고, 발길이 적은 바닥으로 둘러봄');

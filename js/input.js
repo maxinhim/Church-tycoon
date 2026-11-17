@@ -134,6 +134,7 @@ function onPanel0(e){
   else if(a==='linkf'){var lbd=bById(UI.sel),lw=linkDoor(lbd,v);UI.linkPick=null;if(lw){toast(lw,1600);sfx('error',.4);}else{toast('입구까지 '+D[v].name+'을(를) 깔았어요',1600);sfx('floor',.5);}renderDetail();hud(true);}
   else if(a==='undoLast'){var ul=UI.lastBuilt,un=ul&&bById(ul.bid)?defOf(bById(ul.bid)).name:'';if(unbuild(ul))toast(un+'을(를) 되돌렸어요',1400);UI.lastBuilt=null;renderDetail();hud(true);}
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
+  else if(a==='fsz'){var fq=String(v).split('x');UI.fsz=[+fq[0],+fq[1]];sfx('click',.35);renderPanel();}   // 바닥 한 번에 까는 넓이
   else if(a==='pslope'){UI.pc.slope=+v;UI.pbarOpen=false;renderDetail();}
   else if(a==='mgr'){var mb0=UI.sel;if(mb0&&mgrRole(bById(mb0))){openScreen('mgr');UI.mgrB=mb0;renderScreen();}}
   else if(a==='supopen'){var sb0=UI.sel;if(sb0&&supSlots(bById(sb0))){openScreen('sup');UI.supB=sb0;renderScreen();}}

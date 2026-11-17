@@ -64,13 +64,13 @@ function scrStatusClick(a,v,el){
   if(a==='mexp'){UI.mexp=UI.mexp===v?null:v;renderScreen();return true;}
   if(a==='inclaimall'){
     var all=claimAllInd();
-    if(all.n){scrToast('지표 보상 '+all.n+'개 · 자금 +'+fmt(all.g),2600);setTimeout(function(){sfx('join',.6,0);},180);UI.scrSel=null;}
+    if(all.n){scrToast('지표 보상 '+all.n+'개 · 자금 +'+fmt(all.g),2600);sfx('reward',.6,0);UI.scrSel=null;}
     else{scrToast('받을 보상이 없어요',1600);sfx('error',.4);}
     renderScreen();hud(true);return true;
   }
   if(a==='inclaim'){
     var g=claimInd(v);
-    if(g){scrToast(INDK[v].n+' 보상 +'+fmt(g),2400);setTimeout(function(){sfx('join',.6,0);},180);}
+    if(g){scrToast(INDK[v].n+' 보상 +'+fmt(g),2400);sfx('reward',.6,0);}
     else{scrToast('받을 보상이 없어요',1600);sfx('error',.4);}
     renderScreen();hud(true);return true;
   }

@@ -203,7 +203,7 @@ function ppLeftText(p){return p.tr&&!p.tr.ready?durText(Math.max(1/7,p.tr.end-ev
 function peopleTick(){
   var now=evNow(),n=0;
   (S.people||[]).forEach(function(p){if(p.tr&&!p.tr.ready&&now>=p.tr.end){p.tr.ready=true;n++;toast(p.n+' 성도의 '+nodeTr(p.tr.to,p.g)+'이(가) 끝났어요 · '+nodeDone(p.tr.to,p.g)+'을(를) 눌러 주세요',2800);}});
-  if(n){sfx('bell',.5,0);save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();}
+  if(n){sfx('done',.6,0);save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();}
 }
 // 임명: 교육이 끝난 사람을 다음 단계로. 부교역자면 성도 명단에서 사역자로 옮긴다. 돌려주는 글은 축하 문구(못 하면 null)
 function ppAppoint(id){

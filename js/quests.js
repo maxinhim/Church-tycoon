@@ -66,7 +66,7 @@ function questDone(q){
     var lines=['후원금 +'+fmt(q.m),'사역 경험 +'+q.xp];if(q.rep)lines.push('신뢰 +'+q.rep);
     celebrate(q,lines,'퀘스트 완료');
   }else{
-    toast('퀘스트 완료 · '+q.n+' · +'+fmt(q.m)+' · 사역 경험 +'+q.xp+(nx&&nx.g==='first'?' · 다음: '+nx.n:''),2800);sfx('coins',.5,0);
+    toast('퀘스트 완료 · '+q.n+' · +'+fmt(q.m)+' · 사역 경험 +'+q.xp+(nx&&nx.g==='first'?' · 다음: '+nx.n:''),2800);sfx('reward',.55,0);
   }
   recalc();save();
 }
