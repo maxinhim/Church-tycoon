@@ -33,6 +33,18 @@ function teamEff(){var o={};for(var k in STAFF)o[k]=teamUnits((S.staff&&S.staff[
 function teamFx(k,lv){return STAFF[k].fx(teamUnits(lv));}
 /* 달란트 */
 function talentTotal(){return TALENT_PER_LV*ilState().xp.lv;}
+/* 사역팀 한 팀에 세운 봉사자(S.servants[팀] = 사람 id 목록, 최대 TEAM_SERVANTS_MAX) */
+function teamServants(k){S.servants=S.servants||{};return S.servants[k]||(S.servants[k]=[]);}
+function teamServeWhy(k,pid){
+  var p=ppById(pid),L=teamServants(k);
+  if(!STAFF[k]||!p)return '찾을 수 없어요';
+  if(ppClass(p)==='saint')return '봉사자부터 세울 수 있어요 (제자반을 마쳐야 해요)';
+  if(L.length>=TEAM_SERVANTS_MAX)return '팀 자리가 가득 찼어요 (최대 '+TEAM_SERVANTS_MAX+'명)';
+  for(var q in STAFF)if(teamServants(q).indexOf(pid)>=0)return '이미 다른 사역팀이에요';
+  return '';
+}
+function teamServe(k,pid){var w=teamServeWhy(k,pid);if(w)return w;teamServants(k).push(pid);return '';}
+function teamUnserve(k,pid){S.servants[k]=teamServants(k).filter(function(i){return i!==pid;});}
 function talentUsed(){var t=0;for(var k in STAFF)t+=(S.staff&&S.staff[k])||0;return t;}
 function talentFree(){return talentTotal()-talentUsed();}
 // 달란트가 모자라면(옛 저장 등) 가장 높은 팀부터 줄인다. 줄였으면 true

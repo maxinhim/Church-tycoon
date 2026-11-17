@@ -105,7 +105,7 @@ var OFFICE={
   deacon:{name:'집사',desc:'목양 수용력 +6, 운영비 -1% (최대 -12%)'},
   kwonsa:{name:'권사',desc:'목양 수용력 +10, 만족 +0.4 (최대 +6)'},
   elder:{name:'장로',desc:'목양 수용력 +18, 이탈 -2% (최대 -20%), 평판 +0.1/주'},
-  cstaff:{name:'교회직원',desc:'운영비 −3%, 건물 노후 −5% (섬김 갈래 합쳐 최대 −25%·−40%)'}
+  cstaff:{name:'사역간사',desc:'운영비 −3%, 건물 노후 −5% (섬김 갈래 합쳐 최대 −25%·−40%)'}
 };
 function offTotal(s){s=s||S;return (s.off.deacon||0)+(s.off.kwonsa||0)+(s.off.elder||0)+(s.off.cstaff||0);}
 

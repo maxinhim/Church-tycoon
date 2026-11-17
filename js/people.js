@@ -17,7 +17,7 @@ function ppPick(seed,k,arr){return arr[Math.floor(ppRand(seed,k)*arr.length)%arr
 function makePerson(){
   var g=Math.random()<.5?'m':'f',seed=Math.floor(Math.random()*1e6);
   return {id:S.ppId++,n:SURN[Math.floor(Math.random()*SURN.length)]+(g==='m'?PP_MALE:PP_FEMALE)[Math.floor(Math.random()*20)],g:g,seed:seed,lv:1,xp:0,node:'new',
-    gift:Object.keys(FIELDS)[Math.floor(Math.random()*5)],jw:S.week,vw:-99,gw:-99,tr:null};
+    gift:Object.keys(FIELDS)[Math.floor(Math.random()*5)],jw:S.week,vw:-99,gw:-99,tr:null,assignedSaints:[],cls:'saint'};
 }
 function ppById(id){var L=S.people||[];for(var i=0;i<L.length;i++)if(L[i].id===id)return L[i];return null;}
 function ppNode(p){return PP_TREE[p.node]||PP_TREE.new;}
@@ -25,7 +25,35 @@ function nodeName(id,g){var t=PP_TREE[id];return g==='f'&&t.nf?t.nf:t.n;}
 function nodeAct(id,g){var t=PP_TREE[id];return g==='f'&&t.actf?t.actf:t.act;}
 function nodeTr(id,g){var t=PP_TREE[id];return g==='f'&&t.trf?t.trf:t.tr;}
 function nodeDone(id,g){var t=PP_TREE[id];return g==='f'&&t.donef?t.donef:t.done;}
-function ppRankName(p){return nodeName(p.node,p.g);}
+function ppRankName(p){return p.ext?'청빙직원':nodeName(p.node,p.g);}
+/* 명단 구분: 성도(saint) → 제자반 수료하면 봉사자(volunteer) → 각 갈래 끝이거나 청빙직원이면 직원(staff).
+   부교역자가 되면 사람 명단(S.people)에서 S.assoc(직원)으로 옮겨 간다. 구분은 p.cls에 적고 단계가 바뀔 때마다 다시 정한다 */
+function ppClass(p){
+  if(p.ext||PP_STAFF_NODES.indexOf(p.node)>=0)return 'staff';
+  return ppDepth(p)>=PP_VOL_D?'volunteer':'saint';
+}
+function ppReclass(p,quiet){
+  var c=ppClass(p);
+  if(p.cls!==c){
+    if(p.cls&&!quiet){addLog(p.n+' 님이 '+(c==='volunteer'?'봉사자':c==='staff'?'직원':'성도')+' 명단으로 옮겨 갔어요');}
+    p.cls=c;if(c==='staff')p.assignedSaints=[];
+  }
+  return c;
+}
+function ppSaints(){return (S.people||[]).filter(function(p){return ppClass(p)==='saint';});}
+function ppVolunteers(){return (S.people||[]).filter(function(p){return ppClass(p)==='volunteer';});}
+function ppStaffPeople(){return (S.people||[]).filter(function(p){return ppClass(p)==='staff';});}
+// 소그룹 리더(리더 갈래)에게 맡긴 성도 칸: assignedSaints = 성도 id 목록. 칸 수는 그 단계의 cap
+function ppAssignWhy(leader,saint){
+  if(!leader||!saint)return '사람을 찾을 수 없어요';
+  if(ppTrack(leader)!=='B'||leader.node==='seminary')return '소그룹 리더가 아니에요';
+  if(ppClass(saint)!=='saint')return '성도만 맡길 수 있어요';
+  if((leader.assignedSaints||[]).length>=(ppNode(leader).cap||0))return '맡을 자리가 없어요';
+  if((S.people||[]).some(function(q){return (q.assignedSaints||[]).indexOf(saint.id)>=0;}))return '이미 다른 리더가 맡고 있어요';
+  return '';
+}
+function ppAssign(lid,sid){var l=ppById(lid),s=ppById(sid),why=ppAssignWhy(l,s);if(why)return why;l.assignedSaints.push(sid);return '';}
+function ppUnassign(lid,sid){var l=ppById(lid);if(l)l.assignedSaints=(l.assignedSaints||[]).filter(function(x){return x!==sid;});}
 function ppTrack(p){return ppNode(p).t||'';}
 function ppDepth(p){return ppNode(p).d||0;}
 // 세례 이상 / 직분자(집사·장로·권사·교회직원) / 제자반 다음 갈래에 들어선 사람
@@ -54,6 +82,14 @@ function syncPeople(){
     var give=function(n,node,g){for(var k=0;k<2;k++)for(var i=0;i<S.people.length&&n>0;i++){var p=S.people[i];if(p.node==='new'&&(k||!g||p.g===g)){p.node=node;if(g)p.g=g;p.lv=Math.max(p.lv,PP_TREE[node].lv);n--;}}};
     give(S.off.elder||0,'elder','m');give(S.off.kwonsa||0,'elder','f');give(S.off.deacon||0,'deacon',null);
   }
+  // 슬롯 배열: 성도 칸(assignedSaints)·건물 보조 인력(supportStaff)·사역팀 봉사자(S.servants). 예전 저장에 없으면 채우고, 없는 사람은 비운다
+  var ids={};S.people.forEach(function(p){ids[p.id]=1;});
+  S.people.forEach(function(p){
+    ppReclass(p,true);
+    p.assignedSaints=(p.assignedSaints||[]).filter(function(i){return ids[i]&&ppTrack(p)==='B'&&p.node!=='seminary'&&ppClass(p)!=='staff';});
+  });
+  (S.buildings||[]).forEach(function(b){b.supportStaff=(b.supportStaff||[]).filter(function(i){return ids[i];});});
+  S.servants=S.servants||{};for(var tk in STAFF)S.servants[tk]=(S.servants[tk]||[]).filter(function(i){return ids[i]&&ppClass(ppById(i))!=='saint';}).slice(0,TEAM_SERVANTS_MAX);
   // 직분 수와 합계 (MOD·영성·헌금이 읽는다)
   var o={deacon:0,kwonsa:0,elder:0,cstaff:0},a={bapt:0,grad:0,flat:0,sp:0,lv:0,cap:0,upk:0,dec:0};
   S.people.forEach(function(p){
@@ -192,11 +228,12 @@ function ppAppoint(id){
   var to=p.tr.to,msg;
   if(to==='assoc'){
     if(S.assoc.length>=assocSlots())return null;
+    p.assignedSaints=[];   // 부교역자가 되면 맡던 성도는 모두 풀린다
     S.assoc.push({name:p.n,title:'부목사',field:p.gift,skill:5,pay:ASSOC_HOME_PAY,fee:0,home:true,g:p.g,seed:p.seed,lv:1,xp:0,cw:-99});
     S.people=S.people.filter(function(q){return q!==p;});S.members=Math.max(0,S.members-1);
     msg=p.n+' 부목사님이 사역을 시작해요 (별 5개 · '+FIELDS[p.gift].name+')';
   }else{
-    p.node=to;p.tr=null;
+    p.node=to;p.tr=null;ppReclass(p);
     if(to==='bapt'){S.evW=S.evW||{};S.evW.baptism=S.week;gainRep(.5);}
     else if(PP_TREE[to].d>=4)gainRep(Math.min(4,PP_TREE[to].d-3));
     msg=p.n+' 성도가 '+(to==='bapt'?'세례를 받았어요':to==='seminary'?'신학교를 마쳤어요':nodeName(to,p.g)+'(으)로 세워졌어요');

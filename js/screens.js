@@ -218,7 +218,10 @@ function ppOrder(a,b){
 // 지금 화면(탭)에 보이는 성도 목록 — 일괄 심방·선물도 이 목록에 한다
 function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
-  if(UI.scr==='officers')return all.filter(function(p){return ppTrack(p)===(tab==='off'?'A':tab);}).sort(ppOrder);
+  // 봉사자 화면: 갈래별 봉사자·직원. 제자반을 갓 마쳐 아직 갈래가 없는 봉사자는 첫 탭에서 갈래를 고른다
+  if(UI.scr==='officers')return all.filter(function(p){return ppTrack(p)===(tab==='off'?'A':tab)||(tab==='off'&&p.node==='disciple');}).sort(ppOrder);
+  // 성도 화면: 제자반 수료 전 성도만 (봉사자·직원은 봉사자 화면으로 옮겨 간다, ppClass)
+  all=all.filter(function(p){return ppClass(p)==='saint';});
   return all.filter(function(p){var d=ppDepth(p);return tab==='care'?!!careOf(p):tab==='new'?d===0:tab==='grow'?d>=1&&d<=3:tab==='lead'?d>=4:tab==='todo'?((p.tr&&p.tr.ready)||ppCanStep(p)):true;}).sort(ppOrder);
 }
 // 직분자·교역 탭 위: 그 탭에 맞는 행사를 아이콘으로 바로 열고 보상을 받는다 (행사 화면과 같은 행사)
@@ -446,7 +449,7 @@ function hcList(){
 function hcFind(id){var s=String(id).split(':'),t=s[0],i=+s[1],c=t==='assoc'?(S.cands||[])[i]:(VOL_TYPES.indexOf(t)>=0?volCands(t)[i]:null);return c?{id:id,t:t,i:i,c:c}:null;}
 /* 초상화: 후보마다 8명 중 한 명(c.pi, hiredata.js) */
 function hcPortrait(x){return hirePortrait(x.c,x.t);}
-function hcRole(x){return x.t==='assoc'?x.c.title:'교회직원';}
+function hcRole(x){return x.t==='assoc'?x.c.title:'청빙직원';}
 function hcStars(n){return '<span class="hst" aria-label="능력 별 '+n+'개">'+'★★★★★'.slice(0,n)+'<i>'+'★★★★★'.slice(n)+'</i></span>';}
 function hcCardHtml(x){
   var c=x.c,poor=S.money<c.fee;

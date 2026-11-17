@@ -64,7 +64,7 @@ var WEEKS_PER_MONTH=5,YEAR_WEEKS=60;
    · 성장 단계(PP_TREE): 새가족 → 세례 → 양육반 → 제자반 → 세 갈래
        직분: 헌신성도 → 집사 → 장로(남)·권사(여)          (Lv 70)
        교역: 소그룹 리더 → 공동체 리더 → 간사 → 신학교 입학 → (부교역자로 섭외)   (Lv 70)
-       섬김: 섬김이 → 사역팀장 → 사역부장 → 교회직원       (Lv 70)
+       섬김: 섬김이 → 사역팀장 → 사역부장 → 사역간사       (Lv 70)
      단계마다 lv(필요 호감 레벨)·cost(값)·dur(교육 주)·give(매주 헌금 더)·sp(영성 자리)·cap(목양 수용력)·upk(운영비 −)·dec(노후 −)
    · 헌금: 성도들의 평균 레벨마다 +PP_GIVE_LV. 영성 자리 = Σ((레벨−1) × PP_SPIRIT_LV + 단계 sp) × PP_SPIRIT_K
    · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자도 격려(ASSOC_CHEER)로 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
@@ -81,13 +81,16 @@ var PP_TREE={
   sgl:{n:'소그룹 리더',act:'소그룹 리더',tr:'리더 훈련',done:'소그룹 리더 세우기',lv:25,cost:250,dur:4,d:4,t:'B',give:2,sp:.8,cap:8,next:['cml']},
   cml:{n:'공동체 리더',act:'공동체 리더',tr:'공동체 리더 훈련',done:'공동체 리더 세우기',lv:40,cost:450,dur:6,d:5,t:'B',give:3,sp:1,cap:15,next:['kanji']},
   kanji:{n:'간사',act:'간사',tr:'간사 수련',done:'간사 임명',lv:55,cost:800,dur:8,d:6,t:'B',give:4,sp:1.3,cap:20,next:['seminary']},
-  seminary:{n:'신학 수료',act:'신학교 입학',tr:'신학교 수업',done:'졸업 축하',lv:70,cost:2500,dur:12,d:7,t:'B',give:120,sp:2,cap:25,next:['assoc']},
+  seminary:{n:'예비신학생',act:'신학교 입학',tr:'신학교 수업',done:'졸업 축하',lv:70,cost:2500,dur:12,d:7,t:'B',give:120,sp:2,cap:25,next:['assoc']},
   assoc:{n:'부교역자',act:'부교역자로 섭외',tr:'부교역자 수련',done:'부교역자 임명',lv:70,cost:1200,dur:3,d:8,t:'B',next:[]},
   server:{n:'섬김이',act:'섬김이',tr:'섬김 훈련',done:'섬김이 세우기',lv:25,cost:200,dur:4,d:4,t:'C',give:2,sp:.4,cap:2,upk:.005,dec:.01,next:['tlead']},
   tlead:{n:'사역팀장',act:'사역팀장',tr:'팀장 훈련',done:'사역팀장 임명',lv:40,cost:400,dur:6,d:5,t:'C',give:3,sp:.5,cap:4,upk:.01,dec:.02,next:['dlead']},
   dlead:{n:'사역부장',act:'사역부장',tr:'부장 훈련',done:'사역부장 임명',lv:55,cost:700,dur:8,d:6,t:'C',give:5,sp:.6,cap:6,upk:.015,dec:.03,next:['cstaff']},
-  cstaff:{n:'교회직원',act:'교회직원 임명',tr:'직원 수습',done:'교회직원 임명',lv:70,cost:1500,dur:10,d:7,t:'C',give:8,sp:.8,cap:8,upk:.03,dec:.05,next:[]}
+  cstaff:{n:'사역간사',act:'사역간사 임명',tr:'간사 수습',done:'사역간사 임명',lv:70,cost:1500,dur:10,d:7,t:'C',give:8,sp:.8,cap:8,upk:.03,dec:.05,next:[]}
 };
+/* 명단 구분 (people.js ppClass): 제자반 수료(깊이 PP_VOL_D) 이상은 '봉사자', 각 갈래의 끝(장로·권사 / 사역간사 / 부교역자)과 청빙직원은 '직원',
+   그 앞은 '성도'. 사역팀 한 팀에 세울 수 있는 봉사자는 TEAM_SERVANTS_MAX명 */
+var PP_VOL_D=3,PP_STAFF_NODES=['elder','cstaff','assoc'],TEAM_SERVANTS_MAX=6;
 var PP_TRACK={A:{n:'직분자',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'리더',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김이',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김이'}};
 var PP_UPK_MAX=.25,PP_DEC_MAX=.4;
 var PP_GIVE_LV=.005;

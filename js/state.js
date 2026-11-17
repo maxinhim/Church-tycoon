@@ -45,7 +45,7 @@ function newState(dk){
     mood:70,cov:{seat:1,spirit:1,fel:1,care:1,comf:1,park:1,past:1},
     hist:[],log:[],over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
     grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{communion:-2},lvl:null,
-    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:3,qd:{},qb:{},qxp:0,tv:0,il:{},ind:null,careDone:0,cares:[],careId:1,hrV:1,hires:[],hireId:1,hireN:0,hcand:{},
+    wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:3,qd:{},qb:{},qxp:0,tv:0,il:{},ind:null,servants:{},careDone:0,cares:[],careId:1,hrV:1,hires:[],hireId:1,hireN:0,hcand:{},
     freeMgr:typeof window!=='undefined'&&!!window.__CT_TEST&&!window.__CT_MGR};
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}

@@ -32,7 +32,7 @@ function build(id,x,y,face){
   var d=D[id];face=fixFace(d,face);
   if(S.money<d.cost||!canPlace(d,x,y,face)||tierWhy(id)||d.retired||d.hidden||propCutWhy(d,x,y))return false;
   S.money-=d.cost;
-  var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0,bw:S.week};setPlaceLevel(nb,d,x,y,face);
+  var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0,bw:S.week,supportStaff:[]};setPlaceLevel(nb,d,x,y,face);
   S.buildings.push(nb);addFresh(d.beauty);noteNew();
   rebuildOcc();bump();recalc();
   save();return true;
