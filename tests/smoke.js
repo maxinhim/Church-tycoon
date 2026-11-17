@@ -583,7 +583,7 @@ async function ministryChecks(browser, url) {
       // 성도가 줄면 마음이 덜 붙은 사람부터 떠나고, 한 주가 지나면 조금씩 정이 든다
       const keep = S.people.find(z => z.node === 'elder'); S.members = 6; recalc(); pe.shrink = S.people.length === 6 && !!ppById(keep.id);
       const x0 = S.people[S.people.length - 1].xp, l0 = S.people[S.people.length - 1].lv; peopleWeek(); pe.week = S.people[S.people.length - 1].xp > x0 || S.people[S.people.length - 1].lv > l0;
-      pe.say = S.people.every(z => typeof ppThought(z) === 'string' && ppThought(z).length > 3) && /<svg/.test(portraitSvg(S.people[0]));
+      pe.say = S.people.every(z => typeof ppThought(z) === 'string' && ppThought(z).length > 3) && /members\/member_[fm]\d+\.png/.test(portraitHtml(S.people[0]));
       // 예전 저장: rank(0~4)는 단계로, 수로만 세던 직분은 사람에게 나눠 준다
       S.people = [{ id: 1, n: '가', g: 'm', seed: 1, lv: 5, xp: 0, rank: 2, gift: 'edu', jw: 0, vw: -99, gw: -99, tr: null }]; S.members = 1; S.ppId = 2; recalc(); pe.legacy = S.people[0].node === 'deacon' && S.people[0].rank === undefined && S.off.deacon === 1;
       S.people = undefined; S.members = 30; S.off = { deacon: 3, kwonsa: 1, elder: 2 }; recalc(); pe.legacy = pe.legacy && S.people.length === 30 && S.off.deacon === 3 && S.off.kwonsa === 1 && S.off.elder === 2;
@@ -715,7 +715,7 @@ async function ministryChecks(browser, url) {
   await page.evaluate(() => { S.members = 8; recalc(); });   // 손대지 않은 30주 뒤라 성도가 거의 없으니 다시 채운다
   await page.click('#fab [data-fab="people"]');
   const ppScr = await page.evaluate(() => { const o = {}; const cards = document.querySelectorAll('#scrBody .ppc');
-    o.grid = !document.getElementById('scr').hidden && cards.length === S.people.length && cards.length === S.members && !!cards[0].querySelector('svg.pt') && !!cards[0].querySelector('.hlv') && /성도/.test(document.getElementById('scrTitle').textContent);
+    o.grid = !document.getElementById('scr').hidden && cards.length === S.people.length && cards.length === S.members && !!cards[0].querySelector('img.pt') && !!cards[0].querySelector('.hlv') && /성도/.test(document.getElementById('scrTitle').textContent);
     cards[0].click(); const dl = document.getElementById('scrDlg'), id = +cards[0].dataset.v, p = ppById(id);
     o.dlg = !dl.hidden && dl.textContent.includes(p.n) && /“.+”/.test(dl.textContent) && /매주 헌금/.test(dl.textContent) && !!dl.querySelector('[data-act="ppvisit"]') && !!dl.querySelector('[data-act="ppgift"]') && /다음 단계/.test(dl.textContent) && /세례/.test(dl.querySelector('.sopt').textContent) && dl.querySelector('[data-act="pptrain"]').disabled === (p.lv < PP_TREE.bapt.lv || S.money < PP_TREE.bapt.cost); o.dbg = [dl.textContent.slice(0, 200)];
     const m0 = S.money; dl.querySelector('[data-act="ppvisit"]').click(); o.visit = S.money === m0 - PP_VISIT.cost && document.querySelector('#scrDlg [data-act="ppvisit"]').disabled;

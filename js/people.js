@@ -221,20 +221,11 @@ function ppThought(p){
   else pool=S.mood<45?PP_SAY.low:(S.mood>=60||p.lv>=4?PP_SAY.good:PP_SAY.ok);
   return pool[Math.floor(ppRand(p.seed,S.week+3)*pool.length)%pool.length];
 }
-/* 초상화: 씨앗 값으로 그리는 간단한 얼굴 (나중에 생성 이미지로 바꾼다) */
-function portraitSvg(o){
-  var s=o.seed||1,f=o.g==='f',skin=ppPick(s,1,PP_SKIN),hair=ppPick(s,2,PP_HAIR),shirt=ppPick(s,3,PP_SHIRT),bg=ppPick(s,4,PP_BG),st=Math.floor(ppRand(s,5)*3);
-  var h='<svg class="pt" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="'+bg+'"/>';
-  // 뒷머리(여성: 긴 머리·단발·묶음), 어깨, 목, 얼굴
-  if(f)h+=st===0?'<path d="M14 30c0-14 8-20 18-20s18 6 18 20v18H14z" fill="'+hair+'"/>':st===1?'<path d="M15 30c0-13 8-19 17-19s17 6 17 19v8H15z" fill="'+hair+'"/>':'<circle cx="32" cy="10" r="6" fill="'+hair+'"/>';
-  h+='<path d="M10 64c1-13 10-18 22-18s21 5 22 18z" fill="'+shirt+'"/><rect x="27" y="38" width="10" height="10" rx="3" fill="'+skin+'"/><circle cx="32" cy="28" r="13" fill="'+skin+'"/>';
-  // 앞머리
-  if(f)h+='<path d="M19 27c0-10 6-15 13-15s13 5 13 15c-4-6-9-9-13-9s-9 3-13 9z" fill="'+hair+'"/>';
-  else h+=st===0?'<path d="M19 26c0-9 6-14 13-14s13 5 13 14c-3-5-8-7-13-7s-10 2-13 7z" fill="'+hair+'"/>':st===1?'<path d="M19 25c1-9 7-13 13-13s12 4 13 13l-4-5H23z" fill="'+hair+'"/>':'<path d="M20 24c2-7 7-11 12-11s10 4 12 11c-4-3-8-4-12-4s-8 1-12 4z" fill="'+hair+'"/>';
-  h+='<circle cx="27" cy="29" r="1.6" fill="#2b2522"/><circle cx="37" cy="29" r="1.6" fill="#2b2522"/><path d="M28 34.5q4 3 8 0" stroke="#2b2522" stroke-width="1.4" fill="none" stroke-linecap="round"/>';
-  if(ppRand(s,6)<.22)h+='<g fill="none" stroke="#2b2522" stroke-width="1.2"><circle cx="27" cy="29" r="3.6"/><circle cx="37" cy="29" r="3.6"/><path d="M30.6 29h2.8"/></g>';
-  return h+'</svg>';
-}
+/* 성도 아이콘: 성별(g)에 맞는 생성 초상화(assets/portraits/icons/members, tools/members_icons.py)에서 씨앗(seed)으로 한 명을 고른다.
+   같은 사람은 언제나 같은 얼굴이다. 이름은 성별로 지으므로(PP_MALE·PP_FEMALE) 그림과 어긋나지 않는다 */
+var MEMBER_ICONS={f:11,m:13};
+function memberIcon(o){var g=o.g==='f'?'f':'m',n=MEMBER_ICONS[g];return 'assets/portraits/icons/members/member_'+g+(1+Math.floor(ppRand(o.seed||1,4)*n)%n)+'.png';}
+function portraitHtml(o){return '<img class="pt" alt="" src="'+memberIcon(o)+'">';}
 /* 부교역자의 레벨: 격려하면 오르고, 레벨마다 효과가 커진다 */
 function asNeed(lv){return AS_XP0+AS_XP_K*lv;}
 function asGain(a,xp){
