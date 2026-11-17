@@ -223,7 +223,7 @@ function ppThought(p){
 }
 /* 성도 아이콘: 성별(g)에 맞는 생성 초상화(assets/portraits/icons/members, tools/members_icons.py)에서 씨앗(seed)으로 한 명을 고른다.
    같은 사람은 언제나 같은 얼굴이다. 이름은 성별로 지으므로(PP_MALE·PP_FEMALE) 그림과 어긋나지 않는다 */
-var MEMBER_ICONS={f:11,m:13};
+var MEMBER_ICONS={f:23,m:25};
 function memberIcon(o){var g=o.g==='f'?'f':'m',n=MEMBER_ICONS[g];return 'assets/portraits/icons/members/member_'+g+(1+Math.floor(ppRand(o.seed||1,4)*n)%n)+'.png';}
 function portraitHtml(o){return '<img class="pt" alt="" src="'+memberIcon(o)+'">';}
 /* 부교역자의 레벨: 격려하면 오르고, 레벨마다 효과가 커진다 */
