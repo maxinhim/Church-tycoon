@@ -90,13 +90,18 @@ var PP_TREE={
 };
 /* 명단 구분 (people.js ppClass): 제자반 수료(깊이 PP_VOL_D) 이상은 '봉사자', 각 갈래의 끝(장로·권사 / 사역간사 / 부교역자)과 청빙직원은 '직원',
    그 앞은 '성도'. 사역팀 한 팀에 세울 수 있는 봉사자는 TEAM_SERVANTS_MAX명 */
-var PP_VOL_D=3,PP_STAFF_NODES=['elder','cstaff','assoc'];
+var PP_VOL_D=3,PP_STAFF_NODES=['elder','assoc'];   // 섬김 갈래 끝(사역간사)은 봉사자로 남아 사역팀만 맡는다. 청빙직원(p.ext)은 직원
 /* 할당 슬롯 (봉사자 화면·사역팀·건물 카드)
    · 소그룹 리더: 맡을 수 있는 성도 칸 = 1 + 호감 Lv ÷ LEAD_SLOT_LV (단계의 cap이 위쪽 한계, 예비신학생은 0)
    · 사역팀: 섬김이(섬김 갈래) 최대 TEAM_MAX명 — 사역팀의 단계는 배치한 섬김이 수와 같다
    · 건물: 메인 관리자 1명 + 보조 인력(직분자 갈래) 칸 = 티어 1 SUP_SLOTS[0], 티어 2 SUP_SLOTS[1], 대예배당 SUP_SLOTS[2] */
 var LEAD_SLOT_LV=10,SUP_SLOTS=[1,2,3];
-var PP_TRACK={A:{n:'직분자',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'리더',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김이',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김이'}};
+/* 슬롯 효과
+   · 리더 성도 칸: 맡은 성도는 매주 호감 경험치 +LEAD_SAINT_XP × (1 + 리더 호감 Lv × LEAD_SAINT_LV)
+   · 건물 보조 칸: 직분자 한 명마다 건물 성능(효과·회전) +(SUP_BUFF[단계] + 호감 Lv × SUP_BUFF_LV)
+   · 사역팀 칸: 팀 효과 × 섬김이 증폭(1 + 배치한 섬김이 평균(호감 Lv × TEAM_SV_LV + TEAM_SV_NODE[단계])) */
+var LEAD_SAINT_XP=1.5,LEAD_SAINT_LV=.02,SUP_BUFF={devoted:.04,deacon:.06,elder:.1},SUP_BUFF_LV=.001,TEAM_SV_LV=.004,TEAM_SV_NODE={server:0,tlead:.03,dlead:.06,cstaff:.1};
+var PP_TRACK={A:{n:'직분자',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'리더',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김이',desc:'섬김이 → 사역팀장 → 사역부장 → 사역간사. 사역팀에서 일하며 운영비와 건물 노후를 줄이는 섬김이'}};
 var PP_UPK_MAX=.25,PP_DEC_MAX=.4;
 var PP_GIVE_LV=.005;
 // 교육 행사: 보상 수령 때 모든 성도 경험치 + xp. 값 = base + 성도 × per
@@ -278,12 +283,14 @@ var ASC_EV={
    · 관리자가 있어야 가동하는 건물: 예배(추가 예배당) → 부교역자, 교제(소그룹실·친교실) → 직분자·리더, 매장 → 직원. 처음부터 있는 대예배당은 담임목사가 맡는다
    · 성능 배율(효과·회전): 교회에서 기른 사람 MGR_IN_K × (1 + 호감 Lv × MGR_PLV_K, 부교역자는 레벨마다 MGR_LV_K), 밖에서 청빙한 사람 MGR_EX_K0 + 별 × MGR_EX_STEP
    · 건물을 맡은 사람은 성도 돌봄(자동 심방)에서 빠진다 — 둘 중 하나만
-   · 외부 청빙: 후보 3명. 월 사례비는 별 등급표(부교역자 ASSOC_PAY, 청빙직원 STAFF_PAY), 청빙비는 없다(HIRE_FEE=0), 다시 뽑기 HIRE_REROLL.
+   · 외부 청빙: 후보 3명. 월 사례비는 별 등급표(부교역자 ASSOC_PAY, 청빙직원 STAFF_PAY), 청빙비는 없다(HIRE_FEE=0), 후보 칸마다 한 번 교체 HIRE_REROLL.
      처음 HIRE_EARLY번은 별 1개짜리 사례비 낮은 후보가 반드시 한 명 나온다 */
-var MGR_NEED={worship:'pastor',fellow:'pastor',shop:'staff'};   // 예배·교제 건물은 부교역자만, 매장은 직원(교회직원·청빙한 직원)만
-var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['cstaff'];
+var MGR_NEED={worship:'pastor',fellow:'pastor',shop:'staff'};   // 예배·교제 건물은 부교역자만, 매장은 청빙직원만
+var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'];   // 매장 관리자는 청빙직원(p.ext)만
 var MGR_IN_K=1.3,MGR_PLV_K=.004,MGR_LV_K=.04,MGR_EX_K0=.7,MGR_EX_STEP=.08;
-var HIRE_REROLL=600,HIRE_EARLY=3;
+/* 이력서: 청빙 후보는 처음 HIRE_CAND0명씩, 그 뒤로는 매주 HIRE_RESUME_P 확률로 부교역자나 청빙직원 이력서가 한 장 도착해 목록에 더해진다(갈래마다 최대 HIRE_CAND_MAX명).
+   후보 칸마다 한 번만 HIRE_REROLL만원을 내고 다른 후보로 바꿀 수 있다 */
+var HIRE_REROLL=800,HIRE_EARLY=3,HIRE_CAND0=2,HIRE_CAND_MAX=4,HIRE_RESUME_P=.3;
 
 /* 대예배당(`main`, 시작 건물): 같은 예배당보다 성능(효과·정원·좌석)이 MAIN_K배 */
 var MAIN_K=2.5;

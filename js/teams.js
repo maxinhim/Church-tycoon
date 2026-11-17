@@ -4,7 +4,8 @@
    · S.servants[팀] = 배치한 사람 id 목록. 팀의 단계 S.staff[팀] = 배치한 사람 수(teamSync가 맞춘다)이고 효과가 생긴다
    · 넣고 빼고 다른 팀으로 옮기는 데 값이 들지 않고, 사례비도 없다. 한 사람은 한 팀만
    · 효과는 단계 효과 배수(TEAM_K × TEAM_CURVE[단계], 단계가 오를수록 늘어나는 폭이 줄어듦)에 비례한다 (balance.js)
-   · 건물·행사처럼 교회 Level로 열린다(goal: LV_TIER 단계). 행사 화면의 '사역팀' 탭에서 다룬다 */
+   · 건물·행사처럼 교회 Level로 열린다(goal: LV_TIER 단계). 봉사자 화면 › 섬김이 탭의 오른쪽 60%에서 다룬다
+   · 배치한 섬김이의 능력치(svPow: 호감 Lv·단계)가 팀 효과를 증폭한다(teamAmp) */
 var tP=function(v){return Math.round(v*100)+'%';},tN=function(v){return String(Math.round(v*10)/10);};
 var STAFF={
   evang:{name:'전도팀',ic:'📣',col:'#d98a3a',goal:0,d:'거리에서 이웃을 만나 교회를 알려요',
@@ -29,11 +30,15 @@ var STAFF={
 // 단계 → 효과 배수
 function teamUnits(lv){return TEAM_K*TEAM_CURVE[Math.max(0,Math.min(TEAM_MAX,lv))];}
 // 모든 팀의 지금 효과 배수 {evang: 2, …} — 효과를 계산하는 곳(refreshMods·spirit 등)이 읽는다
-function teamEff(){var o={};for(var k in STAFF)o[k]=teamUnits((S.staff&&S.staff[k])||0);return o;}
-function teamFx(k,lv){return STAFF[k].fx(teamUnits(lv));}
+function teamEff(){var o={};for(var k in STAFF)o[k]=teamUnits((S.staff&&S.staff[k])||0)*teamAmp(k);return o;}
+function teamFx(k,lv,amp){return STAFF[k].fx(teamUnits(lv)*(amp||1));}
+// 섬김이 한 명의 능력치(증폭 몫): 호감 Lv × TEAM_SV_LV + 단계 보너스
+function svPow(p){return p?p.lv*TEAM_SV_LV+(TEAM_SV_NODE[p.node]||0):0;}
+// 팀 증폭 배수 = 1 + 배치한 섬김이 능력치의 평균
+function teamAmp(k){var L=(S.servants&&S.servants[k])||[];if(!L.length)return 1;var t=0;L.forEach(function(i){t+=svPow(ppById(i));});return 1+t/L.length;}
 /* 섬김이 슬롯 */
 function teamServants(k){S.servants=S.servants||{};return S.servants[k]||(S.servants[k]=[]);}
-function teamEligible(p){return !!p&&ppTrack(p)==='C';}   // 섬김 갈래(섬김이·사역팀장·사역부장·사역간사)
+function teamEligible(p){return !!p&&!p.ext&&ppTrack(p)==='C';}   // 섬김 갈래(섬김이·사역팀장·사역부장·사역간사). 청빙직원은 건물만
 function teamOf(pid){for(var q in STAFF)if(teamServants(q).indexOf(pid)>=0)return q;return '';}
 // 아직 어느 팀에도 없는 섬김이 (호감 Lv 높은 사람부터)
 function teamFree(){return (S.people||[]).filter(function(p){return teamEligible(p)&&!teamOf(p.id);}).sort(function(a,b){return b.lv-a.lv||a.id-b.id;});}
@@ -84,48 +89,44 @@ function teamAdd(k,d){
   teamUnserve(k,L[L.length-1]);return '';
 }
 
-/* ---------- 사역팀 탭 (행사 화면) ---------- */
-// 육각형 슬롯: 비어 있으면 점선 테두리, 차 있으면 얼굴이 가득
+/* ---------- 사역팀 카드 (봉사자 › 섬김이 탭 오른쪽 60%) ----------
+   카드 위: 지금 패시브 효과(단계 × 섬김이 증폭)와 증폭 배수. 아래: 왼쪽 3 · 팀 · 오른쪽 3 육각형 슬롯 */
+// 육각형 슬롯: 비어 있으면 점선 테두리(누르면 고르기 모드), 차 있으면 얼굴이 가득(누르면 뺌)
 function hexSlot(k,pid){
-  var p=pid&&ppById(pid);
-  if(!p)return '<button class="hex empty" data-act="tmslot" data-v="'+k+'" aria-label="'+STAFF[k].name+' 빈 슬롯 — 섬김이 배치"><svg viewBox="0 0 52 60" aria-hidden="true"><polygon points="26,2 50,16 50,44 26,58 2,44 2,16"/></svg><b>＋</b></button>';
-  return '<button class="hex full" data-act="tmfree" data-v="'+k+':'+p.id+'" aria-label="'+p.n+' 빼기" title="'+p.n+' · 누르면 빼요"><i><img alt="" src="'+personFace(p)+'"></i></button>';
+  var p=pid&&ppById(pid),pk=UI.ofPick&&UI.ofPick.t==='tm'&&UI.ofPick.v===k;
+  if(!p)return '<button class="hex empty'+(pk?' pk':'')+'" data-act="tmslot" data-v="'+k+'" aria-label="'+STAFF[k].name+' 빈 슬롯 — 섬김이 배치"><svg viewBox="0 0 52 60" aria-hidden="true"><polygon points="26,2 50,16 50,44 26,58 2,44 2,16"/></svg><b>＋</b></button>';
+  return '<button class="hex full" data-act="tmfree" data-v="'+k+':'+p.id+'" aria-label="'+p.n+' 빼기, 증폭 +'+pctS(svPow(p))+'" title="'+p.n+' · 증폭 +'+pctS(svPow(p))+' · 누르면 빼요"><i><img alt="" src="'+personFace(p)+'"></i><em>+'+Math.round(svPow(p)*100)+'</em></button>';
 }
 function teamCardHtml(k){
   var t=STAFF[k],L=teamServants(k),lv=L.length,lk=!tierOk(t.goal||0),cls=lk?'lock':(lv?'run':'wait'),side=function(a){var h='';for(var i=a;i<a+3;i++)h+=hexSlot(k,L[i]);return h;};
   if(lk)return '<div class="evc teamc '+cls+'"><button class="tmi" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+' 정보"><span class="evr">'+ringSvg(0)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span><span class="evlk" aria-hidden="true">🔒</span></span><span class="evn">'+t.name+'</span></button><span class="evp">Lv '+LV_TIER[t.goal]+' 후</span></div>';
-  return '<div class="evc teamc tm6 '+cls+'"><div class="tmh l">'+side(0)+'</div>'+
+  var amp=teamAmp(k);
+  var fx=lv?'<b>패시브</b> '+teamFx(k,lv,amp).join(' · '):'<b>패시브</b> 없음 · 섬김이 1명이면 '+teamFx(k,1).join(' · ');
+  var am=lv?'<span class="tm-amp" title="배치한 섬김이 능력치(호감 Lv·단계)의 평균">섬김이 증폭 ×'+amp.toFixed(2)+' <small>(기본 '+teamFx(k,lv).slice(0,1).join('')+')</small></span>':'';
+  return '<div class="evc teamc tm6 '+cls+'"><div class="tm-fx">'+fx+am+'</div><div class="tm-row"><div class="tmh l">'+side(0)+'</div>'+
     '<button class="tmi" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+' 정보">'+
     '<span class="evr">'+ringSvg(lv/TEAM_MAX)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span></span><span class="evn">'+t.name+'</span><span class="evp">'+lv+' / '+TEAM_MAX+'</span></button>'+
-    '<div class="tmh r">'+side(3)+'</div></div>';
+    '<div class="tmh r">'+side(3)+'</div></div></div>';
 }
 function teamsHtml(){
+  if(!featOk('teams'))return '<p class="sempty">🔒 사역팀은 '+featWhy('teams')+'</p>';
   var fr=teamFree().length,used=Object.keys(STAFF).reduce(function(n,k){return n+teamServants(k).length;},0);
-  return '<div class="sbulk tbar"><span class="tinfo">섬김이 '+used+'명 배치 · 대기 '+fr+'명 · 빈 칸을 누르면 섬김이를 세워요 · 목양 수용력 '+S.members+' / '+Math.round(MOD.cap)+'명</span>'+
+  return '<div class="sbulk tbar"><span class="tinfo">섬김이 '+used+'명 배치 · 대기 '+fr+'명 · 빈칸을 누르고 왼쪽 섬김이를 고르세요</span>'+
     '<button class="btn" data-act="tmreset"'+(used?'':' disabled')+'>모두 빼기</button><button class="btn pri" data-act="tmauto"'+(fr?'':' disabled')+'>⚡ 자동 배정</button></div>'+
     '<div class="tmg6">'+Object.keys(STAFF).map(teamCardHtml).join('')+'</div>';
 }
 function teamDlgHtml(k){
   var t=STAFF[k],lv=teamServants(k).length,lk=!tierOk(t.goal||0);
-  var rows=[['단계',lv+' / '+TEAM_MAX],['지금 효과',lv?teamFx(k,lv).join('<br>'):'아직 없어요']];
-  if(lv<TEAM_MAX)rows.push(['다음 단계 (섬김이 '+(lv+1)+'명)',teamFx(k,lv+1).join('<br>')]);
+  var amp=teamAmp(k),rows=[['단계',lv+' / '+TEAM_MAX],['지금 효과',lv?teamFx(k,lv,amp).join('<br>'):'아직 없어요'],['섬김이 증폭','×'+amp.toFixed(2)+' (섬김이 능력치 평균: 호감 Lv × '+TEAM_SV_LV*100+'% + 단계 보너스)']];
+  if(lv<TEAM_MAX)rows.push(['다음 단계 (섬김이 '+(lv+1)+'명)',teamFx(k,lv+1,amp).join('<br>')]);
   return '<div class="sdlg" role="dialog" aria-label="'+t.name+'"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
     '<div class="sdh"><span class="evr big" data-team="'+k+'">'+ringSvg(lv/TEAM_MAX)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span></span>'+
     '<div class="sdt"><h3>'+t.name+(lk?'':' <span class="rchip t0">'+(lv?'섬김이 '+lv+'명':'미배치')+'</span>')+'</h3><p>'+t.d+'</p></div></div>'+
     '<dl class="sdr">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
     (lk?'<p class="swhy">'+lockText(t.goal)+' 꾸릴 수 있어요</p>':'')+'</div>';
 }
-// 빈 슬롯을 눌렀을 때: 배치할 섬김이 고르기
-function teamPickHtml(k){
-  var t=STAFF[k],L=teamFree(),why=teamServants(k).length>=TEAM_MAX?'팀 자리가 가득 찼어요':'';
-  return '<div class="sdlg tmpick" role="dialog" aria-label="'+t.name+' 섬김이 배치"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
-    '<div class="sdh"><span class="evr big">'+ringSvg(teamServants(k).length/TEAM_MAX)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span></span><div class="sdt"><h3>'+t.name+' 섬김이 배치</h3><p>호감 Lv 높은 순 · 한 사람은 한 팀만</p></div></div>'+
-    (L.length&&!why?'<div class="lp-g tm-lp">'+L.map(function(p){return '<button class="lp" data-act="tmpick" data-v="'+k+':'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+' 호감 Lv '+p.lv+'"><img alt="" src="'+personFace(p)+'"><span>'+p.n+'</span><small>♥'+p.lv+'</small></button>';}).join('')+'</div>':
-      '<p class="sempty">'+(why||'배치할 섬김이가 없어요. 성도를 길러 섬김 갈래(섬김이·사역팀장…)로 세워 주세요.')+'</p>')+'</div>';
-}
 function scrTeamClick(a,v){
   if(a==='tmopen'){UI.scrSel={t:'tm',id:v};sfx('click',.4);renderScreen();return true;}
-  if(a==='tmslot'){UI.scrSel={t:'tms',id:v};sfx('click',.4);renderScreen();return true;}
   if(a==='tmpick'||a==='tmfree'){
     var kv=String(v).split(':'),w=a==='tmpick'?teamServe(kv[0],+kv[1]):(teamUnserve(kv[0],+kv[1]),'');
     if(w){scrToast(w,2200);sfx('error',.4);}else{sfx(a==='tmpick'?'join':'click',.5,0);UI.scrSel=null;}

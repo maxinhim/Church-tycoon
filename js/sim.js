@@ -87,7 +87,7 @@ function weekEnd(){
   for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}
   decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;S.tv=(S.tv||0)*TRUST_VIS_DECAY;
   peopleWeek();caresWeek();
-  if(S.week-S.candWeek>=6)refreshCands();
+  resumeWeek();
   var ev='';
   if(S.evtLeft>0){S.evtLeft--;if(S.evtLeft===0)S.evt=null;}
   else if(Math.random()<0.14){

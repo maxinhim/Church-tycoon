@@ -27,7 +27,7 @@ function rosEnt(key){
   if(kind==='a')o=(S.assoc||[]).filter(function(a){return String(a.uid)===id;})[0];
   else o=ppById(+id);
   if(!o)return null;
-  var as=kind==='a',ex=as?!o.home:!!o.ext,role=as?'pastor':(o.node==='cstaff'?'staff':'');
+  var as=kind==='a',ex=as?!o.home:!!o.ext,role=as?'pastor':(o.ext?'staff':'');   // 매장 관리자는 청빙직원만
   var pool=role?mgrPool(role).filter(function(w){return w.key===key;})[0]:null;
   var pay=as?o.pay:(o.ext?o.ext.pay:0),s=stOf(o);
   return {key:key,kind:kind,o:o,as:as,ex:ex,role:role,name:as?o.name:o.n,rank:as?o.title:ppRankName(o),g:o.g||(mgrSeed(as?o:{name:o.n,seed:o.seed})%2?'m':'f'),seed:as?mgrSeed(o):o.seed,
@@ -44,11 +44,17 @@ function rosArt(e){
   return memberIcon({seed:e.seed,g:e.g});
 }
 function rosAtName(e){var b=e.at&&bById(e.at);return b?defOf(b).name:'';}
+// 등급(별 1~5 → D~S): 청빙한 사람은 청빙 때 별, 기른 부교역자는 별 5, 기른 장로·권사는 호감 Lv로
+function rosSkill(e){if(e.as)return e.o.skill||1;if(e.o.ext)return e.o.ext.skill||1;return Math.max(1,Math.min(5,1+Math.floor(e.o.lv/20)));}
+// 한 줄 성능: 관리자 성능(있으면) 또는 직분 효과
+function rosPerf(e){return e.k!=null?kText(e.k):e.as?'성능 ×'+asSkill(e.o).toFixed(2):(nodeEff(e.o.node)||'—');}
 function rosCardHtml(e,on){
-  var at=rosAtName(e);
-  return '<button class="rcard '+(e.ex?'ex':'in')+(on?' on':'')+'" data-act="rosopen" data-v="'+e.key+'" aria-label="'+e.name+' '+e.rank+', '+(e.ex?'청빙':'교회에서 기름')+', '+(at?at+' 근무':'대기')+'">'+
-    '<img alt="" src="'+rosArt(e)+'"><span class="rc-rk">'+e.rank+'</span>'+
-    '<span class="rc-n">'+e.name+'</span><span class="rc-at'+(at?'':' idle')+'">'+(at?'📍 '+at:'대기')+'</span></button>';
+  var at=rosAtName(e),sk=rosSkill(e);
+  return '<button class="rcard '+(e.ex?'ex':'in')+(on?' on':'')+'" data-act="rosopen" data-v="'+e.key+'" aria-label="'+e.name+' '+e.rank+', 등급 '+HC_GRADE[sk]+', 별 '+sk+'개, 월 사례비 '+(e.pay?fmt(e.pay):'없음')+', '+(at?at+' 근무':'대기')+'">'+
+    '<img alt="" src="'+rosArt(e)+'"><span class="rc-rk">'+e.rank+'</span><span class="hc-grade g'+sk+' rc-gr">'+HC_GRADE[sk]+'</span>'+
+    '<span class="rc-info"><span class="rc-n">'+e.name+'</span>'+hcStars(sk)+'<small class="rc-story">'+(e.story||(e.ex?'새 사역지에서 열심히 섬기고 있어요.':'우리 교회에서 자라났어요.'))+'</small>'+
+    '<small class="rc-k">'+rosPerf(e)+'</small><small class="rc-pay">월 '+(e.pay?fmtS(e.pay):'없음')+'</small></span>'+
+    '<span class="rc-at'+(at?'':' idle')+'">'+(at?'📍 '+at:'대기')+'</span></button>';
 }
 function rosCost(n){return Math.round(ST_TRAIN.cost*(1+ST_TRAIN.grow*n));}
 function rosWhyTrain(e){
@@ -78,6 +84,7 @@ function rosDetailHtml(e){
     '<div class="rd-h"><h3>'+e.name+'</h3><span class="rchip '+(e.ex?'ex':'in')+'">'+e.rank+'</span><span class="rorg">'+(e.ex?'청빙':'양육')+'</span></div>'+
     '<p class="say">“'+story+'”</p>'+
     '<dl class="rd-s"><div><dt>근무지</dt><dd>'+(at?'📍 '+at:'<em>대기 중</em>')+'</dd></div>'+
+    '<div><dt>등급</dt><dd><span class="hc-grade g'+rosSkill(e)+' sm">'+HC_GRADE[rosSkill(e)]+'</span> '+hcStars(rosSkill(e))+'</dd></div>'+
     '<div><dt>월 사례비</dt><dd>'+(e.pay?fmt(e.pay):'없음')+'</dd></div>'+
     '<div><dt>성능</dt><dd>'+(e.k!=null?kText(e.k):'—')+'</dd></div>'+
     '<div><dt>직무 교육</dt><dd>'+s.tr+' / '+ST_TRAIN.max+'회</dd></div>'+
@@ -89,7 +96,7 @@ function rosDetailHtml(e){
     '<button class="btn" data-act="roscheer"'+(cw?' disabled':'')+' title="'+cw+'">🎁 특별 격려<small>'+fmtS(ST_CHEER.cost)+' · 사기 +'+ST_CHEER.mo+'</small></button>'+
     '<button class="btn" data-act="rospromo"'+(pw?' disabled':'')+' title="'+pw+'">🎓 직급 승급<small>'+(nx?e.rank+' → '+nx+' · '+fmtS(ST_RANK.cost[r]):'—')+'</small></button></div>'+
     (e.as?'<button class="btn rd-x" data-act="rosdismiss">사임시키기</button>':'');
-  var why=!e.role?'건물 관리자는 부교역자와 사역간사·청빙직원만 맡을 수 있어요':(tw&&cw&&pw?'':'');
+  var why=!e.role?'건물 관리자는 부교역자와 청빙직원만 맡을 수 있어요 (장로·권사는 봉사자 › 직분자 탭에서 건물 보조 인력으로)':(tw&&cw&&pw?'':'');
   if(why)h+='<p class="swhy">'+why+'</p>';
   else if(UI.rosPick){
     var L=S.buildings.filter(function(b){return mgrRole(b)===e.role;}).sort(function(a,b){return (!!MGC[a.id])-(!!MGC[b.id])||a.id-b.id;});
@@ -105,7 +112,7 @@ function rosterHtml(){
   var asn=tab==='assoc';
   var head='<div class="rost-h"><span>'+(asn?'부교역자 '+S.assoc.length+' / '+assocSlots()+'명':'직원 '+L.length+'명')+' · 카드를 눌러 육성하세요 <i class="mk in"></i>기른 사람 <i class="mk ex"></i>청빙</span></div>';
   var grid=L.length?'<div class="rost-g">'+L.map(function(e){return rosCardHtml(e,sel&&e.key===sel.key);}).join('')+'</div>':
-    '<p class="sempty">'+(asn?'아직 부교역자가 없어요. <b>청빙</b> 탭에서 모셔 오세요.':'아직 직원이 없어요. 성도를 길러 사역간사·장로·권사로 세우거나 <b>청빙</b> 탭에서 직원을 모셔 오세요.')+'</p>';
+    '<p class="sempty">'+(asn?'아직 부교역자가 없어요. <b>청빙</b> 탭에서 모셔 오세요.':'아직 직원이 없어요. <b>청빙</b> 탭에서 청빙직원을 모셔 오거나 성도를 길러 장로·권사로 세워요. (사역간사는 봉사자 › 섬김이에서 사역팀을 맡아요)')+'</p>';
   return head+'<div class="rost"><div class="rost-l">'+grid+'</div><div class="rost-r">'+rosDetailHtml(sel)+'</div></div>';
 }
 function rosDone(msg){recalc();save();scrToast(msg,2000);renderScreen();hud(true);}

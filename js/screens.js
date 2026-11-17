@@ -7,17 +7,17 @@
      다 차면 '보상 수령'이 뜬다. 눌러야 보상을 받는다
    UI.scr = 열린 화면('events'), UI.scrTab = 탭, UI.scrSel = 정보 창에 띄운 것 */
 var SCREENS={
-  events:{title:'행사',tabs:[['events','행사'],['pastor','담임목사'],['assoc','부교역자'],['vol','봉사자'],['staff','사역팀']]},
+  events:{title:'행사',tabs:[['events','행사'],['pastor','담임목사'],['assoc','부교역자'],['vol','봉사자']]},
   people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'봉사자',tabs:[['off','직분자'],['B','리더'],['C','섬김이']]},
-  hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','직원']]},
+  hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','청빙직원']]},
   roster:{title:'직원',tabs:[['assoc','부교역자'],['staff','직원'],['hire','청빙']]},
   mgr:{title:'관리자 배치',tabs:[['pool','인력']]},
   sup:{title:'보조 인력',tabs:[['pool','직분자']]}
 };
 // 교회 Level이 되어야 열리는 탭 (balance.js FEAT_LV): 잠긴 탭은 자물쇠로 보이고 누르면 몇 Lv에 열리는지 알려 준다
-var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','events:staff':'teams','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
+var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
 var PP_PAGE=60;
@@ -27,7 +27,7 @@ function openScreen(k,tab){
   UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.choose=null;UI.sel=null;UI.selPiece=null;UI.selFloor=null;UI.fold=true;UI.lastBuilt=null;
   var tabs=SCREENS[k].tabs,want=tab||tabs[0][0];
   if(tabLocked(k,want)){var ft=tabs.filter(function(x){return !tabLocked(k,x[0]);})[0];want=ft?ft[0]:want;}   // 잠긴 탭이면 열린 첫 탭으로
-  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ppMore=PP_PAGE;if(k==='roster'){UI.hireFor=0;UI.rosPick=false;}
+  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ofPick=null;UI.ppMore=PP_PAGE;if(k==='roster'){UI.hireFor=0;UI.rosPick=false;}
   sfx('page',.35);renderPanel();renderScreen();
 }
 function closeScreen(){UI.scr=null;UI.scrSel=null;renderScreen();syncTabs();}
@@ -79,14 +79,11 @@ function renderScreen(){
   $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
   $('#scrMoney').textContent=fmt(S.money);
   var body=$('#scrBody'),top=body.scrollTop;
-  if(UI.scr==='events'&&UI.scrTab==='staff'){
-    // 사역팀: 원형 카드 + 달란트
-    body.className='sbody';body.innerHTML=teamsHtml();
-  }else if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
+  if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
   }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
-  else if(UI.scr==='officers'){body.className=UI.scrTab==='B'?'sbody leadscr':'sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='B'?(leaders().length?delegHtml():'')+leadHtml():officersHtml());}
+  else if(UI.scr==='officers'){body.className='sbody leadscr';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='B'&&leaders().length?delegHtml():'')+offHtml();}
   else if(UI.scr==='mgr'){body.className='sbody';body.innerHTML=mgrHtml();}
   else if(UI.scr==='sup'){body.className='sbody';body.innerHTML=supHtml();}
   else if(UI.scr==='events'){
@@ -114,7 +111,6 @@ function renderScreen(){
   else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
   else if(sel&&sel.t==='cr'&&careRes)dh=careResHtml();
   else if(sel&&sel.t==='tm'&&STAFF[sel.id])dh=teamDlgHtml(sel.id);
-  else if(sel&&sel.t==='tms'&&STAFF[sel.id])dh=teamPickHtml(sel.id);
   else if(sel&&sel.t==='hc'&&(UI.scr==='hire'||UI.scr==='roster')&&hcFind(sel.id))dh=hcDlgHtml(sel.id);
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
@@ -159,6 +155,7 @@ function scrClick(e){
   if(scrStatusClick(el.dataset.act,el.dataset.v,el))return;
   if(scrRosterClick(el.dataset.act,el.dataset.v))return;
   if(scrLeadClick(el.dataset.act,el.dataset.v))return;
+  if(scrOffClick(el.dataset.act,el.dataset.v))return;
   if(scrSupClick(el.dataset.act,el.dataset.v))return;
   if(scrTeamClick(el.dataset.act,el.dataset.v))return;
   if(scrPeopleClick(el.dataset.act,el.dataset.v,el))return;
@@ -166,7 +163,7 @@ function scrClick(e){
   if(a==='scrclose'){scrBack();return;}
   if(a==='scrtab'&&tabLocked(UI.scr,v)){scrToast('이 탭은 '+featWhy(tabFeat(UI.scr,v)),1800);sfx('error',.4);return;}
   if(scrHireClick(a,v))return;
-  if(a==='scrtab'){UI.scrTab=v;UI.scrSel=null;UI.ppMore=PP_PAGE;$('#scrBody').scrollTop=0;renderScreen();return;}
+  if(a==='scrtab'){UI.scrTab=v;UI.scrSel=null;UI.ofPick=null;UI.ppMore=PP_PAGE;$('#scrBody').scrollTop=0;renderScreen();return;}
   if(a==='evopen'){UI.scrSel={t:'ev',id:v};sfx('click',.4);renderScreen();return;}
   if(a==='evclose'){UI.scrSel=null;renderScreen();return;}
   if(a==='evstart'){
@@ -226,7 +223,7 @@ function ppOrder(a,b){
 function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
   // 봉사자 화면: 갈래별 봉사자·직원. 제자반을 갓 마쳐 아직 갈래가 없는 봉사자는 첫 탭에서 갈래를 고른다
-  if(UI.scr==='officers')return all.filter(function(p){return ppTrack(p)===(tab==='off'?'A':tab)||(tab==='off'&&p.node==='disciple');}).sort(ppOrder);
+  if(UI.scr==='officers')return all.filter(function(p){return !p.ext&&ppTrack(p)===(tab==='off'?'A':tab)||(tab==='off'&&p.node==='disciple');}).sort(ppOrder);
   // 성도 화면: 제자반 수료 전 성도만 (봉사자·직원은 봉사자 화면으로 옮겨 간다, ppClass)
   all=all.filter(function(p){return ppClass(p)==='saint';});
   return all.filter(function(p){var d=ppDepth(p);return tab==='care'?!!careOf(p):tab==='new'?d===0:tab==='grow'?d>=1&&d<=3:tab==='lead'?d>=4:tab==='todo'?((p.tr&&p.tr.ready)||ppCanStep(p)):true;}).sort(ppOrder);
@@ -273,46 +270,100 @@ function peopleHtml(){
   if(L.length>n)h+='<div class="smore"><button class="btn" data-act="ppmore">더 보기 · '+(L.length-n)+'명</button></div>';
   return h;
 }
-// 직분자 화면: 갈래(직분·교역·섬김)마다 단계별로 묶는다
-function officersHtml(){
-  var tk=UI.scrTab==='off'?'A':UI.scrTab,T=PP_TRACK[tk],L=scrPeople();
-  var h='<p class="shint"><b>'+T.n+'</b> 갈래 · '+T.desc+'.</p>';
-  if(!L.length)return h+'<p class="sempty">아직 이 갈래에 들어선 성도가 없어요. 성도 화면에서 제자반까지 기른 뒤 이 갈래를 골라 주세요.</p>';
-  var ids=Object.keys(PP_TREE).filter(function(id){return PP_TREE[id].t===tk&&id!=='assoc';}).sort(function(a,b){return PP_TREE[b].d-PP_TREE[a].d;});
-  ids.forEach(function(id){
-    var G=L.filter(function(p){return p.node===id;});if(!G.length)return;var t=PP_TREE[id];
-    var nm=id==='elder'?'장로·권사':t.n,eff=id==='deacon'?OFFICE.deacon.desc:id==='elder'?OFFICE.elder.desc+' / 권사: '+OFFICE.kwonsa.desc:nodeEff(id);
-    h+='<div class="ssec"><b>'+nm+' '+G.length+'명</b><span>'+eff+'</span></div><div class="evg">'+G.map(ppCardHtml).join('')+'</div>';
-  });
-  return h;
+/* ---------- 봉사자 화면 4:6 (직분자 · 리더 · 섬김이 탭 모두) ----------
+   왼쪽 40%: 고른 사람의 큰 카드(레벨·능력치·지금 맡은 곳) + 그 갈래 사람 카드. 오른쪽 60%: 배치 대상
+     · 직분자 → 기능 건물 카드(건물 레벨·기본 성능·보조 칸·보조 버프)  · 리더 → 맡을 성도 칸  · 섬김이 → 사역팀 카드(패시브 효과·섬김이 증폭)
+   오른쪽의 빈칸을 누르면 고르기 모드(UI.ofPick = {t:'sup'|'tm', v: 건물 id | 팀}), 그다음 왼쪽 카드를 누르면 그 칸에 배치된다.
+   UI.leadSel = 왼쪽에서 고른 사람 id */
+function ofTrack(){return UI.scrTab==='off'?'A':UI.scrTab;}
+function ofSelOf(L){var s=L.filter(function(p){return p.id===UI.leadSel;})[0]||L[0]||null;if(s)UI.leadSel=s.id;return s;}
+function ofCanPick(p){var k=UI.ofPick;if(!k)return false;return k.t==='sup'?supEligible(p):teamEligible(p);}
+// 사람이 지금 맡은 곳 한 줄
+function ofWhere(p){
+  var t=ppTrack(p);
+  if(t==='A'){var b=supOf(p.id)&&bById(supOf(p.id));return b?'📍 '+defOf(b).name:'대기';}
+  if(t==='C'){var k=teamOf(p.id);return k?STAFF[k].ic+' '+STAFF[k].name:'대기';}
+  if(t==='B'){var sl=leadSlots(p);return sl?'성도 '+(p.assignedSaints||[]).length+' / '+sl:'성도 칸 없음';}
+  return '갈래 고르기 전';
 }
-/* 리더 탭: 왼쪽 40% 리더 카드 · 오른쪽 60% 그 리더가 맡은 성도 칸(호감 Lv에 비례해 늘어남). 빈 칸을 누르면 담당할 성도를 고른다.
-   UI.leadSel = 고른 리더 id, UI.leadPick = 성도 고르는 줄이 열렸는지. 리더가 없으면 안내만 */
 function leadCardHtml(p,on){
-  var n=(p.assignedSaints||[]).length,sl=leadSlots(p);
-  return '<button class="lcard'+(on?' on':'')+'" data-act="ldopen" data-v="'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+', 성도 '+n+' / '+sl+'">'+
-    '<img alt="" src="'+personFace(p)+'"><span class="lc-rk">'+ppRankName(p)+'</span><span class="lc-n">'+p.n+'</span><span class="lc-s">성도 '+n+' / '+sl+'</span></button>';
+  var ln=ppLine(p),pk=UI.ofPick,ok=pk&&ofCanPick(p),todo=ln.c==='ready'||ln.c==='can';
+  return '<button class="lcard'+(on?' on':'')+(pk?(ok?' pk':' pkx'):'')+'" data-act="'+(pk?'ofpick':'ldopen')+'" data-v="'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+', 호감 Lv '+p.lv+', '+ofWhere(p)+'">'+
+    '<img alt="" src="'+personFace(p)+'"><span class="lc-rk">'+ppRankName(p)+'</span><span class="lc-lv">♥'+p.lv+'</span>'+(todo?'<span class="lc-todo" title="'+ln.t+'">!</span>':'')+
+    '<span class="lc-n">'+p.n+'</span><span class="lc-s">'+(todo?ln.t:ofWhere(p))+'</span></button>';
 }
-function leadSlotHtml(sid,i){
-  var s=sid&&ppById(sid);
-  if(!s)return '<button class="lslot empty" data-act="ldslot" aria-label="빈 칸 — 담당할 성도 배치"><span>＋</span></button>';
-  return '<button class="lslot full" data-act="ldfree" data-v="'+s.id+'" aria-label="'+s.n+' 빼기" title="누르면 빼요"><img alt="" src="'+personFace(s)+'"><span class="ls-n">'+s.n+'</span><span class="ls-l">♥'+s.lv+'</span></button>';
+// 큰 카드: 레벨 · 능력치 · 맡은 곳
+function ofBigHtml(p){
+  var t=ppTrack(p),need=ppNeed(p.lv),xp=Math.min(1,p.xp/need),st=[],ln=ppLine(p),btn='';
+  st.push(['호감 레벨','♥ '+p.lv+' <small>('+Math.floor(p.xp)+' / '+need+')</small>']);
+  if(t==='A'){var bb=supBuff(p),b=supOf(p.id)&&bById(supOf(p.id));
+    st.push(['보조 버프','건물 성능 +'+pctS(bb)+' <small>(단계 +'+pctS(SUP_BUFF[p.node]||SUP_BUFF.devoted)+' · 호감 +'+pctS(p.lv*SUP_BUFF_LV)+')</small>']);
+    st.push(['근무',b?'📍 '+defOf(b).name:'<em>대기</em>']);if(b)btn='<button class="btn sm" data-act="ofsupdel" data-v="'+b.id+':'+p.id+'">빼기</button>';}
+  else if(t==='B'){var sl=leadSlots(p);
+    st.push(['성도 칸',(p.assignedSaints||[]).length+' / '+sl+(sl<(ppNode(p).cap||0)?' <small>(호감 Lv '+(Math.floor(p.lv/LEAD_SLOT_LV)+1)*LEAD_SLOT_LV+'에 한 칸 더)</small>':'')]);
+    st.push(['돌봄 효과','맡은 성도마다 ♥ +'+tN(leadXp(p))+'/주']);}
+  else if(t==='C'){var k=teamOf(p.id);
+    st.push(['섬김 능력','팀 효과 +'+pctS(svPow(p))+' <small>(호감 +'+pctS(p.lv*TEAM_SV_LV)+' · 단계 +'+pctS(TEAM_SV_NODE[p.node]||0)+')</small>']);
+    st.push(['소속 팀',k?STAFF[k].ic+' '+STAFF[k].name:'<em>대기</em>']);if(k)btn='<button class="btn sm" data-act="tmfree" data-v="'+k+':'+p.id+'">빼기</button>';}
+  else st.push(['다음','제자반을 마쳤어요 · 상세에서 갈래를 골라 주세요']);
+  var ne=nodeEff(p.node);if(ne)st.push(['직분 효과',ne]);
+  return '<div class="lbig t'+(t||'0')+'"><div class="lb-art"><img alt="" src="'+personFace(p)+'"></div>'+
+    '<div class="lb-h"><h3>'+p.n+'</h3><span class="rchip t'+(t||'0')+'">'+ppRankName(p)+'</span></div>'+
+    '<span class="bar lb-xp"><i style="width:'+Math.round(xp*100)+'%"></i></span>'+
+    '<dl class="lb-s">'+st.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
+    '<div class="lb-b"><button class="btn'+(ln.c==='ready'||ln.c==='can'?' pri':'')+'" data-act="ppopen" data-v="'+p.id+'">상세 · '+ln.t+'</button>'+btn+'</div></div>';
 }
-function leadHtml(){
-  var L=scrPeople();
-  if(!L.length)return '<p class="sempty">아직 이 갈래에 들어선 성도가 없어요. 성도 화면에서 제자반까지 기른 뒤 이 갈래를 골라 주세요.</p>';
-  var sel=L.filter(function(p){return p.id===UI.leadSel;})[0]||L[0];UI.leadSel=sel.id;
+function ofLeftHtml(L,sel){
+  var pk=UI.ofPick,ph='';
+  if(pk){var nm=pk.t==='sup'?(bById(pk.v)?defOf(bById(pk.v)).name+' 보조 칸':''):(STAFF[pk.v]?STAFF[pk.v].name+' 빈칸':'');
+    ph='<div class="of-pk"><b>👇 '+nm+'에 세울 사람을 고르세요</b><button class="btn sm" data-act="ofcancel">취소</button></div>';}
+  return '<div class="lead-l">'+(pk?'':ofBigHtml(sel))+ph+'<div class="lc-g">'+L.map(function(p){return leadCardHtml(p,!pk&&p.id===sel.id);}).join('')+'</div></div>';
+}
+function offHtml(){
+  var tk=ofTrack(),T=PP_TRACK[tk],L=scrPeople();
+  if(!L.length)return '<p class="shint"><b>'+T.n+'</b> 갈래 · '+T.desc+'.</p><p class="sempty">아직 이 갈래에 들어선 성도가 없어요. 성도 화면에서 제자반까지 기른 뒤 이 갈래를 골라 주세요.</p>'+(tk==='C'?'<div class="lead-r">'+teamsHtml()+'</div>':tk==='A'?'<div class="lead-r">'+supBldHtml()+'</div>':'');
+  var sel=ofSelOf(L),r=tk==='A'?supBldHtml():tk==='C'?teamsHtml():leadRightHtml(sel);
+  return '<div class="lead t'+tk+'">'+ofLeftHtml(L,sel)+'<div class="lead-r">'+r+'</div></div>';
+}
+/* 직분자 탭 오른쪽: 보조 칸이 있는 기능 건물 카드 */
+function supBldHtml(){
+  var B=S.buildings.filter(function(b){return supSlots(b)>0;}).sort(function(a,b){return (b.fixed?1:0)-(a.fixed?1:0)||a.id-b.id;});
+  var used=B.reduce(function(n,b){return n+(b.supportStaff||[]).length;},0),fr=supFree().length;
+  var h='<div class="sbulk tbar"><span class="tinfo">보조 직분자 '+used+'명 배치 · 대기 '+fr+'명 · 빈칸을 누르고 왼쪽 직분자를 고르세요</span><button class="btn pri" data-act="ofsupauto"'+(fr?'':' disabled')+'>⚙️ 직분자 자동 배치</button></div>';
+  if(!B.length)return h+'<p class="sempty">보조 인력을 둘 기능 건물(예배·교제·매장)이 아직 없어요.</p>';
+  return h+'<div class="bsg">'+B.map(supCardHtml).join('')+'</div>';
+}
+function supCardHtml(b){
+  var d=defOf(b),n=supSlots(b),L=b.supportStaff||[],k0=bPerf(b)/supK(b),bf=supK(b)-1,mw=mgrOf(b),pk=UI.ofPick,sl='';
+  for(var i=0;i<n;i++){var p=L[i]&&ppById(L[i]);
+    sl+=p?'<button class="slt full" data-act="ofsupdel" data-v="'+b.id+':'+p.id+'" title="'+p.n+' · 누르면 빼요" aria-label="'+p.n+' 빼기, 성능 +'+pctS(supBuff(p))+'"><img alt="" src="'+personFace(p)+'"><em>+'+pctS(supBuff(p))+'</em></button>':
+      '<button class="slt empty'+(pk&&pk.t==='sup'&&pk.v===b.id?' pk':'')+'" data-act="ofslot" data-v="sup:'+b.id+'" aria-label="'+d.name+' 보조 빈칸 — 직분자 배치">＋</button>';}
+  var ef=effText(d).split(' · ').filter(function(x){return !/^유지비/.test(x);}).slice(0,2).join(' · ');
+  return '<div class="bsc'+(L.length?' on':'')+'"><div class="bsc-h"><b>'+d.name+'</b><span class="bsc-lv">'+(hasLv(b)?'★ Lv '+bLv(b):'')+'</span></div>'+
+    '<p class="bsc-e">'+(ef?ef+' · ':'')+'기본 성능 ×'+k0.toFixed(2)+(b.fixed?' (담임목사)':mw?' ('+mw.name+')':' <em>(메인 관리자 없음)</em>')+'</p>'+
+    '<div class="bsc-s">'+sl+'</div>'+
+    '<p class="bsc-b">'+(L.length?'보조 버프 <b>+'+pctS(bf)+'</b> → 성능 ×'+(k0*(1+bf)).toFixed(2):'보조 직분자를 세우면 성능이 올라요')+'</p></div>';
+}
+/* 리더 탭 오른쪽: 고른 리더가 맡은 성도 칸. 빈칸을 누르면 담당할 성도를 고른다 */
+function leadSlotHtml(sid,l){
+  var s=sid&&ppById(sid),x=tN(leadXp(l));
+  if(!s)return '<button class="lslot empty" data-act="ldslot" aria-label="빈 칸 — 담당할 성도 배치, 매주 호감 +'+x+'"><span>＋</span><small>♥+'+x+'/주</small></button>';
+  return '<button class="lslot full" data-act="ldfree" data-v="'+s.id+'" aria-label="'+s.n+' 빼기" title="누르면 빼요 · 매주 호감 +'+x+'"><img alt="" src="'+personFace(s)+'"><span class="ls-n">'+s.n+'</span><span class="ls-l">♥'+s.lv+'</span><span class="ls-x">+'+x+'/주</span></button>';
+}
+function leadRightHtml(sel){
   var sl=leadSlots(sel),mine=sel.assignedSaints||[],free=ppFreeSaints(),slots='';
-  for(var i=0;i<sl;i++)slots+=leadSlotHtml(mine[i],i);
+  for(var i=0;i<sl;i++)slots+=leadSlotHtml(mine[i],sel);
   var nx=sl<(ppNode(sel).cap||0)?'호감 Lv '+(Math.floor(sel.lv/LEAD_SLOT_LV)+1)*LEAD_SLOT_LV+'에 한 칸 더':'최대 칸이에요';
-  var r='<div class="lead-h"><div><b>'+sel.n+' '+ppRankName(sel)+'</b><small>맡은 성도 '+mine.length+' / '+sl+' · '+(sl?nx:'소그룹 리더가 되면 성도를 맡아요')+'</small></div>'+
-    '<button class="btn" data-act="ppopen" data-v="'+sel.id+'">상세</button>'+
+  var r='<div class="lead-h"><div><b>'+sel.n+' '+ppRankName(sel)+'</b><small>맡은 성도 '+mine.length+' / '+sl+' · '+(sl?'성도마다 매주 ♥ +'+tN(leadXp(sel))+' · '+nx:'소그룹 리더가 되면 성도를 맡아요')+'</small></div>'+
     '<button class="btn pri" data-act="ldauto"'+(sl&&mine.length<sl&&free.length?'':' disabled')+'>⚡ 자동 배정</button></div>';
   r+=sl?'<div class="lead-slots">'+slots+'</div>':'<p class="sempty">이 단계는 성도를 맡지 않아요.</p>';
   if(UI.leadPick&&sl&&mine.length<sl)r+='<div class="lead-pick"><b>담당할 성도를 고르세요 <small>(호감 Lv 낮은 순)</small></b>'+(free.length?'<div class="lp-g">'+free.map(function(s){
     return '<button class="lp" data-act="ldpick" data-v="'+s.id+'" aria-label="'+s.n+' 호감 Lv '+s.lv+'"><img alt="" src="'+personFace(s)+'"><span>'+s.n+'</span><small>♥'+s.lv+'</small></button>';}).join('')+'</div>':'<p class="sempty">맡길 성도가 없어요 (제자반 전 성도만 맡길 수 있어요)</p>')+'</div>';
-  return '<div class="lead"><div class="lead-l">'+L.map(function(p){return leadCardHtml(p,p.id===sel.id);}).join('')+'</div><div class="lead-r">'+r+'</div></div>';
+  return r;
 }
+// 예전 이름 (봇·시험)
+function leadHtml(){return offHtml();}
+function officersHtml(){return offHtml();}
 function scrLeadClick(a,v){
   if(UI.scr!=='officers'||a.indexOf('ld')!==0)return false;
   if(a==='ldopen'){UI.leadSel=+v;UI.leadPick=false;sfx('click',.4);}
@@ -322,6 +373,34 @@ function scrLeadClick(a,v){
   else if(a==='ldauto'){var n=ppAutoAssign(UI.leadSel);if(n){sfx('join',.5,0);scrToast('성도 '+n+'명을 배정했어요',1800);save();}else{scrToast('배정할 성도나 빈 칸이 없어요',1800);sfx('error',.4);}UI.leadPick=false;}
   else return false;
   renderScreen();return true;
+}
+// 빈칸 → 왼쪽 카드로 배치. 다른 곳에 있던 사람은 옮겨 온다
+function ofPlace(pid){
+  var k=UI.ofPick,w='';if(!k)return '';
+  var p=ppById(pid);if(!p)return '찾을 수 없어요';
+  if(k.t==='sup'){
+    var b=bById(k.v);if(!b)return '찾을 수 없어요';
+    if(!supEligible(p))return '직분자 갈래(헌신성도·집사·장로·권사)만 보조 인력이 돼요';
+    var at=supOf(pid);if(at===k.v)return '이미 이 건물에 있어요';
+    if((b.supportStaff||[]).length>=supSlots(b))return '보조 자리가 가득 찼어요';
+    if(at)supRemove(at,pid);w=supPut(k.v,pid);if(!w)recalc();
+  }else{
+    var tm=teamOf(pid);if(tm===k.v)return '이미 이 팀이에요';
+    if(tm){S.servants[tm]=teamServants(tm).filter(function(i){return i!==pid;});w=teamServeWhy(k.v,pid);if(w){teamServants(tm).push(pid);return w;}}
+    w=teamServe(k.v,pid);
+  }
+  return w;
+}
+function scrOffClick(a,v){
+  if(UI.scr!=='officers')return false;
+  if(a==='ofslot'){var s=String(v).split(':');UI.ofPick={t:s[0],v:s[0]==='sup'?+s[1]:s[1]};sfx('click',.4);}
+  else if(a==='tmslot'){UI.ofPick={t:'tm',v:v};sfx('click',.4);}
+  else if(a==='ofcancel'){UI.ofPick=null;}
+  else if(a==='ofpick'){var w=ofPlace(+v);if(w){scrToast(w,2200);sfx('error',.4);}else{sfx('join',.5,0);UI.leadSel=+v;UI.ofPick=null;}}
+  else if(a==='ofsupdel'){var q=String(v).split(':');supRemove(+q[0],+q[1]);recalc();sfx('click',.4);}
+  else if(a==='ofsupauto'){var n=supAuto();if(n){recalc();sfx('join',.5,0);scrToast('직분자 '+n+'명을 배치했어요',1800);}else{sfx('error',.4);scrToast('배치할 직분자나 빈 칸이 없어요',1800);}}
+  else return false;
+  renderScreen();hud(true);return true;
 }
 // 단계 하나가 주는 것 (매주 헌금·목양·운영비·노후)
 function nodeEff(id){
@@ -431,7 +510,7 @@ function mgrHtml(){
   var h='<div class="sbulk mgrh"><span><b>'+defOf(b).name+'</b> · '+R.sub+' 맡아야 가동해요 · 지금: '+(cur?cur.name+' ('+kText(cur.k)+')':'<em>없음</em>')+'</span>'+
     (cur?'<button class="btn" data-act="mgrclear">관리자 빼기</button>':'')+'<button class="btn pri" data-act="hireopen">＋ 청빙</button></div>'+
     '<p class="shint"><i class="mk in"></i>교회에서 기른 사람(성능이 높아요) · <i class="mk ex"></i>밖에서 청빙한 사람. 건물을 맡은 사람은 <b>성도 돌봄(자동 심방)</b>에서 빠져요 — 둘 중 하나만 할 수 있어요. 이미 다른 건물을 맡은 분은 그 건물에서 먼저 빼거나 바꿔야 해요.</p>';
-  if(!L.length)return h+'<p class="sempty">아직 맡길 '+R.n+'이(가) 없어요. <b>＋ 청빙</b>으로 '+R.n+'을(를) 모셔 오세요'+(r==='staff'?' (교회직원으로 기른 성도도 맡을 수 있어요)':' (신학교를 마친 성도도 부교역자가 돼요)')+'.</p>';
+  if(!L.length)return h+'<p class="sempty">아직 맡길 '+R.n+'이(가) 없어요. <b>＋ 청빙</b>으로 '+R.n+'을(를) 모셔 오세요'+(r==='staff'?' (매장은 청빙직원만 맡아요)':' (신학교를 마친 성도도 부교역자가 돼요)')+'.</p>';
   return h+'<div class="evg">'+L.map(function(w){
     var here=w.at===b.id,ob=w.at&&!here?bById(w.at):null,st=here?'이 건물 담당':ob?defOf(ob).name+' 담당':(w.carer&&dg?'성도 돌봄 중':'대기 중');
     return '<div class="mgrw"><button class="evc ppc mgrc '+w.src+(here?' here':'')+(ob?' away':'')+'" data-act="mgrset" data-v="'+w.key+'" aria-label="'+w.name+', '+(w.src==='in'?'교회에서 기른 사람':'외부 청빙')+', '+st+'">'+
@@ -469,42 +548,41 @@ function hcRole(x){return x.t==='assoc'?x.c.title:'청빙직원';}
 function hcStars(n){return '<span class="hst" aria-label="능력 별 '+n+'개">'+'★★★★★'.slice(0,n)+'<i>'+'★★★★★'.slice(n)+'</i></span>';}
 function hcCardHtml(x){
   var c=x.c,poor=S.money<c.fee;
-  return '<button class="hcard t'+x.t+(poor?' poor':'')+'" data-act="hcopen" data-v="'+x.id+'" aria-label="'+c.name+' '+hcRole(x)+', 능력 별 '+c.skill+'개, 청빙'+(c.fee?' '+fmt(c.fee):'')+'">'+
-    '<span class="hc-em" aria-hidden="true">'+HC_EM[x.t]+'</span><span class="hc-name">'+c.name+'</span><span class="hc-grade g'+c.skill+'">'+HC_GRADE[c.skill]+'</span>'+
+  return '<button class="hcard t'+x.t+(poor?' poor':'')+'" data-act="hcopen" data-v="'+x.id+'" aria-label="'+c.name+' '+hcRole(x)+', 능력 별 '+c.skill+'개, 청빙'+(c.fee?' '+fmt(c.fee):'')+(c.nw?', 새 이력서':'')+'">'+
+    (c.nw?'<span class="hc-new">NEW</span>':'')+'<span class="hc-em" aria-hidden="true">'+HC_EM[x.t]+'</span><span class="hc-name">'+c.name+'</span><span class="hc-grade g'+c.skill+'">'+HC_GRADE[c.skill]+'</span>'+
     '<span class="hc-art"><img alt="" src="'+hcPortrait(x)+'"></span>'+
-    '<span class="hc-foot"><b>'+hcRole(x)+'</b>'+hcStars(c.skill)+'<small class="hc-story">'+(c.story||'')+'</small><small>'+(x.t==='assoc'?FIELDS[c.field].name+' 사역':kText(exK(c.skill)))+' · 월 '+fmtS(c.pay)+'</small><em>'+(c.fee?'<i class="coin" aria-hidden="true"></i>'+fmt(c.fee):'청빙비 없음')+'</em></span></button>';
+    '<span class="hc-foot"><b>'+hcRole(x)+'</b>'+hcStars(c.skill)+'<small class="hc-story">'+(c.story||'')+'</small><small>'+(x.t==='assoc'?FIELDS[c.field].name+' 사역':kText(exK(c.skill)))+' · 월 '+fmtS(c.pay)+'</small><em>'+(c.fee?'<i class="coin" aria-hidden="true"></i>'+fmt(c.fee):'청빙비 없음')+(c.rr?' · 교체함':' · 🎲 교체 1회')+'</em></span></button>';
 }
 function hireHtml(){
   var L=hcList(),fb=UI.hireFor&&bById(UI.hireFor);
-  var h='<div class="sbulk"><span>'+(fb?'<b>'+defOf(fb).name+'</b>을(를) 맡을 분을 찾는 중 · ':'')+'후보 '+L.length+'명 · 부교역자 '+S.assoc.length+' / '+assocSlots()+'명</span>'+
-    '<button class="btn" data-act="hcreroll"'+(S.money<HIRE_REROLL?' disabled':'')+'>🎲 새 후보 찾기 · '+fmt(HIRE_REROLL)+'</button></div>'+
-    '<p class="shint">카드를 눌러 사연을 읽고 청빙하세요. 청빙은 <b>부교역자</b>와 <b>직원</b>만 해요. 예배·교제 건물(부서실 포함)은 부교역자가, 매장은 직원이 맡아야 가동돼요. 직원은 성도 명단과 봉사자 › 섬김이 탭에 교회직원으로 들어가요. 직분자·리더·섬김이는 성도를 길러서 세워요.</p>';
-  if(!L.length)return h+'<p class="sempty">지금은 후보가 없어요. <b>새 후보 찾기</b>를 눌러 보세요.</p>';
+  var h='<div class="sbulk"><span>'+(fb?'<b>'+defOf(fb).name+'</b>을(를) 맡을 분을 찾는 중 · ':'')+'후보 '+L.length+'명 · 부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 📨 이력서는 때때로 도착해요 (갈래마다 최대 '+HIRE_CAND_MAX+'명)</span></div>'+
+    '<p class="shint">카드를 눌러 사연을 읽고 청빙하세요. 청빙비는 없고 <b>월 사례비</b>만 나가요. 예배·교제 건물(부서실 포함)은 <b>부교역자</b>가, 매장은 <b>청빙직원</b>이 메인 관리자로 맡아야 가동돼요. 마음에 들지 않으면 후보마다 한 번 '+fmt(HIRE_REROLL)+'을 내고 다른 후보로 바꿀 수 있어요.</p>';
+  if(!L.length)return h+'<p class="sempty">지금은 후보가 없어요. 이력서가 도착하면 알려 드릴게요.</p>';
   return h+'<div class="hcards">'+L.map(hcCardHtml).join('')+'</div>';
 }
 function hcDlgHtml(id){
-  var x=hcFind(id),c=x.c,as=x.t==='assoc',full=as&&S.assoc.length>=assocSlots(),poor=S.money<c.fee;
+  var x=hcFind(id),c=x.c,as=x.t==='assoc',full=as&&S.assoc.length>=assocSlots(),poor=S.money<c.fee,sw=hireSwapWhy(x.t,x.i);
   var rows=as?[['분야',FIELDS[c.field].name+' — '+FIELDS[c.field].desc+' (별마다)'],['맡는 일','예배·교제 건물(부서실 포함) 관리 · 성도 돌봄 · 목양 수용력 +35'],['월 사례비',fmt(c.pay)]]:
-    [['자리','교회직원으로 성도 명단에 들어가요'],['맡는 일','매장 관리 · '+kText(exK(c.skill))+' (호감 레벨이 오르면 더 좋아져요)'],['월 사례비',fmt(c.pay)]];
+    [['자리','청빙직원으로 성도 명단과 직원 화면에 들어가요'],['맡는 일','매장(기능 건물) 메인 관리자만 · '+kText(exK(c.skill))+' (호감 레벨이 오르면 더 좋아져요)'],['월 사례비',fmt(c.pay)]];
   return '<div class="sdlg hcdlg t'+x.t+'" role="dialog" aria-label="'+c.name+' 청빙"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
     '<div class="sdh"><span class="hc-art big"><img alt="" src="'+hcPortrait(x)+'"></span>'+
     '<div class="sdt"><h3>'+c.name+' <span class="rchip t'+(as?'B':x.t)+'">'+hcRole(x)+'</span></h3>'+hcStars(c.skill)+'<p class="say">“'+(c.story||'새 사역지를 찾고 있어요.')+'”</p></div></div>'+
     '<dl class="sdr">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
     (full?'<p class="swhy">부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)</p>':'')+
-    '<div class="sdb"><span class="runc">'+(c.fee?'<i class="coin" aria-hidden="true"></i>'+fmt(c.fee):'청빙비 없음')+'</span><button class="btn pri big" data-act="hctake" data-v="'+id+'"'+(full||poor?' disabled':'')+'>청빙</button></div></div>';
+    '<div class="sdb"><button class="btn" data-act="hcswap" data-v="'+id+'"'+(sw?' disabled title="'+sw+'"':'')+' title="이 후보 자리는 한 번만 다른 후보로 바꿀 수 있어요">🎲 '+(c.rr?'교체함':'교체 1회 · '+fmt(HIRE_REROLL))+'</button><span class="runc">'+(c.fee?'<i class="coin" aria-hidden="true"></i>'+fmt(c.fee):'청빙비 없음')+'</span><button class="btn pri big" data-act="hctake" data-v="'+id+'"'+(full||poor?' disabled':'')+'>청빙</button></div></div>';
 }
 function scrHireClick(a,v){
   if(UI.scr!=='hire'&&!(UI.scr==='roster'&&UI.scrTab==='hire'))return false;
   var why;
-  if(a==='hcopen'){UI.scrSel={t:'hc',id:v};sfx('click',.4);}
-  else if(a==='hcreroll'){why=volReroll();if(why){scrToast(why,2000);sfx('error',.4);}else{sfx('coins',.5,0);UI.scrSel=null;scrToast('새 후보들이 찾아왔어요',1600);}}
+  if(a==='hcopen'){UI.scrSel={t:'hc',id:v};var hx=hcFind(v);if(hx)delete hx.c.nw;sfx('click',.4);}
+  else if(a==='hcswap'){var sx=hcFind(v);why=sx?hireSwap(sx.t,sx.i):'후보가 없어요';if(why){scrToast(why,2000);sfx('error',.4);}else{sfx('coins',.5,0);scrToast('다른 후보가 찾아왔어요 · '+hcFind(v).c.name,1800);}}
   else if(a==='hctake'){
     var x=hcFind(v);if(!x)return true;var nm=x.c.name,fb=UI.hireFor&&bById(UI.hireFor)?UI.hireFor:0;
     why=x.t==='assoc'?hireAssoc(x.i,fb):volHire(x.t,x.i,fb);
     if(why){scrToast(why,2400);sfx('error',.4);}
     else{UI.scrSel=null;sfx('join',.6,0);var put=fb&&mgrOf(bById(fb));
       if(put){scrBack();scrToast(nm+'님을 모셨어요 · '+defOf(bById(fb)).name+' 가동 시작',2600);hud(true);return true;}
-      scrToast(nm+'님을 '+(x.t==='assoc'?'부교역자':'직원')+'(으)로 모셨어요'+(x.t==='assoc'?'':' · 성도 명단에 들어갔어요'),2600);}
+      scrToast(nm+'님을 '+(x.t==='assoc'?'부교역자':'청빙직원')+'(으)로 모셨어요'+(x.t==='assoc'?'':' · 매장 관리자로 배치할 수 있어요'),2600);}
   }else return false;
   renderScreen();hud(true);return true;
 }

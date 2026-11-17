@@ -5,8 +5,8 @@
                tr(교육 중이면 {to,t0,end,ready})}]
    · 사람 수는 언제나 S.members를 따른다(syncPeople): 늘면 새가족이 생기고, 줄면 가장 마음이 덜 붙은 사람부터 떠난다
    · 성장: 새가족 → 세례 → 양육반 → 제자반 → 직분(헌신성도·집사·장로/권사) / 교역(소그룹 리더·공동체 리더·간사·신학교 → 부교역자)
-           / 섬김(섬김이·사역팀장·사역부장·교회직원). 단계마다 호감 레벨이 되면 값을 내고 교육(게이지)을 하고, 다 차면 직접 임명한다
-   · 직분 수 S.off(집사·권사·장로·교회직원)와 합계 PA는 여기서 다시 센 값이다. 수치는 balance.js PP_* */
+           / 섬김(섬김이·사역팀장·사역부장·사역간사). 단계마다 호감 레벨이 되면 값을 내고 교육(게이지)을 하고, 다 차면 직접 임명한다
+   · 직분 수 S.off(집사·권사·장로·사역간사)와 합계 PA는 여기서 다시 센 값이다. 수치는 balance.js PP_* */
 var PP_MALE=['민준','도윤','지호','예준','현우','성민','동현','준혁','시온','요한','다니엘','은찬','재원','태영','상훈','영수','기현','정훈','바울','요셉'];
 var PP_FEMALE=['서연','하은','수빈','지우','유진','은지','혜린','다은','하람','은혜','소망','예린','지민','미영','순자','영희','한나','에스더','사랑','주은'];
 var PP_SKIN=['#f6d3b3','#eec39a','#e0ac80','#f9dcc4'],PP_HAIR=['#2b2522','#4a3426','#6b4a2e','#1f1f24','#8a8a8a','#b9b2a6'],PP_SHIRT=['#4f6db0','#d65a4a','#5c8a48','#d1a02e','#7b6aa5','#2f8f9d','#c9627a','#8a6a46','#efe8da'],PP_BG=['#cfe3ee','#e8dcc8','#d9ead3','#f3d9df','#e3dcf0','#f6e7b8'];
@@ -58,12 +58,16 @@ function ppAssignedAny(sid){return (S.people||[]).some(function(q){return (q.ass
 // 아직 어느 리더도 맡지 않은 성도 (호감 Lv 낮은 사람부터)
 function ppFreeSaints(){return ppSaints().filter(function(p){return !ppAssignedAny(p.id);}).sort(function(a,b){return a.lv-b.lv||a.id-b.id;});}
 // ⚡ 자동 배정: 빈 칸을 호감 Lv 낮은 성도부터 채운다. 채운 수
+// 리더가 맡은 성도 한 명이 매주 더 받는 호감 경험치
+function leadXp(l){return l?LEAD_SAINT_XP*(1+l.lv*LEAD_SAINT_LV):0;}
+// 매주: 리더가 맡은 성도에게 호감 경험치
+function leadWeek(){(S.people||[]).forEach(function(l){(l.assignedSaints||[]).forEach(function(i){var s=ppById(i);if(s)ppGain(s,leadXp(l));});});}
 function ppAutoAssign(lid){var l=ppById(lid),n=0;if(!l)return 0;ppFreeSaints().forEach(function(s){if(!ppAssignWhy(l,s)&&!ppAssign(lid,s.id))n++;});return n;}
 function ppAssign(lid,sid){var l=ppById(lid),s=ppById(sid),why=ppAssignWhy(l,s);if(why)return why;l.assignedSaints.push(sid);return '';}
 function ppUnassign(lid,sid){var l=ppById(lid);if(l)l.assignedSaints=(l.assignedSaints||[]).filter(function(x){return x!==sid;});}
 function ppTrack(p){return ppNode(p).t||'';}
 function ppDepth(p){return ppNode(p).d||0;}
-// 세례 이상 / 직분자(집사·장로·권사·교회직원) / 제자반 다음 갈래에 들어선 사람
+// 세례 이상 / 직분자(집사·장로·권사·사역간사) / 제자반 다음 갈래에 들어선 사람
 function ppBaptized(p){return ppDepth(p)>=1;}
 function isOfficer(p){return p.node==='deacon'||p.node==='elder'||p.node==='cstaff';}
 function ppNeed(lv){return Math.round(PP_XP0+PP_XP_K*lv);}
@@ -127,7 +131,7 @@ function peopleWeek(){
   var x=S.mood>=50?PP_WEEK_XP:PP_WEEK_XP_LOW;
   (S.people||[]).forEach(function(p){ppGain(p,x);});
   (S.assoc||[]).forEach(function(a){asGain(a,.5);});
-  delegWeek();
+  leadWeek();delegWeek();
 }
 /* 부교역자·소그룹 리더에게 성도 돌봄 맡기기 (balance.js ASSOC_CARE*·LEAD_*·DELEG_*) */
 function delegState(){return S.deleg||(S.deleg={on:false,lv:DELEG_LV0,last:null});}

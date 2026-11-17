@@ -45,7 +45,7 @@ function frame(ts){
 }
 function init(){
   cv=$('#cv');ctx=cv.getContext('2d');
-  S=load();if(!S.cands||!S.cands.length)refreshCands();rebuildOcc();recalc();levelTick(true);
+  S=load();if(!S.cands)refreshCands();rebuildOcc();recalc();levelTick(true);
   // 속도 버튼만 (같은 줄 모양의 소리 버튼은 audio.js가 맡는다)
   document.querySelectorAll('.sp button[data-sp]').forEach(function(b){
     b.addEventListener('click',function(){

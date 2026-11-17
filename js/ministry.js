@@ -81,7 +81,7 @@ function makeCand(){
   var pay=ASSOC_PAY[sk-1],pk=hirePortraitPick('subpastor'),g=pk.g;
   return {name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),title:ASC_OLD.indexOf(pk.pi)>=0?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:HIRE_FEE,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
 }
-function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
+function refreshCands(){S.cands=[];for(var i=0;i<HIRE_CAND0;i++)S.cands.push(makeCand());S.candWeek=S.week;}   // 처음 후보. 그 뒤로는 이력서가 도착한다(resumeWeek)
 function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}
 function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}   // 월 사례비 합계
 function payWeek(){return assocPay()/PAY_MONTH_DIV;}   // 주간 정산에 내는 몫
@@ -311,7 +311,7 @@ function refreshMods(){
   m.cap+=6*o.deacon+10*o.kwonsa+18*o.elder+PA.cap;
   m.offer*=ppGiveK();
   m.upkeep*=1-Math.min(0.12,0.01*o.deacon);
-  // 섬김 갈래(섬김이·사역팀장·사역부장·교회직원): 운영비·노후를 줄인다
+  // 섬김 갈래(섬김이·사역팀장·사역부장·사역간사): 운영비·노후를 줄인다
   m.upkeep*=1-PA.upk;m.decay*=1-PA.dec;
   part('권사',Math.min(6,0.4*o.kwonsa));
   m.loss*=1-Math.min(0.2,0.02*o.elder);

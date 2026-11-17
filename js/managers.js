@@ -8,7 +8,7 @@
    · 건물을 맡은 사람은 성도 돌봄 맡기기(자동 심방, people.js delegCap)에서 빠진다 — 둘 중 하나만
    · 시험에서 관리자 없이 가동하려면 S.freeMgr = true (smoke는 기본으로 켠다: __CT_TEST && !__CT_MGR)
    수치는 balance.js MGR_*·HIRE_* */
-var MGR_ROLE={pastor:{n:'부교역자',who:'부교역자를',sub:'부교역자가'},staff:{n:'직원',who:'직원을',sub:'직원이'}};
+var MGR_ROLE={pastor:{n:'부교역자',who:'부교역자를',sub:'부교역자가'},staff:{n:'청빙직원',who:'청빙직원을',sub:'청빙직원이'}};
 var MGC={},MGB={};   // 건물 id → 관리자, 일꾼 열쇠 → 건물 id (fitMgrs가 다시 만든다)
 function mgrRole(b){var d=b&&defOf(b);if(!d||b.fixed||!d.fill||!d.cap||d.prop||d.nomgr)return '';return MGR_NEED[d.cat]||'';}
 function asUid(a){if(!a.uid){S.uidN=(S.uidN||0)+1;a.uid=S.uidN;}return a.uid;}
@@ -19,10 +19,9 @@ function mgrPool(role){
   if(role==='pastor')(S.assoc||[]).forEach(function(a){var inn=!!a.home,sd=mgrSeed(a);
     L.push({key:'a'+asUid(a),name:a.name+' '+a.title,g:a.g||(sd%2?'m':'f'),seed:sd,src:inn?'in':'ex',k:(inn?MGR_IN_K*(1+MGR_LV_K*((a.lv||1)-1)):exK(a.skill))*stMul(a),sub:'★'+a.skill,carer:true});});
   else{
-    var nodes=MGR_STAFF_NODES;
-    (S.people||[]).forEach(function(p){if(nodes.indexOf(p.node)<0)return;
-      if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'★'+p.ext.skill+' · 월 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
-      else L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
+    // 매장은 청빙직원(p.ext)만 맡는다. 섬김 갈래(사역간사 포함)는 사역팀만
+    (S.people||[]).forEach(function(p){if(!p.ext)return;
+      L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'★'+p.ext.skill+' · 월 '+fmtS(p.ext.pay),carer:false});});
   }
   L.forEach(function(w){w.at=MGB[w.key]||0;});
   return L.sort(function(a,b){return b.k-a.k;});
@@ -53,7 +52,8 @@ function fitMgrs(){
 function mgrOf(b){return (b&&MGC[b.id])||null;}
 function mgrAt(key){return MGB[key]||0;}
 function staffed(b){return !mgrRole(b)||!!S.freeMgr||!!MGC[b.id];}
-function mgrK(b){if(b&&b.fixed)return pastorK();var w=mgrRole(b)&&MGC[b.id];return w?w.k:1;}   // 대예배당은 담임목사 레벨만큼
+function mgrK0(b){if(b&&b.fixed)return pastorK();var w=mgrRole(b)&&MGC[b.id];return w?w.k:1;}   // 대예배당은 담임목사 레벨만큼
+function mgrK(b){return mgrK0(b)*supK(b);}   // 메인 관리자 × 보조 직분자 버프
 // 가동하는 건물: 문 앞까지 길이 닿고(usable), 관리자가 있다
 function bOpen(b){return usable(b)&&staffed(b);}
 function unstaffed(){return S.freeMgr?[]:S.buildings.filter(function(b){return mgrRole(b)&&!MGC[b.id];});}
@@ -71,7 +71,7 @@ function mgrClear(bid){var b=bById(bid);if(b&&b.mgr){delete b.mgr;recalc();save(
    봉사자 후보는 갈래마다 3명(S.vc: A 직분자 · B 리더 · C 섬김이), 부교역자 후보는 S.cands(ministry.js).
    청빙한 봉사자는 성도 명단(S.people)에 들어간다(p.ext = {skill, pay, story}): 그 갈래의 첫 직책(VOL_NODE)으로 시작하고,
    봉사자 화면의 해당 탭에 나오며, 여느 성도처럼 심방·교육으로 더 기를 수 있다. 월 사례비(p.ext.pay)는 사례비에 더한다 */
-var VOL_NODE={C:'cstaff'},VOL_TYPES=['C'];   // 청빙할 수 있는 것은 부교역자(ministry.js)와 직원(C, 교회직원으로 성도 명단에 들어간다)뿐
+var VOL_NODE={C:'cstaff'},VOL_TYPES=['C'];   // 청빙할 수 있는 것은 부교역자(ministry.js)와 청빙직원(C, 성도 명단에 p.ext로 들어간다)뿐
 /* 초상화 8명(hiredata.js)의 성별 — 이름·그림이 어긋나지 않게 */
 var HIRE_PORTRAIT_G={subpastor:'mfmfmmmm',staff:'mfmmffff'};
 // 후보 한 명의 그림(pi: 0~7)·성별·한 줄 사연을 정한다. kind: 'subpastor' | 'staff'
@@ -89,13 +89,39 @@ function makeVol(t,cheap){
   return {t:t,name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,skill:sk,pay:pay,fee:HIRE_FEE,story:pk.story};
 }
 // 후보 3명. 처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 낀다
-function genVol(t){return [makeVol(t,(S.hireN||0)<HIRE_EARLY),makeVol(t),makeVol(t)].sort(function(a,b){return a.pay-b.pay;});}
+function genVol(t){var L=[makeVol(t,(S.hireN||0)<HIRE_EARLY)];while(L.length<HIRE_CAND0)L.push(makeVol(t));return L.sort(function(a,b){return a.pay-b.pay;});}
 function volCands(t){S.vc=S.vc||{};return S.vc[t]||(S.vc[t]=genVol(t));}
-// 새 후보 찾기: 봉사자 세 갈래와 부교역자 후보를 모두 새로
-function volReroll(){
+/* 이력서 도착: 매주(sim.js) HIRE_RESUME_P 확률로 부교역자나 청빙직원 이력서가 한 장 와서 후보 목록 끝에 붙는다(갈래마다 HIRE_CAND_MAX명까지).
+   새로 온 후보는 c.nw(카드에 NEW). 돌려주는 것: 온 후보 {t, c} 또는 null */
+function resumeArrive(t){
+  if(!featOk('hire'))return null;
+  var open=['assoc','C'].filter(function(k){return (k==='assoc'?(S.cands||[]):volCands(k)).length<HIRE_CAND_MAX;});
+  if(t&&open.indexOf(t)<0)return null;
+  t=t||open[Math.floor(Math.random()*open.length)];if(!t)return null;
+  var c;
+  if(t==='assoc'){c=makeCand();S.cands=S.cands||[];S.cands.push(c);}
+  else{var L=volCands(t);c=makeVol(t,(S.hireN||0)<HIRE_EARLY&&!L.some(function(x){return x.skill===1;}));L.push(c);}
+  c.nw=1;
+  var who=c.name+' '+(t==='assoc'?c.title:'청빙직원')+' 후보';
+  addLog('📨 '+who+'의 이력서가 도착했어요');
+  try{toast('📨 이력서 도착 · '+who+' (직원 › 청빙)',3200);}catch(e){}
+  S.resumeN=(S.resumeN||0)+1;
+  return {t:t,c:c};
+}
+function resumeWeek(){if(Math.random()<HIRE_RESUME_P)resumeArrive();}
+/* 후보 교체: 후보 칸(t, i)마다 딱 한 번, HIRE_REROLL만원을 내고 다른 후보로. 새 후보는 rr=1(다시 못 바꿈) */
+function hireSwapWhy(t,i){
+  var L=t==='assoc'?(S.cands||[]):volCands(t),c=L[i];
   if(!featOk('hire'))return '청빙은 '+featWhy('hire');
+  if(!c)return '후보가 없어요';
+  if(c.rr)return '이 자리는 이미 한 번 바꿨어요';
   if(S.money<HIRE_REROLL)return '자금이 부족해요';
-  S.money-=HIRE_REROLL;S.vc={};VOL_TYPES.forEach(volCands);refreshCands();save();return '';
+  return '';
+}
+function hireSwap(t,i){
+  var w=hireSwapWhy(t,i);if(w)return w;
+  var L=t==='assoc'?S.cands:volCands(t),c=t==='assoc'?makeCand():makeVol(t);
+  c.rr=1;L[i]=c;S.money-=HIRE_REROLL;save();return '';
 }
 // 후보를 성도 명단에 넣는다 (사람 수도 함께 는다)
 function volJoin(c){
@@ -108,7 +134,7 @@ function volHire(t,i,bid){
   if(!featOk('hire'))return '청빙은 '+featWhy('hire');
   var c=volCands(t)[i];if(!c)return '후보가 없어요';
   if(S.money<c.fee)return '청빙 비용이 부족해요';
-  S.money-=c.fee;S.hireN=(S.hireN||0)+1;S.vc[t].splice(i,1);if(!S.vc[t].length)S.vc[t]=null;
+  S.money-=c.fee;S.hireN=(S.hireN||0)+1;S.vc[t].splice(i,1);
   var p=volJoin(c);
   addLog(c.name+'님을 직원으로 청빙했어요');noteNew();
   recalc();
@@ -117,7 +143,6 @@ function volHire(t,i,bid){
 }
 // 예전 이름으로도 부를 수 있게 (봇·도구): 역할 → 후보 목록 / 청빙
 function hireCands(role){return role==='pastor'?S.cands:volCands('C');}
-function hireReroll(){return volReroll();}
 function hireTake(role,i,bid){return role==='pastor'?hireAssoc(i,bid):volHire('C',i,bid);}
 // 내보내기: 청빙한 봉사자(성도 id)를 명단에서 뺀다
 function hireFire(pid){var p=ppById(pid);if(!p||!p.ext)return;S.people=S.people.filter(function(q){return q!==p;});S.members=Math.max(0,Math.round(S.members)-1);addLog(p.n+' '+ppRankName(p)+'님을 내보냈어요');recalc();save();}
@@ -138,6 +163,10 @@ function autoStaff(reserve){
    건물 카드의 슬롯 줄: [메인 관리자 1칸] | [보조 직분자 N칸]. 메인 관리자는 위(mgrSet)대로, 보조 인력은 직분자 갈래(헌신성도·집사·장로/권사)를 b.supportStaff(사람 id)에 세운다.
    · 칸 수 supSlots(b) = 티어 1 SUP_SLOTS[0], 티어 2 SUP_SLOTS[1], 대예배당 SUP_SLOTS[2] (예배·교제·매장 건물과 대예배당만)
    · 한 사람은 한 건물만. ⚙️ 직분자 자동 배치(supAuto)는 대예배당부터 빈 칸을 호감 Lv 높은 직분자로 채운다 */
+// 보조 직분자 한 명의 버프 (건물 성능에 더하는 몫)
+function supBuff(p){return p?(SUP_BUFF[p.node]||SUP_BUFF.devoted)+p.lv*SUP_BUFF_LV:0;}
+function supK(b){if(!b||!b.supportStaff||!b.supportStaff.length)return 1;var t=0;b.supportStaff.forEach(function(i){t+=supBuff(ppById(i));});return 1+t;}
+function pctS(v){return Math.round(v*1000)/10+'%';}
 function supSlots(b){
   if(!b)return 0;if(b.fixed)return SUP_SLOTS[2];
   if(!mgrRole(b))return 0;return SUP_SLOTS[defOf(b).tier===2?1:0];
@@ -177,11 +206,11 @@ function slotsHtml(b){
   else main='<button class="slt empty" data-act="mgr" aria-label="메인 관리자 빈 칸 — 배치">👤</button>';
   for(var i=0;i<n;i++){
     var p=L[i]&&ppById(L[i]);
-    sup+=p?'<button class="slt full" data-act="supdel" data-v="'+p.id+'" aria-label="보조 '+p.n+' 빼기" title="'+p.n+' · 누르면 빼요"><img alt="" src="'+personFace(p)+'"></button>':
+    sup+=p?'<button class="slt full" data-act="supdel" data-v="'+p.id+'" aria-label="보조 '+p.n+' 빼기, 성능 +'+pctS(supBuff(p))+'" title="'+p.n+' · 성능 +'+pctS(supBuff(p))+' · 누르면 빼요"><img alt="" src="'+personFace(p)+'"></button>':
       '<button class="slt empty" data-act="supopen" aria-label="보조 인력 빈 칸 — 직분자 배치">＋</button>';
   }
   return '<div class="scs"><div class="scs-g"><small>메인</small><div class="scs-r">'+main+'</div></div>'+(n?'<i class="scs-sep" aria-hidden="true"></i>'+
-    '<div class="scs-g"><small>보조 '+L.length+'/'+n+'</small><div class="scs-r">'+sup+'</div></div><button class="btn sm scs-auto" data-act="supauto" aria-label="직분자 자동 배치" title="⚙️ 직분자 자동 배치">⚙️</button>':'')+'</div>';
+    '<div class="scs-g"><small>보조 '+L.length+'/'+n+(L.length?' · +'+pctS(supK(b)-1):'')+'</small><div class="scs-r">'+sup+'</div></div><button class="btn sm scs-auto" data-act="supauto" aria-label="직분자 자동 배치" title="⚙️ 직분자 자동 배치">⚙️</button>':'')+'</div>';
 }
 /* 보조 인력 화면: 칸을 눌러 열고(UI.supB = 건물 id), 직분자 카드를 눌러 세우거나 뺀다 */
 function supScrB(){var b=UI.supB&&bById(UI.supB);return b&&supSlots(b)?b:null;}
