@@ -89,6 +89,12 @@ function syncAlert(){
 }
 function setupAlert(){
   $('#alert').addEventListener('click',function(){UI.alertOpen=!UI.alertOpen;sfx('click',.4);syncAlert();});
+  // 챙길 일 카드가 열려 있을 때 카드와 ! 단추 밖을 누르면(지도·다른 단추 어디든) 닫는다. 누른 것은 그대로 처리된다
+  document.addEventListener('pointerdown',function(e){
+    if(!UI.alertOpen)return;
+    if(e.target.closest&&(e.target.closest('#alertCard')||e.target.closest('#alert')))return;
+    UI.alertOpen=false;syncAlert();
+  },true);
   $('#alertCard').addEventListener('click',function(e){
     var el=e.target.closest('[data-act]');if(!el)return;
     if(el.dataset.act==='alertclose'){UI.alertOpen=false;syncAlert();return;}

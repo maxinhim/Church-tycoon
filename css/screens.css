@@ -282,3 +282,10 @@
 .sbulk .bgp{display:inline-flex;align-items:center;gap:3px}
 .bcost{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .bcost.on{color:#8a5a00;font-weight:700}
+
+/* 행사 아이콘: 카드 전체가 '바로 시행', 모서리 ? 버튼만 정보·효과 창 */
+.evgo{position:relative;cursor:pointer;user-select:none}
+.evh{position:absolute;right:2px;top:2px;z-index:2;width:22px;height:22px;padding:0;border-radius:50%;border:2px solid var(--line,#0003);background:var(--card,#fff);color:var(--ink);font:700 12px/18px var(--f-display,inherit);text-align:center;cursor:pointer;box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.evh:hover,.evh:focus-visible{background:var(--butter,#ffe9a6)}
+.evq-w{position:relative;display:inline-flex;flex:none}
+.evq-w .evh{right:-4px;top:-5px;width:18px;height:18px;font-size:10.5px;line-height:14px}

@@ -660,7 +660,9 @@ async function ministryChecks(browser, url) {
   const minis = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && r.height >= innerHeight - 1 && /행사/.test(document.getElementById('scrTabs').textContent) && !/사역팀/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .evc').length === Object.keys(EVENTS).filter(k => !EVENTS[k].hidden && !EVENTS[k].grp).length && document.querySelectorAll('#scrTabs [role="tab"]').length === 4 && ['pas', 'asc', 'vol'].every(g => Object.keys(EVENTS).filter(k => EVENTS[k].grp === g).length >= 7) && EVENTS.minedu.grp === 'asc' && EVENTS.offsem.grp === 'vol'; });
   // 행사 카드 → 정보 창 → 행사 시작 → 원형 게이지가 차오름 → 다 차면 보상 수령을 눌러야 보상
   const evFlow = await page.evaluate(() => { const o = {}; const m0 = S.money, r0 = S.rep;
-    document.querySelector('#scrBody .evc[data-v="street"]').click();
+    // 카드 모서리의 ? 버튼만 정보·효과 창을 연다 (카드의 다른 곳은 바로 시행)
+    const q0 = document.querySelectorAll('#scrBody .evc').length; o.qBtn = q0 > 5 && [...document.querySelectorAll('#scrBody .evc')].every(c => c.querySelector('.evh') && c.querySelector('.evh').textContent === '?');
+    document.querySelector('#scrBody .evc[data-v="street"] .evh').click();
     const dl = document.getElementById('scrDlg'); o.dlg = !dl.hidden && /노방전도/.test(dl.textContent) && /진행 중 효과/.test(dl.textContent) && /마무리 보상/.test(dl.textContent) && /소요 시간/.test(dl.textContent);
     dl.querySelector('[data-act="evstart"]').click();
     o.started = S.money === m0 - EVENTS.street.cost && evRunning('street') && !evReady('street') && MOD.vis > 1.3 && evBlock('street') === '진행 중이에요';
@@ -671,8 +673,13 @@ async function ministryChecks(browser, url) {
     // 시간이 다 차면: 효과는 멈추고 보상 대기, 받기 전에는 다시 열 수 없다
     S.ev.street.end = evNow() - .01; evTick();
     o.ready = evReady('street') && !evRunning('street') && MOD.vis < 1.3 && S.rep === r0 && card().classList.contains('ready') && /보상 수령/.test(card().textContent) && !document.getElementById('evBadge').hidden && /보상을 먼저/.test(evBlock('street'));
-    card().click(); const cb = document.querySelector('#scrDlg [data-act="evclaim"]'); o.claimBtn = !!cb; cb.click();
+    card().querySelector('.evh').click(); const cb = document.querySelector('#scrDlg [data-act="evclaim"]'); o.claimBtn = !!cb; cb.click();
     o.claimed = !evReady('street') && S.rep > r0 && S.ev.street.cd === EVENTS.street.cd && document.getElementById('evBadge').hidden && /뒤/.test(card().textContent) && claimEvent('street') === null;
+    // 카드의 빈 곳·아이콘·비용을 누르면 정보 창 없이 바로 시행, 보상이 차면 바로 수령
+    { UI.scrSel = null; renderScreen(); const id2 = Object.keys(EVENTS).find(k => !EVENTS[k].hidden && !EVENTS[k].grp && k !== 'street' && !evBlock(k)), c2 = () => document.querySelector('#scrBody .evc[data-v="' + id2 + '"]'), m2 = S.money;
+      c2().querySelector('.evi').click(); o.goIcon = !!id2 && evRunning(id2) && S.money === m2 - evCost(EVENTS[id2]) && document.getElementById('scrDlg').hidden;
+      S.ev[id2].end = evNow() - .01; evTick(); renderScreen(); c2().querySelector('.evp').click(); o.goClaim = !evReady(id2) && !evRunning(id2) && S.ev[id2].cd > 0 && document.getElementById('scrDlg').hidden;
+      c2().click(); o.goWait = !evRunning(id2) && document.getElementById('scrDlg').hidden; }
     // 바자회: 돈은 시작할 때가 아니라 보상 수령 때 들어온다
     S.unlockAll = true; const m1 = S.money; runEvent('bazaar'); const paid = S.money === m1 - EVENTS.bazaar.cost; S.ev.bazaar.end = evNow() - .01; evTick(); const m2 = S.money; const got = claimEvent('bazaar');
     o.bazaar = paid && S.money === m2 + 600 + S.members * 12 && got.length === 2;
@@ -906,7 +913,8 @@ async function ministryChecks(browser, url) {
   check(offScr.offIc && offScr.offRun && offScr.offReady && offScr.offDone, '봉사자 화면 직분자 탭: 직분자 행사 아이콘으로 바로 열고 보상을 받으며, 교역자 행사는 나오지 않음');
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss, '봉사자 화면: 직분자·리더·섬김이 목록 · 부교역자는 직원 화면에서 카드·격려·사임');
   check(offScr.cands && offScr.hireTab && offScr.hireDlg && offScr.hired && offScr.hireReroll && offScr.hiredTab && offScr.fired, '청빙 화면: 직원 화면의 청빙 탭이 큰 카드 화면으로 바뀌고, 청빙한 봉사자는 성도 명단과 그 갈래 탭에 들어감(주급·내보내기)');
-  check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
+  check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: ? 버튼을 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
+  check(evFlow.qBtn && evFlow.goIcon && evFlow.goClaim && evFlow.goWait, '행사 아이콘: 모서리 ? 버튼만 정보·효과 창을 열고, 아이콘·비용·빈 곳을 누르면 바로 시행(보상이 차면 바로 수령)');
   check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');
   check(evFlow.claimAll, '행사 화면: 끝난 행사가 여럿이면 모두 보상 수령 버튼으로 한꺼번에 받음');
   check(evFlow.claimBtn && evFlow.claimed && evFlow.bazaar && evFlow.old, '행사 화면: 보상 수령을 눌러야 보상을 받고 그때부터 쉬는 기간, 예전 저장도 이어짐');
@@ -1527,6 +1535,15 @@ async function slotChecks(browser, url) {
   check(b.auto && b.main && b.prune && b.autoBtn, '건물 카드: ⚙️ 직분자 자동 배치는 대예배당부터 빈 칸을 호감 Lv 높은 직분자로 채우고, 자격을 잃으면 빠짐');
   check(b.offSplit && b.offPick && b.offPut, '봉사자 › 직분자 4:6: 왼쪽 큰 카드·직분자 카드, 오른쪽 기능 건물 카드(레벨·기본 성능·보조 버프), 빈칸 → 왼쪽 카드로 배치');
   check(b.leadXp && b.leadTxt, '리더 성도 칸: 맡은 성도는 매주 호감 경험치 +(LEAD_SAINT_XP × 리더 Lv), 칸과 큰 카드에 수치 표시');
+  { const al = await page.evaluate(() => { const o = {}; closeScreen(); S.members = 200; recalc(); syncAlert();   // 좌석 부족 → 챙길 일이 생김
+      const b = document.getElementById('alert'), card = document.getElementById('alertCard'); o.has = alertCount() > 0 && !b.hidden;
+      b.click(); o.open = UI.alertOpen && !card.hidden;
+      // 카드 안을 누르면 그대로, 밖(지도·다른 곳)을 누르면 닫힘
+      card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.inside = UI.alertOpen && !card.hidden;
+      document.getElementById('cv').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.outside = !UI.alertOpen && card.hidden;
+      b.click(); o.reopen = UI.alertOpen && !card.hidden; document.querySelector('#fab button').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.other = !UI.alertOpen && card.hidden;
+      return o; });
+    check(Object.values(al).every(Boolean), '챙길 일 카드: 카드 안은 그대로, 지도·다른 곳을 누르면 닫힘 ' + JSON.stringify(al)); }
   check(errs.length === 0, '슬롯 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }

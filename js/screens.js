@@ -50,9 +50,11 @@ function evLine(id){
 }
 function evCardHtml(id){
   var e=EVENTS[id],ln=evLine(id),run=evRunning(id),rdy=evReady(id),p=evProg(id);
-  return '<button class="evc '+ln.c+(run&&e.fx?' fx':'')+'" data-act="evopen" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+', '+ln.t+'">'+
+  // 카드의 빈 곳·아이콘·비용 어디를 눌러도 바로 시행(보상 수령·진행 중 알림 포함), 모서리의 ? 버튼만 정보·효과 창을 연다
+  return '<div class="evc evgo '+ln.c+(run&&e.fx?' fx':'')+'" role="button" tabindex="0" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+', '+ln.t+' — 누르면 바로 시행">'+
+    '<button class="evh" data-act="evopen" data-v="'+id+'" aria-label="'+e.name+' 정보·효과 보기" title="정보·효과">?</button>'+
     '<span class="evr">'+ringSvg(p)+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span>'+(ln.c==='lock'?'<span class="evlk" aria-hidden="true">🔒</span>':'')+'</span>'+
-    '<span class="evn">'+e.name+'</span><span class="evp" data-evp>'+(ln.c==='cost'||ln.c==='poor'?'<i class="coin" aria-hidden="true"></i>':'')+ln.t+'</span></button>';
+    '<span class="evn">'+e.name+'</span><span class="evp" data-evp>'+(ln.c==='cost'||ln.c==='poor'?'<i class="coin" aria-hidden="true"></i>':'')+ln.t+'</span></div>';
 }
 function evDlgHtml(id){
   var e=EVENTS[id],st=evState(id),why=evBlock(id),run=evRunning(id),rdy=evReady(id),p=evProg(id);
@@ -197,6 +199,7 @@ function scrClick(e){
 function setupScreens(){
   $('#scr').addEventListener('click',scrClick);
   setupStatusUI();setupAlert();
+  $('#scr').addEventListener('keydown',function(e){var c=e.target;if((e.key==='Enter'||e.key===' ')&&c.classList&&c.classList.contains('evgo')){e.preventDefault();c.click();}});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&UI.scr){if(UI.scrSel){UI.scrSel=null;renderScreen();}else scrBack();}});
 }
 
@@ -235,8 +238,9 @@ function evIcons(){
   var ids=Object.keys(EVENTS).filter(function(id){var e=EVENTS[id];return e.grp==='vol'&&e.vg.indexOf(vg)>=0;});
   return '<div class="sbulk evq"><span>'+VOL_NAME[vg]+' 행사</span>'+ids.map(function(id){
     var e=EVENTS[id],ln=evLine(id),why=evBlock(id),rdy=evReady(id),run=evRunning(id),ok=rdy||(!why&&!run);
-    return '<button class="evq-b'+(ok?' on':'')+(rdy?' rdy':'')+'" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+' · '+ln.t+'" title="'+e.name+' · '+ln.t+(why&&!rdy&&!run?' ('+why+')':'')+'">'+
-      '<span class="evr">'+ringSvg(evProg(id))+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span></span><b>'+e.name+'</b><small>'+ln.t+'</small></button>';}).join('')+'</div>';
+    return '<span class="evq-w"><button class="evq-b'+(ok?' on':'')+(rdy?' rdy':'')+'" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+' · '+ln.t+' — 누르면 바로 시행" title="'+e.name+' · '+ln.t+(why&&!rdy&&!run?' ('+why+')':'')+'">'+
+      '<span class="evr">'+ringSvg(evProg(id))+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span></span><b>'+e.name+'</b><small>'+ln.t+'</small></button>'+
+      '<button class="evh" data-act="evopen" data-v="'+id+'" aria-label="'+e.name+' 정보·효과 보기" title="정보·효과">?</button></span>';}).join('')+'</div>';
 }
 // 행사 › 담임목사 탭 맨 위: 담임목사의 레벨·학위와 효과
 function pastorHead(){
