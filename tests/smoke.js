@@ -1457,31 +1457,31 @@ async function introChecks(browser, url) {
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   await page.addInitScript(() => { try { localStorage.clear(); } catch (e) {} });
   await page.goto(url); await page.waitForTimeout(500);
-  const a = await page.evaluate(() => { const el = document.getElementById('intro-screen'), cs = getComputedStyle(el), lg = el.querySelector('.intro-logo'), bt = el.querySelector('.intro-btns'), bn = el.querySelector('.ib.new'), ls = getComputedStyle(lg), bs = getComputedStyle(bn);
+  const a = await page.evaluate(() => { const el = document.getElementById('intro-screen'), cs = getComputedStyle(el), lg = el.querySelector('.intro-logo'), bt = el.querySelector('.intro-btn'), ls = getComputedStyle(lg), bs = getComputedStyle(bt);
     const cv2 = document.createElement('canvas'); cv2.width = lg.naturalWidth; cv2.height = lg.naturalHeight; const g = cv2.getContext('2d'); g.drawImage(lg, 0, 0); const px = (x, y) => [...g.getImageData(x, y, 1, 1).data];
     // 로고 그림에 마젠타가 남아 있지 않은지: 불투명한 화소 가운데 마젠타에 가까운 것의 수
     const d = g.getImageData(0, 0, cv2.width, cv2.height).data; let mag = 0, opq = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40) { opq++; if (d[i] > 200 && d[i + 2] > 200 && d[i + 1] < 110) mag++; }
     const r = lg.getBoundingClientRect(), rb = bt.getBoundingClientRect();
     return { lay: cs.position === 'fixed' && cs.zIndex === '9999' && cs.display === 'flex' && cs.flexDirection === 'column' && cs.justifyContent === 'space-between' && cs.alignItems === 'center' && /intro_bg/.test(cs.backgroundImage) && cs.backgroundSize === 'cover',
       logo: lg.naturalWidth > 600 && px(0, 0)[3] === 0 && px(cv2.width - 1, cv2.height - 1)[3] === 0 && opq > 100000 && mag < opq * .002 && r.top < innerHeight * .3 && Math.abs(r.left + r.width / 2 - innerWidth / 2) < 6 && r.height < innerHeight * .6,
-      btn: [...bt.querySelectorAll('.ib')].map(b => b.textContent + ':' + b.dataset.mode).join() === '처음부터:new,이어하기:cont,테스트:test' && el.querySelector('.ib.cont').disabled && rb.bottom > innerHeight * .75 && rb.bottom <= innerHeight && Math.abs(rb.left + rb.width / 2 - innerWidth / 2) < 6 && bs.cursor === 'pointer' && /linear-gradient/.test(getComputedStyle(bn.querySelector('span')).backgroundImage),
+      btn: bt.querySelector('img').naturalWidth > 300 && rb.bottom > innerHeight * .75 && rb.bottom <= innerHeight && Math.abs(rb.left + rb.width / 2 - innerWidth / 2) < 6 && bs.cursor === 'pointer',
       anim: ls.animationName === 'introFloat' && ls.animationDuration === '3s' && ls.animationDirection === 'alternate' && ls.animationIterationCount === 'infinite' && bs.animationName === 'introPulse' && bs.animationDuration === '1.5s' && bs.animationDirection === 'alternate' && bs.animationIterationCount === 'infinite',
       wait: UI.intro === true && document.getElementById('stage-screen').hidden, t0: S.t }; });
   await page.waitForTimeout(400);
   const paused = await page.evaluate(t0 => S.t === t0, a.t0);
-  await page.click('#intro-screen .ib.cont', { force: true }); await page.waitForTimeout(60); const contOff = await page.evaluate(() => !document.getElementById('intro-screen').classList.contains('press'));
-  await page.click('#intro-screen .ib.new', { force: true }); await page.waitForTimeout(60);
-  const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && el.dataset.mode === 'new' && UI.introMode === 'new' && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.ib.new')).transform) || el.classList.contains('out'); }) && contOff;
+  await page.click('#intro-screen'); await page.waitForTimeout(60);
+  const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.intro-btn')).transform) || el.classList.contains('out'); });
   await page.waitForTimeout(260);
   const fading = await page.evaluate(() => { const el = document.getElementById('intro-screen'), o = +getComputedStyle(el).opacity; return el.classList.contains('out') && o < 1 && o > 0 && /0\.6s/.test(getComputedStyle(el).transitionDuration) && !document.getElementById('stage-screen').hidden; });
   await page.mouse.move(2, 2); await page.waitForTimeout(650);   // 열린 카드 위에 마우스가 있으면 살짝 떠오른다
   const st = await page.evaluate(() => { const el = document.getElementById('intro-screen'), g = document.getElementById('stage-grid'), cards = [...g.querySelectorAll('.stcard')], cs = getComputedStyle(g);
     const ys = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().top)))], xs = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().left)))];
     return { gone: getComputedStyle(el).display === 'none', grid: cards.length === 6 && ys.length === 2 && xs.length === 3 && cards.every(c => { const r = c.getBoundingClientRect(); return r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1 && !!c.querySelector('.stpic'); }),
-      names: cards.map(c => c.querySelector('b').textContent).join() === '농촌 목회,산촌 목회,어촌 목회,도시 목회,선교지 1,선교지 2', locks: cards.filter(c => c.classList.contains('lock')).length === 2 && cards.slice(0, 4).every(c => !c.classList.contains('lock') && !!c.querySelector('.stgoal')) && cards.slice(4).every(c => !!c.querySelector('.stlock') && !!c.querySelector('svg')), still: UI.intro === true }; });
-  await page.click('[data-stage="miss1"]', { force: true }); await page.waitForTimeout(100);
+      names: cards.map(c => c.querySelector('b').textContent).join() === '농촌 목회,산촌 목회,어촌 목회,도시 목회,선교지 1,선교지 2', locks: cards.filter(c => c.classList.contains('lock')).length === 2 && cards.slice(0, 4).every(c => !c.classList.contains('lock') && !!c.querySelector('.stgoal')) && cards.slice(4).every(c => !!c.querySelector('.stlock') && !!c.querySelector('svg')),
+      btns: cards.every((c, i) => { const b = [...c.querySelectorAll('.stb')], on = x => !x.classList.contains('off'); return b.map(x => x.textContent + ':' + x.dataset.mode).join() === '처음부터:new,이어하기:cont,테스트:test' && on(b[2]) && !on(b[1]) && on(b[0]) === (i < 4); }), still: UI.intro === true }; });
+  await page.click('[data-stage="miss1"][data-mode="new"]', { force: true }); await page.click('[data-stage="rural"][data-mode="cont"]', { force: true }); await page.waitForTimeout(100);
   const locked = await page.evaluate(() => UI.intro === true && !document.getElementById('stage-screen').classList.contains('out'));
-  await page.click('[data-stage="rural"]'); await page.waitForTimeout(700);
+  await page.click('[data-stage="rural"][data-mode="new"]'); await page.waitForTimeout(700);
   const game = await page.evaluate(() => { const o = { in: UI.intro === false && S.stage === 'rural' && getComputedStyle(document.getElementById('stage-screen')).display === 'none', t0: S.t }; return o; });
   await page.waitForTimeout(400);
   const runs = await page.evaluate(t0 => S.t > t0, game.t0);
@@ -1497,12 +1497,36 @@ async function introChecks(browser, url) {
     p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
     o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
     S.lvl = 4; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'dis' && [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v).join() === 'dis,off,B,C' && !document.querySelector('#scrTabs [data-v="B"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
+  // 설정 메뉴의 이동: 스테이지 선택(게임을 저장하고 카드로) · 메인 화면(Tap to Start로)
+  const nav = {};
+  nav.menu = await page.evaluate(() => { S.dlg = null; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.open = true; S.money = 4321; closeScreen(); document.getElementById('bGear').click(); const ok = !document.getElementById('gearMenu').hidden && !!document.getElementById('bStages') && !!document.getElementById('bHome');
+    document.getElementById('bStages').click(); const st = document.getElementById('stage-screen'), c = st.querySelector('[data-stage="rural"][data-mode="cont"]');
+    return ok && document.getElementById('gearMenu').hidden && UI.intro === true && !st.hidden && getComputedStyle(st).display !== 'none' && !c.classList.contains('off') && JSON.parse(localStorage.getItem(SAVE_KEY)).money === 4321 && /성도/.test(st.querySelector('[data-card="rural"] .stsv').textContent); });
+  { const t1 = await page.evaluate(() => S.t); await page.waitForTimeout(300); nav.paused = await page.evaluate(t => S.t === t, t1); }
+  await page.mouse.move(2, 2); await page.click('[data-stage="rural"][data-mode="cont"]'); await page.waitForTimeout(600);
+  nav.cont = await page.evaluate(() => UI.intro === false && S.stage === 'rural' && S.money === 4321 && !S.test);
+  await page.evaluate(() => { document.getElementById('bGear').click(); document.getElementById('bStages').click(); }); await page.waitForTimeout(300);
+  await page.click('[data-stage="rural"][data-mode="new"]'); await page.waitForTimeout(150);
+  nav.arm = await page.evaluate(() => UI.intro === true && document.querySelector('[data-stage="rural"][data-mode="new"]').classList.contains('arm') && S.money === 4321);
+  await page.click('[data-stage="rural"][data-mode="new"]', { force: true }); await page.waitForTimeout(600);
+  nav.fresh = await page.evaluate(() => UI.intro === false && S.stage === 'rural' && S.money !== 4321 && S.week === 0 && !S.open);
+  await page.evaluate(() => { document.getElementById('bGear').click(); document.getElementById('bStages').click(); }); await page.waitForTimeout(300);
+  await page.click('[data-stage="miss1"][data-mode="test"]'); await page.waitForTimeout(600);
+  nav.test = await page.evaluate(() => UI.intro === false && S.stage === 'miss1' && S.test === true && S.money === 1000000 && S.unlockAll === true && !localStorage.getItem(SAVE_KEY + '-miss1'));
+  await page.evaluate(() => { document.getElementById('bGear').click(); document.getElementById('bHome').click(); }); await page.waitForTimeout(200);
+  nav.home = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return UI.intro === true && getComputedStyle(el).display !== 'none' && !el.classList.contains('press') && !el.classList.contains('out') && !!el.querySelector('.intro-btn img') && document.getElementById('stage-screen').hidden; });
+  await page.click('#intro-screen'); await page.waitForTimeout(900);
+  nav.back = await page.evaluate(() => !document.getElementById('stage-screen').hidden && getComputedStyle(document.getElementById('intro-screen')).display === 'none' && UI.intro === true);
+  if (!Object.values(nav).every(Boolean)) console.log('NAV', JSON.stringify(nav));
   if (!(a.lay && a.logo && a.btn && a.anim && a.wait && paused && pressed && fading && Object.values(st).every(Boolean) && locked && game.in && runs)) console.log('INTRO', JSON.stringify({ a, paused, pressed, fading, st, locked, game, runs }));
-  check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·단추 셋(처음부터·이어하기·테스트, 아래 가운데 — 저장이 없으면 이어하기는 흐림), 로고 그림은 투명 바탕에 마젠타가 남지 않음');
-  check(a.anim, '인트로: 로고는 3초, 첫 단추는 1.5초 주기로 오가며 끝없이 움직임');
-  check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 처음부터를 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐 (저장이 없을 때 이어하기는 눌러도 그대로)');
-  check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함), 스테이지 1~4는 열려 있고(목표 표시) 선교지 1·2는 잠겨 눌러도 그대로, 고르면 게임이 시작됨');
+  check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·시작 단추(Tap to Start, 아래 가운데), 로고·단추 그림은 투명 바탕에 마젠타가 남지 않음');
+  check(a.anim, '인트로: 로고는 3초, 단추는 1.5초 주기로 오가며 끝없이 움직임');
+  check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐');
+  check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함)마다 처음부터·이어하기·테스트 단추 — 스테이지 1~4는 열려 있고(목표 표시), 잠긴 선교지 1·2와 저장 없는 이어하기는 흐리고 눌러도 그대로, 처음부터를 누르면 게임이 시작됨');
   if (!Object.values(lk).every(Boolean)) console.log('LOCKUI', JSON.stringify(lk));
+  check(nav.menu && nav.paused && nav.cont, '설정 메뉴 › 스테이지 선택: 하던 게임을 저장하고 스테이지 카드로(시간 멈춤), 카드에 저장된 진행이 보이고 이어하기로 그대로 이어짐');
+  check(nav.arm && nav.fresh && nav.test, '스테이지 카드: 저장이 있으면 처음부터는 한 번 더 눌러야 새로 시작 · 테스트는 잠긴 선교지도 새 테스트 게임(100억·모든 기능, 일반 저장과 따로)');
+  check(nav.home && nav.back, '설정 메뉴 › 메인 화면: Tap to Start 인트로로 돌아가고, 누르면 다시 스테이지 고르기');
   check(lk.fab && lk.fabBlock && lk.fabOpen && lk.offScr, '잠금: Lv 1에는 봉사자 버튼이 잠겨 있고(누르면 Lv 안내), Lv 4에 직분자·리더·섬김이 화면이 열림');
   check(lk.tabs && lk.tabBlock && lk.evs && lk.ppTabs, '잠금: 행사·성도 화면의 잠긴 탭과 행사 카드에 자물쇠와 Lv가 보이고 눌러도 열리지 않음');
   check(lk.gift && lk.node && lk.hire, '잠금: 선물·다음 성장 단계·청빙·사역팀은 교회 Lv가 되어야 쓸 수 있음');

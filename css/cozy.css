@@ -395,6 +395,7 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .pcb i,.pcb b,.pcb.hot i{display:none!important}
 #bGear[aria-expanded="true"]{background:url(../assets/ui/hud_gear.png) center/contain no-repeat!important;border:0!important}
 #gearMenu{min-width:236px}
+#gearMenu .gnav{display:flex;flex-direction:column;gap:5px}
 /* 챙길 일 단추의 반짝임: 네모 box-shadow 대신 그림 모양을 따라 번지는 둥근 빛 */
 .alertb{border-radius:50%;box-shadow:none!important}
 @media (prefers-reduced-motion:no-preference){.alertb{animation:alPulse2 1.4s ease-in-out infinite}}

@@ -66,40 +66,74 @@ function stageGoalHtml(s){
   var q=QID[STAGE_GOAL],done=stageClears()[s.id]!=null;
   return '<span class="stgoal'+(done?' done':'')+'"><i aria-hidden="true">'+(done?'✓':'🎯')+'</i>목표 · '+q.n+'</span>';
 }
+// 스테이지마다 일반 저장이 있는지 (테스트 저장은 치지 않는다)와 저장된 진행(주·성도 수)
+function stageSaved(id){try{return !!localStorage.getItem(stageKey(id));}catch(e){return false;}}
+function stageSaveInfo(id){try{var o=JSON.parse(localStorage.getItem(stageKey(id))||'null');return o?dateText(o.week||0,true)+' · 성도 '+Math.round(o.members||0)+'명':'';}catch(e){return '';}}
+/* 스테이지 카드: 그림(목표 칩) · 번호(저장된 진행) · 이름 · 한 줄 설명 · 시작 단추 셋
+   처음부터(new) — 새 지도로 시작 (저장이 있으면 한 번 더 눌러야: UI.stArm, 3초) · 이어하기(cont) — 저장에서 이어서 (저장이 없으면 흐림) ·
+   테스트(test) — 언제나 새 테스트 게임(stages.js testSetup: 100억·모든 기능, 저장은 따로). 잠긴 스테이지(선교지)는 테스트로만 들어간다.
+   흐린 단추도 누를 수 있게 두고(aria-disabled) 누르면 카드가 흔들린다 */
+function stBtn(s,mode,label,on,arm){
+  return '<button class="stb '+mode+(on?'':' off')+(arm?' arm':'')+'" data-stage="'+s.id+'" data-mode="'+mode+'"'+(on?'':' aria-disabled="true"')+
+    ' aria-label="'+s.n+' '+(arm?'정말 처음부터 — 한 번 더 누르면 저장된 게임 대신 새로 시작해요':label)+'">'+(arm?'정말 새로?':label)+'</button>';
+}
 function renderStages(){
   var el=document.getElementById('stage-grid');if(!el)return;
+  var arm=UI.stArm&&performance.now()<UI.stArm.t?UI.stArm.id:null;
   el.innerHTML=STAGES.map(function(s,i){
-    var op=stageOpen(s);
-    return '<button class="stcard'+(op?'':' lock')+'" data-stage="'+s.id+'" aria-label="스테이지 '+(i+1)+' '+s.n+(op?'':', 잠김')+'"'+(op?'':' aria-disabled="true"')+'>'+
+    var op=!!s.open,sv=op&&stageSaved(s.id),inf=sv?stageSaveInfo(s.id):'';
+    return '<div class="stcard'+(op?'':' lock')+'" data-card="'+s.id+'" role="group" aria-label="스테이지 '+(i+1)+' '+s.n+(op?'':' (잠김 · 테스트로만)')+'">'+
       '<span class="stpic">'+(s.id==='rural'?'<span class="stphoto"></span>':stageArt(s.id))+(op?'':'<span class="stlock" aria-hidden="true"><i>🔒</i>잠김</span>')+stageGoalHtml(s)+'</span>'+
-      '<span class="stno">STAGE '+(i+1)+'</span><b>'+s.n+'</b><small>'+s.d+'</small></button>';}).join('');
+      '<span class="stno">STAGE '+(i+1)+(inf?'<em class="stsv">'+inf+'</em>':'')+'</span><b>'+s.n+'</b><small>'+s.d+'</small>'+
+      '<span class="stbtns">'+stBtn(s,'new','처음부터',op,arm===s.id)+stBtn(s,'cont','이어하기',sv)+stBtn(s,'test','테스트',true)+'</span></div>';}).join('');
 }
 // 인트로를 닫고 스테이지 고르기를 보인다: 단추가 눌렸다가(0.95배) 화면이 0.6초 동안 사라진다
-/* 인트로 단추 셋 (인트로 그림과 같은 주황 사탕 단추, CSS로 그린다):
-   처음부터(new) — 고른 스테이지를 새로 시작 · 이어하기(cont) — 저장된 스테이지를 이어서(저장이 없으면 흐림) ·
-   테스트(test) — 모든 스테이지(선교지 포함)에 들어가고, 100억·성도 50명·갈래마다 봉사자 20명·직원 20명·부교역자 20명·모든 기능으로 시작(저장은 따로) */
-var INTRO_SUB={new:'처음부터 · 새로 시작할 곳을 골라 주세요',cont:'이어하기 · 이어서 목회할 곳을 골라 주세요',test:'테스트 · 모든 스테이지가 열려 있어요 (100억 · 모든 기능)'};
-function hasSave(){try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k===SAVE_KEY||(k.indexOf(SAVE_KEY+'-')===0&&!/-clear$|-test-/.test(k)))return true;}}catch(e){}return false;}
-function introStart(mode){
+function introStart(){
   var el=document.getElementById('intro-screen'),st=document.getElementById('stage-screen');
-  mode=mode||(hasSave()?'cont':'new');
   if(!el||el.classList.contains('press')||el.classList.contains('out'))return;
-  if(mode==='cont'&&!hasSave()){if(typeof sfx==='function')sfx('error',.4);return;}
-  UI.introMode=mode;renderStages();var sub=document.getElementById('st-sub');if(sub)sub.textContent=INTRO_SUB[mode];
-  if(st)st.classList.toggle('testmode',mode==='test');
-  el.classList.add('press');el.dataset.mode=mode;if(typeof sfx==='function')sfx('click',.6,0);
+  UI.stArm=null;renderStages();if(st){st.style.display='';st.classList.remove('out');}
+  el.classList.add('press');if(typeof sfx==='function')sfx('click',.6,0);
   setTimeout(function(){if(st)st.hidden=false;el.classList.add('out');},130);
   setTimeout(function(){el.style.display='none';},130+620);
 }
-// 스테이지가 열려 있는지: 테스트에서는 모두
-function stageOpen(s){return !!s.open||UI.introMode==='test';}
-// 스테이지를 고른다: 잠긴 것은 흔들리기만 하고, 열린 것은 고른 방식(처음부터·이어하기·테스트)으로 들어간다
-function stagePick(id){
-  var s=STAGES.filter(function(x){return x.id===id;})[0],st=document.getElementById('stage-screen');if(!s||!st||st.classList.contains('out'))return;
-  if(!stageOpen(s)){var c=st.querySelector('[data-stage="'+id+'"]');if(c){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');}if(typeof sfx==='function')sfx('error',.4);return;}
-  enterStage(id,UI.introMode||'cont');if(typeof sfx==='function')sfx('page',.5);   // 스테이지마다 지도·저장이 따로다 (stages.js)
+// 카드의 단추를 눌렀을 때: 안 되는 것은 카드가 흔들리고, 되는 것은 그 방식으로 들어간다
+function stagePick(id,mode){
+  var s=STAGES.filter(function(x){return x.id===id;})[0],st=document.getElementById('stage-screen');if(!s||!st||st.hidden||st.classList.contains('out'))return;
+  mode=mode||'cont';
+  var card=st.querySelector('[data-card="'+id+'"]'),no=function(){if(card){card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');}if(typeof sfx==='function')sfx('error',.4);};
+  if(!s.open&&mode!=='test')return no();
+  if(mode==='cont'&&!stageSaved(id))return no();
+  if(mode==='new'&&stageSaved(id)&&!(UI.stArm&&UI.stArm.id===id&&performance.now()<UI.stArm.t)){
+    UI.stArm={id:id,t:performance.now()+3000};renderStages();if(typeof sfx==='function')sfx('click',.4);
+    setTimeout(function(){if(UI.stArm&&UI.stArm.id===id&&performance.now()>=UI.stArm.t){UI.stArm=null;renderStages();}},3100);return;
+  }
+  UI.stArm=null;
+  enterStage(id,mode);if(typeof sfx==='function')sfx('page',.5);   // 스테이지마다 지도·저장이 따로다 (stages.js)
   st.classList.add('out');
   setTimeout(function(){st.style.display='none';UI.intro=false;},460);
+}
+/* 설정 메뉴(톱니바퀴)의 이동: 스테이지 선택 · 메인 화면.
+   하던 게임은 저장하고(손대지 않은 빈 게임은 빼고, saveIfPlayed) 열린 창·카드를 닫은 뒤 시간을 멈춘다(UI.intro) */
+function leaveGame(){
+  saveIfPlayed();
+  if(UI.scr)closeScreen();if(isPlacing())endPlace();
+  UI.sel=null;UI.selPiece=null;UI.selFloor=null;UI.alertOpen=false;UI.fold=true;
+  closeGatePop();renderPanel();renderSelCard();syncAlert();
+  UI.intro=true;
+}
+function showStageScreen(){
+  var el=document.getElementById('intro-screen'),st=document.getElementById('stage-screen');
+  if(!st){toast('스테이지 고르기 화면이 없어요',1600);return;}
+  leaveGame();UI.stArm=null;renderStages();
+  if(el)el.style.display='none';
+  st.style.display='';st.classList.remove('out');st.hidden=false;if(typeof sfx==='function')sfx('page',.4);
+}
+function showIntro(){
+  var el=document.getElementById('intro-screen'),st=document.getElementById('stage-screen');
+  if(!el){toast('메인 화면이 없어요',1600);return;}
+  leaveGame();
+  if(st){st.hidden=true;st.classList.remove('out');st.style.display='';}
+  el.classList.remove('press','out');el.style.display='';if(typeof sfx==='function')sfx('page',.4);
 }
 // 인트로와 스테이지 고르기를 바로 치운다 (시험·점검용)
 function introSkip(){['intro-screen','stage-screen'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});UI.intro=false;}
@@ -108,9 +142,7 @@ function setupIntro(){
   if(!el||!st)return;
   if(window.__CT_TEST&&!window.__CT_INTRO){el.parentNode.removeChild(el);st.parentNode.removeChild(st);return;}
   UI.intro=true;renderStages();
-  var bc=el.querySelector('[data-mode="cont"]');if(bc){bc.disabled=!hasSave();bc.classList.toggle('pulse',!bc.disabled);}
-  var bn=el.querySelector('[data-mode="new"]');if(bn)bn.classList.toggle('pulse',!hasSave());
-  el.addEventListener('click',function(e){var b=e.target.closest('[data-mode]');if(b&&!b.disabled)introStart(b.dataset.mode);});
-  st.addEventListener('click',function(e){var c=e.target.closest('[data-stage]');if(c)stagePick(c.dataset.stage);});
-  document.addEventListener('keydown',function(e){if(UI.intro&&el.style.display!=='none'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();introStart(hasSave()?'cont':'new');}});
+  el.addEventListener('click',function(){introStart();});
+  st.addEventListener('click',function(e){var b=e.target.closest('[data-stage][data-mode]');if(b)stagePick(b.dataset.stage,b.dataset.mode);});
+  document.addEventListener('keydown',function(e){if(UI.intro&&el.style.display!=='none'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();introStart();}});
 }

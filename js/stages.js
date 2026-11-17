@@ -119,13 +119,16 @@ function loadStage(id,test){
   if(!raw)return null;
   var o=load(stageKey(id,test));return o&&(o.stage||'rural')===id?o:null;
 }
-// 다른 스테이지로 옮긴다: 지금 것을 저장하고 들어간다. mode: 'cont'(기본, 저장이 있으면 이어서) · 'new'(처음부터) · 'test'(테스트 게임, testSetup)
+// 하던 게임을 저장한다. 손대지 않은 빈 시작 상태(0주·문 닫힘)는 저장하지 않는다 (이어하기가 빈 게임을 가리키지 않게)
+function saveIfPlayed(){if(S&&S.stage&&(S.week>0||S.open))save();}
+// 다른 스테이지로 옮긴다: 지금 것을 저장하고 들어간다. mode: 'cont'(기본, 저장이 있으면 이어서) · 'new'(처음부터) · 'test'(언제나 새 테스트 게임, testSetup)
 function enterStage(id,mode){
   if(!STAGE_SET[id])return;
   mode=mode||'cont';
   if(mode==='cont'&&stageId()===id&&S.stage&&!S.test)return;
-  if(S&&S.stage&&(S.week>0||S.open))save();   // 손대지 않은 빈 시작 상태는 저장하지 않는다 (이어하기가 빈 게임을 가리키지 않게)
-  var o=mode==='new'?null:loadStage(id,mode==='test'),dk=mode==='test'?'easy':((S&&!S.test&&S.diff)||'normal');
+  saveIfPlayed();
+  // 처음부터·테스트는 언제나 새로 (테스트 게임은 늘 새 100억 게임)
+  var o=(mode==='new'||mode==='test')?null:loadStage(id,false),dk=mode==='test'?'easy':((S&&!S.test&&S.diff)||'normal');
   S=o||newState(dk,id);S.stage=id;
   if(mode==='test'&&!o)testSetup();
   V=[];F=[];WILD.length=0;UI.tool=null;UI.ghost=null;UI.sel=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.selFloor=null;UI.lastBuilt=null;

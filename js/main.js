@@ -56,6 +56,9 @@ function init(){
   syncSpeed();
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){b.addEventListener('click',function(){openGroup(b.dataset.fab);});});
   $('#bMenu').addEventListener('click',function(){setGear(false);openGroup('menu');});
+  // 설정 메뉴의 이동: 스테이지 고르기 · 메인 화면(인트로). 하던 게임은 저장된다 (intro.js)
+  $('#bStages').addEventListener('click',function(){setGear(false);showStageScreen();});
+  $('#bHome').addEventListener('click',function(){setGear(false);showIntro();});
   // 위 자금·성도 수 칩을 누르면 현황 화면
   document.querySelectorAll('#status .pill.money,#status .pill.mem').forEach(function(p){
     p.addEventListener('click',function(){openGroup('status');});
