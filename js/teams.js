@@ -99,13 +99,13 @@ function hexSlot(k,pid){
 }
 function teamCardHtml(k){
   var t=STAFF[k],L=teamServants(k),lv=L.length,lk=!tierOk(t.goal||0),cls=lk?'lock':(lv?'run':'wait'),side=function(a){var h='';for(var i=a;i<a+3;i++)h+=hexSlot(k,L[i]);return h;};
-  if(lk)return '<div class="evc teamc '+cls+'"><button class="tmi" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+' 정보"><span class="evr">'+ringSvg(0)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span><span class="evlk" aria-hidden="true">🔒</span></span><span class="evn">'+t.name+'</span></button><span class="evp">Lv '+LV_TIER[t.goal]+' 후</span></div>';
+  if(lk)return '<div class="evc teamc '+cls+'"><button class="tmi" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+' 정보"><span class="evr">'+ringSvg(0)+'<span class="evi'+icoCls('tm',k)+'" style="--c:'+t.col+'">'+icoHtml('tm',k,t.ic)+'</span><span class="evlk" aria-hidden="true">🔒</span></span><span class="evn">'+t.name+'</span></button><span class="evp">Lv '+LV_TIER[t.goal]+' 후</span></div>';
   var amp=teamAmp(k);
   var fx=lv?'<b>패시브</b> '+teamFx(k,lv,amp).join(' · '):'<b>패시브</b> 없음 · 섬김이 1명이면 '+teamFx(k,1).join(' · ');
   var am=lv?'<span class="tm-amp" title="배치한 섬김이 능력치(호감 Lv·단계)의 평균">섬김이 증폭 ×'+amp.toFixed(2)+' <small>(기본 '+teamFx(k,lv).slice(0,1).join('')+')</small></span>':'';
   return '<div class="evc teamc tm6 '+cls+'"><div class="tm-fx">'+fx+am+'</div><div class="tm-row"><div class="tmh l">'+side(0)+'</div>'+
     '<button class="tmi" data-act="tmopen" data-v="'+k+'" aria-label="'+t.name+' 정보">'+
-    '<span class="evr">'+ringSvg(lv/TEAM_MAX)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span></span><span class="evn">'+t.name+'</span><span class="evp">'+lv+' / '+TEAM_MAX+'</span></button>'+
+    '<span class="evr">'+ringSvg(lv/TEAM_MAX)+'<span class="evi'+icoCls('tm',k)+'" style="--c:'+t.col+'">'+icoHtml('tm',k,t.ic)+'</span></span><span class="evn">'+t.name+'</span><span class="evp">'+lv+' / '+TEAM_MAX+'</span></button>'+
     '<div class="tmh r">'+side(3)+'</div></div></div>';
 }
 function teamsHtml(){
@@ -120,7 +120,7 @@ function teamDlgHtml(k){
   var amp=teamAmp(k),rows=[['단계',lv+' / '+TEAM_MAX],['지금 효과',lv?teamFx(k,lv,amp).join('<br>'):'아직 없어요'],['섬김이 증폭','×'+amp.toFixed(2)+' (섬김이 능력치 평균: 호감 Lv × '+TEAM_SV_LV*100+'% + 단계 보너스)']];
   if(lv<TEAM_MAX)rows.push(['다음 단계 (섬김이 '+(lv+1)+'명)',teamFx(k,lv+1,amp).join('<br>')]);
   return '<div class="sdlg" role="dialog" aria-label="'+t.name+'"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
-    '<div class="sdh"><span class="evr big" data-team="'+k+'">'+ringSvg(lv/TEAM_MAX)+'<span class="evi" style="--c:'+t.col+'">'+t.ic+'</span></span>'+
+    '<div class="sdh"><span class="evr big" data-team="'+k+'">'+ringSvg(lv/TEAM_MAX)+'<span class="evi'+icoCls('tm',k)+'" style="--c:'+t.col+'">'+icoHtml('tm',k,t.ic)+'</span></span>'+
     '<div class="sdt"><h3>'+t.name+(lk?'':' <span class="rchip t0">'+(lv?'섬김이 '+lv+'명':'미배치')+'</span>')+'</h3><p>'+t.d+'</p></div></div>'+
     '<dl class="sdr">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
     (lk?'<p class="swhy">'+lockText(t.goal)+' 꾸릴 수 있어요</p>':'')+'</div>';

@@ -20,6 +20,13 @@ var SCREENS={
 var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:vol':'vol'};
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
+/* Gemini 그림(assets/ui, tools/ui_buttons.py): 탭 이름 → 그림 이름. 담임목사는 '선택됨' 그림뿐이라 선택됐을 때만, 재정은 '잠김' 그림뿐이라 글자 탭으로 둔다 */
+var TAB_IMG={'행사':'event','담임목사':'pastor_on','부교역자':'assoc','봉사자':'vol','전체':'all','지표':'ind','퀘스트':'quest','직분자':'off','리더':'lead','섬김이':'serv','청빙직원':'hirestaff','직원':'staff','청빙':'hire','인력':'pool'};
+function tabImg(label,on){var f=TAB_IMG[label];if(!f||(label==='담임목사'&&!on))return '';return ' tabi" style="--tbi:url(../assets/ui/tab_'+f+'.png)';}
+/* 행사·사역팀 아이콘 그림(assets/ui/ev_*·tm_*.png). 목록에 없는 것은 이모지로 */
+var ICO_EV=' smallgroup bible creed training communion street bazaar service retreat revival easter vbs thanks christmas pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast ',ICO_TM=' evang praise care newcomer edu prayer admin media mission ';
+function icoHtml(kind,id,emoji){var L=kind==='ev'?ICO_EV:ICO_TM;return L.indexOf(' '+id+' ')>=0?'<img class="icoi" alt="" src="assets/ui/'+kind+'_'+id+'.png">':emoji;}
+function icoCls(kind,id){return (kind==='ev'?ICO_EV:ICO_TM).indexOf(' '+id+' ')>=0?' ico':'';}
 var PP_PAGE=60;
 var RING_C=2*Math.PI*46;
 function openScreen(k,tab){
@@ -53,7 +60,7 @@ function evCardHtml(id){
   // 카드의 빈 곳·아이콘·비용 어디를 눌러도 바로 시행(보상 수령·진행 중 알림 포함), 모서리의 ? 버튼만 정보·효과 창을 연다
   return '<div class="evc evgo '+ln.c+(run&&e.fx?' fx':'')+'" role="button" tabindex="0" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+', '+ln.t+' — 누르면 바로 시행">'+
     '<button class="evh" data-act="evopen" data-v="'+id+'" aria-label="'+e.name+' 정보·효과 보기" title="정보·효과">?</button>'+
-    '<span class="evr">'+ringSvg(p)+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span>'+(ln.c==='lock'?'<span class="evlk" aria-hidden="true">🔒</span>':'')+'</span>'+
+    '<span class="evr">'+ringSvg(p)+'<span class="evi'+icoCls('ev',id)+'" style="--c:'+e.col+'">'+icoHtml('ev',id,e.ic)+'</span>'+(ln.c==='lock'?'<span class="evlk" aria-hidden="true">🔒</span>':'')+'</span>'+
     '<span class="evn">'+e.name+'</span><span class="evp" data-evp>'+(ln.c==='cost'||ln.c==='poor'?'<i class="coin" aria-hidden="true"></i>':'')+ln.t+'</span></div>';
 }
 function evDlgHtml(id){
@@ -67,7 +74,7 @@ function evDlgHtml(id){
     run?'<button class="btn big" disabled data-evleft>진행 중 · '+evLeftText(id)+' 남음</button>':
     cost+'<button class="btn pri big" data-act="evstart" data-v="'+id+'"'+(why?' disabled':'')+'>실행</button>';
   return '<div class="sdlg" role="dialog" aria-label="'+e.name+'"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
-    '<div class="sdh"><span class="evr big'+(run&&e.fx?' fx':'')+'" data-ev="'+id+'">'+ringSvg(p)+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span></span>'+
+    '<div class="sdh"><span class="evr big'+(run&&e.fx?' fx':'')+'" data-ev="'+id+'">'+ringSvg(p)+'<span class="evi'+icoCls('ev',id)+'" style="--c:'+e.col+'">'+icoHtml('ev',id,e.ic)+'</span></span>'+
     '<div class="sdt"><h3>'+e.name+'</h3><p>'+e.desc+'</p>'+(run&&e.fx?'<p class="fxon">🔥 지금 효과가 적용되고 있어요</p>':'')+'</div></div>'+
     '<dl class="sdr">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
     (why&&!run&&!rdy?'<p class="swhy">'+why+'</p>':'')+'<div class="sdb">'+btn+'</div></div>';
@@ -78,7 +85,7 @@ function renderScreen(){
   if(!UI.scr)return;
   var sc=SCREENS[UI.scr];
   $('#scrTitle').textContent=sc.title;
-  $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
+  $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+tabImg(t[1],on)+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
   $('#scrMoney').textContent=fmt(S.money);
   var body=$('#scrBody'),top=body.scrollTop;
   if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
@@ -238,7 +245,7 @@ function evIcons(){
   return '<div class="sbulk evq"><span>'+VOL_NAME[vg]+' 행사</span>'+ids.map(function(id){
     var e=EVENTS[id],ln=evLine(id),why=evBlock(id),rdy=evReady(id),run=evRunning(id),ok=rdy||(!why&&!run);
     return '<span class="evq-w"><button class="evq-b'+(ok?' on':'')+(rdy?' rdy':'')+'" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+' · '+ln.t+' — 누르면 바로 시행" title="'+e.name+' · '+ln.t+(why&&!rdy&&!run?' ('+why+')':'')+'">'+
-      '<span class="evr">'+ringSvg(evProg(id))+'<span class="evi" style="--c:'+e.col+'">'+e.ic+'</span></span><b>'+e.name+'</b><small>'+ln.t+'</small></button>'+
+      '<span class="evr">'+ringSvg(evProg(id))+'<span class="evi'+icoCls('ev',id)+'" style="--c:'+e.col+'">'+icoHtml('ev',id,e.ic)+'</span></span><b>'+e.name+'</b><small>'+ln.t+'</small></button>'+
       '<button class="evh" data-act="evopen" data-v="'+id+'" aria-label="'+e.name+' 정보·효과 보기" title="정보·효과">?</button></span>';}).join('')+'</div>';
 }
 // 행사 › 담임목사 탭 맨 위: 담임목사의 레벨·학위와 효과
