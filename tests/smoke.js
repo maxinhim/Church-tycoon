@@ -734,7 +734,10 @@ async function ministryChecks(browser, url) {
     const d0 = off(); S.t += WEEK * .5; syncScreen(); o.gauge = card().classList.contains('run') && off() < d0 && /교육 중/.test(document.getElementById('scrDlg').textContent);
     p.tr.end = evNow() - .01; peopleTick(); o.ready = card().classList.contains('ready') && /세례 주기/.test(card().textContent) && !document.getElementById('ppBadge').hidden && p.node === 'new';
     document.querySelector('#scrDlg [data-act="ppappoint"]').click(); o.done = p.node === 'bapt' && document.getElementById('ppBadge').hidden && /세례교인/.test(card().textContent);
-    { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } document.querySelector('#scrTabs [data-v="grow"]').click(); o.tab = document.querySelectorAll('#scrBody .ppc').length === 1;
+    { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } const tv = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v); document.querySelector('#scrTabs [data-v="vol"]').click(); const vc0 = document.querySelectorAll('#scrBody .ppc').length; S.people[2].node = 'disciple'; syncPeople(); renderScreen();
+    o.tab = tv.join() === 'all,vol' && vc0 === 0 && document.querySelectorAll('#scrBody .ppc').length === 1 && !!document.querySelector('#scrBody .pcb') && ppClass(S.people[2]) === 'volunteer'; S.people[2].node = 'new'; syncPeople(); document.querySelector('#scrTabs [data-v="all"]').click();
+    // 전체 탭 맨 위: 전체 성도 현황 (등록 성도 크게, 명단별·세례·직분자·평균 호감·할 일)
+    o.status = document.querySelector('#scrBody').firstElementChild.classList.contains('pstat') && /등록 성도/.test(document.querySelector('#scrBody .pstat').textContent) && document.querySelectorAll('#scrBody .pstat .pst').length >= 8 && document.querySelector('#scrBody .pst.big b').textContent.startsWith(String(S.people.length));
     // 목록 위 '모두 심방': 이 목록에서 할 수 있는 사람 모두 (대기 기간인 사람은 빼고)
     const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
     o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
@@ -747,8 +750,8 @@ async function ministryChecks(browser, url) {
       const gb = document.querySelector('#scrBody [data-act="bulkgrow"][data-k="ap"]'), ic = document.querySelector('#scrBody .bic[data-v="gift"]'); const nb = S.people.length; if (gb) gb.click();
       o.bulkLow = lowVisited && trained && !!gb && !!ic && S.people.every(q => q.node === 'bapt' && !q.tr) && r2.done >= 1 && nb >= 2; }
     // 고민 탭: 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림 (행사 버튼 배지에도 셈)
-    { const q = S.people[1]; S.cares = [{ id: 90, k: 'lonely', a: q.id, b: 0, w: S.week }]; syncEvBadge(); document.querySelector('#scrTabs [data-v="care"]').click();
-      const cs = document.querySelectorAll('#scrBody .ppc'); o.care = cs.length === 1 && !!cs[0].querySelector('.pcare') && !document.getElementById('ppBadge').hidden;
+    { const q = S.people[1]; S.cares = [{ id: 90, k: 'lonely', a: q.id, b: 0, w: S.week }]; syncEvBadge(); renderScreen(); syncEvBadge(); const bb0 = document.getElementById('ppBadge'), cb0 = document.querySelector('#scrBody .pcb'); o.careBtn = cb0.classList.contains('hot') && getComputedStyle(cb0).backgroundImage !== 'none' && bb0.textContent === '!' && bb0.classList.contains('care') && !bb0.hidden && /^!/.test(cb0.textContent);
+      cb0.click(); const cs = document.querySelectorAll('#scrBody .ppc'); o.care = cs.length === 1 && cs[0].querySelector('.pcare').textContent === '!' && !document.getElementById('ppBadge').hidden;
       cs[0].click(); const dl = document.getElementById('scrDlg'), btns = dl.querySelectorAll('[data-act="carepick"]'); o.care = o.care && /외로움/.test(dl.textContent) && btns.length === 4;
       // 고른 결과로 성도가 떠나면 창이 닫히므로, 떠날 확률은 이 검사에서만 막는다
       const ok = [...btns].find(b => !b.disabled), R0 = Math.random; Math.random = () => 0.99; ok.click(); Math.random = R0;
@@ -906,7 +909,7 @@ async function ministryChecks(browser, url) {
   check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(사역팀 탭은 봉사자 › 섬김이로 옮김), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
-  check(ppScr.care, '성도 화면: 고민 탭에 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림');
+  check(ppScr.care && ppScr.careBtn && ppScr.status, '성도 화면: 맨 위 전체 현황, 고민이 생기면 성도 버튼에 빨간 느낌표·고민 단추 빨갛게·성도 아이콘 위 빨간 느낌표, 세부 정보에 사연과 선택지, 고르면 풀림');
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
@@ -1395,7 +1398,7 @@ async function introChecks(browser, url) {
     o.tabs = !tl('events').classList.contains('lock') && !tl('pastor').classList.contains('lock') && tl('assoc').classList.contains('lock') && tl('vol').classList.contains('lock') && !tl('staff') && /Lv 4/.test(tl('vol').textContent);
     tl('vol').click(); o.tabBlock = UI.scrTab === 'events' && /Lv 4/.test(document.getElementById('scrToast').textContent);
     const evs = [...document.querySelectorAll('#scrBody .evc')]; o.evs = evs.filter(e => !e.classList.contains('lock')).length <= 3 && evs.filter(e => e.classList.contains('lock')).length >= 8 && /Lv 2/.test(document.querySelector('#scrBody [data-v="communion"]').textContent);
-    openScreen('people'); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.find(x => x.dataset.v === 'care').classList.contains('lock') && pt.find(x => x.dataset.v === 'lead').classList.contains('lock') && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
+    openScreen('people'); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.length === 2 && pt.find(x => x.dataset.v === 'all') && !pt.find(x => x.dataset.v === 'all').classList.contains('lock') && pt.find(x => x.dataset.v === 'vol').classList.contains('lock') && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
     const p = S.people[0]; document.querySelector('#scrBody [data-act="ppopen"]').click(); const dl = document.getElementById('scrDlg'); o.gift = dl.querySelector('[data-act="ppgift"]').disabled && !dl.querySelector('[data-act="ppvisit"]').disabled && /Lv 2/.test(ppCareWhy(p, 'gift'));
     p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
     o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));

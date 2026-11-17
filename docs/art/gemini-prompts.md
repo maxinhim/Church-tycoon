@@ -199,3 +199,55 @@ Within an age group the two rows of the same gender must look clearly different 
 
 ### 시트 사용 현황
 아직 받지 않았다. 받으면 여기에 쓸 칸과 못 쓴 칸을 적을 것 (Gemini 작은 별 표시가 오른쪽 아래에 들어오면 그 칸은 쓰지 않거나 지운다).
+
+## 메인 화면 버튼 그림 (Gemini로 만들 것 — 아직 게임에 쓰지 않음)
+지금 메인 화면의 버튼 그림은 코드로 그린 픽셀 아이콘(`js/pixicons.js`)과 이모지다. 아래 시트를 Gemini로 받으면 `docs/art/sheets/`에 두고 `tools/slice_sheet.py`로 잘라 `assets/ui/`에 만든 뒤 버튼에 `<img>`로 쓴다(게임 코드는 잘린 조각만 불러온다).
+- 공통 규칙: 마젠타(#FF00FF) 단색 배경(받은 뒤 투명하게), 버튼 한 칸 = 정사각 셀, 셀 사이 여백 충분히, 그림자는 버튼 아래로만 짧게, 워터마크·글자 밖 문구 금지.
+- **글자는 이미지 안에 직접 넣는다**(요청: 심방·선물 등). Gemini가 한글을 틀리게 그리면 글자 없는 버전으로 다시 받고 글자는 CSS로 얹는다(프롬프트 끝의 'no text' 줄).
+- 기존 게임 이름은 쓰지 않는다. 화풍만 설명한다.
+
+### 공통 화풍 블록 (아래 프롬프트마다 맨 앞에 붙인다)
+```
+Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling, the same look as the church-member portrait icons: clean confident dark-brown outlines, soft cel shading, gentle gradients, rounded chunky shapes, a thick cream-colored border around each button and a short soft drop shadow underneath. Palette: sage green, teal, butter yellow, warm cream, soft coral red for alerts. Each button is a rounded square (or circle where noted) about 256x256 px, icon centered with a clear silhouette that stays readable when shrunk to 48 px. Solid flat magenta (#FF00FF) background between buttons, no gradients, no watermark, no extra text outside the buttons.
+```
+
+### 1) 성도 화면 위쪽 버튼 — 심방·선물·고민 (글자 포함)
+```
+[공통 화풍 블록] A sheet of 6 wide rounded-rectangle action buttons (each about 384x192 px), arranged 3 columns by 2 rows on a magenta background. Every button has a bold icon on the left and a large, clearly readable Korean label on the right, in a rounded friendly hand-drawn display font, dark brown text with a cream outline.
+Row 1: (1) label "심방": a pastor with a small Bible and a warm smile knocking on a cozy house door, speech bubble heart; button color soft sky blue. (2) label "선물": a small gift box with a ribbon bow and sparkles; button color butter yellow. (3) label "고민": a speech bubble with a big red exclamation mark, worried face; button color bright coral red (this is the ACTIVE alert state).
+Row 2: the same three buttons in their idle/disabled state: desaturated gray-beige, no sparkles, the "고민" one with a gray speech bubble and no exclamation mark.
+The Korean labels must be exactly: 심방, 선물, 고민. If you cannot draw Hangul correctly, draw the same buttons with no text at all.
+```
+- 단체 버튼도 같은 모양으로 받는다: 같은 프롬프트에서 라벨만 "모두 심방", "모두 선물"로 바꾼 두 장.
+
+### 2) 아래 기능 버튼 5개 (원형, 라벨 글자 포함)
+```
+[공통 화풍 블록] A sheet of 5 round main-menu buttons (each about 256x256 px circle with a thick teal rim and cream inner border), one row on a magenta background, each with a small Korean label ribbon under the circle.
+(1) label "건축": a tiny cozy church with a red roof and a hammer. (2) label "행사": a calendar page with a heart and a small banner flag. (3) label "성도": two friendly Korean church members, one older, one younger, side by side. (4) label "봉사자": a red heart held by two helping hands, a sash badge. (5) label "직원": a smiling staff worker with a lanyard name tag and a clipboard.
+Also draw a second row with the same five buttons in a "pressed" state (slightly darker, 3 px lower, no drop shadow) and a third row in a "locked" state (grayscale with a small padlock icon on the lower right).
+Labels must be exactly: 건축, 행사, 성도, 봉사자, 직원. If Hangul comes out wrong, redraw with no text.
+```
+- 성도 버튼에는 알림용 빨간 느낌표 배지(코드로 얹음)가 붙으니 오른쪽 위 모서리를 비워 둔다.
+
+### 3) 위쪽 HUD 버튼 (지도를 가리지 않게 작고 단순하게)
+```
+[공통 화풍 블록] A sheet of 14 small round icon buttons (each about 160x160 px) in a 7 by 2 grid on a magenta background, no text, simple bold pictograms:
+Row 1: (1) rotate the map 90 degrees: a curved arrow around a tiny isometric house; (2) view mode: an eye; (3) settings: a gear; (4) menu: three horizontal lines; (5) pause: two vertical bars; (6) play 1x: one triangle; (7) fast 2x: two triangles.
+Row 2: (8) fast 4x: three triangles; (9) fastest 8x: four triangles; (10) music on: a music note; (11) music off: a music note with a diagonal slash; (12) sound effects on: a speaker with two waves; (13) sound effects off: a speaker with a slash; (14) close: a rounded X on a coral red circle.
+```
+
+### 4) 알림·상태 버튼
+```
+[공통 화풍 블록] A sheet of 6 buttons on a magenta background, each about 192x192 px, no text:
+(1) "things to attend to" alert: a glossy round coral-red button with a bold white exclamation mark, a small white count bubble in the upper right corner left empty; (2) the same alert in a pulsing glow state with an outer halo; (3) quest: a round butter-yellow button with a scroll and a star; (4) church level: a rounded badge with a small gold cross and the number slot left empty; (5) concern filter active: coral red rounded square with a white speech bubble and exclamation mark; (6) concern filter idle: gray-beige rounded square with a gray speech bubble.
+```
+
+### 5) 성도 아이콘 위 고민 표시
+```
+[공통 화풍 블록] A sheet of 4 tiny badges (each 96x96 px) on a magenta background, no text: a round red badge with a bold white exclamation mark and a thin white rim in four slightly different sizes/glow levels (normal, pulse small, pulse large, urgent with a faint red halo).
+```
+
+### 받은 뒤
+1. 마젠타 배경을 투명하게 → 칸마다 `tools/slice_sheet.py`로 잘라 `assets/ui/btn_visit.png` 등 이름을 붙인다(심방 `visit`, 선물 `gift`, 고민 `care`, 모두 심방·선물 `visit_all`·`gift_all`, 기능 버튼 `fab_build`·`fab_events`·`fab_people`·`fab_volunteer`·`fab_staff`, 상태 `_idle`·`_press`·`_lock`).
+2. 글자가 틀리면 글자 없는 시트로 다시 받고 라벨은 CSS로 얹는다.
+3. 시트 원본은 `docs/art/sheets/ui-*.webp`에 두고, 출처(Gemini 생성)는 README의 에셋 항목에 적는다.

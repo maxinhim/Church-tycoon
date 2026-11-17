@@ -8,7 +8,7 @@
    UI.scr = 열린 화면('events'), UI.scrTab = 탭, UI.scrSel = 정보 창에 띄운 것 */
 var SCREENS={
   events:{title:'행사',tabs:[['events','행사'],['pastor','담임목사'],['assoc','부교역자'],['vol','봉사자']]},
-  people:{title:'성도',tabs:[['all','전체'],['care','고민'],['todo','할 일'],['new','새가족'],['grow','양육 중'],['lead','갈래']]},
+  people:{title:'성도',tabs:[['all','전체'],['vol','봉사자']]},
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'봉사자',tabs:[['off','직분자'],['B','리더'],['C','섬김이']]},
   hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','청빙직원']]},
@@ -17,7 +17,7 @@ var SCREENS={
   sup:{title:'보조 인력',tabs:[['pool','직분자']]}
 };
 // 교회 Level이 되어야 열리는 탭 (balance.js FEAT_LV): 잠긴 탭은 자물쇠로 보이고 누르면 몇 Lv에 열리는지 알려 준다
-var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
+var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:vol':'vol'};
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
 var PP_PAGE=60;
@@ -27,7 +27,7 @@ function openScreen(k,tab){
   UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.choose=null;UI.sel=null;UI.selPiece=null;UI.selFloor=null;UI.fold=true;UI.lastBuilt=null;
   var tabs=SCREENS[k].tabs,want=tab||tabs[0][0];
   if(tabLocked(k,want)){var ft=tabs.filter(function(x){return !tabLocked(k,x[0]);})[0];want=ft?ft[0]:want;}   // 잠긴 탭이면 열린 첫 탭으로
-  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ofPick=null;UI.ppMore=PP_PAGE;if(k==='roster'){UI.hireFor=0;UI.rosPick=false;}
+  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ofPick=null;UI.careOnly=false;UI.ppMore=PP_PAGE;if(k==='roster'){UI.hireFor=0;UI.rosPick=false;}
   sfx('page',.35);renderPanel();renderScreen();
 }
 function closeScreen(){UI.scr=null;UI.scrSel=null;renderScreen();syncTabs();}
@@ -84,7 +84,7 @@ function renderScreen(){
   if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
   }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
   }else if(UI.scr==='status'){renderStatusScreen(body);
-  }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
+  }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=peopleStatus()+bulkBar()+peopleHtml();}
   else if(UI.scr==='officers'){body.className='sbody leadscr';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='B'&&leaders().length?delegHtml():'')+offHtml();}
   else if(UI.scr==='mgr'){body.className='sbody';body.innerHTML=mgrHtml();}
   else if(UI.scr==='sup'){body.className='sbody';body.innerHTML=supHtml();}
@@ -142,7 +142,7 @@ function syncScreen(){
 function syncEvBadge(){
   var b=$('#evBadge');if(!b)return;var n=evReadyCount();
   b.hidden=!n;if(n)b.textContent=n;
-  var pb=$('#ppBadge'),pn=ppReadyCount()+caresCount();if(pb){pb.hidden=!pn;if(pn)pb.textContent=pn;}
+  var pb=$('#ppBadge'),cn=caresCount(),pn=ppReadyCount()+cn;if(pb){pb.hidden=!pn;pb.classList.toggle('care',cn>0);if(pn)pb.textContent=cn?'!':pn;pb.setAttribute('aria-label',cn?'고민이 있는 성도 '+cn+'명':'');}   // 고민이 있으면 빨간 느낌표
   var of=document.querySelector('#fab [data-fab="officers"]');if(of)of.classList.toggle('lock',!featOk('vol'));
   var sb=$('#stBadge'),sn=indReadyCount();if(sb){sb.hidden=!sn;if(sn)sb.textContent=sn;}
 }
@@ -214,7 +214,7 @@ function heartLv(lv){return '<span class="hlv" aria-label="호감 레벨 '+lv+'"
 function ppCardHtml(p){
   var ln=ppLine(p);
   return '<button class="evc ppc '+ln.c+(p.ext?' ext':'')+'" data-act="ppopen" data-v="'+p.id+'" data-pp="'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+', 호감 레벨 '+p.lv+', '+ln.t+'">'+
-    '<span class="evr">'+ringSvg(ppProg(p))+'<span class="ppi">'+portraitHtml(p)+'</span>'+heartLv(p.lv)+(careOf(p)?'<span class="pcare" aria-label="고민 있음">💬</span>':'')+'</span>'+
+    '<span class="evr">'+ringSvg(ppProg(p))+'<span class="ppi">'+portraitHtml(p)+'</span>'+heartLv(p.lv)+(careOf(p)?'<span class="pcare" aria-label="고민 있음">!</span>':'')+'</span>'+
     '<span class="evn">'+p.n+'</span><span class="evp" data-evp>'+ln.t+'</span></button>';
 }
 // 급한 순서: 임명 대기 → 다음 단계 가능 → 교육 중 → 직분·레벨 높은 순
@@ -227,9 +227,8 @@ function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
   // 봉사자 화면: 갈래별 봉사자·직원. 제자반을 갓 마쳐 아직 갈래가 없는 봉사자는 첫 탭에서 갈래를 고른다
   if(UI.scr==='officers')return all.filter(function(p){return !p.ext&&ppTrack(p)===(tab==='off'?'A':tab)||(tab==='off'&&p.node==='disciple');}).sort(ppOrder);
-  // 성도 화면: 제자반 수료 전 성도만 (봉사자·직원은 봉사자 화면으로 옮겨 간다, ppClass)
-  all=all.filter(function(p){return ppClass(p)==='saint';});
-  return all.filter(function(p){var d=ppDepth(p);return tab==='care'?!!careOf(p):tab==='new'?d===0:tab==='grow'?d>=1&&d<=3:tab==='lead'?d>=4:tab==='todo'?((p.tr&&p.tr.ready)||ppCanStep(p)):true;}).sort(ppOrder);
+  // 성도 화면: 전체(등록 성도 모두) · 봉사자(제자반을 마친 봉사자와 직원). 고민 단추를 켜면 고민이 있는 사람만
+  return all.filter(function(p){return (tab==='vol'?ppClass(p)!=='saint':true)&&(!UI.careOnly||!!careOf(p));}).sort(ppOrder);
 }
 // 직분자·교역 탭 위: 그 탭에 맞는 행사를 아이콘으로 바로 열고 보상을 받는다 (행사 화면과 같은 행사)
 function evIcons(){
@@ -261,14 +260,26 @@ function bulkBar(){
   var gh=Object.keys(gr).map(function(k){var x=gr[k],tr=x.k==='tr';
     return '<button class="btn'+(tr?' pri':' pri claim')+'" data-act="bulkgrow" data-k="'+x.k+'" data-to="'+x.to+'">전체 '+(tr?nodeTr(x.to,x.g)+' 시작':nodeDone(x.to,x.g))+' · '+x.n+'명'+(tr?' · '+fmt(x.n*PP_TREE[x.to].cost):'')+'</button>';}).join('');
   return '<div class="sbulk"><span>이 목록 '+L.length+'명</span>'+
-    '<div class="bgp"><button class="bic'+(nv?' on':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+' aria-label="모두 심방 '+nv+'명, '+fmt(nv*PP_VISIT.cost)+'" title="모두 심방 · '+fmt(PP_VISIT.cost)+'씩">💬'+(nv?'<i>'+nv+'</i>':'')+'</button><small class="bcost'+(nv?' on':'')+'">'+fmtS(nv?nv*PP_VISIT.cost:PP_VISIT.cost)+'</small></div>'+
-    '<div class="bgp"><button class="bic'+(ng?' on':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+' aria-label="모두 선물 '+ng+'명, '+fmt(ng*PP_GIFT.cost)+'" title="모두 선물 · '+fmt(PP_GIFT.cost)+'씩">🎁'+(ng?'<i>'+ng+'</i>':'')+'</button><small class="bcost'+(ng?' on':'')+'">'+fmtS(ng?ng*PP_GIFT.cost:PP_GIFT.cost)+'</small></div>'+gh+'</div>';
+    '<div class="bgp"><button class="bic'+(nv?' on':'')+'" data-act="bulk" data-v="visit"'+(nv?'':' disabled')+' aria-label="모두 심방 '+nv+'명, '+fmt(nv*PP_VISIT.cost)+'" title="모두 심방 · '+fmt(PP_VISIT.cost)+'씩">💬<b>심방</b>'+(nv?'<i>'+nv+'</i>':'')+'</button><small class="bcost'+(nv?' on':'')+'">'+fmtS(nv?nv*PP_VISIT.cost:PP_VISIT.cost)+'</small></div>'+
+    '<div class="bgp"><button class="bic'+(ng?' on':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+' aria-label="모두 선물 '+ng+'명, '+fmt(ng*PP_GIFT.cost)+'" title="모두 선물 · '+fmt(PP_GIFT.cost)+'씩">🎁<b>선물</b>'+(ng?'<i>'+ng+'</i>':'')+'</button><small class="bcost'+(ng?' on':'')+'">'+fmtS(ng?ng*PP_GIFT.cost:PP_GIFT.cost)+'</small></div>'+gh+'</div>';
+}
+/* 성도 화면 맨 위: 전체 성도 현황(사람 수·명단별·세례·직분자·평균 호감·할 일)과 고민 단추(고민이 있으면 빨갛게 켜짐, 누르면 고민 있는 사람만) */
+function peopleStatus(){
+  var all=S.people||[],n=all.length,cn=caresCount(),cl={saint:0,volunteer:0,staff:0},lv=0,todo=0;
+  all.forEach(function(p){cl[ppClass(p)]++;lv+=p.lv;if((p.tr&&p.tr.ready)||ppCanStep(p))todo++;});
+  var cell=function(v,l,c){return '<div class="pst'+(c?' '+c:'')+'"><b>'+v+'</b><span>'+l+'</span></div>';};
+  var careBtn='<button class="pcb'+(cn?' hot':'')+(UI.careOnly?' sel':'')+'" data-act="carefilter" aria-pressed="'+(!!UI.careOnly)+'" aria-label="고민 '+cn+'명'+(UI.careOnly?' — 눌러서 전체 보기':'')+'"><i aria-hidden="true">'+(cn?'!':'💬')+'</i><b>고민</b><span>'+cn+'</span></button>';
+  if(UI.scrTab!=='all')return '<div class="pstat mini"><div class="pst big"><b>'+(cl.volunteer+cl.staff)+'<small>명</small></b><span>봉사자·직원</span></div>'+careBtn+'</div>';
+  return '<div class="pstat" role="group" aria-label="전체 성도 현황">'+
+    '<div class="pst big"><b>'+n+'<small>명</small></b><span>등록 성도</span></div>'+
+    cell(cl.saint,'성도')+cell(cl.volunteer,'봉사자')+cell(cl.staff,'직원')+cell(all.filter(ppBaptized).length,'세례교인')+cell(offTotal(),'직분자')+
+    cell(n?Math.round(lv/n*10)/10:0,'평균 호감 Lv')+cell(todo,'할 일',todo?'on':'')+
+    careBtn+'</div>';
 }
 function peopleHtml(){
-  var all=(S.people||[]),tab=UI.scrTab,L=scrPeople();
-  var cnt='등록 성도 '+all.length+'명 · 세례교인 '+all.filter(ppBaptized).length+'명 · 직분자 '+offTotal()+'명';
-  var h='<p class="shint">'+cnt+'. 심방·선물로 호감 레벨을 올려 <b>세례 → 양육반 → 제자반</b>으로 기르고, 제자반 뒤에는 <b>직분자·리더·섬김이</b> 가운데 한 갈래로 세워요. 마지막 단계는 Lv 70부터예요.</p>';
-  if(!L.length)return h+'<p class="sempty">'+(tab==='care'?'지금 고민이나 갈등을 겪는 성도가 없어요.':tab==='todo'?'지금 임명하거나 다음 단계로 세울 성도가 없어요. 심방으로 호감을 쌓아 보세요.':'여기에 해당하는 성도가 아직 없어요.')+'</p>';
+  var tab=UI.scrTab,L=scrPeople();
+  var h='';
+  if(!L.length)return h+'<p class="sempty">'+(UI.careOnly?'지금 고민이나 갈등을 겪는 성도가 없어요.':tab==='vol'?'아직 봉사자가 없어요. 성도를 제자반까지 길러 보세요.':'등록된 성도가 아직 없어요.')+'</p>';
   var n=Math.min(L.length,UI.ppMore||PP_PAGE);
   h+='<div class="evg">'+L.slice(0,n).map(ppCardHtml).join('')+'</div>';
   if(L.length>n)h+='<div class="smore"><button class="btn" data-act="ppmore">더 보기 · '+(L.length-n)+'명</button></div>';
@@ -482,6 +493,7 @@ function scrPeopleClick(a,v,el){
   if((a==='deleg'||a==='delegLv')&&!featOk('deleg')){scrToast('성도 돌봄 맡기기는 '+featWhy('deleg'),1800);sfx('error',.4);return true;}
   if(a==='deleg'){var d=delegState();d.on=!d.on;sfx('click',.4);scrToast(d.on?'부교역자·소그룹 리더가 매주 호감 Lv '+d.lv+' 아래 성도를 돌봐요 (한 주 '+delegCap()+'명까지)':'성도 돌봄 맡기기를 껐어요',2400);save();renderScreen();return true;}
   if(a==='delegLv'){var d2=delegState();d2.lv=clamp(d2.lv+(+v)*DELEG_STEP,DELEG_STEP,PP_LV_MAX);save();renderScreen();return true;}
+  if(a==='carefilter'){UI.careOnly=!UI.careOnly;UI.ppMore=PP_PAGE;sfx('click',.4);renderScreen();return true;}
   if(a==='ppmore'){UI.ppMore=(UI.ppMore||PP_PAGE)+PP_PAGE;renderScreen();return true;}
   if(a==='ppvisit'||a==='ppgift'){
     var p=ppById(+v),r=ppCare(+v,a==='ppgift'?'gift':'visit');
