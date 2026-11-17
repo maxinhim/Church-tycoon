@@ -122,13 +122,14 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .hc-grade.g2{background:linear-gradient(180deg,#e7f4dc,#a8d68f);border-color:#4f8a3c;box-shadow:0 2px 0 #4f8a3c}
 .hc-grade.g3{background:linear-gradient(180deg,#dcefff,#8fc3f0);border-color:#2f6fa8;box-shadow:0 2px 0 #2f6fa8}
 .hc-grade.g4{background:linear-gradient(180deg,#f3e0ff,#c79af0);border-color:#6a3fa0;box-shadow:0 2px 0 #6a3fa0}
-.hc-art{position:absolute;left:0;right:0;top:9%;bottom:70px;display:grid;place-items:end center}
-.hc-art img{width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block;filter:drop-shadow(0 3px 0 rgba(0,0,0,.2))}
+.hc-art{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden}
+.hc-art img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
 .hc-art.big{position:static;flex:none;width:92px;height:118px;border-radius:14px;border:3px solid var(--c3);overflow:hidden;
   background:repeating-linear-gradient(135deg,rgba(255,255,255,.16) 0 8px,transparent 8px 18px),radial-gradient(circle at 50% 40%,var(--c1),var(--c2) 80%)}
-.hc-art.big img{width:100%;height:100%;object-fit:cover;object-position:center 18%;filter:none}
+.hc-art.big img{object-position:50% 30%}
 .hc-foot{position:absolute;left:0;right:0;bottom:0;padding:6px 9px 7px;display:flex;flex-direction:column;gap:1px;background:linear-gradient(180deg,rgba(40,25,12,0),rgba(40,25,12,.82) 26%,rgba(40,25,12,.92));color:#fff}
 .hc-foot b{font-size:14px;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.hc-foot .hc-story{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;margin:2px 0 3px;opacity:1}
 .hc-foot small{font-size:10.5px;opacity:.92;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hc-foot em{font-style:normal;font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:4px;color:#ffe28a;font-variant-numeric:tabular-nums}
 .hst{color:#ffd23a;font-size:12px;letter-spacing:1px;text-shadow:0 1px 0 rgba(0,0,0,.35)}

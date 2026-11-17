@@ -444,8 +444,8 @@ function hcList(){
   return L;
 }
 function hcFind(id){var s=String(id).split(':'),t=s[0],i=+s[1],c=t==='assoc'?(S.cands||[])[i]:(VOL_TYPES.indexOf(t)>=0?volCands(t)[i]:null);return c?{id:id,t:t,i:i,c:c}:null;}
-/* 초상화: 지금은 갈래마다 한 장(부교역자 subpastor1, 직원 staff1) — 나중에 후보마다 다른 그림으로 */
-function hcPortrait(x){return 'assets/portraits/hirecard/'+(x.t==='assoc'?'subpastor/subpastor1':'staff/staff1')+'.png';}
+/* 초상화: 후보마다 8명 중 한 명(c.pi, hiredata.js) */
+function hcPortrait(x){return hirePortrait(x.c,x.t);}
 function hcRole(x){return x.t==='assoc'?x.c.title:'교회직원';}
 function hcStars(n){return '<span class="hst" aria-label="능력 별 '+n+'개">'+'★★★★★'.slice(0,n)+'<i>'+'★★★★★'.slice(n)+'</i></span>';}
 function hcCardHtml(x){
@@ -453,7 +453,7 @@ function hcCardHtml(x){
   return '<button class="hcard t'+x.t+(poor?' poor':'')+'" data-act="hcopen" data-v="'+x.id+'" aria-label="'+c.name+' '+hcRole(x)+', 능력 별 '+c.skill+'개, 청빙 '+fmt(c.fee)+'">'+
     '<span class="hc-em" aria-hidden="true">'+HC_EM[x.t]+'</span><span class="hc-name">'+c.name+'</span><span class="hc-grade g'+c.skill+'">'+HC_GRADE[c.skill]+'</span>'+
     '<span class="hc-art"><img alt="" src="'+hcPortrait(x)+'"></span>'+
-    '<span class="hc-foot"><b>'+hcRole(x)+'</b>'+hcStars(c.skill)+'<small>'+(x.t==='assoc'?FIELDS[c.field].name+' 사역':kText(exK(c.skill)))+' · 주 '+fmtS(c.pay)+'</small><em><i class="coin" aria-hidden="true"></i>'+fmt(c.fee)+'</em></span></button>';
+    '<span class="hc-foot"><b>'+hcRole(x)+'</b>'+hcStars(c.skill)+'<small class="hc-story">'+(c.story||'')+'</small><small>'+(x.t==='assoc'?FIELDS[c.field].name+' 사역':kText(exK(c.skill)))+' · 주 '+fmtS(c.pay)+'</small><em><i class="coin" aria-hidden="true"></i>'+fmt(c.fee)+'</em></span></button>';
 }
 function hireHtml(){
   var L=hcList(),fb=UI.hireFor&&bById(UI.hireFor);

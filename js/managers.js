@@ -33,7 +33,7 @@ function fitMgrs(){
   if(!S.hrV){S.hrV=1;S.buildings.forEach(function(b){if(mgrRole(b)&&!b.mgr)b.mgr='v';});
     var b0=S.buildings[0];if(b0&&!S.buildings.some(function(b){return b.fixed;})&&isHall(b0))b0.fixed=true;}
   if(S.hires.length){   // 예전 저장: 따로 두던 청빙 직원을 성도 명단의 봉사자로 옮긴다
-    S.hires.forEach(function(h){var p=volJoin({t:'C',name:h.name,g:h.g,seed:h.seed,skill:h.skill,pay:h.pay,story:h.story});
+    S.hires.forEach(function(h){var p=volJoin({t:'C',name:h.name,g:h.g,seed:h.seed,pi:h.pi,skill:h.skill,pay:h.pay,story:h.story});
       S.buildings.forEach(function(b){if(b.mgr==='h'+h.id)b.mgr='p'+p.id;});});
     S.hires=[];syncPeople();
   }
@@ -72,16 +72,21 @@ function mgrClear(bid){var b=bById(bid);if(b&&b.mgr){delete b.mgr;recalc();save(
    청빙한 봉사자는 성도 명단(S.people)에 들어간다(p.ext = {skill, pay, story}): 그 갈래의 첫 직책(VOL_NODE)으로 시작하고,
    봉사자 화면의 해당 탭에 나오며, 여느 성도처럼 심방·교육으로 더 기를 수 있다. 주급(p.ext.pay)은 사례비에 더한다 */
 var VOL_NODE={C:'cstaff'},VOL_TYPES=['C'];   // 청빙할 수 있는 것은 부교역자(ministry.js)와 직원(C, 교회직원으로 성도 명단에 들어간다)뿐
-var HIRE_STORY={
-  pastor:['신학교를 갓 졸업하고 첫 사역지를 찾고 있어요. 서툴지만 새벽마다 기도로 하루를 열어요.','개척교회에서 오래 섬기다 교회가 합쳐지며 사역지를 잃었어요. 작은 교회의 사정을 잘 알아요.','선교지에서 돌아와 다시 목회를 시작하려 해요. 낯선 사람과 금세 친해져요.','대형 교회 교육부서에서 일했어요. 체계 잡는 일에 밝아요.'],
-  A:['이웃 교회에서 집사로 오래 섬겼어요. 이사 와서 새 교회를 찾고 있어요.','은퇴 뒤 고향으로 돌아왔어요. 교회 살림을 꼼꼼히 챙기던 분이에요.','젊은 날 받은 은혜를 갚고 싶어 해요. 궂은일에 먼저 손을 들어요.','새벽기도를 한 번도 거르지 않는다는 소문이 자자해요.'],
-  B:['이웃 교회에서 구역장으로 십 년을 섬겼어요. 이사 와서 섬길 자리를 찾고 있어요.','대학 선교단체 간사 출신이에요. 처음 온 사람이 말문을 열게 하는 재주가 있어요.','어려운 시절 소그룹에서 받은 사랑을 갚고 싶어 해요. 아직 인도는 서툴러요.','청년부 리더로 오래 섬겼어요. 모임을 따뜻하게 이끌어요.'],
-  C:['동네 분식집을 오래 꾸렸어요. 손이 빠르고 계산이 정확해요.','취업 준비 중인 청년이에요. 일은 처음이지만 인사성이 밝아요.','카페에서 일하며 신앙을 갖게 됐어요. 손님 얼굴을 잘 기억해요.','아이들을 다 키우고 다시 일을 찾고 있어요. 살림 솜씨가 좋아요.']
-};
+/* 초상화 8명(hiredata.js)의 성별 — 이름·그림이 어긋나지 않게 */
+var HIRE_PORTRAIT_G={subpastor:'mfmfmmmm',staff:'mfmmffff'};
+// 후보 한 명의 그림(pi: 0~7)·성별·한 줄 사연을 정한다. kind: 'subpastor' | 'staff'
+function hirePortraitPick(kind){
+  var L=HIRE_PORTRAIT_DATA[kind],pi=Math.floor(Math.random()*L.length),st=L[pi].stories;
+  return {pi:pi,g:HIRE_PORTRAIT_G[kind].charAt(pi),story:st[Math.floor(Math.random()*st.length)]};
+}
+function hirePortrait(c,t){   // 후보(또는 성도 p.ext)의 그림 주소. pi가 없는 옛 저장은 seed로 정한다
+  var kind=t==='assoc'?'subpastor':'staff',L=HIRE_PORTRAIT_DATA[kind],i=c.pi!=null?c.pi:((c.seed||0)%L.length);
+  return L[i].portrait;
+}
 function hirePick(a){return a[Math.floor(Math.random()*a.length)];}
 function makeVol(t,cheap){
-  var sk=cheap?1:1+Math.floor(Math.pow(Math.random(),1.3)*5),pay=HIRE_PAY0+HIRE_PAY_K*sk,g=Math.random()<.5?'m':'f';
-  return {t:t,name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),g:g,seed:1+Math.floor(Math.random()*99990),skill:sk,pay:pay,fee:pay*HIRE_FEE_K,story:hirePick(HIRE_STORY[t])};
+  var sk=cheap?1:1+Math.floor(Math.pow(Math.random(),1.3)*5),pay=HIRE_PAY0+HIRE_PAY_K*sk,pk=hirePortraitPick('staff'),g=pk.g;
+  return {t:t,name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,skill:sk,pay:pay,fee:pay*HIRE_FEE_K,story:pk.story};
 }
 // 후보 3명. 처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 낀다
 function genVol(t){return [makeVol(t,(S.hireN||0)<HIRE_EARLY),makeVol(t),makeVol(t)].sort(function(a,b){return a.fee-b.fee;});}
@@ -95,7 +100,7 @@ function volReroll(){
 // 후보를 성도 명단에 넣는다 (사람 수도 함께 는다)
 function volJoin(c){
   var p=makePerson(),node=VOL_NODE[c.t];
-  p.n=c.name;p.g=c.g;p.seed=c.seed;p.node=node;p.lv=8+4*(c.skill-1);p.ext={skill:c.skill,pay:c.pay,story:c.story,w:S.week};
+  p.n=c.name;p.g=c.g;p.seed=c.seed;p.node=node;p.lv=8+4*(c.skill-1);p.ext={skill:c.skill,pay:c.pay,story:c.story,pi:c.pi,w:S.week};
   S.people.push(p);S.members=Math.round(S.members)+1;return p;
 }
 // 청빙: 갈래 t의 후보 i를 들이고, bid가 있고 맡을 수 있으면 그 건물에 바로 배치한다. 못 하면 이유
