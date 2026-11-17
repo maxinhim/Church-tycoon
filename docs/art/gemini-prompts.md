@@ -251,3 +251,58 @@ Row 2: (8) fast 4x: three triangles; (9) fastest 8x: four triangles; (10) music 
 1. 마젠타 배경을 투명하게 → 칸마다 `tools/slice_sheet.py`로 잘라 `assets/ui/btn_visit.png` 등 이름을 붙인다(심방 `visit`, 선물 `gift`, 고민 `care`, 모두 심방·선물 `visit_all`·`gift_all`, 기능 버튼 `fab_build`·`fab_events`·`fab_people`·`fab_volunteer`·`fab_staff`, 상태 `_idle`·`_press`·`_lock`).
 2. 글자가 틀리면 글자 없는 시트로 다시 받고 라벨은 CSS로 얹는다.
 3. 시트 원본은 `docs/art/sheets/ui-*.webp`에 두고, 출처(Gemini 생성)는 README의 에셋 항목에 적는다.
+
+## 추가 버튼 그림 (2차) — 왼쪽 아래 아이콘 · 화면 탭 · 행사 아이콘
+공통 화풍 블록(위 '메인 화면 버튼 그림' 절)을 맨 앞에 붙여서 쓴다. 마젠타 배경·워터마크 없음·칸 사이 여백은 같다. 받으면 `docs/art/sheets/ui-buttons6.jpeg` 이후로 두고 `tools/ui_buttons.py`의 `SPEC`에 칸 이름을 적어 자른다.
+
+### 6) 왼쪽 아래 자금·성도 수 칩의 아이콘 (글자·배경 칩 없이 그림만)
+```
+[공통 화풍 블록] A sheet of 6 standalone icons (no button, no chip, no background plate, no text), each about 192x192 px, in one row of 3 and one row of 3 on a magenta background:
+(1) money: a neat stack of Korean banknote-style green bills with a few gold coins in front; (2) money, bright variant for "income" with small sparkles; (3) debt: a deflated coin purse with a small red down arrow and a chain; (4) church members: two friendly Korean church members side by side, a younger woman and an older man, shoulders up; (5) church members, bright variant with a tiny heart above them; (6) congregation count alternative: three small head-and-shoulders silhouettes in warm colors.
+Thick dark-brown outline, readable at 32 px.
+```
+
+### 7) 화면 탭 버튼 (글자 포함, 상태별로 시트 세 장)
+탭 이름 15가지: 행사 · 담임목사 · 부교역자 · 봉사자 · 전체 · 지표 · 퀘스트 · 재정 · 직분자 · 리더 · 섬김이 · 청빙직원 · 직원 · 청빙 · 인력.
+```
+[공통 화풍 블록] A sheet of 15 small tab buttons (each about 256x96 px, a rounded tab shape with a flat bottom edge like a folder tab), arranged 3 columns by 5 rows on a magenta background. STATE: <IDLE | SELECTED | LOCKED>.
+Each tab has a small simple pictogram on the left and a bold readable Korean label on the right in a rounded friendly font, dark brown text with a cream outline. IDLE: sage-green tab, soft shadow. SELECTED: butter-yellow tab raised 4 px higher with a bright cream border and a tiny sparkle. LOCKED: grayscale tab with a small padlock on the right side.
+Row 1: "행사" (calendar), "담임목사" (pastor with a Bible), "부교역자" (assistant pastor with a clipboard).
+Row 2: "봉사자" (hand holding a heart), "전체" (a group of three people), "지표" (a small bar chart).
+Row 3: "퀘스트" (a scroll), "재정" (a coin), "직분자" (a person with a sash badge).
+Row 4: "리더" (a person with a flag), "섬김이" (a person with a towel and bucket), "청빙직원" (a person with a name tag and a handshake).
+Row 5: "직원" (a person with a lanyard), "청빙" (an envelope with a resume), "인력" (a team of two people).
+The Korean labels must be exactly as written. If Hangul comes out wrong, redraw with no text.
+```
+- 세 번 돌린다: STATE를 `IDLE` → `SELECTED` → `LOCKED`로 바꿔서. 받으면 `tab_<이름>`, `tab_<이름>_on`, `tab_<이름>_lock`으로 자른다.
+
+### 8) 행사 아이콘 — 교회 행사 14개 (글자 없음)
+```
+[공통 화풍 블록] A sheet of 14 round event icons (each a circle about 224x224 px with a thick sage-green rim, cream inner border and a pastel colored inner disc), arranged 5 columns by 3 rows (last row has 4) on a magenta background. No text, one clear pictogram per icon:
+1 small group meeting: a teapot and two cups on a table; 2 Bible study: an open Bible with a bookmark; 3 doctrine study: a rolled scroll with a quill; 4 discipleship training seminar: a graduation cap with a small cross; 5 communion: a loaf of bread and a chalice; 6 street evangelism: a megaphone with small speech bubbles; 7 charity bazaar: a shopping bag and a price tag; 8 community service day: a broom, a bucket and work gloves; 9 retreat: a camping tent under stars; 10 revival meeting: a flame with a small cross; 11 Easter joint worship: a pink tulip and a decorated egg; 12 summer Bible school: a child's backpack and a sun; 13 thanksgiving worship: a bundle of golden wheat and a pumpkin; 14 Christmas worship: a decorated fir tree with a star.
+```
+
+### 9) 행사 아이콘 — 담임목사·부교역자 행사 14개 (글자 없음)
+```
+[공통 화풍 블록] The same round event icon format, 14 icons, 5 columns by 3 rows (last row has 4). No text:
+Pastor events (row 1 and the first two of row 2): 1 buy books: a stack of books with a coin; 2 scripture study: a magnifying glass over an open Bible; 3 scripture memorizing: a candle beside a small scroll; 4 prayer mountain meditation: a quiet mountain with a praying silhouette; 5 attend a seminar: a microphone with a lecture screen; 6 pastors' conference: a globe with a small podium; 7 earn a degree: a graduation cap with a diploma scroll.
+Assistant pastor events: 8 buy books; 9 scripture study group: a magnifying glass over a Bible with two small speech bubbles; 10 memorizing: a candle and a scroll; 11 attend a seminar: a microphone; 12 degree program: a graduation cap; 13 staff training: a school building with a small bell; 14 staff fellowship night: a teacup with a crescent moon.
+Use a cooler blue-violet disc tint for pastor events and a warm teal disc tint for assistant pastor events so they differ at a glance.
+```
+
+### 10) 행사 아이콘 — 봉사자 행사 12개 (글자 없음)
+```
+[공통 화풍 블록] The same round event icon format, 12 icons, 4 columns by 3 rows. No text. Column groups by tint: officers (deacons and elders) = soft rose disc, leaders = sky-blue disc, servers = mint disc, all volunteers = butter-yellow disc.
+Row 1 officers: 1 vow dedication worship: praying hands with a sash; 2 officers' seminar: an open Bible with a lecture screen; 3 officers' retreat: a camping tent with a lantern; and a leader icon 4 leaders' tea time: a cookie and a cup.
+Row 2: 5 leader training school: a compass; 6 leader MT (group trip): a small bus with a flag; 7 servers' tool sharing: a red toolbox; 8 servers' workshop: a hammer and a wrench.
+Row 3: 9 servers' thank-you night: a bouquet with a ribbon; 10 volunteers' prayer meeting: a white dove; 11 volunteers' picnic: a picnic basket on a checkered cloth; 12 volunteers' consolation banquet: a plate with a dome cover and a candle.
+```
+
+### 11) 사역팀 아이콘 9개 (봉사자 › 섬김이 탭의 팀 카드 가운데 아이콘)
+```
+[공통 화풍 블록] The same round icon format, 9 icons, 3 columns by 3 rows, no text: evangelism team (megaphone), praise team (music note and a microphone), care team (two hands holding a heart), newcomer team (a green sprout with a welcome door mat), education team (stack of books and a pencil), intercessory prayer team (praying hands with a soft glow), management team (wrench and a small building), media team (clapperboard and a camera), mission team (a globe with a paper plane).
+```
+
+### 받은 뒤 연결 메모
+- 탭: `#scrTabs button`의 `data-v`(탭 이름)에 맞춰 배경 그림을 입힌다. 같은 이름의 탭이 화면마다 다르게 쓰이니(`봉사자` = 행사 탭·성도 탭·하단 화면) 화면 + 탭 이름으로 고른다.
+- 행사 아이콘: `EVENTS[id].ic`(지금은 이모지)를 `assets/ui/ev_<id>.png`로 바꾼다. id 목록은 위 14·14·12개의 영문 id (`smallgroup bible creed training communion street bazaar service retreat revival easter vbs thanks christmas` / `pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel` / `offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast`).
