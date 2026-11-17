@@ -197,3 +197,64 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 @media (max-height:480px){.rd-art{width:min(100%,112px);border-width:3px}.rd{gap:5px;padding:7px}.rd-h h3{font-size:16px}.rd .say{font-size:11.5px;line-height:1.35}.rd-s>div{font-size:11px}.rd-b .btn{padding:4px 2px;font-size:12px}}
 @media (max-width:700px),(max-height:420px){.rost-g{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px}.rd-art{width:min(100%,84px)}.rd{padding:8px;gap:5px}.rd-h h3{font-size:17px}}
 .rd-x{margin-top:2px;border-color:#e0624a;color:#b8442f;font-size:12px}
+
+/* ---------- 리더 화면 4:6 (screens.js leadHtml): 왼쪽 리더 카드 · 오른쪽 성도 슬롯 ---------- */
+.lead{display:grid;grid-template-columns:2fr 3fr;gap:12px;align-items:start}
+.lead-l{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:9px;align-content:start}
+.lcard{position:relative;aspect-ratio:3/4;padding:0;overflow:hidden;border-radius:14px;border:3px solid #d9a321;background:#efe4cc;cursor:pointer;box-shadow:0 3px 0 #d9a321,0 5px 10px rgba(0,0,0,.18)}
+.lcard.on{outline:3px solid #fff;outline-offset:-6px;box-shadow:0 0 0 3px #d9a321,0 0 16px 2px rgba(217,163,33,.6)}
+.lcard img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 28%}
+.lc-rk{position:absolute;left:6px;top:6px;padding:1px 7px;border-radius:9px;background:#d9a321;color:#fff;font-size:11px;font-weight:700}
+.lc-n{position:absolute;left:0;right:0;bottom:22px;padding:14px 6px 2px;background:linear-gradient(180deg,transparent,rgba(40,25,12,.82));color:#fff;font-family:var(--f-display);font-size:15px;text-align:center}
+.lc-s{position:absolute;left:0;right:0;bottom:0;height:22px;line-height:22px;background:rgba(40,25,12,.9);color:#ffe9a6;font-size:11px;font-weight:700;text-align:center}
+.lead-r{display:flex;flex-direction:column;gap:10px;padding:10px;border-radius:16px;border:3px solid #d9a321;background:#fffaf0;box-shadow:0 3px 0 #d9a321}
+.lead-h{display:flex;align-items:center;gap:8px}.lead-h>div{flex:1;min-width:0}.lead-h b{display:block;font-family:var(--f-display);font-size:17px}.lead-h small{color:#8a7a5c;font-size:11.5px}
+.lead-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.lslot{position:relative;aspect-ratio:1;border-radius:14px;padding:0;overflow:hidden;cursor:pointer}
+.lslot.empty{border:2.5px dashed #c9b98f;background:rgba(255,255,255,.55);color:#b9a77d;font-size:26px;display:grid;place-items:center}
+.lslot.empty:hover{border-color:#d9a321;color:#d9a321}
+.lslot.full{border:3px solid #d9a321;background:#efe4cc}
+.lslot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.ls-n{position:absolute;left:0;right:0;bottom:0;padding:8px 2px 1px;background:linear-gradient(180deg,transparent,rgba(40,25,12,.85));color:#fff;font-size:11px;text-align:center}
+.ls-l{position:absolute;right:3px;top:3px;padding:0 5px;border-radius:8px;background:rgba(255,255,255,.9);color:#c0392b;font-size:10px;font-weight:700}
+.lead-pick{border-top:2px dashed #e2d6b8;padding-top:8px}.lead-pick>b{font-size:12.5px}.lead-pick small{color:#8a7a5c;font-weight:400}
+.lp-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin-top:6px;max-height:190px;overflow-y:auto}
+.lp{position:relative;aspect-ratio:1;border-radius:12px;border:2px solid #c9b98f;overflow:hidden;padding:0;background:#efe4cc;cursor:pointer}
+.lp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.lp span{position:absolute;left:0;right:0;bottom:0;padding:6px 2px 0;background:linear-gradient(180deg,transparent,rgba(40,25,12,.85));color:#fff;font-size:10.5px;text-align:center}
+.lp small{position:absolute;right:2px;top:2px;padding:0 4px;border-radius:7px;background:rgba(255,255,255,.9);color:#c0392b;font-size:9.5px;font-weight:700}
+@media (max-width:700px),(max-height:420px){.lead-l{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}.lead-slots{grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px}.lead-h b{font-size:15px}}
+
+/* ---------- 사역팀 6슬롯 (teams.js): 왼쪽 3 · 가운데 팀 · 오른쪽 3 육각형 ---------- */
+.tmg6{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;padding:4px}
+.teamc.tm6{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:8px 6px;border-radius:16px;background:#fffaf0;border:2px solid #e2d6b8;box-shadow:0 3px 0 #e2d6b8}
+.teamc.tm6.run{border-color:#7cc276;box-shadow:0 3px 0 #7cc276}
+.teamc.lock{grid-column:auto}
+.tmh{display:flex;flex-direction:column;gap:5px;align-items:center}
+.hex{position:relative;width:46px;height:52px;padding:0;border:0;background:transparent;cursor:pointer;display:grid;place-items:center}
+.hex svg{position:absolute;inset:0;width:100%;height:100%}
+.hex.empty polygon{fill:rgba(255,255,255,.55);stroke:#c9b98f;stroke-width:2.5;stroke-dasharray:5 4;stroke-linejoin:round}
+.hex.empty b{position:relative;color:#b9a77d;font-size:20px;line-height:1}
+.hex.empty:hover polygon{stroke:#d9a321}.hex.empty:hover b{color:#d9a321}
+.hex.full{clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#d9a321}
+.hex.full i{position:absolute;inset:3px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#efe4cc}
+.hex.full img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;display:block}
+.hex.full:hover{filter:brightness(1.08)}
+.tm-lp{max-height:210px}
+@media (max-width:700px),(max-height:420px){.tmg6{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}.hex{width:38px;height:43px}}
+
+/* ---------- 건물 카드 슬롯 줄 (managers.js slotsHtml): 메인 관리자 | 보조 직분자 ---------- */
+.scs{display:flex;align-items:center;gap:6px;padding:2px 0 0}
+.scs-g{display:flex;align-items:center;gap:4px}.scs-g small{font-size:10px;line-height:1.1;color:#8a7a5c;white-space:nowrap;font-weight:700}
+.scs-r{display:flex;gap:4px}
+.scs-sep{align-self:stretch;width:0;border-left:2px dashed #c9b98f;margin:0 1px}
+.slt{position:relative;width:30px;height:30px;padding:0;border-radius:10px;overflow:hidden;cursor:pointer;flex:none}
+.slt.empty{border:2px dashed #c9b98f;background:rgba(255,255,255,.55);color:#b9a77d;font-size:15px;display:grid;place-items:center}
+.slt.empty:hover{border-color:#d9a321;color:#d9a321}
+.slt.full{border:2.5px solid #d9a321;background:#efe4cc}
+.slt.fix{display:block;cursor:default;border-color:#7a4fb0}
+.slt img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%;display:block}
+.scs .scs-auto{margin-left:auto;width:30px;height:30px;padding:0;font-size:15px}
+.sup-lp{max-height:none;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px;padding:4px}
+.lp.here{border-color:#d9a321;box-shadow:0 0 0 2px #d9a321}.lp.away{opacity:.55}
+.lp small{max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

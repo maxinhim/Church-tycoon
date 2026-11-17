@@ -90,7 +90,12 @@ var PP_TREE={
 };
 /* 명단 구분 (people.js ppClass): 제자반 수료(깊이 PP_VOL_D) 이상은 '봉사자', 각 갈래의 끝(장로·권사 / 사역간사 / 부교역자)과 청빙직원은 '직원',
    그 앞은 '성도'. 사역팀 한 팀에 세울 수 있는 봉사자는 TEAM_SERVANTS_MAX명 */
-var PP_VOL_D=3,PP_STAFF_NODES=['elder','cstaff','assoc'],TEAM_SERVANTS_MAX=6;
+var PP_VOL_D=3,PP_STAFF_NODES=['elder','cstaff','assoc'];
+/* 할당 슬롯 (봉사자 화면·사역팀·건물 카드)
+   · 소그룹 리더: 맡을 수 있는 성도 칸 = 1 + 호감 Lv ÷ LEAD_SLOT_LV (단계의 cap이 위쪽 한계, 예비신학생은 0)
+   · 사역팀: 섬김이(섬김 갈래) 최대 TEAM_MAX명 — 사역팀의 단계는 배치한 섬김이 수와 같다
+   · 건물: 메인 관리자 1명 + 보조 인력(직분자 갈래) 칸 = 티어 1 SUP_SLOTS[0], 티어 2 SUP_SLOTS[1], 대예배당 SUP_SLOTS[2] */
+var LEAD_SLOT_LV=10,SUP_SLOTS=[1,2,3];
 var PP_TRACK={A:{n:'직분자',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'리더',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김이',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김이'}};
 var PP_UPK_MAX=.25,PP_DEC_MAX=.4;
 var PP_GIVE_LV=.005;
@@ -172,11 +177,10 @@ var PP_CLV={bapt:1,nurture:2,disciple:3,devoted:4,sgl:4,server:4,deacon:6,cml:6,
 var FEAT_LV={gift:2,hire:2,entr:2,teams:3,bulk:3,care:3,vol:4,deleg:5};
 // 퀘스트 한 칸마다 받는 돈은 퀘스트 목록(quests.js)에 있다
 
-/* 사역팀과 달란트 (teams.js): 사역 경험 지표 레벨 1당 달란트 1개(TALENT_PER_LV).
-   달란트를 사역팀에 넣으면 그 팀의 단계(0~TEAM_MAX)가 오른다. 넣고 빼고 다른 팀으로 옮기는 데 값은 들지 않고, 사례비도 없다.
+/* 사역팀 (teams.js): 섬김이를 팀 슬롯(최대 TEAM_MAX칸)에 배치하면 그 수가 팀의 단계(0~TEAM_MAX)가 된다. 넣고 빼고 옮기는 데 값은 들지 않고, 사례비도 없다.
    효과 = 팀마다 정해진 기본 효과 × 단계 효과 배수 (TEAM_K × TEAM_CURVE[단계]). 단계가 오를수록 늘어나는 폭이 줄어들어
    달란트를 여러 팀에 나누는 것과 한 팀에 모으는 것이 균형을 이룬다 */
-var TEAM_MAX=5,TALENT_PER_LV=1,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9];
+var TEAM_MAX=6,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9,3.1];
 
 /* 건물 운영·레벨·티어 (bldlv.js)
    · 운영 방식: 예배·교제 건물은 '일괄 가동'(정원이 차면 한꺼번에 BATCH 시간 동안 가동 후 내보냄, 주일이 되면 정원이 덜 차도 가동),

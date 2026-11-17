@@ -35,6 +35,7 @@ function renderSelCard(){
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     var lvTag=hasLv(b)?'<i class="blv">Lv '+bLv(b)+'</i>'+(bd.tier===2?'<i class="btr">상위</i>':''):'';
     h='<div class="sct"><b>'+bd.name+'</b>'+lvTag+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
+    h+=slotsHtml(b);   // 메인 관리자 | 보조 직분자 슬롯
     // 레벨 올리기: 투자 게이지와 버튼
     if(hasLv(b)&&bLv(b)<BLV_MAX){
       var iw=investWhy(b);

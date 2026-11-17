@@ -48,10 +48,17 @@ function ppAssignWhy(leader,saint){
   if(!leader||!saint)return '사람을 찾을 수 없어요';
   if(ppTrack(leader)!=='B'||leader.node==='seminary')return '소그룹 리더가 아니에요';
   if(ppClass(saint)!=='saint')return '성도만 맡길 수 있어요';
-  if((leader.assignedSaints||[]).length>=(ppNode(leader).cap||0))return '맡을 자리가 없어요';
+  if((leader.assignedSaints||[]).length>=leadSlots(leader))return '맡을 자리가 없어요 (호감 Lv '+LEAD_SLOT_LV+'마다 한 칸)';
   if((S.people||[]).some(function(q){return (q.assignedSaints||[]).indexOf(saint.id)>=0;}))return '이미 다른 리더가 맡고 있어요';
   return '';
 }
+// 리더가 맡을 수 있는 성도 칸 수: 호감 Lv에 비례(단계의 cap까지). 소그룹 리더 앞 단계(예비신학생 등)는 맡지 않는다
+function leadSlots(p){if(!p||ppTrack(p)!=='B'||p.node==='seminary')return 0;return Math.min(ppNode(p).cap||0,1+Math.floor(p.lv/LEAD_SLOT_LV));}
+function ppAssignedAny(sid){return (S.people||[]).some(function(q){return (q.assignedSaints||[]).indexOf(sid)>=0;});}
+// 아직 어느 리더도 맡지 않은 성도 (호감 Lv 낮은 사람부터)
+function ppFreeSaints(){return ppSaints().filter(function(p){return !ppAssignedAny(p.id);}).sort(function(a,b){return a.lv-b.lv||a.id-b.id;});}
+// ⚡ 자동 배정: 빈 칸을 호감 Lv 낮은 성도부터 채운다. 채운 수
+function ppAutoAssign(lid){var l=ppById(lid),n=0;if(!l)return 0;ppFreeSaints().forEach(function(s){if(!ppAssignWhy(l,s)&&!ppAssign(lid,s.id))n++;});return n;}
 function ppAssign(lid,sid){var l=ppById(lid),s=ppById(sid),why=ppAssignWhy(l,s);if(why)return why;l.assignedSaints.push(sid);return '';}
 function ppUnassign(lid,sid){var l=ppById(lid);if(l)l.assignedSaints=(l.assignedSaints||[]).filter(function(x){return x!==sid;});}
 function ppTrack(p){return ppNode(p).t||'';}
@@ -86,10 +93,9 @@ function syncPeople(){
   var ids={};S.people.forEach(function(p){ids[p.id]=1;});
   S.people.forEach(function(p){
     ppReclass(p,true);
-    p.assignedSaints=(p.assignedSaints||[]).filter(function(i){return ids[i]&&ppTrack(p)==='B'&&p.node!=='seminary'&&ppClass(p)!=='staff';});
+    p.assignedSaints=(p.assignedSaints||[]).filter(function(i){return ids[i]&&ppClass(ppById(i))==='saint'&&ppTrack(p)==='B'&&ppClass(p)!=='staff';}).slice(0,leadSlots(p));
   });
-  (S.buildings||[]).forEach(function(b){b.supportStaff=(b.supportStaff||[]).filter(function(i){return ids[i];});});
-  S.servants=S.servants||{};for(var tk in STAFF)S.servants[tk]=(S.servants[tk]||[]).filter(function(i){return ids[i]&&ppClass(ppById(i))!=='saint';}).slice(0,TEAM_SERVANTS_MAX);
+  var supSeen={};(S.buildings||[]).forEach(function(b){b.supportStaff=(b.supportStaff||[]).filter(function(i){if(!ids[i]||supSeen[i]||!supEligible(ppById(i)))return false;supSeen[i]=1;return true;}).slice(0,supSlots(b));});
   // 직분 수와 합계 (MOD·영성·헌금이 읽는다)
   var o={deacon:0,kwonsa:0,elder:0,cstaff:0},a={bapt:0,grad:0,flat:0,sp:0,lv:0,cap:0,upk:0,dec:0};
   S.people.forEach(function(p){
@@ -257,6 +263,8 @@ function ppThought(p){
    같은 사람은 언제나 같은 얼굴이다. 이름은 성별로 지으므로(PP_MALE·PP_FEMALE) 그림과 어긋나지 않는다 */
 var MEMBER_ICONS={f:23,m:25};
 function memberIcon(o){var g=o.g==='f'?'f':'m',n=MEMBER_ICONS[g];return 'assets/portraits/icons/members/member_'+g+(1+Math.floor(ppRand(o.seed||1,4)*n)%n)+'.png';}
+// 사람 한 명의 얼굴 그림 주소: 청빙한 사람은 청빙 카드 그림, 기른 사람은 성도 아이콘
+function personFace(p){return p.ext?hirePortrait(p.ext,'C'):memberIcon(p);}
 function portraitHtml(o){return '<img class="pt" alt="" src="'+memberIcon(o)+'">';}
 /* 부교역자의 레벨: 격려하면 오르고, 레벨마다 효과가 커진다 */
 function asNeed(lv){return AS_XP0+AS_XP_K*lv;}

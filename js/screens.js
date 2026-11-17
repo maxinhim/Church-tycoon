@@ -13,7 +13,8 @@ var SCREENS={
   officers:{title:'봉사자',tabs:[['off','직분자'],['B','리더'],['C','섬김이']]},
   hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','직원']]},
   roster:{title:'직원',tabs:[['assoc','부교역자'],['staff','직원'],['hire','청빙']]},
-  mgr:{title:'관리자 배치',tabs:[['pool','인력']]}
+  mgr:{title:'관리자 배치',tabs:[['pool','인력']]},
+  sup:{title:'보조 인력',tabs:[['pool','직분자']]}
 };
 // 교회 Level이 되어야 열리는 탭 (balance.js FEAT_LV): 잠긴 탭은 자물쇠로 보이고 누르면 몇 Lv에 열리는지 알려 준다
 var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','events:staff':'teams','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
@@ -85,8 +86,9 @@ function renderScreen(){
   }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
-  else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml();}
+  else if(UI.scr==='officers'){body.className=UI.scrTab==='B'?'sbody leadscr':'sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='B'?(leaders().length?delegHtml():'')+leadHtml():officersHtml());}
   else if(UI.scr==='mgr'){body.className='sbody';body.innerHTML=mgrHtml();}
+  else if(UI.scr==='sup'){body.className='sbody';body.innerHTML=supHtml();}
   else if(UI.scr==='events'){
     body.className='sbody';
     // 탭마다 묶음(grp)이 다르다: 행사(묶음 없음) · 담임목사(pas) · 부교역자(asc) · 봉사자(vol)
@@ -112,6 +114,7 @@ function renderScreen(){
   else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
   else if(sel&&sel.t==='cr'&&careRes)dh=careResHtml();
   else if(sel&&sel.t==='tm'&&STAFF[sel.id])dh=teamDlgHtml(sel.id);
+  else if(sel&&sel.t==='tms'&&STAFF[sel.id])dh=teamPickHtml(sel.id);
   else if(sel&&sel.t==='hc'&&(UI.scr==='hire'||UI.scr==='roster')&&hcFind(sel.id))dh=hcDlgHtml(sel.id);
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
@@ -155,6 +158,8 @@ function scrClick(e){
   if(!el){if(e.target.id==='scrDlg'){UI.scrSel=null;renderScreen();}return;}
   if(scrStatusClick(el.dataset.act,el.dataset.v,el))return;
   if(scrRosterClick(el.dataset.act,el.dataset.v))return;
+  if(scrLeadClick(el.dataset.act,el.dataset.v))return;
+  if(scrSupClick(el.dataset.act,el.dataset.v))return;
   if(scrTeamClick(el.dataset.act,el.dataset.v))return;
   if(scrPeopleClick(el.dataset.act,el.dataset.v,el))return;
   var a=el.dataset.act,v=el.dataset.v;
@@ -280,6 +285,43 @@ function officersHtml(){
     h+='<div class="ssec"><b>'+nm+' '+G.length+'명</b><span>'+eff+'</span></div><div class="evg">'+G.map(ppCardHtml).join('')+'</div>';
   });
   return h;
+}
+/* 리더 탭: 왼쪽 40% 리더 카드 · 오른쪽 60% 그 리더가 맡은 성도 칸(호감 Lv에 비례해 늘어남). 빈 칸을 누르면 담당할 성도를 고른다.
+   UI.leadSel = 고른 리더 id, UI.leadPick = 성도 고르는 줄이 열렸는지. 리더가 없으면 안내만 */
+function leadCardHtml(p,on){
+  var n=(p.assignedSaints||[]).length,sl=leadSlots(p);
+  return '<button class="lcard'+(on?' on':'')+'" data-act="ldopen" data-v="'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+', 성도 '+n+' / '+sl+'">'+
+    '<img alt="" src="'+personFace(p)+'"><span class="lc-rk">'+ppRankName(p)+'</span><span class="lc-n">'+p.n+'</span><span class="lc-s">성도 '+n+' / '+sl+'</span></button>';
+}
+function leadSlotHtml(sid,i){
+  var s=sid&&ppById(sid);
+  if(!s)return '<button class="lslot empty" data-act="ldslot" aria-label="빈 칸 — 담당할 성도 배치"><span>＋</span></button>';
+  return '<button class="lslot full" data-act="ldfree" data-v="'+s.id+'" aria-label="'+s.n+' 빼기" title="누르면 빼요"><img alt="" src="'+personFace(s)+'"><span class="ls-n">'+s.n+'</span><span class="ls-l">♥'+s.lv+'</span></button>';
+}
+function leadHtml(){
+  var L=scrPeople();
+  if(!L.length)return '<p class="sempty">아직 이 갈래에 들어선 성도가 없어요. 성도 화면에서 제자반까지 기른 뒤 이 갈래를 골라 주세요.</p>';
+  var sel=L.filter(function(p){return p.id===UI.leadSel;})[0]||L[0];UI.leadSel=sel.id;
+  var sl=leadSlots(sel),mine=sel.assignedSaints||[],free=ppFreeSaints(),slots='';
+  for(var i=0;i<sl;i++)slots+=leadSlotHtml(mine[i],i);
+  var nx=sl<(ppNode(sel).cap||0)?'호감 Lv '+(Math.floor(sel.lv/LEAD_SLOT_LV)+1)*LEAD_SLOT_LV+'에 한 칸 더':'최대 칸이에요';
+  var r='<div class="lead-h"><div><b>'+sel.n+' '+ppRankName(sel)+'</b><small>맡은 성도 '+mine.length+' / '+sl+' · '+(sl?nx:'소그룹 리더가 되면 성도를 맡아요')+'</small></div>'+
+    '<button class="btn" data-act="ppopen" data-v="'+sel.id+'">상세</button>'+
+    '<button class="btn pri" data-act="ldauto"'+(sl&&mine.length<sl&&free.length?'':' disabled')+'>⚡ 자동 배정</button></div>';
+  r+=sl?'<div class="lead-slots">'+slots+'</div>':'<p class="sempty">이 단계는 성도를 맡지 않아요.</p>';
+  if(UI.leadPick&&sl&&mine.length<sl)r+='<div class="lead-pick"><b>담당할 성도를 고르세요 <small>(호감 Lv 낮은 순)</small></b>'+(free.length?'<div class="lp-g">'+free.map(function(s){
+    return '<button class="lp" data-act="ldpick" data-v="'+s.id+'" aria-label="'+s.n+' 호감 Lv '+s.lv+'"><img alt="" src="'+personFace(s)+'"><span>'+s.n+'</span><small>♥'+s.lv+'</small></button>';}).join('')+'</div>':'<p class="sempty">맡길 성도가 없어요 (제자반 전 성도만 맡길 수 있어요)</p>')+'</div>';
+  return '<div class="lead"><div class="lead-l">'+L.map(function(p){return leadCardHtml(p,p.id===sel.id);}).join('')+'</div><div class="lead-r">'+r+'</div></div>';
+}
+function scrLeadClick(a,v){
+  if(UI.scr!=='officers'||a.indexOf('ld')!==0)return false;
+  if(a==='ldopen'){UI.leadSel=+v;UI.leadPick=false;sfx('click',.4);}
+  else if(a==='ldslot'){UI.leadPick=!UI.leadPick;sfx('click',.4);}
+  else if(a==='ldpick'){var w=ppAssign(UI.leadSel,+v);if(w){scrToast(w,2200);sfx('error',.4);}else{sfx('join',.5,0);var l=ppById(UI.leadSel);if((l.assignedSaints||[]).length>=leadSlots(l))UI.leadPick=false;}save();}
+  else if(a==='ldfree'){ppUnassign(UI.leadSel,+v);sfx('click',.4);save();}
+  else if(a==='ldauto'){var n=ppAutoAssign(UI.leadSel);if(n){sfx('join',.5,0);scrToast('성도 '+n+'명을 배정했어요',1800);save();}else{scrToast('배정할 성도나 빈 칸이 없어요',1800);sfx('error',.4);}UI.leadPick=false;}
+  else return false;
+  renderScreen();return true;
 }
 // 단계 하나가 주는 것 (매주 헌금·목양·운영비·노후)
 function nodeEff(id){

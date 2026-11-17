@@ -136,6 +136,9 @@ function onPanel0(e){
   else if(a==='pbar'){UI.pbarOpen=!UI.pbarOpen;renderDetail();}
   else if(a==='pslope'){UI.pc.slope=+v;UI.pbarOpen=false;renderDetail();}
   else if(a==='mgr'){var mb0=UI.sel;if(mb0&&mgrRole(bById(mb0))){openScreen('mgr');UI.mgrB=mb0;renderScreen();}}
+  else if(a==='supopen'){var sb0=UI.sel;if(sb0&&supSlots(bById(sb0))){openScreen('sup');UI.supB=sb0;renderScreen();}}
+  else if(a==='supdel'){var sb1=UI.sel;if(sb1){supRemove(sb1,+v);sfx('click',.4);}}
+  else if(a==='supauto'){var sn=supAuto();if(sn){sfx('join',.5,0);toast('직분자 '+sn+'명을 보조 인력으로 배치했어요',1800);}else{sfx('error',.4);toast('배치할 직분자나 빈 칸이 없어요',1800);}hud(true);}
   else if(a==='invest'){var ib=bById(UI.sel),il0=ib&&bLv(ib),iw=ib&&investWhy(ib);if(iw){toast(iw,1600);sfx('error',.4);}else if(ib){var xw0=Math.round((ib.bx||0)/BLV_XP*100);investBld(ib);UI.xpFrom={id:ib.id,w:bLv(ib)>il0?100:xw0};if(bLv(ib)>il0){toast(defOf(ib).name+' Lv '+bLv(ib)+(bStage(ib)!==stageOf(il0)?' · 모습이 바뀌었어요':''),2000);sfx('bell',.6,0);}renderSelCard();hud(true);}}
   else if(a==='pkind'){UI.pc.k=v;UI.pbarOpen=false;renderDetail();}
   else if(a==='pbuild'){var why=pcBuild();if(why)toast(why,1600);renderDetail();hud(true);}

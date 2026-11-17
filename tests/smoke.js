@@ -502,7 +502,7 @@ async function ministryChecks(browser, url) {
     // 사역팀·부교역자·직분자
     const cap0 = MOD.cap;
     S.unlockAll = true; recalc();
-    { const mt = S.money; o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); }
+    { const mt = S.money; S.members = Math.max(S.members, 4); syncPeople(); const sp = S.people[0], nd = sp.node; sp.node = 'server'; recalc(); o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); sp.node = nd; recalc(); }
     refreshCands(); const fee = S.cands[0].fee, mA = S.money;
     o.assoc = hireAssoc(0) === '' && S.assoc.length === 1 && S.money === mA - fee && MOD.cap >= cap0 + 35 && assocPay() > 0;
     { const mm = S.members; S.members = ASSOC_PER - 1; recalc(); o.assocLimit = hireAssoc(0) !== '' && /명까지/.test(hireAssoc(0)); S.members = mm; recalc(); }
@@ -709,7 +709,7 @@ async function ministryChecks(browser, url) {
   check(pasTab.vol && pasTab.volXp, '행사 › 봉사자 탭: 직분자·리더·섬김이·모두 묶음, 그 갈래 봉사자에게 경험치');
   check(pasTab.tap, '지도에서 담임목사를 누르면 행사 › 담임목사 탭이 열림');
   await page.click('#scr [data-act="scrtab"][data-v="staff"]');
-  const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && document.querySelectorAll('#scrBody .teamc').length === Object.keys(STAFF).length && /달란트/.test(document.getElementById('scrBody').textContent) && !document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]'));
+  const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && document.querySelectorAll('#scrBody .teamc').length === Object.keys(STAFF).length && /섬김이/.test(document.getElementById('scrBody').textContent) && !document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]'));
   await page.keyboard.press('Escape');
   // 성도 화면: 성도마다 이름·초상화 카드, 누르면 세부 정보(한마디·호감·심방·다음 단계)
   await page.evaluate(() => { S.members = 8; recalc(); });   // 손대지 않은 30주 뒤라 성도가 거의 없으니 다시 채운다
@@ -854,7 +854,7 @@ async function ministryChecks(browser, url) {
     if (UI.sel !== b.id) return 'not picked';
     syncSelCard(); const el = document.getElementById('selCard');
     if (!document.getElementById('dock').hidden || el.hidden) return 'dock or no card';
-    const r = el.getBoundingClientRect(); if (r.width > 320 || r.height > 120) return 'too big ' + Math.round(r.width) + 'x' + Math.round(r.height);
+    const r = el.getBoundingClientRect(); if (r.width > 320 || r.height > 160) return 'too big ' + Math.round(r.width) + 'x' + Math.round(r.height);
     el.querySelector('[data-act="scmore"]').click();
     // 대예배당은 철거·이동 단추가 없고, 함수를 직접 불러도 그대로다
     if (el.querySelector('[data-act="scdem"]') || el.querySelector('[data-act="move"]') || canMove(b)) return 'main chapel has demolish/move';
@@ -1431,6 +1431,66 @@ async function rosterChecks(browser, url) {
   check(a.tabs && a.split && a.cards && a.border && a.breath && a.btns, '직원 화면: 탭 3개(부교역자·직원·청빙), 60:40 분할, 카드(초상화·황금/푸른 테두리·근무지 뱃지)와 숨 쉬는 상세 초상화·네 버튼');
   check(b.pick && b.placed && b.train && b.cheer && b.promoBlock && b.promo && b.inPromo && b.staff && b.hire, '직원 화면: 근무지 배치(건물 관리자), 직무 교육·특별 격려·직급 승급이 쿨타임 없이 즉시 적용되고, 직원·청빙 탭이 열림');
   check(errs.length === 0, '직원 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
+async function slotChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; });
+  await page.goto(url); await skipSteps(page);
+  const a = await page.evaluate(() => {
+    window.__ct.init(); S.money = 9999999; S.unlockAll = true; S.lvl = 12; S.members = 30; syncPeople(); recalc();
+    S.people.forEach(p => { p.node = 'new'; p.lv = 1; p.tr = null; });
+    const L = S.people[0], L2 = S.people[1]; L.node = 'sgl'; L.lv = 25; L2.node = 'seminary'; L2.lv = 70; recalc();
+    const o = {};
+    // 리더 슬롯: 호감 Lv에 비례, 예비신학생은 0칸
+    o.slots = leadSlots(L) === 1 + Math.floor(25 / LEAD_SLOT_LV) && leadSlots(L2) === 0; L.lv = 35; o.prop = leadSlots(L) === 1 + Math.floor(35 / LEAD_SLOT_LV); L.lv = 25;
+    openScreen('officers', 'B');
+    const l = document.querySelector('.lead-l').getBoundingClientRect(), r = document.querySelector('.lead-r').getBoundingClientRect();
+    o.split = Math.abs(l.width / (l.width + r.width) - .4) < .05 && document.querySelectorAll('.lcard').length === 2;
+    document.querySelector('.lcard[data-v="' + L.id + '"]').click();
+    const n = leadSlots(L), emp = () => document.querySelectorAll('.lead-slots .lslot.empty').length;
+    o.grid = document.querySelectorAll('.lead-slots .lslot').length === n && emp() === n && getComputedStyle(document.querySelector('.lslot.empty')).borderTopStyle === 'dashed' && !!document.querySelector('[data-act="ldauto"]') && /⚡/.test(document.querySelector('[data-act="ldauto"]').textContent);
+    document.querySelector('.lslot.empty').click(); const pk = [...document.querySelectorAll('.lead-pick [data-act="ldpick"]')];
+    o.pick = pk.length > 0 && pk.every(b => ppById(+b.dataset.v) && ppClass(ppById(+b.dataset.v)) === 'saint');
+    const s0 = +pk[0].dataset.v; pk[0].click(); o.put = L.assignedSaints.length === 1 && L.assignedSaints[0] === s0 && emp() === n - 1 && !!document.querySelector('.lead-slots .lslot.full img') && ppAssignedAny(s0);
+    document.querySelector('.lslot.full').click(); o.free = L.assignedSaints.length === 0 && emp() === n;
+    document.querySelector('[data-act="ldauto"]').click(); o.auto = L.assignedSaints.length === n && emp() === 0 && L.assignedSaints.every(i => ppById(i).lv <= 1);
+    o.full = /맡을 자리가 없어요/.test(ppAssign(L.id, ppFreeSaints()[0].id));
+    L.assignedSaints.forEach(i => { ppById(i).node = 'bapt'; }); recalc(); o.keep = L.assignedSaints.length === n;   // 세례교인은 아직 성도
+    ppById(L.assignedSaints[0]).node = 'disciple'; recalc(); o.drop = L.assignedSaints.length === n - 1;   // 제자반을 마치면 봉사자 — 슬롯에서 빠짐
+    closeScreen(); return o;
+  });
+  const b = await page.evaluate(() => {
+    const o = {}; S.people.forEach(p => { p.node = 'new'; p.lv = 1; p.assignedSaints = []; });
+    const id1 = build('room', 20, 20, 2) && S.buildings.find(x => x.def === 'room'), id2 = S.buildings.find(x => x.fixed);
+    recalc(); const room = S.buildings.find(x => x.def === 'room');
+    o.slots = supSlots(room) === SUP_SLOTS[0] && supSlots(id2) === SUP_SLOTS[2] && Array.isArray(room.supportStaff) && supSlots(S.buildings.find(x => x.def !== 'room' && !x.fixed && !mgrRole(x)) || { def: 'x' }) === 0;
+    // 직분자 갈래 성도 넷
+    const A = S.people.slice(0, 4); A[0].node = 'devoted'; A[1].node = 'deacon'; A[2].node = 'elder'; A[3].node = 'sgl'; A.forEach((p, i) => { p.lv = 50 + i; }); recalc();
+    o.elig = supEligible(A[0]) && supEligible(A[2]) && !supEligible(A[3]) && supFree().length === 3 && supFree()[0].id === A[2].id;
+    UI.sel = room.id; renderSelCard(); const card = document.getElementById('selCard');
+    const g = [...card.querySelectorAll('.scs-g')];
+    o.card = !card.hidden && g.length === 2 && /메인/.test(g[0].textContent) && /보조/.test(g[1].textContent) && g[0].querySelectorAll('.slt').length === 1 && g[1].querySelectorAll('.slt').length === SUP_SLOTS[0] && !!card.querySelector('.scs-sep') && !!card.querySelector('[data-act="supauto"]');
+    o.empty = g[0].querySelector('.slt.empty') && g[1].querySelector('.slt.empty') && getComputedStyle(g[1].querySelector('.slt.empty')).borderTopStyle === 'dashed';
+    card.querySelector('[data-act="supopen"]').click(); o.screen = UI.scr === 'sup' && UI.supB === room.id && document.querySelectorAll('#scrBody .lp').length === 3;
+    document.querySelector('#scrBody .lp[data-v="' + A[2].id + '"]').click(); o.put = room.supportStaff.length === 1 && room.supportStaff[0] === A[2].id && supOf(A[2].id) === room.id && /가득/.test(supPut(room.id, A[0].id));
+    closeScreen(); UI.sel = room.id; renderSelCard(); o.face = !!document.querySelector('#selCard .scs-g:nth-child(3) .slt.full img, #selCard .scs-g .slt.full img') && /members\/member_/.test(document.querySelector('#selCard .slt.full img').src);
+    // 대예배당(3칸) + ⚙️ 자동 배치: 대예배당부터 빈 칸을 호감 Lv 높은 직분자로
+    supRemove(room.id, A[2].id); const n = supAuto(); o.auto = n === 3 && id2.supportStaff.length === 3 && supFree().length === 0 && id2.supportStaff[0] === A[2].id;
+    UI.sel = id2.id; renderSelCard(); const c2 = document.getElementById('selCard'); o.main = !!c2.querySelector('.slt.fix img') && c2.querySelectorAll('.scs-g')[1].querySelectorAll('.slt.full').length === 3;
+    // 자격을 잃으면 빠짐
+    A[2].node = 'bapt'; recalc(); o.prune = id2.supportStaff.length === 2 && !id2.supportStaff.includes(A[2].id);
+    UI.sel = room.id; renderSelCard(); document.querySelector('#selCard [data-act="supauto"]').click(); o.autoBtn = true;
+    UI.sel = null; renderSelCard(); return o;
+  });
+  if (!(Object.values(a).every(Boolean) && Object.values(b).every(Boolean))) console.log('SLOT', JSON.stringify(a), JSON.stringify(b));
+  check(a.slots && a.prop && a.split && a.grid, '리더 화면: 왼쪽 40% 리더 카드 · 오른쪽 60% 성도 슬롯(호감 Lv에 비례, 빈 칸은 점선, 예비신학생은 0칸), ⚡ 자동 배정 버튼');
+  check(a.pick && a.put && a.free && a.auto && a.full && a.keep && a.drop, '리더 슬롯: 빈 칸을 누르면 성도를 골라 배치, 채운 칸은 얼굴이 차고 누르면 빠짐, 자동 배정은 호감 Lv 낮은 성도부터, 제자반을 마치면 슬롯에서 빠짐');
+  check(b.slots && b.elig && b.card && b.empty && b.screen && b.put && b.face, '건물 카드: 메인 관리자 슬롯과 보조 직분자 슬롯(티어 비례)을 나눠 보여 주고, 빈 칸은 점선, 배치하면 얼굴이 참');
+  check(b.auto && b.main && b.prune && b.autoBtn, '건물 카드: ⚙️ 직분자 자동 배치는 대예배당부터 빈 칸을 호감 Lv 높은 직분자로 채우고, 자격을 잃으면 빠짐');
+  check(errs.length === 0, '슬롯 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
 async function levelChecks(browser, url) {
@@ -2029,34 +2089,36 @@ async function earlyChecks(browser, url) {
       const q0 = document.querySelectorAll('#scrBody .qrow').length; S.qd.f1 = 1; renderScreen(); const q1 = document.querySelectorAll('#scrBody .qrow').length;
       ni.quest = q0 === 1 && /교회 문 열기/.test(document.getElementById('scrBody').textContent) && q1 === 1 && /마친 퀘스트 1 \/ /.test(document.getElementById('scrBody').textContent); closeScreen();
       QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.qxp = 0; S.il = {}; recalc(); indTick(true);
-      // 사역팀·달란트: 사역 경험 Lv 1당 1개. 넣고 빼고 옮기고 모두 빼고, 최대 5단계, 값·사례비 없음, 단계가 오를수록 효과 증가폭이 줄어듦
-      { const nt = {}; o.nt = nt; for (const k in STAFF) S.staff[k] = 0; S.unlockAll = true; S.il = {}; S.qxp = 0; recalc(); indTick(true);
-        nt.base = talentTotal() === S.il.xp.lv * TALENT_PER_LV && talentFree() === talentTotal();
-        S.qxp = 1500; recalc(); indTick(); const tot = talentTotal(), v0 = MOD.vis, m0 = S.money;
-        nt.total = tot === S.il.xp.lv * TALENT_PER_LV && tot >= 8 && talentFree() === tot;
-        nt.add = teamAdd('evang', 1) === '' && S.staff.evang === 1 && talentFree() === tot - 1 && MOD.vis > v0 && S.money === m0 && typeof teamPay === 'undefined';
-        for (let i = 2; i <= TEAM_MAX; i++) teamAdd('evang', 1);
-        nt.max = S.staff.evang === TEAM_MAX && /최대/.test(teamAdd('evang', 1)) && talentFree() === tot - TEAM_MAX;
+      // 사역팀·섬김이 슬롯: 섬김 갈래 성도를 팀 슬롯(최대 6칸)에 세우면 그 수가 단계. 넣고 빼고 옮기고 자동 배정, 값·사례비 없음, 단계가 오를수록 효과 증가폭이 줄어듦
+      { const nt = {}; o.nt = nt; S.unlockAll = true; for (const k in STAFF) S.servants[k] = []; if (S.members < 14) S.members = 14; syncPeople(); recalc();
+        S.people.forEach(p => { p.node = 'new'; p.lv = 1; p.tr = null; });
+        const sv = S.people.slice(0, 8); sv.forEach((p, i) => { p.node = 'server'; p.lv = 30 + i; }); S.people[8].node = 'sgl'; S.people[8].lv = 30; recalc(); const v0 = MOD.vis, m0 = S.money;
+        nt.free = teamFree().length === 8 && teamFree()[0].id === sv[7].id;
+        nt.add = teamServe('evang', sv[0].id) === '' && S.staff.evang === 1 && teamOf(sv[0].id) === 'evang' && MOD.vis > v0 && S.money === m0 && teamFree().length === 7 && typeof teamPay === 'undefined' && typeof talentTotal === 'undefined';
+        nt.elig = /섬김 갈래/.test(teamServeWhy('evang', S.people[8].id)) && /섬김 갈래/.test(teamServeWhy('evang', S.people[9].id)) && /이미 다른/.test(teamServe('praise', sv[0].id));
+        for (let i = 1; i < TEAM_MAX; i++) teamServe('evang', sv[i].id);
+        nt.max = S.staff.evang === TEAM_MAX && /가득/.test(teamServe('evang', sv[6].id)) && teamServants('evang').length === TEAM_MAX;
         let dim = true; for (let l = 1; l <= TEAM_MAX; l++) { const d = teamUnits(l) - teamUnits(l - 1); if (!(d > 0) || (l > 1 && !(d < teamUnits(l - 1) - teamUnits(l - 2)))) dim = false; }
-        nt.curve = dim && teamUnits(0) === 0 && teamEff().evang === teamUnits(S.staff.evang) && STAFF.evang.fx(2).every(t => /[+−]/.test(t));
+        nt.curve = dim && teamUnits(0) === 0 && teamEff().evang === teamUnits(S.staff.evang) && STAFF.evang.fx(2).every(x => /[+−]/.test(x));
         // 옮기기: 한 팀에서 빼서 다른 팀에 넣는다
-        const off0 = MOD.offer; nt.move = teamAdd('evang', -1) === '' && S.staff.evang === TEAM_MAX - 1 && teamAdd('praise', 1) === '' && MOD.offer > off0 && talentFree() === tot - TEAM_MAX;
-        nt.sub = /없어요/.test(teamAdd('prayer', -1));
-        // 모자라면 못 넣음, 잠긴 팀은 못 넣음
-        const keep = {}; for (const k in S.staff) keep[k] = S.staff[k]; for (const k in S.staff) S.staff[k] = 0; S.il.xp.lv = 1; S.qxp = 0; recalc(); const w1 = teamAdd('care', 1), w2 = teamAdd('edu', 1);
-        S.unlockAll = false; S.lvl = 1; const w3 = teamAdd('admin', 1); S.unlockAll = true; nt.poor = w1 === '' && /남은 달란트/.test(w2) && S.staff.edu === 0 && /Lv \d/.test(w3);
-        // 달란트가 모자라게 되면(옛 저장) 가장 높은 팀부터 줄인다
-        for (const k in S.staff) S.staff[k] = 0; S.staff.evang = 5; S.staff.praise = 3; S.il.xp.lv = 4; recalc(); nt.fit = talentUsed() === 4 && S.staff.evang === 3 && S.staff.praise === 1 || talentUsed() === 4 && S.staff.evang + S.staff.praise === 4;
-        S.il.xp.lv = 20; recalc(); const n = teamReset(); nt.reset = n === 4 && talentUsed() === 0 && MOD.vis === 1;
-        // 화면: 원형 카드 아홉 개, 누르면 정보 창, 넣기·빼기·모두 빼기
-        S.il = {}; S.qxp = 1500; recalc(); indTick(true); for (const k in STAFF) S.staff[k] = 0; recalc(); openScreen('events', 'staff');
-        const cs = document.querySelectorAll('#scrBody .teamc'), bar = document.querySelector('#scrBody .tbar').textContent;
-        cs[0].querySelector('.tmi').click(); const dl = document.getElementById('scrDlg'); const dlg0 = !dl.hidden && /전도팀/.test(dl.textContent) && /다음 단계/.test(dl.textContent);
-        document.querySelector('#scrDlg [data-act="tmadd"]').click(); document.querySelector('#scrDlg [data-act="tmadd"]').click(); const two = S.staff.evang === 2 && !document.getElementById('scrDlg').hidden && /Lv 2/.test(document.getElementById('scrDlg').textContent);
-        document.querySelector('#scrDlg [data-act="tmsub"]').click(); const one = S.staff.evang === 1;
-        document.querySelector('#scrDlg [data-act="evclose"]').click(); const reset = document.querySelector('#scrBody [data-act="tmreset"]'); reset.click();
-        nt.ui = cs.length === 9 && /×\d+\s*\/\s*\d+/.test(bar) && dlg0 && two && one && S.staff.evang === 0 && talentUsed() === 0 && /달란트/.test(document.getElementById('scrBody').textContent); closeScreen();
-        for (const k in STAFF) S.staff[k] = 0; recalc();
+        const off0 = MOD.offer; teamUnserve('evang', sv[5].id); nt.move = S.staff.evang === TEAM_MAX - 1 && teamServe('praise', sv[5].id) === '' && S.staff.praise === 1 && MOD.offer > off0 && teamOf(sv[5].id) === 'praise';
+        // 자격을 잃으면 팀에서 빠진다
+        sv[1].node = 'bapt'; recalc(); nt.sync = teamOf(sv[1].id) === '' && S.staff.evang === TEAM_MAX - 2; sv[1].node = 'server'; recalc();
+        // 잠긴 팀은 못 넣음, 모두 빼기, ⚡ 자동 배정(사람이 적은 팀부터 고르게)
+        S.unlockAll = false; S.lvl = 1; const w3 = teamServeWhy('admin', sv[7].id), w4 = teamAdd('evang', 1); S.unlockAll = true; nt.lock = /Lv \d/.test(w3) && /Lv \d/.test(w4);
+        const n = teamReset(); nt.reset = n === TEAM_MAX - 2 + 1 && S.staff.evang === 0 && S.staff.praise === 0 && MOD.vis === 1;
+        const na = teamAuto(), open = Object.keys(STAFF).filter(k => tierOk(STAFF[k].goal || 0)).map(k => S.staff[k]); nt.auto = na === 8 && teamFree().length === 0 && Math.max(...open) - Math.min(...open) <= 1;
+        // 화면: 육각형 슬롯 카드 아홉 개(열린 팀은 왼쪽 3·오른쪽 3), 빈 슬롯을 누르면 섬김이 고르기, 채운 슬롯을 누르면 빠짐
+        teamReset(); openScreen('events', 'staff');
+        const cs = document.querySelectorAll('#scrBody .teamc'), open0 = document.querySelectorAll('#scrBody .teamc.tm6').length;
+        const c0 = document.querySelector('#scrBody .teamc.tm6'), sides = c0.querySelectorAll('.tmh.l .hex').length === 3 && c0.querySelectorAll('.tmh.r .hex').length === 3;
+        const noGem = !document.querySelector('#scrBody .gem, #scrBody .tgems, #scrBody .tpm') && !/달란트/.test(document.getElementById('scrBody').textContent);
+        c0.querySelector('.hex.empty').click(); const dl = document.getElementById('scrDlg'), pk = [...dl.querySelectorAll('[data-act="tmpick"]')];
+        const dlg0 = !dl.hidden && pk.length === 8; pk[0].click(); const one = S.staff.evang === 1 && document.querySelectorAll('#scrBody .teamc.tm6 .hex.full img').length === 1 && !!document.querySelector('#scrBody .hex.full img[src*="portraits/icons/members"]') && document.getElementById('scrDlg').hidden;
+        document.querySelector('#scrBody .hex.full').click(); const zero = S.staff.evang === 0;
+        document.querySelector('#scrBody [data-act="tmauto"]').click(); const auto = teamFree().length === 0 && S.staff.evang >= 1; document.querySelector('#scrBody [data-act="tmreset"]').click();
+        nt.ui = cs.length === 9 && open0 >= 3 && sides && noGem && dlg0 && one && zero && auto && Object.values(S.staff).every(v => v === 0); closeScreen();
+        for (const k in STAFF) S.servants[k] = []; S.people.forEach(p => { p.node = 'new'; p.lv = 1; }); recalc();
         // 지표 보상 모두 받기: 받을 수 있는 보상이 둘 이상이면 한 번에
         S.il = {}; S.qxp = 0; recalc(); indTick(true); S.il.xp.lv = 4; S.il.sp.lv = 3; S.il.conv.lv = 2; recalc();
         const cnt = indReadyCount(), sum = indReward('xp') + indReward('sp') + indReward('conv'), mm = S.money; openGroup('status'); const ba = document.querySelector('#scrBody [data-act="inclaimall"]'); if (ba) ba.click();
@@ -2094,10 +2156,10 @@ async function earlyChecks(browser, url) {
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
   check(r.fixdoor, '문: 문 앞에 길이 없으면 카드에 이유와 길 잇기, 이으면 이용');
   { const nt = (r.ni && r.ni.nt) || r.nt || {};
-    check(nt.base && nt.total && nt.add, '달란트: 사역 경험 Lv 1당 1개, 사역팀에 넣으면 효과가 생기고 자금·사례비는 안 듦');
-    check(nt.max && nt.curve && nt.move && nt.sub, '사역팀: 최대 5단계, 단계가 오를수록 증가폭이 줄고, 한 팀에서 빼 다른 팀으로 옮길 수 있음');
-    check(nt.poor && nt.fit && nt.reset, '사역팀: 달란트가 모자라면 못 넣고(잠긴 팀도), 모자라게 되면 높은 팀부터 줄이고, 모두 뺄 수 있음');
-    check(nt.ui, '사역팀 탭: 원형 카드, 누르면 정보 창에서 달란트 넣기·빼기, 모두 빼기');
+    check(nt.free && nt.add && nt.elig, '사역팀: 섬김 갈래 성도를 슬롯에 세우면 효과가 생기고(자금·사례비 없음), 섬김 갈래만·한 팀에만 설 수 있음');
+    check(nt.max && nt.curve && nt.move && nt.sync, '사역팀: 슬롯 최대 6칸, 단계가 오를수록 증가폭이 줄고, 팀 사이로 옮길 수 있고, 자격을 잃으면 빠짐');
+    check(nt.lock && nt.reset && nt.auto, '사역팀: 잠긴 팀은 못 세우고, 모두 빼기와 ⚡ 자동 배정(사람이 적은 팀부터 고르게)');
+    check(nt.ui, '사역팀 탭: 육각형 슬롯 6칸(왼쪽 3·오른쪽 3), 빈 슬롯을 누르면 섬김이 고르기, 채운 슬롯은 얼굴이 차고 누르면 빠짐, 달란트 보석은 없음');
     check(nt.claimAll, '현황: 지표 보상을 모두 받기 버튼으로 한꺼번에 받음');
     if (!(nt.base && nt.total && nt.add && nt.max && nt.curve && nt.move && nt.sub && nt.poor && nt.fit && nt.reset && nt.ui && nt.claimAll)) console.log('NT', JSON.stringify(nt)); }
   { const n = r.ni || {};
@@ -2139,6 +2201,7 @@ async function earlyChecks(browser, url) {
     await waterChecks(browser, url);
     await introChecks(browser, url);
     await rosterChecks(browser, url);
+    await slotChecks(browser, url);
     await levelChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);

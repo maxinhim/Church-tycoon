@@ -132,3 +132,76 @@ function autoStaff(reserve){
   });
   return n;
 }
+
+
+/* ---------- 보조 인력 (직분자 슬롯) ----------
+   건물 카드의 슬롯 줄: [메인 관리자 1칸] | [보조 직분자 N칸]. 메인 관리자는 위(mgrSet)대로, 보조 인력은 직분자 갈래(헌신성도·집사·장로/권사)를 b.supportStaff(사람 id)에 세운다.
+   · 칸 수 supSlots(b) = 티어 1 SUP_SLOTS[0], 티어 2 SUP_SLOTS[1], 대예배당 SUP_SLOTS[2] (예배·교제·매장 건물과 대예배당만)
+   · 한 사람은 한 건물만. ⚙️ 직분자 자동 배치(supAuto)는 대예배당부터 빈 칸을 호감 Lv 높은 직분자로 채운다 */
+function supSlots(b){
+  if(!b)return 0;if(b.fixed)return SUP_SLOTS[2];
+  if(!mgrRole(b))return 0;return SUP_SLOTS[defOf(b).tier===2?1:0];
+}
+function supEligible(p){return !!p&&ppTrack(p)==='A';}   // 직분자 갈래
+function supOf(pid){var b=S.buildings.filter(function(x){return (x.supportStaff||[]).indexOf(pid)>=0;})[0];return b?b.id:0;}
+function supFree(){return (S.people||[]).filter(function(p){return supEligible(p)&&!supOf(p.id);}).sort(function(a,b){return b.lv-a.lv||a.id-b.id;});}
+function supPutWhy(bid,pid){
+  var b=bById(bid),p=ppById(pid);
+  if(!b||!p)return '찾을 수 없어요';
+  if(!supSlots(b))return '이 건물에는 보조 인력 자리가 없어요';
+  if(!supEligible(p))return '직분자 갈래(헌신성도·집사·장로·권사)만 보조 인력이 돼요';
+  if(supOf(pid))return supOf(pid)===bid?'이미 이 건물에 있어요':'이미 '+defOf(bById(supOf(pid))).name+'에서 일해요';
+  if((b.supportStaff||[]).length>=supSlots(b))return '보조 자리가 가득 찼어요';
+  return '';
+}
+function supPut(bid,pid){var w=supPutWhy(bid,pid);if(w)return w;var b=bById(bid);(b.supportStaff=b.supportStaff||[]).push(pid);save();return '';}
+function supRemove(bid,pid){var b=bById(bid);if(b){b.supportStaff=(b.supportStaff||[]).filter(function(i){return i!==pid;});save();}}
+// ⚙️ 직분자 자동 배치: 대예배당부터, 빈 칸을 호감 Lv 높은 직분자로. 채운 수
+function supAuto(){
+  var n=0,L=S.buildings.filter(function(b){return supSlots(b)>0;}).sort(function(a,b){return (b.fixed?1:0)-(a.fixed?1:0)||a.id-b.id;});
+  L.forEach(function(b){supFree().forEach(function(p){if((b.supportStaff||[]).length<supSlots(b)&&!supPut(b.id,p.id))n++;});});
+  return n;
+}
+// 건물 슬롯의 사람 그림 (청빙한 사람은 청빙 카드 그림, 기른 사람은 성도 아이콘, 담임목사는 코드 그림)
+function mgrFace(w){
+  if(w.key==='me')return chrArtUrl(CHR_SPECS.pastor,4);
+  var e=(w.key.charAt(0)==='a'||w.key.charAt(0)==='p')?rosEnt(w.key):null;
+  return e?rosArt(e):memberIcon({seed:w.seed,g:w.g});
+}
+// 건물 카드(selcard.js) 아래쪽 슬롯 줄: 메인 관리자 | 보조 직분자 + ⚙️ 자동 배치
+function slotsHtml(b){
+  var n=supSlots(b),mr=mgrRole(b);if(!n&&!mr&&!b.fixed)return '';
+  var main,sup='',mw=mgrOf(b),L=b.supportStaff||[];
+  if(b.fixed&&mw)main='<span class="slt full fix" title="담임목사" aria-label="메인 관리자 담임목사"><img alt="" src="'+mgrFace(mw)+'"></span>';
+  else if(mw)main='<button class="slt full" data-act="mgr" aria-label="메인 관리자 '+mw.name+' — 바꾸기" title="'+mw.name+' · 누르면 바꿔요"><img alt="" src="'+mgrFace(mw)+'"></button>';
+  else main='<button class="slt empty" data-act="mgr" aria-label="메인 관리자 빈 칸 — 배치">👤</button>';
+  for(var i=0;i<n;i++){
+    var p=L[i]&&ppById(L[i]);
+    sup+=p?'<button class="slt full" data-act="supdel" data-v="'+p.id+'" aria-label="보조 '+p.n+' 빼기" title="'+p.n+' · 누르면 빼요"><img alt="" src="'+personFace(p)+'"></button>':
+      '<button class="slt empty" data-act="supopen" aria-label="보조 인력 빈 칸 — 직분자 배치">＋</button>';
+  }
+  return '<div class="scs"><div class="scs-g"><small>메인</small><div class="scs-r">'+main+'</div></div>'+(n?'<i class="scs-sep" aria-hidden="true"></i>'+
+    '<div class="scs-g"><small>보조 '+L.length+'/'+n+'</small><div class="scs-r">'+sup+'</div></div><button class="btn sm scs-auto" data-act="supauto" aria-label="직분자 자동 배치" title="⚙️ 직분자 자동 배치">⚙️</button>':'')+'</div>';
+}
+/* 보조 인력 화면: 칸을 눌러 열고(UI.supB = 건물 id), 직분자 카드를 눌러 세우거나 뺀다 */
+function supScrB(){var b=UI.supB&&bById(UI.supB);return b&&supSlots(b)?b:null;}
+function supHtml(){
+  var b=supScrB();if(!b)return '<p class="sempty">보조 인력을 둘 건물을 지도에서 골라 주세요.</p>';
+  var L=(S.people||[]).filter(supEligible).sort(function(a,c){return c.lv-a.lv||a.id-c.id;}),n=supSlots(b),k=(b.supportStaff||[]).length;
+  var h='<div class="sbulk mgrh"><span><b>'+defOf(b).name+'</b> · 보조 직분자 '+k+' / '+n+'칸 · 직분자 갈래(헌신성도·집사·장로·권사)를 세워요</span><button class="btn pri" data-act="supauto">⚙️ 직분자 자동 배치</button></div>';
+  if(!L.length)return h+'<p class="sempty">아직 직분자 갈래 성도가 없어요. 성도 화면에서 제자반 뒤 직분자 갈래로 세워 주세요.</p>';
+  return h+'<div class="lp-g sup-lp">'+L.map(function(p){
+    var at=supOf(p.id),here=at===b.id,ob=at&&!here?bById(at):null;
+    return '<button class="lp'+(here?' here':'')+(ob?' away':'')+'" data-act="supset" data-v="'+p.id+'" aria-label="'+p.n+' '+ppRankName(p)+', '+(here?'이 건물':ob?defOf(ob).name:'대기')+'"><img alt="" src="'+personFace(p)+'"><span>'+p.n+'</span><small>'+(here?'여기':ob?defOf(ob).name:ppRankName(p))+'</small></button>';}).join('')+'</div>';
+}
+function scrSupClick(a,v){
+  if(UI.scr!=='sup')return false;
+  var b=supScrB();if(!b)return false;
+  if(a==='supset'){
+    var pid=+v,why;
+    if(supOf(pid)===b.id){supRemove(b.id,pid);sfx('click',.4);}
+    else{why=supPut(b.id,pid);if(why){scrToast(why,2200);sfx('error',.4);return true;}sfx('join',.5,0);}
+  }else if(a==='supauto'){var n=supAuto();if(n){sfx('join',.5,0);scrToast('직분자 '+n+'명을 배치했어요',1800);}else{sfx('error',.4);scrToast('배치할 직분자나 빈 칸이 없어요',1800);}}
+  else return false;
+  renderScreen();hud(true);return true;
+}
