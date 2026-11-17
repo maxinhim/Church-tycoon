@@ -761,7 +761,7 @@ async function ministryChecks(browser, url) {
     document.querySelector('#scrTabs [data-v="cands"]').click();
     { const mm = S.money, n0 = S.people.length, m0 = S.members; S.money = 99999;
       const cards = [...document.querySelectorAll('#scrBody .hcard')];
-      o.cands = UI.scr === 'hire' && cards.length === 3 + S.cands.length && cards.every(c => !!c.querySelector('img.pxart') && !!c.querySelector('.hc-grade') && !!c.querySelector('.hc-name')) && document.querySelectorAll('#scrTabs [role="tab"]').length === 3;
+      o.cands = UI.scr === 'hire' && cards.length === 3 + S.cands.length && cards.every(c => !!c.querySelector('img[src*="portraits/hirecard"]') && !!c.querySelector('.hc-grade') && !!c.querySelector('.hc-name')) && document.querySelectorAll('#scrTabs [role="tab"]').length === 3;
       document.querySelector('#scrTabs [data-v="C"]').click(); const cc = document.querySelectorAll('#scrBody .hcard'); o.hireTab = cc.length === 3 && [...cc].every(c => c.classList.contains('tC'));
       const c0 = volCands('C')[0]; cc[0].click(); const hd = document.getElementById('scrDlg'); o.hireDlg = !hd.hidden && hd.textContent.includes(c0.name) && /“.+”/.test(hd.textContent);
       hd.querySelector('[data-act="hctake"]').click(); const np = S.people[S.people.length - 1];
@@ -1275,7 +1275,7 @@ async function mgrChecks(browser, url) {
     UI.sel = shop.id; renderSelCard(); const sc = document.getElementById('selCard'); o.card = /관리자 필요/.test(sc.textContent); sc.querySelector('[data-act="mgr"]').click();
     o.scr = UI.scr === 'mgr' && UI.mgrB === shop.id && /없음/.test(document.getElementById('scrBody').textContent); document.querySelector('#scrBody [data-act="hireopen"]').click();
     const dl = document.getElementById('scrDlg'), cheap = (HIRE_PAY0 + HIRE_PAY_K) * HIRE_FEE_K, hc = () => [...document.querySelectorAll('#scrBody .hcard')];
-    o.dlg = UI.scr === 'hire' && UI.scrTab === 'C' && UI.hireFor === shop.id && hc().length === 3 && hc().every(c => !!c.querySelector('img.pxart') && !!c.querySelector('.hst') && !!c.querySelector('.hc-grade')) && volCands('C')[0].skill === 1 && volCands('C')[0].fee === cheap;
+    o.dlg = UI.scr === 'hire' && UI.scrTab === 'C' && UI.hireFor === shop.id && hc().length === 3 && hc().every(c => !!c.querySelector('img[src*="portraits/hirecard"]') && !!c.querySelector('.hst') && !!c.querySelector('.hc-grade')) && volCands('C')[0].skill === 1 && volCands('C')[0].fee === cheap;
     const m0 = S.money, before = JSON.stringify(volCands('C')); document.querySelector('#scrBody [data-act="hcreroll"]').click();
     const mR = S.money; volReroll();   // 단추로 한 번(퀘스트 보상이 함께 들어올 수 있다), 함수로 한 번 더 정확히
     o.reroll = S.money === mR - HIRE_REROLL && mR < m0 && HIRE_REROLL > cheap * 4 && JSON.stringify(volCands('C')) !== before && volCands('C').some(c => c.skill === 1); renderScreen();

@@ -435,7 +435,7 @@ function scrMgrClick(a,v){
 
 /* ---------- 청빙 화면 ----------
    큰 카드 한 줄(옆으로 넘김): 갈래 휘장 · 세로 이름 · 등급 · 큰 그림 · 아래 능력과 값. 누르면 사연과 '청빙' 단추가 있는 창.
-   그림은 지금은 코드로 그린 캐릭터(chrArtUrl)이고, 나중에 갈래별 카드 그림으로 바꾼다 (.hc-art) */
+   그림은 생성 초상화(assets/portraits/hirecard, hcPortrait)다 (.hc-art) */
 var HC_GRADE=['','D','C','B','A','S'],HC_EM={C:'직',assoc:'교'};
 function hcList(){
   var tab=UI.scrTab,L=[];
@@ -444,14 +444,15 @@ function hcList(){
   return L;
 }
 function hcFind(id){var s=String(id).split(':'),t=s[0],i=+s[1],c=t==='assoc'?(S.cands||[])[i]:(VOL_TYPES.indexOf(t)>=0?volCands(t)[i]:null);return c?{id:id,t:t,i:i,c:c}:null;}
-function hcSpec(x){var c=x.c,sd=c.seed||asSeed(c);return chrCandSpec(sd,c.g||(sd%2?'m':'f'),x.t);}
+/* 초상화: 지금은 갈래마다 한 장(부교역자 subpastor1, 직원 staff1) — 나중에 후보마다 다른 그림으로 */
+function hcPortrait(x){return 'assets/portraits/hirecard/'+(x.t==='assoc'?'subpastor/subpastor1':'staff/staff1')+'.png';}
 function hcRole(x){return x.t==='assoc'?x.c.title:'교회직원';}
 function hcStars(n){return '<span class="hst" aria-label="능력 별 '+n+'개">'+'★★★★★'.slice(0,n)+'<i>'+'★★★★★'.slice(n)+'</i></span>';}
 function hcCardHtml(x){
   var c=x.c,poor=S.money<c.fee;
   return '<button class="hcard t'+x.t+(poor?' poor':'')+'" data-act="hcopen" data-v="'+x.id+'" aria-label="'+c.name+' '+hcRole(x)+', 능력 별 '+c.skill+'개, 청빙 '+fmt(c.fee)+'">'+
     '<span class="hc-em" aria-hidden="true">'+HC_EM[x.t]+'</span><span class="hc-name">'+c.name+'</span><span class="hc-grade g'+c.skill+'">'+HC_GRADE[c.skill]+'</span>'+
-    '<span class="hc-art"><img class="pxart" alt="" src="'+chrArtUrl(hcSpec(x),8)+'"></span>'+
+    '<span class="hc-art"><img alt="" src="'+hcPortrait(x)+'"></span>'+
     '<span class="hc-foot"><b>'+hcRole(x)+'</b>'+hcStars(c.skill)+'<small>'+(x.t==='assoc'?FIELDS[c.field].name+' 사역':kText(exK(c.skill)))+' · 주 '+fmtS(c.pay)+'</small><em><i class="coin" aria-hidden="true"></i>'+fmt(c.fee)+'</em></span></button>';
 }
 function hireHtml(){
@@ -467,7 +468,7 @@ function hcDlgHtml(id){
   var rows=as?[['분야',FIELDS[c.field].name+' — '+FIELDS[c.field].desc+' (별마다)'],['맡는 일','예배·교제 건물(부서실 포함) 관리 · 성도 돌봄 · 목양 수용력 +35'],['사례비','주 '+fmt(c.pay)]]:
     [['자리','교회직원으로 성도 명단에 들어가요'],['맡는 일','매장 관리 · '+kText(exK(c.skill))+' (호감 레벨이 오르면 더 좋아져요)'],['주급','주 '+fmt(c.pay)]];
   return '<div class="sdlg hcdlg t'+x.t+'" role="dialog" aria-label="'+c.name+' 청빙"><button class="sx" data-act="evclose" aria-label="닫기">✕</button>'+
-    '<div class="sdh"><span class="hc-art big"><img class="pxart" alt="" src="'+chrArtUrl(hcSpec(x),8)+'"></span>'+
+    '<div class="sdh"><span class="hc-art big"><img alt="" src="'+hcPortrait(x)+'"></span>'+
     '<div class="sdt"><h3>'+c.name+' <span class="rchip t'+(as?'B':x.t)+'">'+hcRole(x)+'</span></h3>'+hcStars(c.skill)+'<p class="say">“'+(c.story||'새 사역지를 찾고 있어요.')+'”</p></div></div>'+
     '<dl class="sdr">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
     (full?'<p class="swhy">부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)</p>':'')+
