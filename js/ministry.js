@@ -16,7 +16,7 @@ function lastNet(s){var h=s.hist[s.hist.length-1];return h?h.inc-h.exp:0;}
 // 건물이 열리는 단계 (교회 Lv − 1). 표는 balance.js BLD_LV
 var UNLOCK={};for(var ubk in BLD_LV)UNLOCK[ubk]=BLD_LV[ubk]-1;
 /* 그 밖의 기능 잠금 (balance.js FEAT_LV·PP_CLV): 교회 Level이 되어야 쓴다. S.unlockAll이면 모두 열린다 */
-var FEAT_NAME={gift:'선물',hire:'청빙·봉사자 화면',entr:'입구 꾸미기',teams:'사역팀',bulk:'일괄 심방·교육',care:'성도의 고민 상담',vol:'봉사자 세우기(직분자·리더·섬김이)',deleg:'성도 돌봄 맡기기'};
+var FEAT_NAME={gift:'선물',hire:'청빙·봉사자 화면',entr:'입구 꾸미기',teams:'사역팀',bulk:'일괄 심방·교육',care:'성도의 고민 상담',vol:'봉사자 세우기(직분자·리더·섬김이)'};
 function featLv(k){return FEAT_LV[k]||1;}
 function featOk(k){return unlockLevel()>=featLv(k);}
 function featWhy(k){return featOk(k)?'':'교회 Lv '+featLv(k)+'에 열려요';}

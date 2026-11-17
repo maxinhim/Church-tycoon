@@ -131,32 +131,10 @@ function peopleWeek(){
   var x=S.mood>=50?PP_WEEK_XP:PP_WEEK_XP_LOW;
   (S.people||[]).forEach(function(p){ppGain(p,x);});
   (S.assoc||[]).forEach(function(a){asGain(a,.5);});
-  leadWeek();delegWeek();
+  leadWeek();
 }
-/* 부교역자·소그룹 리더에게 성도 돌봄 맡기기 (balance.js ASSOC_CARE*·LEAD_*·DELEG_*) */
-function delegState(){return S.deleg||(S.deleg={on:false,lv:DELEG_LV0,last:null});}
-function asCare(a){return Math.round(ASSOC_CARE0+ASSOC_CARE_K*asSkill(a));}
 function leaders(){return (S.people||[]).filter(function(p){return LEAD_NODES.indexOf(p.node)>=0;});}
-function leadCare(p){return Math.max(1,Math.round((PP_TREE[p.node].cap||0)*LEAD_CARE_K));}
-function leadCap(){return leaders().filter(function(p){return !mgrAt('p'+p.id);}).reduce(function(t,p){return t+leadCare(p);},0);}
-function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+(a.uid&&mgrAt('a'+a.uid)?0:asCare(a));},0)+leadCap();}
-// 맡길 수 있는 일꾼이 있는지 (부교역자나 소그룹 리더)
-function delegHelpers(){return (S.assoc||[]).length+leaders().length;}
-function delegPool(){var L=delegState().lv;return (S.people||[]).filter(function(p){return p.lv<L;});}
-function delegWeek(){
-  var d=delegState();d.last=null;
-  if(!d.on||!delegHelpers()||!featOk('deleg'))return;
-  var cap=delegCap(),n=0,cost=0,up=0;
-  delegPool().sort(function(a,b){return a.lv-b.lv||a.vw-b.vw;}).forEach(function(p){
-    if(n>=cap)return;var did=false;
-    ['visit','gift'].forEach(function(k){if(ppCareWhy(p,k,true)||S.money-ppCareCost(k,true)<ASSOC_CARE_RES)return;var c0=ppCareCost(k,true),r=ppCare(p.id,k,true);did=true;cost+=c0;if(r)up++;});
-    if(did)n++;
-  });
-  d.last={n:n,cost:cost,up:up,w:S.week};
-  if(n)addLog('부교역자·소그룹 리더들이 성도 '+n+'명을 돌봤어요 · '+fmt(cost));
-}
 /* 심방·선물 */
-// cheap: 부교역자·리더가 맡아 할 때는 값이 DELEG_COST_K배, 경험치가 DELEG_XP_K배
 function ppCareCost(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.cost*DELEG_COST_K):c.cost;}
 function ppCareXp(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.xp*DELEG_XP_K):c.xp;}
 function ppCareWhy(p,kind,cheap){

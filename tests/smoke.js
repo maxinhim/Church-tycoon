@@ -537,16 +537,6 @@ async function ministryChecks(browser, url) {
       pe.assoc = aOk && !!am && S.assoc.length === 1 && S.assoc[0].home && S.assoc[0].skill === 5 && S.assoc[0].name === tname && S.members === mem0 - 1 && S.people.length === mem0 - 1 && !ppById(t3.id) && Math.abs(asSkill(S.assoc[0]) - 5 * ASSOC_HOME_K) < .01;
       // 부교역자 격려: 레벨이 오르면 실력이 커진다
       const a0 = S.assoc[0], sk0 = asSkill(a0); a0.xp = asNeed(1) - 1; m1 = cash(); pe.cheer = asGain(a0, 1) === 1 && a0.lv === 2 && asSkill(a0) > sk0;
-      // 부교역자에게 돌봄 맡기기: 켜면 매주 Lv 아래 성도를 능력만큼 심방·선물, 자금이 바닥 가까우면 멈춤
-      { const d = delegState(); d.lv = 10; S.people.forEach(z => { z.vw = -99; z.gw = -99; }); const low = delegPool().length; S.money = 99999; delegWeek(); const off = d.last === null;
-        d.on = true; const cap = delegCap(); const m2 = cash(); delegWeek(); const did = d.last.n, spent = m2 - cash();
-        S.people.forEach(z => { z.vw = -99; z.gw = -99; }); S.money = ASSOC_CARE_RES + 10; delegWeek(); const stop = d.last.n === 0;
-        pe.deleg = off && cap === asCare(S.assoc[0]) && cap >= ASSOC_CARE0 && did === Math.min(cap, low) && spent === did * (ppCareCost('visit', true) + ppCareCost('gift', true)) && ppCareCost('visit', true) < PP_VISIT.cost && ppCareCost('gift', true) < PP_GIFT.cost && ppCareXp('visit', true) < PP_VISIT.xp && ppCareXp('gift', true) < PP_GIFT.xp && stop; d.on = false; S.money = 99999; }
-      // 소그룹 리더도 돌봄을 맡는다: 부교역자 없이도, 리더 단계의 목양 수용력만큼, 싼 값에
-      { const P = S.people, keepA = S.assoc, n0 = P[0].node, n1 = P[1].node, lv0 = P.map(z => z.lv); S.assoc = []; P[0].node = 'sgl'; P[1].node = 'cml'; const d = delegState(); d.on = true; d.lv = 10; P.forEach(z => { z.vw = -99; z.gw = -99; z.lv = 1; }); S.money = 99999; recalc();
-        const cap2 = delegCap(), exp = leadCare(P[0]) + leadCare(P[1]), low = delegPool().length, m2 = cash(); delegWeek(); const did = d.last.n, sp = m2 - cash();
-        pe.lead = cap2 === exp && exp === Math.round(PP_TREE.sgl.cap * LEAD_CARE_K) + Math.round(PP_TREE.cml.cap * LEAD_CARE_K) && delegHelpers() === 2 && did === Math.min(cap2, low) && sp === did * (ppCareCost('visit', true) + ppCareCost('gift', true)) && P[2].lv > 1 && /소그룹 리더/.test(delegHtml());
-        P[0].node = n0; P[1].node = n1; P.forEach((z, i) => { z.lv = lv0[i]; }); S.assoc = keepA; d.on = false; S.money = 99999; recalc(); }
       // 교육 행사: 보상 수령 때 모든 성도 경험치
       S.unlockAll = true; const xs = S.people.map(z => z.lv * 1000 + z.xp); S.ev.bible = { cd: 0 }; const be = runEvent('bible'); S.ev.bible.end = evNow() - .01; evTick(); const got = claimEvent('bible');
       pe.edu = be === '' && !!got && /모든 성도 경험치/.test(got[0]) && S.people.every((z, i) => z.lv * 1000 + z.xp > xs[i]) && !!EVENTS.creed && !!EVENTS.training;
@@ -634,8 +624,6 @@ async function ministryChecks(browser, url) {
   check(r.pe.bapt && r.pe.grow && r.pe.last70, '성장 단계: 세례 → 양육반 → 제자반 뒤 세 갈래(직분·교역·섬김), 마지막 단계는 모두 Lv 70부터');
   check(r.pe.deacon && r.pe.elder && r.pe.kwonsa && r.pe.cstaff, '성장 단계: 헌신성도 → 집사 → 장로(남)·권사(여), 섬김 끝 교회직원도 직분자이고 운영비·노후를 줄임');
   check(r.pe.grad && r.pe.slot && r.pe.assoc && r.pe.cheer, '성장 단계: 소그룹 리더 … 간사 → 신학교 → 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자, 격려로 레벨이 오름');
-  check(r.pe.deleg, '부교역자: 성도 돌봄을 맡기면 매주 능력만큼 호감 Lv 아래 성도를 심방·선물하고, 자금이 바닥 가까우면 멈춤');
-  check(r.pe.lead, '소그룹 리더: 부교역자 없이도 리더 단계만큼 성도 돌봄을 맡고, 값은 절반·호감은 75%');
   if (!Object.values(r.pe.ce || {}).every(Boolean)) console.log('CARE', JSON.stringify(r.pe.ce));
   check(r.pe.ce.made && r.pe.ce.data && r.pe.ce.wise && r.pe.ce.bad && r.pe.ce.texts && r.pe.ce.money && r.pe.ce.poor, '고민: 사연마다 정답은 하나(자금 불필요)이고 나머지 셋은 불이익, 선택마다 결과 글이 다름, 돈이 드는 오답은 자금이 나감');
   check(r.pe.ce.pair && r.pe.ce.due && r.pe.ce.shuffle && r.pe.ce.block, '갈등: 두 성도 모두에게 결과, 기한을 넘기면 마음이 멀어짐, 선택지 순서는 사건마다 섞임');
@@ -737,7 +725,8 @@ async function ministryChecks(browser, url) {
     { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } const tv = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v); document.querySelector('#scrTabs [data-v="vol"]').click(); const vc0 = document.querySelectorAll('#scrBody .ppc').length; S.people[2].node = 'disciple'; syncPeople(); renderScreen();
     o.tab = tv.join() === 'all,vol' && vc0 === 0 && document.querySelectorAll('#scrBody .ppc').length === 1 && !!document.querySelector('#scrBody .pcb') && ppClass(S.people[2]) === 'volunteer'; S.people[2].node = 'new'; syncPeople(); document.querySelector('#scrTabs [data-v="all"]').click();
     // 전체 탭 맨 위: 전체 성도 현황 (등록 성도 크게, 명단별·세례·직분자·평균 호감·할 일)
-    o.status = document.querySelector('#scrBody').firstElementChild.classList.contains('pstat') && /등록 성도/.test(document.querySelector('#scrBody .pstat').textContent) && document.querySelectorAll('#scrBody .pstat .pst').length >= 8 && document.querySelector('#scrBody .pst.big b').textContent.startsWith(String(S.people.length));
+    const inf = document.getElementById('scrInfo'), hb = document.querySelector('#scr .shead');
+    o.status = !inf.hidden && hb.contains(inf) && new RegExp('등록 ' + S.people.length + '명').test(inf.textContent) && /성도 \d/.test(inf.textContent) && /평균 호감/.test(inf.textContent) && !document.querySelector('#scrBody .pstat') && document.querySelector('#scrBody').firstElementChild.classList.contains('pbar') && !!document.querySelector('#scrBody .pbar .pcb') && inf.getBoundingClientRect().left > document.getElementById('scrTabs').getBoundingClientRect().right - 1 && inf.getBoundingClientRect().height < 40;
     // 목록 위 '모두 심방': 이 목록에서 할 수 있는 사람 모두 (대기 기간인 사람은 빼고)
     const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
     o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
@@ -917,7 +906,7 @@ async function ministryChecks(browser, url) {
   check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(사역팀 탭은 봉사자 › 섬김이로 옮김), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
-  check(ppScr.care && ppScr.careBtn && ppScr.status, '성도 화면: 맨 위 전체 현황, 고민이 생기면 성도 버튼에 빨간 느낌표·고민 단추 빨갛게·성도 아이콘 위 빨간 느낌표, 세부 정보에 사연과 선택지, 고르면 풀림');
+  check(ppScr.care && ppScr.careBtn && ppScr.status, '성도 화면: 현황은 탭 오른쪽 작은 글, 본문 맨 위는 고민·심방·선물·일괄 시작 한 줄, 고민이 생기면 성도 버튼에 빨간 느낌표·고민 단추 빨갛게·성도 아이콘 위 빨간 느낌표, 세부 정보에 사연과 선택지, 고르면 풀림');
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
@@ -1190,9 +1179,9 @@ async function entranceChecks(browser, url) {
     o.mainStrong = bCapK(mn) === MAIN_K && bPerf(mn) > bPerf({ def: 'room', lv: 1, id: 0, x: 0, y: 0 }) * 1.5 && bCap(mn) > bCap({ def: 'room', lv: 1, id: 0, x: 0, y: 0, face: 2 }) * 1.5;
     const cats = ['worship', 'fellow', 'shop', 'care', 'comfort', 'club', 'park'];
     o.tier1 = ['wc', 'bench', 'lots', 'tree', 'flower', 'bin'].every(id => !isLocked(id)) && ['shop', 'cell', 'pray', 'nursery', 'room', 'kids', 'chapel', 'grand'].every(id => isLocked(id)) &&
-      ['gift', 'hire', 'entr', 'teams', 'bulk', 'care', 'vol', 'deleg'].every(k => !featOk(k)) && !ppNodeOpen('nurture') && ppNodeOpen('bapt') && evBlock('bible') === '' && /Lv 2/.test(evBlock('communion')) && evBlock('pbook') === '' && /Lv/.test(evBlock('pdeg')) && /Lv 2/.test(lockLabel('shop'));
+      ['gift', 'hire', 'entr', 'teams', 'bulk', 'care', 'vol'].every(k => !featOk(k)) && typeof delegWeek === 'undefined' && !ppNodeOpen('nurture') && ppNodeOpen('bapt') && evBlock('bible') === '' && /Lv 2/.test(evBlock('communion')) && evBlock('pbook') === '' && /Lv/.test(evBlock('pdeg')) && /Lv 2/.test(lockLabel('shop'));
     { S.lvl = 2; const l2 = ['shop', 'cell', 'pray', 'nursery', 'coffeecart'].every(id => !isLocked(id)) && isLocked('room') && featOk('gift') && featOk('hire') && !featOk('teams') && ppNodeOpen('nurture') && !ppNodeOpen('disciple') && evBlock('communion') !== lockText(1) + ' 열 수 있어요';
-      S.lvl = 4; const l4 = !isLocked('room') && !isLocked('kids') && isLocked('chapel') && featOk('vol') && featOk('teams') && !featOk('deleg') && ppNodeOpen('sgl') && !ppNodeOpen('deacon') && tierNames(4).includes('초등부실') && tierNames(4).some(n => /봉사자/.test(n));
+      S.lvl = 4; const l4 = !isLocked('room') && !isLocked('kids') && isLocked('chapel') && featOk('vol') && featOk('teams') && ppNodeOpen('sgl') && !ppNodeOpen('deacon') && tierNames(4).includes('초등부실') && tierNames(4).some(n => /봉사자/.test(n));
       S.lvl = 12; const l12 = !isLocked('grand') && ppNodeOpen('assoc') && Object.keys(FEAT_LV).every(featOk) && Object.keys(EV_LV).every(id => tierOk(EVENTS[id].goal));
       // 관리자가 필요한 건물은 청빙이 열리는 Lv보다 먼저 열리지 않는다
       const mgrOk = DEFS.filter(d => d.kind === 'bld' && !d.hidden && !d.retired && mgrRole({ def: d.id })).every(d => (BLD_LV[d.id] || 1) >= FEAT_LV.hire);
@@ -1319,7 +1308,7 @@ async function mgrChecks(browser, url) {
     supRemove(shop.id, p1.id); p1.node = 'cstaff'; recalc();
     // 건물을 맡으면 성도 돌봄(자동 심방)에서 빠진다
     const a1 = { name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }; S.assoc.push(a1); recalc(); const k1 = 'a' + asUid(a1);
-    const cap0 = delegCap(); o.excl = mgrSet(cell.id, k1) === '' && delegCap() === cap0 - asCare(a1) && cap0 > 0;
+    o.excl = mgrSet(cell.id, k1) === '' && cell.mgr === k1;
     // 이미 다른 건물을 맡은 사람은 그 건물에서 먼저 빼야 다른 건물에 배정할 수 있다
     const why = mgrSet(room.id, k1); o.taken = /이미/.test(why) && !room.mgr && cell.mgr === k1 && !mgrPool('pastor').some(w => w.key === k1 && !w.at);
     mgrClear(cell.id); o.moved = mgrSet(room.id, k1) === '' && room.mgr === k1 && !cell.mgr;

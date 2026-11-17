@@ -111,12 +111,8 @@ var PP_SPIRIT_LV=.01,PP_SPIRIT_K=.15;
    사연마다 정답은 하나: 고르면 호감 경험치 CARE_GOOD(갈등이면 두 사람 모두). 오답 셋은 레벨이 내려가고(데이터에 선택지별로) 떠날 수도 있다.
    돈이 드는 오답의 값은 CARE_COST(·2), 선물 값은 PP_GIFT.cost. CARE_DUE주 안에 고르지 않으면 레벨 −2, CARE_LEAVE 확률로 떠남, 만족 −CARE_IGNORE_MOOD */
 var CARE_P_PER=.01,CARE_P_MAX=.45,CARE_MAX=3,CARE_MIN_MEM=6,CARE_GOOD=60,CARE_COST=300,CARE_DUE=3,CARE_LEAVE=.3,CARE_IGNORE_MOOD=1.5;
-/* 부교역자에게 성도 돌봄 맡기기: 매주 부교역자 한 사람이 (ASSOC_CARE0 + ASSOC_CARE_K × 실력)명을 심방하고, 선물 때가 된 사람에게는 선물도 한다.
-   맡길 성도는 호감 Lv(S.deleg.lv) 아래인 사람만, 레벨이 낮은 순으로. 교회 자금이 ASSOC_CARE_RES 아래로 내려가면 멈춘다 */
-var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
-/* 소그룹 리더(소그룹 리더·공동체 리더·간사·신학교 입학)도 성도 돌봄을 맡는다: 한 주에 단계의 목양 수용력(cap) × LEAD_CARE_K명.
-   맡아서 하는 심방·선물은 값이 DELEG_COST_K배, 호감 경험치가 DELEG_XP_K배 (직접 하는 것보다 싸고 효과는 조금 작다) */
-var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
+/* 소그룹 리더 단계들. 심방·선물을 값싸게(cheap) 할 때 값 DELEG_COST_K배·경험치 DELEG_XP_K배 */
+var LEAD_NODES=['sgl','cml','kanji','seminary'],DELEG_COST_K=.5,DELEG_XP_K=.75;
 /* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
 var ASSOC_PER=10;
 var ASSOC_HOME_K=1.4,ASSOC_LV_K=.04,ASSOC_LV_MAX=20;
@@ -182,7 +178,7 @@ var EV_LV={
 var TEAM_LV={evang:3,praise:3,care:3,newcomer:4,edu:4,prayer:5,admin:6,media:7,mission:8};
 var PP_CLV={bapt:1,nurture:2,disciple:3,devoted:4,sgl:4,server:4,deacon:6,cml:6,tlead:6,elder:8,kanji:8,dlead:8,seminary:10,cstaff:10,assoc:12};
 // gift 선물 · hire 청빙(부교역자·직원)과 봉사자 화면 · entr 입구 꾸미기 · teams 사역팀 · bulk 일괄 심방·교육 · care 성도의 고민 · vol 봉사자 갈래(직분자·리더·섬김이) · deleg 성도 돌봄 맡기기
-var FEAT_LV={gift:2,hire:2,entr:2,teams:3,bulk:3,care:3,vol:4,deleg:5};
+var FEAT_LV={gift:2,hire:2,entr:2,teams:3,bulk:3,care:3,vol:4};
 // 퀘스트 한 칸마다 받는 돈은 퀘스트 목록(quests.js)에 있다
 
 /* 사역팀 (teams.js): 섬김이를 팀 슬롯(최대 TEAM_MAX칸)에 배치하면 그 수가 팀의 단계(0~TEAM_MAX)가 된다. 넣고 빼고 옮기는 데 값은 들지 않고, 사례비도 없다.
