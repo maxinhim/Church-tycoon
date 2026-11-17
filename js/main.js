@@ -56,6 +56,11 @@ function init(){
   syncSpeed();
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){b.addEventListener('click',function(){openGroup(b.dataset.fab);});});
   $('#bMenu').addEventListener('click',function(){setGear(false);openGroup('menu');});
+  // 위 자금·성도 수 칩을 누르면 현황 화면
+  document.querySelectorAll('#status .pill.money,#status .pill.mem').forEach(function(p){
+    p.addEventListener('click',function(){openGroup('status');});
+    p.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openGroup('status');}});
+  });
   $('#bGear').addEventListener('click',function(){setGear($('#gearMenu').hidden);});
   // 톱니바퀴 메뉴 바깥을 누르거나 Esc를 누르면 닫는다
   document.addEventListener('pointerdown',function(e){if(!$('#gearMenu').hidden&&!e.target.closest('#gear'))setGear(false);});

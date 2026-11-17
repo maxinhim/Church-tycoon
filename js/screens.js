@@ -12,10 +12,11 @@ var SCREENS={
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'봉사자',tabs:[['off','직분자'],['B','리더'],['C','섬김이'],['assoc','부교역자'],['cands','청빙']]},
   hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','직원']]},
+  roster:{title:'직원',tabs:[['assoc','부교역자'],['staff','직원'],['hire','청빙']]},
   mgr:{title:'관리자 배치',tabs:[['pool','인력']]}
 };
 // 교회 Level이 되어야 열리는 탭 (balance.js FEAT_LV): 잠긴 탭은 자물쇠로 보이고 누르면 몇 Lv에 열리는지 알려 준다
-var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','events:staff':'teams','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
+var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','events:staff':'teams','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:care':'care','people:lead':'vol'};
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
 var PP_PAGE=60;
@@ -25,7 +26,7 @@ function openScreen(k,tab){
   UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.choose=null;UI.sel=null;UI.selPiece=null;UI.selFloor=null;UI.fold=true;UI.lastBuilt=null;
   var tabs=SCREENS[k].tabs,want=tab||tabs[0][0];
   if(tabLocked(k,want)){var ft=tabs.filter(function(x){return !tabLocked(k,x[0])&&x[0]!=='cands';})[0];want=ft?ft[0]:want;}   // 잠긴 탭이면 열린 첫 탭으로
-  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ppMore=PP_PAGE;
+  UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ppMore=PP_PAGE;if(k==='roster'){UI.hireFor=0;UI.rosPick=false;}
   sfx('page',.35);renderPanel();renderScreen();
 }
 function closeScreen(){UI.scr=null;UI.scrSel=null;renderScreen();syncTabs();}
@@ -79,7 +80,8 @@ function renderScreen(){
   if(UI.scr==='events'&&UI.scrTab==='staff'){
     // 사역팀: 원형 카드 + 달란트
     body.className='sbody';body.innerHTML=teamsHtml();
-  }else if(UI.scr==='hire'){body.className='sbody hirescr';body.innerHTML=hireHtml();
+  }else if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
+  }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=bulkBar()+peopleHtml();}
   else if(UI.scr==='officers'){body.className='sbody';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='assoc'?assocHtml():(UI.scrTab==='B'&&leaders().length?delegHtml():'')+officersHtml());}
@@ -110,7 +112,7 @@ function renderScreen(){
   else if(sel&&sel.t==='in'&&INDK[sel.id])dh=indDlgHtml(sel.id);
   else if(sel&&sel.t==='cr'&&careRes)dh=careResHtml();
   else if(sel&&sel.t==='tm'&&STAFF[sel.id])dh=teamDlgHtml(sel.id);
-  else if(sel&&sel.t==='hc'&&UI.scr==='hire'&&hcFind(sel.id))dh=hcDlgHtml(sel.id);
+  else if(sel&&sel.t==='hc'&&(UI.scr==='hire'||UI.scr==='roster')&&hcFind(sel.id))dh=hcDlgHtml(sel.id);
   else UI.scrSel=null;
   dl.hidden=!dh;dl.innerHTML=dh;
 }
@@ -152,6 +154,7 @@ function scrClick(e){
   // 정보 창 바깥(어두운 곳)을 누르면 닫는다
   if(!el){if(e.target.id==='scrDlg'){UI.scrSel=null;renderScreen();}return;}
   if(scrStatusClick(el.dataset.act,el.dataset.v,el))return;
+  if(scrRosterClick(el.dataset.act,el.dataset.v))return;
   if(scrTeamClick(el.dataset.act,el.dataset.v))return;
   if(scrPeopleClick(el.dataset.act,el.dataset.v,el))return;
   var a=el.dataset.act,v=el.dataset.v;
@@ -441,7 +444,7 @@ function scrMgrClick(a,v){
    그림은 생성 초상화(assets/portraits/hirecard, hcPortrait)다 (.hc-art) */
 var HC_GRADE=['','D','C','B','A','S'],HC_EM={C:'직',assoc:'교'};
 function hcList(){
-  var tab=UI.scrTab,L=[];
+  var tab=UI.scr==='roster'?'all':UI.scrTab,L=[];
   VOL_TYPES.forEach(function(t){if(tab==='all'||tab===t)volCands(t).forEach(function(c,i){L.push({id:t+':'+i,t:t,i:i,c:c});});});
   if(tab==='all'||tab==='assoc')(S.cands||[]).forEach(function(c,i){L.push({id:'assoc:'+i,t:'assoc',i:i,c:c});});
   return L;
@@ -478,7 +481,7 @@ function hcDlgHtml(id){
     '<div class="sdb"><span class="runc"><i class="coin" aria-hidden="true"></i>'+fmt(c.fee)+'</span><button class="btn pri big" data-act="hctake" data-v="'+id+'"'+(full||poor?' disabled':'')+'>청빙</button></div></div>';
 }
 function scrHireClick(a,v){
-  if(UI.scr!=='hire')return false;
+  if(UI.scr!=='hire'&&!(UI.scr==='roster'&&UI.scrTab==='hire'))return false;
   var why;
   if(a==='hcopen'){UI.scrSel={t:'hc',id:v};sfx('click',.4);}
   else if(a==='hcreroll'){why=volReroll();if(why){scrToast(why,2000);sfx('error',.4);}else{sfx('coins',.5,0);UI.scrSel=null;scrToast('새 후보들이 찾아왔어요',1600);}}

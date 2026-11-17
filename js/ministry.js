@@ -79,7 +79,7 @@ var ASC_OLD=[2,5];
 function makeCand(){
   var sk=1+Math.floor(Math.pow(Math.random(),1.5)*5),fk=Object.keys(FIELDS)[Math.floor(Math.random()*5)];
   var pay=50+sk*30,pk=hirePortraitPick('subpastor'),g=pk.g;
-  return {name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],title:ASC_OLD.indexOf(pk.pi)>=0?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
+  return {name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),title:ASC_OLD.indexOf(pk.pi)>=0?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
 }
 function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
 function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}

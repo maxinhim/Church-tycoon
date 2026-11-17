@@ -10,6 +10,7 @@ var PIX={
   officers:['................','...rrr....rrr...','..rrrrr..rrrrr..','.rrcrrrrrrrrrrr.','.rrccrrrrrrrrrr.','.rrrrrrrrrrrrrr.','.RrrrrrrrrrrrrR.','..RrrrrrrrrrrR..','...RrrrrrrrrR...','....RrrrrrrR....','.....RrrrrR.....','......RrrR......','.......RR.......','................','................','................'],
   status:['................','............oo..','............oo..','.......yy...oo..','.......yy...oo..','.......yy...oo..','..gg...yy...oo..','..gg...yy...oo..','..gg...yy...oo..','..gG...yY...oO..'.replace('Y','y').replace('O','o'),'..GG...yy...oo..','.dddddddddddddd.','................','................','................','................']
 };
+PIX.roster=PIX.people.map(function(r){return r.replace(/[Bb]/g,'o');});   // 직원: 성도 그림의 옷을 주황으로
 function pixSvg(rows){
   var n=rows.length,h='<svg class="pix" viewBox="-1 -1 '+(n+2)+' '+(n+2)+'" shape-rendering="crispEdges" aria-hidden="true">',x,y,at=function(x,y){var r=rows[y];var c=r&&r.charAt(x);return c&&c!=='.'?c:'';};
   // 바깥선

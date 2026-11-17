@@ -290,3 +290,14 @@ var ENT_SIGN_COST={m0:0,m1:100,m2:150,m3:200,m4:250,m5:350,m6:450,m7:600,m8:800,
 var ENT_SIGN_VIS={m0:0,m1:.01,m2:.01,m3:.01,m4:.015,m5:.015,m6:.02,m7:.02,m8:.025,m9:.03};
 var ENT_DECO_COST={lights:300,flags:350,planter:400,lantern:600,balloon:700,flower:1000};
 var ENT_DECO_VIS={lights:.01,flags:.01,planter:.01,lantern:.015,balloon:.02,flower:.03};
+
+/* 직원 화면(roster.js)의 즉시 육성. 직원(부교역자·사역간사·청빙직원)마다 st={tr 직무교육 횟수, mo 사기 0~100, xp 훈련 경험, rk 직급}.
+   성능 배수 = (1 + ST_TRAIN.k×교육 횟수) × (1 + ST_RANK.k×직급) × (ST_MO_LO + (1−ST_MO_LO)×사기/100)
+   · 직무 교육: 돈 cost×(1+grow×횟수)만원 + 훈련 경험 xp를 쓰고 즉시 교육 횟수 +1 (최대 max회, 영구)
+   · 특별 격려: 돈 cost만원 → 사기 +mo, 훈련 경험 +xp (기다릴 일 없음)
+   · 직급 승급: 돈 cost[직급]만원, 교육 횟수 need[직급] 이상 → 직급 +1, 성능 +, 주급 +pay%
+   · 사기는 매주 ST_MO_DECAY씩 떨어지고, 건물을 맡고 있으면 매주 훈련 경험 ST_XP_WEEK이 쌓인다 */
+var ST_TRAIN={cost:300,grow:.5,xp:10,max:10,k:.04};
+var ST_CHEER={cost:200,mo:50,xp:6};
+var ST_RANK={k:.12,cost:[1500,4000],need:[3,6],pay:.25,assoc:['전도사','부목사','수석부목사'],staff:['사원','선임','팀장']};
+var ST_MO_DECAY=2,ST_MO_LO=.9,ST_XP_WEEK=2;

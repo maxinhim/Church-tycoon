@@ -17,12 +17,12 @@ function exK(skill){return MGR_EX_K0+MGR_EX_STEP*skill;}
 function mgrPool(role){
   var L=[];
   if(role==='pastor')(S.assoc||[]).forEach(function(a){var inn=!!a.home,sd=mgrSeed(a);
-    L.push({key:'a'+asUid(a),name:a.name+' '+a.title,g:a.g||(sd%2?'m':'f'),seed:sd,src:inn?'in':'ex',k:inn?MGR_IN_K*(1+MGR_LV_K*((a.lv||1)-1)):exK(a.skill),sub:'★'+a.skill,carer:true});});
+    L.push({key:'a'+asUid(a),name:a.name+' '+a.title,g:a.g||(sd%2?'m':'f'),seed:sd,src:inn?'in':'ex',k:(inn?MGR_IN_K*(1+MGR_LV_K*((a.lv||1)-1)):exK(a.skill))*stMul(a),sub:'★'+a.skill,carer:true});});
   else{
     var nodes=MGR_STAFF_NODES;
     (S.people||[]).forEach(function(p){if(nodes.indexOf(p.node)<0)return;
-      if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv),sub:'★'+p.ext.skill+' · 주 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
-      else L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
+      if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'★'+p.ext.skill+' · 주 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
+      else L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
   }
   L.forEach(function(w){w.at=MGB[w.key]||0;});
   return L.sort(function(a,b){return b.k-a.k;});

@@ -116,7 +116,7 @@ async function playChecks(browser, url) {
 
   // 동그란 기능 버튼·하위 탭·메뉴·닫기
   await page.click('#fab [data-fab="minis"]'); await page.click('#scr [data-act="scrtab"][data-v="staff"]'); await page.click('#scr [data-act="scrclose"]');
-  await page.click('#fab [data-fab="status"]'); await page.click('#scr [data-act="scrclose"]'); await page.click('#bGear'); await page.click('#bMenu');
+  await page.click('#status .pill.money'); await page.click('#scr [data-act="scrclose"]'); await page.click('#bGear'); await page.click('#bMenu');
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="close"]');
   await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
   await page.click('#bRot');
@@ -651,8 +651,8 @@ async function ministryChecks(browser, url) {
   // 화면 조작: 동그란 기능 버튼으로 패널 열고 닫기, 건물을 지으면 수치 글씨
   await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; levelTick(true); UI.cat = 'worship'; closeDock(); });
   const closedAtStart = await page.evaluate(() => document.getElementById('dock').hidden);
-  await page.click('#fab [data-fab="status"]');
-  const quick = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && /지표/.test(document.getElementById('scrTabs').textContent) && /퀘스트/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .indc').length === 5 && document.querySelector('#fab [data-fab="status"]').classList.contains('on'); });
+  await page.click('#status .pill.money');
+  const quick = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && /지표/.test(document.getElementById('scrTabs').textContent) && /퀘스트/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .indc').length === 5; });
   await page.click('#scr [data-act="scrclose"]');
   const toggled = await page.evaluate(() => document.getElementById('dock').hidden && document.getElementById('scr').hidden);
   await page.click('#fab [data-fab="minis"]');
@@ -1385,6 +1385,54 @@ async function introChecks(browser, url) {
   check(errs.length === 0, '인트로·잠금: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
+async function rosterChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 400 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; });
+  await page.goto(url); await skipSteps(page);
+  await page.evaluate(() => { window.__ct.init(); S.money = 9999999; S.unlockAll = true; S.freeMgr = false; S.members = 30; syncPeople(); recalc();
+    S.assoc = [{ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440, g: 'm', seed: 7, pi: 0, lv: 1, xp: 0 }, { name: '이하나', title: '부목사', field: 'edu', skill: 5, pay: 120, fee: 0, home: true, g: 'f', seed: 9, lv: 1, xp: 0 }];
+    S.people[0].node = 'cstaff'; S.people[0].lv = 70; syncPeople(); recalc(); build('room', 20, 20, 2); recalc(); });
+  const dock = await page.evaluate(() => { const f = document.querySelector('#fab [data-fab="roster"]'), st = document.querySelector('#fab [data-fab="status"]'); return !!f && !st && /직원/.test(f.textContent); });
+  await page.click('#fab [data-fab="roster"]'); await page.waitForTimeout(200);
+  const a = await page.evaluate(() => {
+    const o = {}, sc = document.getElementById('scr'), tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.textContent.replace('🔒', '').trim());
+    o.tabs = UI.scr === 'roster' && tabs.join(',') === '부교역자,직원,청빙';
+    const l = document.querySelector('.rost-l').getBoundingClientRect(), r = document.querySelector('.rost-r').getBoundingClientRect();
+    o.split = Math.abs(l.width / (l.width + r.width) - .6) < .04;
+    const cards = [...document.querySelectorAll('.rcard')];
+    o.cards = cards.length === 2 && cards.every(c => !!c.querySelector('img') && !!c.querySelector('.rc-at')) && cards.some(c => c.classList.contains('ex')) && cards.some(c => c.classList.contains('in'));
+    o.border = getComputedStyle(cards.find(c => c.classList.contains('in'))).borderTopColor !== getComputedStyle(cards.find(c => c.classList.contains('ex'))).borderTopColor;
+    o.breath = /rbreath/.test(getComputedStyle(document.querySelector('.rd-art img')).animationName);
+    o.btns = ['rospick', 'rostrain', 'roscheer', 'rospromo'].every(k => !!document.querySelector('.rd-b [data-act="' + k + '"]'));
+    return o;
+  });
+  // 배치 · 직무 교육 · 특별 격려 · 승급
+  const b = await page.evaluate(() => {
+    const o = {}, bid = S.buildings.find(x => x.def === 'room').id; document.querySelector('.rcard.ex').click();
+    document.querySelector('[data-act="rospick"]').click(); o.pick = document.querySelectorAll('.rpk').length >= 1;
+    document.querySelector('.rpk[data-v="' + bid + '"]').click(); o.placed = !!mgrOf(bById(bid)) && /김시온/.test(mgrOf(bById(bid)).name) && /📍/.test(document.querySelector('.rcard.on .rc-at').textContent);
+    const e = rosEnt(UI.rosSel), k0 = e.k, st = e.o.st; st.xp = ST_TRAIN.xp; const m0 = S.money; renderScreen();
+    document.querySelector('[data-act="rostrain"]').click(); o.train = st.tr === 1 && S.money === m0 - rosCost(0) && st.xp === 0 && rosEnt(UI.rosSel).k > k0 && /영구/.test(document.getElementById('scrToast').textContent);
+    st.mo = 40; const m1 = S.money; renderScreen(); document.querySelector('[data-act="roscheer"]').click(); o.cheer = st.mo === 90 && S.money === m1 - ST_CHEER.cost && st.xp === ST_CHEER.xp;
+    o.promoBlock = /직무 교육/.test(rosWhyPromote(rosEnt(UI.rosSel)));
+    st.tr = ST_RANK.need[0]; renderScreen(); document.querySelector('.rd-b [data-act="rospromo"]').click(); o.promo = e.o.title === '부목사' && st.rk === 1 && e.o.pay === Math.round(110 * (1 + ST_RANK.pay));
+    document.querySelector('.rcard.in').click(); const ia = rosEnt(UI.rosSel); o.inPromo = ia.o.title === '부목사' && ia.st.rk === ia.st.rb && Math.abs(asSkill(ia.o) - 5 * ASSOC_HOME_K) < .01;
+    document.querySelector('[data-act="scrtab"][data-v="staff"]').click(); o.staff = document.querySelectorAll('.rcard').length === 1 && !!document.querySelector('[data-act="rospick"]:not([disabled])');
+    document.querySelector('[data-act="scrtab"][data-v="hire"]').click(); o.hire = document.querySelectorAll('.hcard').length >= 3;
+    return o;
+  });
+  // 위 자금·성도 수 칩으로 현황
+  await page.evaluate(() => closeScreen()); await page.click('#status .pill.mem'); await page.waitForTimeout(150);
+  const c = await page.evaluate(() => UI.scr === 'status' && /지표/.test(document.getElementById('scrTabs').textContent));
+  if (!(Object.values(a).every(Boolean) && Object.values(b).every(Boolean))) console.log('ROSTER', JSON.stringify(a), JSON.stringify(b));
+  check(dock && c, '직원 화면: 하단 버튼이 현황 대신 직원이 되고, 위 자금·성도 수 칩을 누르면 현황이 열림');
+  check(a.tabs && a.split && a.cards && a.border && a.breath && a.btns, '직원 화면: 탭 3개(부교역자·직원·청빙), 60:40 분할, 카드(초상화·황금/푸른 테두리·근무지 뱃지)와 숨 쉬는 상세 초상화·네 버튼');
+  check(b.pick && b.placed && b.train && b.cheer && b.promoBlock && b.promo && b.inPromo && b.staff && b.hire, '직원 화면: 근무지 배치(건물 관리자), 직무 교육·특별 격려·직급 승급이 쿨타임 없이 즉시 적용되고, 직원·청빙 탭이 열림');
+  check(errs.length === 0, '직원 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
 async function levelChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
   const page = await ctx.newPage();
@@ -2090,6 +2138,7 @@ async function earlyChecks(browser, url) {
     await terrainChecks(browser, url);
     await waterChecks(browser, url);
     await introChecks(browser, url);
+    await rosterChecks(browser, url);
     await levelChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);

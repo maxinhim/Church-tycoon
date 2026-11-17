@@ -81,7 +81,7 @@ function weekEnd(){
   // 평판: 40을 넘으면 넘은 만큼 빨리 식는다. 봉사·선교·행사·미디어로 꾸준히 채워야 80을 지킨다
   gainRep(A.rep+MOD.rep+(mood-REP_MOOD0)*0.02);
   if(S.rep>40)S.rep=clamp(S.rep-(S.rep-40)*REP_DECAY,0,100);
-  S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
+  S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;stWeek();
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}

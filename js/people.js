@@ -271,7 +271,7 @@ function asGain(a,xp){
   if(a.lv>=ASSOC_LV_MAX)a.xp=Math.min(a.xp,asNeed(a.lv));return up;
 }
 // 효과에 쓰는 실력: 별 × (교회에서 기른 사람이면 ASSOC_HOME_K) × 레벨 보정
-function asSkill(a){return a.skill*(a.home?ASSOC_HOME_K:1)*(1+ASSOC_LV_K*((a.lv||1)-1));}
+function asSkill(a){return a.skill*(a.home?ASSOC_HOME_K:1)*(1+ASSOC_LV_K*((a.lv||1)-1))*stMul(a);}
 function asCheerWhy(a){
   if((a.lv||1)>=ASSOC_LV_MAX)return '이미 최고 레벨이에요';
   if(S.week-(a.cw==null?-99:a.cw)<ASSOC_CHEER.cd)return (ASSOC_CHEER.cd-(S.week-a.cw))+'주 뒤에 다시 할 수 있어요';
