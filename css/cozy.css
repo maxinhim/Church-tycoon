@@ -455,3 +455,36 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 #scr .sbody.ppscr .evc.ppc{padding:5px 2px 4px}
 @media (max-height:480px){.sinfo{font-size:10px;gap:0 7px}.pbar .pcb,.pbar .bgp .bic[data-v="visit"],.pbar .bgp .bic[data-v="gift"]{width:70px!important;height:39px}.pbar .bgw .btn{height:30px;font-size:11.5px}}
 .pbar .bgw{flex:0 1 auto;justify-content:flex-start}
+
+/* ---------- 전체 화면 머리띠: 자금·닫기는 언제나 오른쪽 위에 고정, 탭은 잘리지 않고 현황 글이 줄어든다 ---------- */
+.shead{position:relative;padding-right:168px!important}
+.shead .smoney{position:absolute;right:52px;top:50%;transform:translateY(-50%);margin:0}
+.shead .sclose{position:absolute;right:10px;top:50%;transform:translateY(-50%);margin:0}
+.shead .stabs{flex:0 0 auto;overflow:visible}
+.shead .sinfo{flex:1 1 0;min-width:0;max-height:2.8em;overflow:hidden}
+@media (max-height:480px){.shead{padding-right:150px!important}.shead .smoney{right:46px}}
+
+/* ---------- 성도 화면 단계 카드: 단계마다 대표 한 명(숨 쉬는 초상화), 위 단추는 그 단계 모두에게 ---------- */
+.sgg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.sgc{position:relative;display:flex;flex-direction:column;border-radius:18px;overflow:hidden;border:3px solid #d9a321;background:linear-gradient(180deg,#fff4d6,#efe4cc);box-shadow:0 3px 0 #d9a321,0 6px 12px rgba(0,0,0,.16)}
+.sgc.care{border-color:#e0262a;box-shadow:0 3px 0 #a81c1f,0 0 0 2px rgba(224,38,42,.25)}
+.sgb-row{display:flex;gap:5px;padding:7px 7px 0;z-index:2}
+.sgb{flex:1 1 0;min-width:0;padding:5px 2px 4px;border-radius:12px;border:2px solid #5a4630;color:#fff;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.35);text-shadow:0 1px 0 rgba(0,0,0,.35);line-height:1.1}
+.sgb b{display:block;font:400 15px/1.15 var(--f-cozy,inherit);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sgb small{display:block;margin-top:2px;font:800 11.5px/1.15 sans-serif;white-space:nowrap}
+.sgb.visit{background:#4b8ed0}.sgb.gift{background:#e2a12b}.sgb.grow{background:#3f9a7c}.sgb.hot{background:#d8452f}
+.sgb:disabled{background:#a59c8c;box-shadow:none;cursor:not-allowed;opacity:.9}
+.sg-art{position:relative;display:block;margin:6px auto 0;width:min(78%,190px);aspect-ratio:1;border-radius:50%;overflow:visible;border:0;padding:0;background:transparent;cursor:pointer}
+.sg-art img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:50% 25%;border:4px solid #fffaf0;box-shadow:0 3px 8px rgba(0,0,0,.22);background:#e9efe6;transform-origin:50% 100%;animation:rbreath 3.2s ease-in-out infinite}
+.sg-art .pcare{right:6%;top:4%;width:30px;height:30px;font-size:19px}
+@media (prefers-reduced-motion:reduce){.sg-art img{animation:none}}
+.sg-foot{padding:6px 8px 9px;text-align:center}
+.sg-foot b{display:block;font-family:var(--f-display);font-size:19px;color:#4a3322}.sg-foot b em{font-style:normal;font-size:14px;color:#b5470f}
+.sg-foot span{display:block;font-size:11.5px;color:#5a4a33}
+.sg-why{display:block;margin-top:2px;font-size:11px;color:#a8432f}
+.sgl-list{height:40px;font-size:13px}
+.sgl-list.on{background:var(--butter)}
+/* 명단 보기의 심방·선물 비용 글씨 크게 */
+.pbar .bcost{font-size:12.5px!important;font-weight:800;color:#3d3326;background:#fff3cf;border:1.5px solid #e2c47a;border-radius:8px;padding:1px 7px;margin-top:2px}
+@media (max-height:480px){.sgg{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}.sg-art{width:min(70%,150px)}.sgb b{font-size:13.5px}.sgb small{font-size:10.5px}.sg-foot b{font-size:16px}}
+.sgb small.sgc-c{margin-top:1px;font-size:11px;opacity:.95}

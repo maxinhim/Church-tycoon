@@ -711,7 +711,18 @@ async function ministryChecks(browser, url) {
   // 성도 화면: 성도마다 이름·초상화 카드, 누르면 세부 정보(한마디·호감·심방·다음 단계)
   await page.evaluate(() => { S.members = 8; recalc(); });   // 손대지 않은 30주 뒤라 성도가 거의 없으니 다시 채운다
   await page.click('#fab [data-fab="people"]');
-  const ppScr = await page.evaluate(() => { const o = {}; const cards = document.querySelectorAll('#scrBody .ppc');
+  // 성도 화면 기본 보기: 단계마다 대표 한 명 큰 카드(숨 쉬는 초상화), 카드 위 단추는 그 단계 모두에게 · 머리띠의 자금·닫기는 오른쪽 위 고정, 탭은 잘리지 않음
+  const stg = await page.evaluate(() => { const o = {}; S.money = 99999; S.people.forEach((q, i) => { q.node = i < 3 ? 'bapt' : 'new'; q.lv = 3 + i; q.tr = null; q.vw = -99; q.gw = -99; }); recalc(); renderScreen();
+    const cs = [...document.querySelectorAll('#scrBody .sgc')]; o.cards = cs.length === 2 && !document.querySelector('#scrBody .ppc') && cs.every(c => !!c.querySelector('.sg-art img') && getComputedStyle(c.querySelector('.sg-art img')).animationName === 'rbreath');
+    const nw = cs.find(c => /새가족/.test(c.textContent)), vb = nw.querySelector('.sgb.visit'), m0 = S.money, nNew = S.people.filter(q => q.node === 'new').length;
+    o.btns = !!vb && /심방/.test(vb.textContent) && !!nw.querySelector('.sgb.gift') !== undefined && /\d+명/.test(vb.textContent);
+    vb.click(); o.visitAll = S.people.filter(q => q.node === 'new').every(q => q.vw === S.week) && S.people.filter(q => q.node === 'bapt').every(q => q.vw !== S.week) && S.money < m0;
+    const gb = [...document.querySelectorAll('#scrBody .sgc')].find(c => /새가족/.test(c.textContent)).querySelector('.sgb.grow'); S.people.filter(q => q.node === 'new').forEach(q => { q.lv = PP_TREE.bapt.lv; }); renderScreen();
+    const gb2 = [...document.querySelectorAll('#scrBody .sgc')].find(c => /새가족/.test(c.textContent)).querySelector('.sgb.grow'); o.grow = !!gb2 && gb2.textContent.length < 20; gb2.click(); o.growAll = S.people.filter(q => q.node === 'new').every(q => q.tr && q.tr.to === 'bapt');
+    const hd = document.querySelector('#scr .shead'), mo = hd.querySelector('.smoney').getBoundingClientRect(), cl = hd.querySelector('.sclose').getBoundingClientRect(), tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')], inf = document.getElementById('scrInfo').getBoundingClientRect();
+    o.head = Math.abs(cl.right - hd.getBoundingClientRect().right) < 20 && mo.right <= cl.left + 1 && tabs.every(t => { const r = t.getBoundingClientRect(); return r.width > 40 && r.right <= inf.left + 1; }) && inf.right <= mo.left + 1;
+    S.people.forEach(q => { q.node = 'new'; q.lv = 1; q.tr = null; }); recalc(); UI.ppList = true; renderScreen(); return o; });
+  const ppScr = await page.evaluate(() => { const o = {}; UI.ppList = true; renderScreen(); const cards = document.querySelectorAll('#scrBody .ppc');
     o.grid = !document.getElementById('scr').hidden && cards.length === S.people.length && cards.length === S.members && !!cards[0].querySelector('img.pt') && !!cards[0].querySelector('.hlv') && /성도/.test(document.getElementById('scrTitle').textContent);
     cards[0].click(); const dl = document.getElementById('scrDlg'), id = +cards[0].dataset.v, p = ppById(id);
     o.dlg = !dl.hidden && dl.textContent.includes(p.n) && /“.+”/.test(dl.textContent) && /매주 헌금/.test(dl.textContent) && !!dl.querySelector('[data-act="ppvisit"]') && !!dl.querySelector('[data-act="ppgift"]') && /다음 단계/.test(dl.textContent) && /세례/.test(dl.querySelector('.sopt').textContent) && dl.querySelector('[data-act="pptrain"]').disabled === (p.lv < PP_TREE.bapt.lv || S.money < PP_TREE.bapt.cost); o.dbg = [dl.textContent.slice(0, 200)];
@@ -906,6 +917,7 @@ async function ministryChecks(browser, url) {
   check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(사역팀 탭은 봉사자 › 섬김이로 옮김), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
+  check(Object.values(stg).every(Boolean), '성도 화면: 단계마다 대표 한 명을 큰 카드(숨 쉬는 초상화)로, 카드 위 심방·선물·교육 단추가 그 단계 모두에게 적용, 자금·닫기는 오른쪽 위 고정·탭은 잘리지 않음 ' + JSON.stringify(stg));
   check(ppScr.care && ppScr.careBtn && ppScr.status, '성도 화면: 현황은 탭 오른쪽 작은 글, 본문 맨 위는 고민·심방·선물·일괄 시작 한 줄, 고민이 생기면 성도 버튼에 빨간 느낌표·고민 단추 빨갛게·성도 아이콘 위 빨간 느낌표, 세부 정보에 사연과 선택지, 고르면 풀림');
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
@@ -1250,7 +1262,7 @@ async function entranceChecks(browser, url) {
     const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money; for (let k = 0; k < BLV_XP * 10; k++) investBld(rm); const got = bLv(rm) - lv0;
     o.lv100 = typeof investMany === 'undefined' && BLV_XP >= 5 && BFX[rm.id] > 0 && BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
     draw(); o.badge = hasLv(rm) && !D.tree.fill;
-    S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
+    S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); UI.ppList = true; renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
     o.bcost = bc.length === 2 && bc.every(t => /만/.test(t));
     return o; });
   check(r.flatStart, '시작 지도: 평지로 시작 (땅 높이·경사·물 없음), 지형 시스템 함수는 그대로');
@@ -1396,7 +1408,7 @@ async function introChecks(browser, url) {
     o.tabs = !tl('events').classList.contains('lock') && !tl('pastor').classList.contains('lock') && tl('assoc').classList.contains('lock') && tl('vol').classList.contains('lock') && !tl('staff') && /Lv 4/.test(tl('vol').textContent);
     tl('vol').click(); o.tabBlock = UI.scrTab === 'events' && /Lv 4/.test(document.getElementById('scrToast').textContent);
     const evs = [...document.querySelectorAll('#scrBody .evc')]; o.evs = evs.filter(e => !e.classList.contains('lock')).length <= 3 && evs.filter(e => e.classList.contains('lock')).length >= 8 && /Lv 2/.test(document.querySelector('#scrBody [data-v="communion"]').textContent);
-    openScreen('people'); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.length === 2 && pt.find(x => x.dataset.v === 'all') && !pt.find(x => x.dataset.v === 'all').classList.contains('lock') && pt.find(x => x.dataset.v === 'vol').classList.contains('lock') && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
+    openScreen('people'); UI.ppList = true; renderScreen(); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.length === 2 && pt.find(x => x.dataset.v === 'all') && !pt.find(x => x.dataset.v === 'all').classList.contains('lock') && pt.find(x => x.dataset.v === 'vol').classList.contains('lock') && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
     const p = S.people[0]; document.querySelector('#scrBody [data-act="ppopen"]').click(); const dl = document.getElementById('scrDlg'); o.gift = dl.querySelector('[data-act="ppgift"]').disabled && !dl.querySelector('[data-act="ppvisit"]').disabled && /Lv 2/.test(ppCareWhy(p, 'gift'));
     p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
     o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
