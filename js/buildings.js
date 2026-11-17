@@ -51,6 +51,12 @@ mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H
 mk('playground','놀이터','worship',2,2,900,4,'playground','#e0c48a','#e8892c',{nomgr:1,sub:'dept',kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
 mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',nolimit:1,ccap:12,fill:{comf:60},cap:2,dur:3,desc:'꼭 필요한 편의시설'});
 mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
+// 도시 스테이지의 이웃 건물: 짓지 못하고(hidden) 땅째 살 수만 있다 (stages.js cityBuy, 그림은 drawCityBld)
+mk('c_apt','아파트','city',4,5,0,0,'city','#e6e1d7','#9aa3ad',{hidden:true,H:3.4,desc:'이웃 아파트. 땅째 사면 그 자리를 쓸 수 있어요'});
+mk('c_office','오피스 빌딩','city',3,3,0,0,'city','#b9c7d3','#6f7f8f',{hidden:true,H:2.6,desc:'유리창이 반짝이는 사무실 건물'});
+mk('c_villa','빌라','city',2,3,0,0,'city','#e8d2bb','#a46b4a',{hidden:true,H:1.6,desc:'붉은 벽돌 빌라'});
+mk('c_mart','상가','city',3,2,0,0,'city','#f1ebe0','#c4503a',{hidden:true,H:1.0,desc:'1층 가게들이 줄지은 상가'});
+mk('c_house','주택','city',2,2,0,0,'city','#efe6d2','#7d5440',{hidden:true,H:.9,desc:'마당 있는 작은 주택'});
 mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
 mk('info','안내실','comfort',1,1,500,5,'bld','#e8eef2','#3f5ea3',{H:.75,roof:'flat',deco:'info',ccap:6,fill:{comf:30,fel:10},cap:3,dur:3,vis:0.03,desc:'처음 온 사람을 맞이하는 안내 창구. 방문자 +3%'});
 mk('nurse','수유실','comfort',1,1,600,5,'bld','#f6eef0','#c77d8f',{H:.75,roof:'hip',rh:.45,ccap:4,kcap:2,fill:{comf:44,care:16},cap:2,dur:4,desc:'아기와 부모를 위한 조용한 방'});

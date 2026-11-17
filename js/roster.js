@@ -118,6 +118,7 @@ function rosterHtml(){
 function rosDone(msg){recalc();save();scrToast(msg,2000);renderScreen();hud(true);}
 function scrRosterClick(a,v){
   if(UI.scr!=='roster'||a.indexOf('ros')!==0)return false;
+  if(fleetClick(a,v))return true;   // 차량 탭 (stages.js)
   var e=rosEnt(UI.rosSel||''),why;
   if(a==='rosopen'){UI.rosSel=v;UI.rosPick=false;sfx('click',.4);renderScreen();return true;}
   if(!e)return true;

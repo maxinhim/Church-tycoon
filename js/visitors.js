@@ -6,10 +6,11 @@
    예배·교제 건물(일괄 가동)은 안에서 정원이 차기를 기다렸다가 함께 나온다(bldlv.js).
    */
 // member: 주일에 예배하러 오는 성도 (정착 판정 없음, 말씀이 가장 급하다). wallet: 매장에서 쓸 수 있는 돈
-function spawnV(member){
+function spawnV(member,at){   // at: 나타날 노드(차량이 내려 준 곳). 없으면 교회 입구
   var needs={};NEEDS.forEach(function(n){var r=n==='word'?VIS_WORD0:VIS_OTHER0;needs[n]=r[0]+Math.random()*(r[1]-r[0]);});   // 말씀이 가장 급하다 (예배를 보러 온다)
   if(member)needs.word=8+Math.random()*10;
-  V.push({x:entC(),y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
+  var ap=at!=null?nodePos(at):null;
+  V.push({x:ap?ap.x:entC(),y:ap?ap.y:ROWS-0.5,z:ap?ap.z:0,node:at!=null?at:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
     member:!!member,wallet:Math.round(member?36+Math.random()*120:20+Math.random()*96),
     life:VIS_LIFE[0]+Math.random()*VIS_LIFE[1],strolls:0,speed:(1.9+Math.random()*0.7)*G*VIS_SPEED,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
@@ -104,7 +105,8 @@ function finishVisit(v){
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
 }
 function goLeave(v){
-  var g=gateNode(),p=navPath(v.node,function(n){return n===g;});
+  // 차량·배를 타고 온 사람은 내린 곳으로 돌아가 다시 탄다
+  var g=v.ride&&dropNode()!=null?dropNode():gateNode(),p=navPath(v.node,function(n){return n===g;});
   if(!p){depart(v);return;}
   v.path=p;v.pi=0;v.state='leave';v.target=0;
   if(!p.length)depart(v);
@@ -127,7 +129,7 @@ function depart(v){
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
   var sv=(S.cov&&S.cov.spirit!=null)?S.cov.spirit:.6;
-  var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(SPIRIT_JOIN0+SPIRIT_JOIN1*sv)*(v.needs.word>=45?1:WORD_JOIN_LOW)/(1+S.members/200);
+  var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(SPIRIT_JOIN0+SPIRIT_JOIN1*sv)*(v.needs.word>=45?1:WORD_JOIN_LOW)/(1+S.members/200)*stageJoinK(v);
   if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:entC(),y:PZ-1.2,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 // 욕구가 이만큼 차면 그 욕구는 됐다고 보고, 평균이 이만큼이면 돌아간다 (높을수록 건물을 더 많이 들른다)

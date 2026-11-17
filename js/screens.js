@@ -12,7 +12,7 @@ var SCREENS={
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
   officers:{title:'봉사자',tabs:[['dis','제자'],['off','직분자'],['B','리더'],['C','섬김이']]},
   hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','청빙직원']]},
-  roster:{title:'직원',tabs:[['assoc','부교역자'],['staff','직원'],['hire','청빙']]},
+  roster:{title:'직원',tabs:[['assoc','부교역자'],['staff','직원'],['hire','청빙'],['fleet','차량']]},   // 차량 탭은 차량·배가 다니는 스테이지에만 (tabShown)
   mgr:{title:'관리자 배치',tabs:[['pool','인력']]},
   sup:{title:'보조 인력',tabs:[['pool','직분자']]}
 };
@@ -33,7 +33,7 @@ function openScreen(k,tab){
   // 지도에서 하던 일(짓기·고르기·작은 창)은 정리한다
   UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.choose=null;UI.sel=null;UI.selPiece=null;UI.selFloor=null;UI.fold=true;UI.lastBuilt=null;
   var tabs=SCREENS[k].tabs,want=tab||tabs[0][0];
-  if(!tabs.some(function(x){return x[0]===want;}))want=tabs[0][0];   // 없어진 탭(예: 성도 › 봉사자)이면 첫 탭
+  if(!tabs.some(function(x){return x[0]===want&&tabShown(k,x[0]);}))want=tabs[0][0];   // 없어진 탭(예: 성도 › 봉사자)이면 첫 탭
   if(tabLocked(k,want)){var ft=tabs.filter(function(x){return !tabLocked(k,x[0]);})[0];want=ft?ft[0]:want;}   // 잠긴 탭이면 열린 첫 탭으로
   UI.scr=k;UI.scrTab=want;UI.scrSel=null;UI.ofPick=null;UI.careOnly=false;UI.ppList=false;UI.ppMore=PP_PAGE;if(k==='roster'){UI.hireFor=0;UI.rosPick=false;}
   sfx('page',.35);renderPanel();renderScreen();
@@ -86,11 +86,13 @@ function renderScreen(){
   if(!UI.scr)return;
   var sc=SCREENS[UI.scr];
   $('#scrTitle').textContent=sc.title;
-  $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+tabImg(t[1],on)+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
+  var tabsV=sc.tabs.filter(function(t){return tabShown(UI.scr,t[0]);});
+  $('#scrTabs').innerHTML=tabsV.length>1?tabsV.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+tabImg(t[1],on)+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
   $('#scrMoney').textContent=fmt(S.money);
   var inf=$('#scrInfo');if(inf){var hb=UI.scr==='officers'?offHeadBtns():'';inf.innerHTML=hb;inf.hidden=!hb;inf.className='sinfo'+(hb?' sact':'');}
   var body=$('#scrBody'),top=body.scrollTop;
   if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
+  }else if(UI.scr==='roster'&&UI.scrTab==='fleet'){body.className='sbody fleet';body.innerHTML=fleetHtml();
   }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.className='sbody ppscr';body.innerHTML=(UI.ppList||UI.careOnly)?peopleBar()+peopleHtml():stageBar()+stagesHtml();}

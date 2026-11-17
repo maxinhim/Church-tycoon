@@ -38,7 +38,7 @@ function build(id,x,y,face){
   save();return true;
 }
 function demolish(id){
-  var b=bById(id);if(!b||b.fixed)return;
+  var b=bById(id);if(!b||b.fixed||defOf(b).kind==='city')return;   // 이웃 건물은 철거하지 못하고 땅째 산다
   var d=defOf(b);
   S.money+=Math.floor(d.cost*0.5);
   S.buildings=S.buildings.filter(function(x){return x.id!==id;});

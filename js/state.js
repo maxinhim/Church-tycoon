@@ -8,7 +8,7 @@ var DIRS=[[1,0],[-1,0],[0,1],[0,-1]];
    방문자는 바닥·길 위로만 다니므로 새 건물은 입구까지 바닥을 이어야 쓸 수 있다 */
 var START_TREES=[[10,20],[21,21],[18,22],[3,4],[6,13],[26,6],[29,16],[4,25],[13,9],[19,3],[8,2],[24,12],[2,18],[30,22],[11,25],[20,25]];
 // 대예배당(지도 가운데, 정면이 입구 쪽) 자리와, 그 문 앞에서 교회 입구까지 이어 둔 길(칸 좌표: 열 ENT~ENT+EW-1)
-var MAIN_AT={x:26,y:25},MAIN_PATH_Y=[32,PZ-1];   // 대예배당 11×7칸: 가운데 칸(x=31)이 문, 입구(ENT~ENT+2)와 같은 가운데
+var MAIN_AT={x:26,y:29},MAIN_PATH_Y=[36,PZ-1];   // 대예배당 11×7칸(26~36 × 29~35): 지도 한가운데. 가운데 칸(x=31)이 문, 입구(ENT~ENT+2)와 같은 가운데
 /* 시작 지도의 지형: 'flat'(평지, 기본) · 'hills'(언덕 둘·연못·도랑). 지형 시스템(땅 높이·경사·물·벽 타일, terrain.js·water.js)은 그대로 있고,
    나중에 지도 종류를 늘릴 때 대예배당이 평지보다 높거나 낮거나 울퉁불퉁한 땅에 서게 하는 데 쓴다 */
 var START_TERRAIN='flat';
@@ -31,14 +31,14 @@ function startTerrain(){
   for(x=44;x<=57;x++){hgt[x+',8']=-1;hgt[x+',9']=-1;}
   return {hgt:hgt,slp:slp,water:water};
 }
-function newState(dk){
+function newState(dk,stage){
   dk=DIFF[dk]?dk:'normal';
   var bs=[{id:1,def:'main',x:MAIN_AT.x,y:MAIN_AT.y,face:2,inUse:0,uses:0,fixed:true}],fl={};
   START_TREES.forEach(function(t,i){bs.push({id:i+2,def:'tree',x:t[0]*G,y:t[1]*G,inUse:0,uses:0});});
   // 예전 칸 좌표로 적어 둔 시작 바닥: 한 칸마다 G×G칸을 깐다
   for(var fy=MAIN_PATH_Y[0];fy<=MAIN_PATH_Y[1];fy++)for(var fx=ENT;fx<ENT+EW;fx++)fl[fx+','+fy]='f_block';
   var st=startTerrain();
-  return {name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,open:false,loans:[],wx:{cur:'sun',next:'cloud',day:0,clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1},rcpt:null,weekShop:0,weekSup:0,weekGive:0,memAcc:0,
+  return applyStageMap({name:'새빛교회',diff:dk,money:DIFF[dk].money,members:6,rep:30,week:0,t:0,clock:0,open:false,loans:[],wx:{cur:'sun',next:'cloud',day:0,clear:0,snow:0,wet:0,bow:0,hits:0,lt:6,xmas:-1},rcpt:null,weekShop:0,weekSup:0,weekGive:0,memAcc:0,
     buildings:bs,nextId:bs.length+1,paths:[],nextPid:1,floor:fl,hgt:st.hgt,slp:st.slp,water:st.water,
     staff:{evang:0,praise:0,care:0,newcomer:0,edu:0,prayer:0,admin:0,media:0,mission:0},
     assoc:[],cands:[],candWeek:-99,off:{deacon:0,kwonsa:0,elder:0,cstaff:0},tempMood:0,ev:{},newSinceBap:0,posWeeks:0,lastEv:0,dlg:null,dlgB:0,
@@ -46,7 +46,7 @@ function newState(dk){
     hist:[],log:[],over:false,evt:null,evtLeft:0,weekInc:0,spawnAcc:0,visitsWeek:0,joinedWeek:0,
     grip:{},gripB:{},gripN:0,gripL:{},gripBL:{},gripNL:0,gripPen:0,fresh:0,evW:{communion:-2},lvl:null,
     wish:null,wishNext:null,wishMood:0,wishLeft:0,wishOk:0,wishFail:0,wishRan:null,lastNew:0,lastEvId:null,lvc:3,qd:{},qb:{},qxp:0,tv:0,il:{},ind:null,servants:{},careDone:0,cares:[],careId:1,hrV:1,hires:[],hireId:1,hireN:0,hcand:{},
-    freeMgr:typeof window!=='undefined'&&!!window.__CT_TEST&&!window.__CT_MGR};
+    freeMgr:typeof window!=='undefined'&&!!window.__CT_TEST&&!window.__CT_MGR},stage);
 }
 function bById(id){for(var i=0;i<S.buildings.length;i++)if(S.buildings[i].id===id)return S.buildings[i];return null;}
 function rebuildOcc(){
@@ -73,6 +73,7 @@ function agg(){
 function satHave(k){return k==='past'?MOD.cap:({seat:A.seats,fel:A.fcap,care:A.kcap,comf:A.ccap,park:A.park}[k])*BLD_SAT;}
 function satInfo(k){
   var s=SAT[k],m=Math.max(1,S.members),E=s.e?expectK(m):1,need=Math.max(s.f,m*s.r*E),have=satHave(k);
+  if(k==='park')need=stageParkK(need);   // 도시는 주차가 더 필요하다 (stages.js)
   return {have:have,base:s.b,need:need,v:Math.min(1,(s.b+have)/need)};
 }
 function calcMood(){

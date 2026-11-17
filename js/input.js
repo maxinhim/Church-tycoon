@@ -37,6 +37,7 @@ function pickFig(px,py){
 function onTap(px,py){
   if(S.over)return;
   if(!isPlacing()&&UI.tool!=='demolish'){var fg=pickFig(px,py);if(fg){openScreen('events',fg.k);return;}}
+  if(!isPlacing()&&WILD.length){var wa=pickWild(px,py);if(wa){wildFlee(wa,true);return;}}   // 산짐승을 누르면 쫓는다 (산촌)
   if(!isPlacing()){var av=pickAngry(px,py);if(av){toast('😠 '+(av.why||'불만이 있어요'),3600);sfx('click',.4);return;}}
   // 교회 입구를 누르면 문 열기·닫기 카드. 다른 곳을 누르면 카드는 닫힌다
   var popOpen=!$('#gatePop').hidden;
@@ -106,7 +107,7 @@ function syncTabs(){
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){var on=b.dataset.fab===g;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));});
   var m=$('#bMenu');if(m)m.setAttribute('aria-pressed',String(g==='menu'));
 }
-var SPEND_ACTS={einvest:1,einvest10:1,epick:1,invest:1,cpick:1,fswap:1,wbridge:1,pbuild:1,wfount:1};
+var SPEND_ACTS={citybuy:1,einvest:1,einvest10:1,epick:1,invest:1,cpick:1,fswap:1,wbridge:1,pbuild:1,wfount:1};
 function onPanel(e){
   var el=e.target.closest('[data-act]'),sa=el&&SPEND_ACTS[el.dataset.act],m0=S.money,pos=sa?spendPos():null;
   onPanel0(e);if(sa)spendFx(m0,pos);
@@ -182,6 +183,7 @@ function onPanel0(e){
     else if(a==='repairAll'){msg=repairAll();done='낡은 건물을 모두 고쳤어요';}
     else if(a==='borrow'){msg=borrow(v);done=LOANS[v]?LOANS[v].name+' '+fmt(LOANS[v].amt)+'을 받았어요':'';}
     else if(a==='repay'){msg=repayLoan(+v);done='대출을 모두 갚았어요';}
+    else if(a==='citybuy'){var cbb=bById(UI.sel),cbn=cbb?defOf(cbb).name:'';msg=cityBuy(UI.sel);done=cbn+' 부지를 샀어요 · 이제 이 땅에 지을 수 있어요';if(!msg){UI.sel=null;renderSelCard();}}   // 도시: 이웃 건물 땅째 사기
     else return;
     toast(msg||done,1800);renderPanel();hud(true);
     if(msg)sfx('error',.4);else if(a==='repair'||a==='repairAll')sfx('build',.8);else if(a==='borrow'||a==='repay')sfx('coins',.7);else sfx('click',.5);

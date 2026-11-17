@@ -44,3 +44,6 @@
 .stcard .stgoal{display:inline-flex;align-items:center;gap:4px;margin-top:4px;padding:2px 9px;border-radius:999px;background:#fff3c4;border:2px solid #e0a92e;color:#7a4e06;font:400 clamp(11px,1.6vh,14px)/1.25 "Jua",sans-serif;box-shadow:0 2px 0 #c58d1c}
 .stcard .stgoal i{font-style:normal}
 .stcard .stgoal.done{background:#dff4d2;border-color:#5aa64a;color:#2f6a22;box-shadow:0 2px 0 #3f8a33}
+/* 목표 칩은 그림 아래쪽에 얹는다 (카드 높이를 늘리지 않게) */
+.stcard .stpic{position:relative}
+.stcard .stpic .stgoal{position:absolute;left:6px;bottom:6px;margin:0;max-width:calc(100% - 12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(10px,1.45vh,13px)}

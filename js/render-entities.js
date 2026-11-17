@@ -210,6 +210,7 @@ function drawEntity0(b,cars){
   if(k==='planter'){drawPlanter(b);return;}
   if(k==='gazebo'){drawGazebo(b);return;}
   if(k==='busstop'){drawBusStop(b);return;}
+  if(k==='city'){drawCityBld(b);return;}
   if(DECO_DRAW[k]){DECO_DRAW[k](b);return;}
   if(k==='bld')drawBld(b);else if(k==='lot')drawLot(b,cars||0);else if(k==='tree')drawTree(b);
   else if(k==='flower')drawFlower(b);else if(k==='bench')drawBench(b);else if(k==='spire')drawSpire(b);

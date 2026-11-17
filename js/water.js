@@ -117,23 +117,28 @@ function drawWFount(b){
 }
 /* 땅 밑(0층 아래)은 파인 칸의 입구로만 보인다: 파인 칸들의 지면 마름모를 모아 둔다.
    0층 아래로 내려가는 그림은 '입구들 + 자기 칸 위쪽 기둥' 안에서만 그린다 (앞쪽 땅 위로 삐져나오지 않게) */
-var PIT={path:null,n:0};
+var PIT={path:null,n:0,cells:[]};
 function pitBuild(){
-  PIT.path=null;PIT.n=0;
+  PIT.path=null;PIT.n=0;PIT.cells=[];
   var pp=null;
   for(var k in S.hgt||{}){
     if(!(S.hgt[k]<0))continue;
-    var a=k.split(','),x=+a[0],y=+a[1];
+    var a=k.split(','),x=+a[0],y=+a[1],m=rotPt(x+.5,y+.5),pts=[];
     if(!pp)pp=new Path2D();
-    [[x,y],[x+1,y],[x+1,y+1],[x,y+1]].forEach(function(w,i){var r=rotPt(w[0],w[1]),q=P(r[0],r[1],0);if(i)pp.lineTo(q[0],q[1]);else pp.moveTo(q[0],q[1]);});
-    pp.closePath();PIT.n++;
+    [[x,y],[x+1,y],[x+1,y+1],[x,y+1]].forEach(function(w,i){var r=rotPt(w[0],w[1]),q=P(r[0],r[1],0);pts.push(q);if(i)pp.lineTo(q[0],q[1]);else pp.moveTo(q[0],q[1]);});
+    pp.closePath();PIT.n++;PIT.cells.push({rx:m[0],ry:m[1],p:pts});
   }
   PIT.path=pp;
 }
-// 회전된 칸 범위 r(x0,y0,x1,y1)의 그림을 땅 밑 가림과 함께 그린다
+// 회전된 칸 범위 r(x0,y0,x1,y1)의 그림을 땅 밑 가림과 함께 그린다.
+// 가림 경로는 가까운(PIT_NEAR칸 안) 파인 칸만 모은다 — 큰 강처럼 파인 칸이 많아도 칸마다 전체를 합치지 않게
+var PIT_NEAR=3;
 function pitClip(r,f){
   if(!PIT.path){f();return;}
-  var c=PJ.c,p=new Path2D(PIT.path),k=ZB;ZB=0;
+  var c=PJ.c,p,k=ZB;ZB=0;
+  if(PIT.n>40){p=new Path2D();var cx=(r.x0+r.x1)/2,cy=(r.y0+r.y1)/2,hw=(r.x1-r.x0)/2+PIT_NEAR,hh2=(r.y1-r.y0)/2+PIT_NEAR;
+    PIT.cells.forEach(function(q){if(Math.abs(q.rx-cx)>hw||Math.abs(q.ry-cy)>hh2)return;p.moveTo(q.p[0][0],q.p[0][1]);p.lineTo(q.p[1][0],q.p[1][1]);p.lineTo(q.p[2][0],q.p[2][1]);p.lineTo(q.p[3][0],q.p[3][1]);p.closePath();});}
+  else p=new Path2D(PIT.path);
   var L=P(r.x0,r.y1,0),B=P(r.x1,r.y1,0),R=P(r.x1,r.y0,0),T=P(r.x0,r.y0,0),m=14*PJ.s;ZB=k;
   // 자기 칸의 지면 마름모와 그 위쪽 (시계 방향으로, 입구 마름모와 같은 방향)
   p.moveTo(L[0],L[1]);p.lineTo(L[0]-m,L[1]-m/2);p.lineTo(L[0]-m,-1e4);p.lineTo(R[0]+m,-1e4);p.lineTo(R[0]+m,R[1]-m/2);p.lineTo(R[0],R[1]);p.lineTo(B[0],B[1]);p.closePath();

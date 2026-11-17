@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* 밸런스 시뮬레이터: 게임 코드를 그대로 불러(헤드리스 브라우저) 전략별 봇이 N주를 자동으로 플레이한다.
-   쓰는 법:  node tools/sim.js [--weeks 52] [--diff normal] [--seed 7] [--only balanced,spirit] [--json out.json] [--set JOIN_P=0.3,REFER_K=0.03]
+   쓰는 법:  node tools/sim.js [--weeks 52] [--diff normal] [--seed 7] [--only balanced,spirit] [--json out.json] [--set JOIN_P=0.3,REFER_K=0.03] [--stage mount|sea|city]
    --set: balance.js 값을 이번 실행에서만 바꿔 비교한다(파일은 그대로)
    전략: idle(아무것도 안 함) · deco(꾸미기만) · shop(매장 중심) · spirit(영성·성례 중심) · balanced(모자란 것부터 고루) · wish(balanced + 성도들의 바람을 먼저 들어줌)
    게임 동작은 바꾸지 않는다(검증·조사 전용). 같은 시드면 결과가 같다. */
@@ -27,10 +27,12 @@ function serve() {
 /* 브라우저 안에서 도는 봇. 게임의 전역 함수(build·runEvent·hireTeam…)만 쓴다 */
 function runBot(cfg) {
   /* global S,A,D,DEFS,V,MOD,PZ,COLS,ROWS,ENT,GOALS,EVENTS,STAFF,OFFICE,SPIRIT_B,HALLS */
-  restart(cfg.diff); S.dlg = null; setGate(true);
+  restart(cfg.diff); if (cfg.stage && cfg.stage !== 'rural') enterStage(cfg.stage); S.dlg = null; setGate(true);
   const wishFirst = cfg.strat === 'wish', strat = wishFirst ? 'balanced' : cfg.strat, RES = 1500;
   // 입구에서 가까운 자리부터
-  const cells = []; for (let y = 0; y < ROWS; y += 2) for (let x = 0; x < COLS; x += 2) cells.push([x, y, Math.abs(x - ENT) + Math.abs(y - (PZ - 4))]);
+  // 농촌은 입구에서, 다른 스테이지는 대예배당 문 앞에서 가까운 자리부터 (산·강·이웃 건물 때문에 입구 근처는 짓기 어렵다)
+  const rural = !cfg.stage || cfg.stage === 'rural', ox = rural ? ENT : 31, oy = rural ? PZ - 4 : 37;
+  const cells = []; for (let y = 0; y < ROWS; y += 2) for (let x = 0; x < COLS; x += 2) cells.push([x, y, Math.abs(x - ox) + Math.abs(y - oy)]);
   cells.sort((a, b) => a[2] - b[2]);
   const stat = { built: {}, events: 0, staff: 0, fail: {} };
   const failed = (id, why) => { const k = id + ':' + why; stat.fail[k] = (stat.fail[k] || 0) + 1; };
@@ -44,7 +46,7 @@ function runBot(cfg) {
       // 바닥 바로 옆 한 칸도 비워 둔다 (길 둘레를 건물로 에워싸 새 길을 못 잇게 되는 일을 막는다)
       let onFloor = false; for (let j = -1; j <= dm.h; j++) for (let i = -1; i <= dm.w; i++) if (S.floor[(c[0] + i) + ',' + (c[1] + j)]) onFloor = true;
       if (onFloor) continue;
-      if (++tries > 300) { failed(id, '300번 시도'); return false; }
+      if (++tries > (rural ? 300 : 60)) { failed(id, '시도 한도'); return false; }
       const m0 = S.money, n0 = okN(), f0 = S.fresh, fl0 = JSON.stringify(S.floor); if (!build(id, c[0], c[1], 2)) continue;
       const nb = S.buildings[S.buildings.length - 1];
       recalc(); let lw = ''; if (nb.door && !usable(nb)) { lw = linkDoor(nb); recalc(); }
@@ -100,7 +102,20 @@ function runBot(cfg) {
       if (!L.length) return; investBld(L[0]); stat.invest = (stat.invest || 0) + 1;
     }
   }
+  // 스테이지: 차량·배를 마련해 놀고 있는 봉사자·부교역자를 운전자로 세우고, 도시는 주차가 모자라면 주차 구역의 이웃 건물을 산다
+  function stageBot() {
+    const s = stg();
+    if (s.trans) {
+      const ks = vehKinds(), free = drvRefs().filter(r => !drvBusy(r.ref));
+      vehs().forEach(v => { if (!vehRun(v) && free.length) vehSetDrv(v.id, free.shift().ref); });
+      const want = s.trans === 'water' ? 1 + Math.floor(S.members / 25) : Math.ceil(S.members / 30);
+      if (free.length && vehs().filter(v => !VEH[v.k].free).length < want) { const k = S.money > VEH[ks[1]].cost + RES * 3 ? ks[1] : ks[0]; if (S.money > VEH[k].cost + RES * 2 && vehBuy(k) === '') { stat.veh = (stat.veh || 0) + 1; vehSetDrv(vehs()[vehs().length - 1].id, free.shift().ref); } }
+    }
+    if (s.city && S.cov.park < .85) { const L = S.buildings.filter(b => defOf(b).kind === 'city' && b.y >= PZ).sort((a, b) => cityPrice(a) - cityPrice(b)); if (L[0] && S.money > cityPrice(L[0]) + RES * 2 && cityBuy(L[0].id) === '') { stat.land = (stat.land || 0) + 1; for (let i = 0; i < 3; i++) put('lot') || put('lots'); } }
+    if (s.wild) WILD.forEach(a => { if (a.st === 'come' && Math.random() < .5) wildFlee(a, true); });
+  }
   function week() {
+    stageBot();
     if (S.dlg) { const d = dlgById(S.dlg); let i = d.o.findIndex(o => !o.ok || o.ok()); chooseDlg(i < 0 ? 0 : i); }
     if (needRepair().length && S.money > RES) repairAll();
     if (strat === 'idle') return;
@@ -152,7 +167,7 @@ function runBot(cfg) {
     await page.goto(url);
     const SET = arg('set', ''); if (SET) await page.evaluate(set => { set.split(',').forEach(kv => { const [k, v] = kv.split('='); window.eval(k + '=' + v); }); }, SET);
     await page.evaluate(() => window.__ct.init());
-    out[strat] = await page.evaluate(runBot, { strat, weeks: WEEKS, diff: DIFFK });
+    out[strat] = await page.evaluate(runBot, { strat, weeks: WEEKS, diff: DIFFK, stage: arg('stage', 'rural') });
     out[strat].errs = errs; await ctx.close();
   }
   await browser.close(); srv.close();

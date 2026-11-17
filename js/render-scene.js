@@ -107,6 +107,7 @@ function draw(){
     LE(rrect(ENT-.1,ROWS-1-.1,ENT+EW/U+.1,ROWS-1+.1),drawRoadGap);
     fenceSegs().forEach(function(f){LE(fenceRect(f),function(){drawFenceSeg(f);});});
   });
+  stageEntities(E);   // 차량·배·기다리는 사람·산짐승 (stages.js)
   snowmen().forEach(function(t){var r=rrect(t.x+.25,t.y+.25,t.x+.75,t.y+.75);r.f=function(){drawSnowman(t);};E.push(r);});
   sortEnt(E).forEach(function(e){e.f();});
   // 고른 건물·미리보기 바닥 표시는 그림 위에 얹는다 (높인 땅 위에서도 보이게)

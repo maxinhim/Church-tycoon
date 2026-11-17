@@ -337,6 +337,67 @@ async function stackChecks(browser, url) {
   await ctx.close();
 }
 
+// 스테이지 2~4: 지도 한가운데 대예배당, 산촌 협곡·차량·산짐승, 어촌 강·배, 도시 이웃 건물·부지 매입·민원, 스테이지별 저장
+async function stageChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 4242; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true; window.__CT_MGR = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {}
+  });
+  await page.goto(url); await skipSteps(page);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.dlg = null; const o = {};
+    const mid = b => { const d = bDims(b); return [b.x + d.w / 2, b.y + d.h / 2]; };
+    o.center = ['rural', 'mount', 'sea', 'city'].every(st => { const n = newState('normal', st), m = n.buildings.find(b => b.def === 'main'), c = [m.x + D.main.w / 2, m.y + D.main.h / 2]; return n.stage === st && Math.abs(c[0] - COLS / 2) <= 1 && Math.abs(c[1] - ROWS / 2) <= 1; });
+    const run = n => { for (let i = 0; i < n; i++) update(0.1); };
+    // 산촌: 계단식 산, 입구에서 대예배당 문까지 굽이진 협곡 길(곧은 길보다 훨씬 김), 걸어서는 적게 오고 차량이 태워 오면 회복
+    enterStage('mount'); S.dlg = null; S.open = true; S.unlockAll = true; S.money = 99999; recalc();
+    const mm = S.buildings.find(b => b.def === 'main'), g = gateNode(), en = entNode(mm), pth = navPath(g, n => n === en);
+    o.mount = S.stage === 'mount' && Object.keys(S.hgt).length > 800 && Math.max(...Object.values(S.hgt)) <= 3 && Math.max(...Object.values(S.hgt)) >= 2 && usable(mm) && !!pth && pth.length > 26 && Object.keys(S.slp).length >= 3;
+    const vk0 = stageVisK(); S.members = 30; syncPeople(); S.people.slice(0, 2).forEach(p => { p.node = 'server'; p.lv = 20; }); recalc();
+    const tk = S.veh[0], bw = vehBuy('van'), vv = S.veh[1], idle = tk.k === 'truck' && vehRun(tk) && !vehRun(vv) && opCap() === VEH.truck.cap && warnings().some(t => /운전자가 없는 차량/.test(t));
+    vehSetDrv(vv.id, 'p' + S.people[0].id); vehSetDrv(vv.id, 'p' + S.people[0].id);
+    o.van = bw === '' && idle && vehRun(vv) && opCap() === VEH.van.cap + VEH.truck.cap && stageVisK() > vk0 && vk0 > STG_WALK_VIS && vk0 < 1 && vehUp() === VEH.van.up && stageJoinK({ ride: true }) === 1 && stageJoinK({}) === STG_WALK_JOIN;
+    run(700); o.ride = V.some(v => v.ride) && V.filter(v => v.ride).length >= 2;
+    // 산짐승: 내려와 건물로 가고, 챙길 일에 뜨며, 닿으면 건물이 상하고, 누르면(쫓으면) 돌아간다
+    WILD.length = 0; wildRaid(); const w0 = WILD.length, a0 = WILD[0], tb = bById(a0.tb), c0 = condOf(tb);
+    const warn = warnings().some(t => /산짐승/.test(t)); a0.x = a0.tx; a0.y = a0.ty; run(2); const hurt = !maintainable(tb) || condOf(tb) < c0;
+    WILD.forEach(a => wildFlee(a, true)); run(200);
+    o.wild = w0 >= WILD_N[0] && warn && hurt && WILD.length === 0 && typeof pickWild === 'function';
+    // 스테이지별 저장: 산촌에서 바꾼 것은 농촌을 다녀와도 그대로
+    S.money = 12345; enterStage('rural'); const ru = S.stage === 'rural' && Object.keys(S.hgt).length === 0 && S.money !== 12345; enterStage('mount'); o.save = ru && S.stage === 'mount' && S.money === 12345;
+    // 어촌: 강이 입구와 교회를 가르고(다리 금지), 마을 나룻배가 사람을 태워 오며, 입구에서 걸어 들어오는 사람은 없다
+    enterStage('sea'); S.dlg = null; S.open = true; S.unlockAll = true; recalc();
+    const sm = S.buildings.find(b => b.def === 'main'), gr = navReach(gateNode());
+    o.sea = Object.keys(S.water).length >= 300 && !gr[entNode(sm)] && usable(sm) && /배로/.test(pieceFits({ x: 10, y: 43, l: 0, s: 0, d: 0, k: 'arch' }) || '') && S.veh.length === 1 && S.veh[0].k === 'ferry' && vehRun(S.veh[0]);
+    run(900); o.ferry = V.length > 0 && V.every(v => v.ride) && S.veh[0].ph !== undefined;
+    openScreen('roster', 'fleet'); o.fleet = UI.scrTab === 'fleet' && !!document.querySelector('#scrTabs [data-v="fleet"]') && /마을 나룻배/.test(document.getElementById('scrBody').textContent) && !!document.querySelector('#scrBody [data-act="rosvbuy"][data-v="boat"]');
+    document.querySelector('#scrBody [data-act="rosvbuy"][data-v="boat"]').click(); o.fleet = o.fleet && S.veh.length === 2 && !!document.querySelector('#scrBody [data-act="rosvdrv"]'); closeScreen();
+    // 도시: 이웃 건물이 가득하고(주차 구역 포함), 눌러서 땅째 사면 그 자리가 빈다 · 주차가 더 필요하고 정착이 어렵다 · 민원
+    enterStage('city'); S.dlg = null; S.open = true; S.unlockAll = true; S.money = 99999; QUESTS.forEach(q => { S.qd[q.id] = 1; }); recalc();
+    const cb = S.buildings.filter(b => defOf(b).kind === 'city'), inPz = cb.filter(b => b.y >= PZ);
+    const c1 = inPz[0], price = cityPrice(c1); UI.sel = c1.id; UI.fold = true; renderSelCard(); const card = /부지 매입/.test(document.getElementById('selCard').textContent);
+    const m0 = S.money; document.querySelector('#selCard [data-act="citybuy"]').click();
+    o.city = cb.length >= 20 && inPz.length >= 3 && card && S.money === m0 - price && price >= 1000 && !bById(c1.id) && !occ[c1.y][c1.x] && canPlace(D.lots, c1.x, c1.y, 2) && S.landN === 1;
+    const pk = satInfo('park').need; S.stage = 'rural'; const pk0 = satInfo('park').need; S.stage = 'city';
+    o.cityK = pk > pk0 && stageJoinK({}) < 1 && demolish(cb[1].id) === undefined && !!bById(cb[1].id);
+    let tries = 0; while (!S.cmp && tries < 60) { cityWeek(); tries++; } o.cmp = !!S.cmp && warnings().some(t => /민원/.test(t));
+    enterStage('rural'); openScreen('roster'); o.noFleet = !document.querySelector('#scrTabs [data-v="fleet"]'); closeScreen();
+    return o;
+  });
+  check(r.center, '스테이지: 모든 스테이지의 대예배당이 지도 한가운데');
+  check(r.mount && r.van && r.ride, '산촌(단순): 넓은 분지 둘레의 낮은 산(1~3층)과 입구에서 한 번 굽은 협곡 길 · 걸어서는 적게 오고 마을 트럭·운전자를 세운 승합차가 입구에서 태워 오면 회복 ' + JSON.stringify([r.mount, r.van, r.ride]));
+  check(r.wild, '산촌: 산짐승이 내려와 챙길 일에 뜨고, 닿으면 건물이 상하며, 쫓으면 산으로 돌아감');
+  check(r.save, '스테이지마다 저장이 따로: 다른 스테이지를 다녀와도 그대로');
+  check(r.sea && r.ferry && r.fleet, '어촌: 강이 입구와 교회를 가르고(다리 금지) 나룻배로만 태워 옴 · 직원 › 차량 탭에서 배를 마련 ' + JSON.stringify([r.sea, r.ferry, r.fleet]));
+  check(r.city && r.cityK && r.cmp, '도시: 이웃 건물이 가득하고 땅째 사면 그 자리를 쓸 수 있음(철거는 안 됨) · 주차가 더 필요하고 정착이 어려움 · 민원 ' + JSON.stringify([r.city, r.cityK, r.cmp]));
+  check(r.noFleet, '농촌에는 차량 탭이 없음');
+  check(errs.length === 0, '스테이지: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
+
 // 구역·울타리·교회 문, 바닥 위로만 걷기, 매장 수익, 대출, 주일 정산, 시계
 async function rulesChecks(browser, url) {
   const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
@@ -1293,7 +1354,7 @@ async function mgrChecks(browser, url) {
     const mn = S.buildings[0], md = bDims(mn);
     let pathOk = true; for (let y = mn.y + md.h; y < PZ; y++) for (let x = ENT; x < ENT + EW; x++) if (S.floor[x + ',' + y] !== 'f_block') pathOk = false;
     o.main = mn.def === 'main' && mn.fixed === true && Math.abs(mn.x + md.w / 2 - COLS / 2) <= 2 && Math.abs(mn.y + md.h / 2 - (ROWS - RD) / 2) <= 3 && pathOk && usable(mn) && bOpen(mn) && !S.freeMgr && !mgrRole(mn) && mgrOf(mn).name === '담임목사' && !DEFS.some(d => d.id === 'main' && !d.hidden) && !build('main', 2, 2, 2);
-    const put = id => { build(id, id === 'shop' ? 36 : id === 'cell' ? 20 : 38, id === 'room' ? 22 : 34, 2); const b = S.buildings[S.buildings.length - 1]; const lp = linkPlan(b); if (lp && !lp.why) lp.tiles.forEach(t => { S.floor[t.x + ',' + t.y] = 'f_block'; }); recalc(); return b; };
+    const put = id => { build(id, id === 'shop' ? 40 : id === 'cell' ? 20 : 38, id === 'room' ? 22 : 34, 2); const b = S.buildings[S.buildings.length - 1]; const lp = linkPlan(b); if (lp && !lp.why) lp.tiles.forEach(t => { S.floor[t.x + ',' + t.y] = 'f_block'; }); recalc(); return b; };
     const c0 = A.ccap, shop = put('shop'), cell = put('cell'), room = put('room');
     o.need = mgrRole(shop) === 'staff' && mgrRole(cell) === 'pastor' && mgrRole(room) === 'pastor' && !mgrRole({ def: 'wc' }) && mgrRole({ def: 'kids' }) === 'pastor' && mgrRole({ def: 'nursery' }) === 'pastor' && !mgrRole({ def: 'playground' }) && !mgrRole({ def: 'pantry' }) && unstaffed().length === 3 && usable(shop) && !bOpen(shop) && !staffed(cell) && A.ccap === c0 && warnings().some(w => /관리자가 없는 건물/.test(w));
     // 선택 카드 → 관리자 화면 → 외부 청빙 창
@@ -1392,12 +1453,12 @@ async function introChecks(browser, url) {
   const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.intro-btn')).transform) || el.classList.contains('out'); });
   await page.waitForTimeout(260);
   const fading = await page.evaluate(() => { const el = document.getElementById('intro-screen'), o = +getComputedStyle(el).opacity; return el.classList.contains('out') && o < 1 && o > 0 && /0\.6s/.test(getComputedStyle(el).transitionDuration) && !document.getElementById('stage-screen').hidden; });
-  await page.waitForTimeout(650);
+  await page.mouse.move(2, 2); await page.waitForTimeout(650);   // 열린 카드 위에 마우스가 있으면 살짝 떠오른다
   const st = await page.evaluate(() => { const el = document.getElementById('intro-screen'), g = document.getElementById('stage-grid'), cards = [...g.querySelectorAll('.stcard')], cs = getComputedStyle(g);
     const ys = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().top)))], xs = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().left)))];
     return { gone: getComputedStyle(el).display === 'none', grid: cards.length === 6 && ys.length === 2 && xs.length === 3 && cards.every(c => { const r = c.getBoundingClientRect(); return r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1 && !!c.querySelector('.stpic'); }),
-      names: cards.map(c => c.querySelector('b').textContent).join() === '농촌 목회,산촌 목회,어촌 목회,도시 목회,선교지 1,선교지 2', locks: cards.filter(c => c.classList.contains('lock')).length === 5 && !cards[0].classList.contains('lock') && cards.slice(1).every(c => !!c.querySelector('.stlock') && !!c.querySelector('svg')), still: UI.intro === true }; });
-  await page.click('[data-stage="city"]', { force: true }); await page.waitForTimeout(100);
+      names: cards.map(c => c.querySelector('b').textContent).join() === '농촌 목회,산촌 목회,어촌 목회,도시 목회,선교지 1,선교지 2', locks: cards.filter(c => c.classList.contains('lock')).length === 2 && cards.slice(0, 4).every(c => !c.classList.contains('lock') && !!c.querySelector('.stgoal')) && cards.slice(4).every(c => !!c.querySelector('.stlock') && !!c.querySelector('svg')), still: UI.intro === true }; });
+  await page.click('[data-stage="miss1"]', { force: true }); await page.waitForTimeout(100);
   const locked = await page.evaluate(() => UI.intro === true && !document.getElementById('stage-screen').classList.contains('out'));
   await page.click('[data-stage="rural"]'); await page.waitForTimeout(700);
   const game = await page.evaluate(() => { const o = { in: UI.intro === false && S.stage === 'rural' && getComputedStyle(document.getElementById('stage-screen')).display === 'none', t0: S.t }; return o; });
@@ -1419,7 +1480,7 @@ async function introChecks(browser, url) {
   check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·시작 단추(아래 가운데), 로고·단추 그림은 투명 바탕에 마젠타가 남지 않음');
   check(a.anim, '인트로: 로고는 3초, 단추는 1.5초 주기로 오가며 끝없이 움직임');
   check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐');
-  check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함), 첫 스테이지만 열려 있고 잠긴 것은 눌러도 그대로, 고르면 게임이 시작됨');
+  check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함), 스테이지 1~4는 열려 있고(목표 표시) 선교지 1·2는 잠겨 눌러도 그대로, 고르면 게임이 시작됨');
   if (!Object.values(lk).every(Boolean)) console.log('LOCKUI', JSON.stringify(lk));
   check(lk.fab && lk.fabBlock && lk.fabOpen && lk.offScr, '잠금: Lv 1에는 봉사자 버튼이 잠겨 있고(누르면 Lv 안내), Lv 4에 직분자·리더·섬김이 화면이 열림');
   check(lk.tabs && lk.tabBlock && lk.evs && lk.ppTabs, '잠금: 행사·성도 화면의 잠긴 탭과 행사 카드에 자물쇠와 Lv가 보이고 눌러도 열리지 않음');
@@ -2121,8 +2182,8 @@ async function earlyChecks(browser, url) {
       o.alertLv = !/매너리즘/.test(w1) && /매너리즘/.test(w3) && /교육을 마친 성도 1명/.test(w1);
       // 마지막 퀘스트를 이루면 스테이지 목표 달성(축하) · 스테이지 카드에 목표와 ✓
       ['g1', 'g2', 'g3', 'g4'].forEach(id => { S.qd[id] = 1; }); const mm = S.members; S.members = 100; questTick(); const clr = qDone(STAGE_GOAL) && S.stageClear && S.stageClear.rural != null && /스테이지 목표/.test(document.getElementById('cele').textContent);
-      const gh = stageGoalHtml(STAGES[0]); o.final = clr && /목표 · 성도 100명의 교회/.test(gh) && /✓/.test(gh) && stageGoalHtml(STAGES[1]) === '';
-      S.members = mm; S.unlockAll = ua; S.lvl = lv0; S.qxp = qx0; S.money = mo0; S.rep = rp0; delete S.stageClear; document.getElementById('cele').hidden = true; recalc(); indTick(true); }
+      const gh = stageGoalHtml(STAGES[0]); o.final = clr && /목표 · 성도 100명의 교회/.test(gh) && /✓/.test(gh) && !/✓/.test(stageGoalHtml(STAGES[1])) && stageGoalHtml(STAGES[4]) === '';
+      S.members = mm; S.unlockAll = ua; S.lvl = lv0; S.qxp = qx0; S.money = mo0; S.rep = rp0; delete S.stageClear; localStorage.removeItem(SAVE_KEY + '-clear'); document.getElementById('cele').hidden = true; recalc(); indTick(true); }
     QUESTS.forEach(q => { S.qd[q.id] = 1; });   // 아래 검사들이 퀘스트 보상에 흔들리지 않게
     // Level 곡선: 시작 점수로는 Lv 1, 지표 점수 합으로 오른다
     S.lvl = 1; o.curve = levelOf(churchScore()) === 1 && lvNeed(2) > churchScore() && levelOf(lvNeed(100)) === 100 && lvNeed(9) < 1300;
@@ -2320,6 +2381,7 @@ async function earlyChecks(browser, url) {
     await deckChecks(browser, url);
     await gripeChecks(browser, url);
     await earlyChecks(browser, url);
+    await stageChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

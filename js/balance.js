@@ -315,3 +315,29 @@ var ST_TRAIN={cost:300,grow:.5,xp:10,max:10,k:.04};
 var ST_CHEER={cost:200,mo:50,xp:6};
 var ST_RANK={k:.12,cost:[1500,4000],need:[3,6],pay:.25,assoc:['전도사','부목사','수석부목사'],staff:['사원','선임','팀장']};
 var ST_MO_DECAY=2,ST_MO_LO=.9,ST_XP_WEEK=2;
+
+/* ---------- 스테이지 2~4 (js/stages.js) ----------
+   산촌(mount): 좁은 협곡 끝 분지에 교회. 걸어서 오는 방문자는 STG_WALK_VIS배만 오고 정착도 STG_WALK_JOIN배. 차량(승합차·미니버스)이
+     운전자(봉사자·부교역자)와 함께 입구에서 태워 오면 그만큼 회복된다. 이따금 산짐승이 내려와 건물을 상하게 하고 방문자를 놀라게 한다
+   어촌(sea): 입구와 교회 사이를 큰 강이 가른다(다리를 놓을 수 없다). 배로 태워 와야만 교회에 온다 (처음엔 마을 나룻배 하나)
+   도시(city): 지도에 이웃 건물이 가득하다. 건물을 땅째 비싸게 사서(CITY_LAND_K × 칸 수) 주차장·시설 자리를 만든다.
+     주차 필요가 CITY_PARK_K배, 정착은 CITY_JOIN배 × (0.6 + 0.4 × 신뢰도/80). 이웃 민원이 들어와 평판이 깎인다 */
+var STG_WALK_VIS=.7,STG_WALK_JOIN=.85;   // 산촌: 걸어서 올 때 방문자 수·정착 배율
+var STG_SEA_VIS=.75,STG_SEA_JOIN=.7;     // 어촌: 강 건너 작은 마을이라 오는 방문자가 적고(나룻배·배로만 온다) 뱃길이 낯설어 덜 정착한다
+var STG_RIDE_FULL=12;                    // 산촌·도시: 운행 중인 차량 정원 합이 이만큼이면 방문자 수 회복이 다 찬다
+// 차량·배: n 이름 · cap 정원 · spd 칸/초 · cost 값 · up 주간 유지비 · w 다니는 곳(road 길 / water 물)
+var VEH={
+  truck:{n:'마을 트럭',cap:4,spd:2.6,cost:0,up:0,w:'road',free:true},   // 산촌 처음: 이장님이 몰아 준다
+  van:{n:'승합차',cap:8,spd:4,cost:1800,up:20,w:'road'},
+  bus:{n:'미니버스',cap:16,spd:3.4,cost:4200,up:40,w:'road'},
+  ferry:{n:'마을 나룻배',cap:4,spd:1.1,cost:0,up:0,w:'water',free:true},
+  boat:{n:'작은 배',cap:8,spd:1.7,cost:2600,up:30,w:'water'},
+  ship:{n:'통통배',cap:16,spd:1.5,cost:6000,up:60,w:'water'}
+};
+var VEH_LOAD=2.5;           // 타고 내리는 시간(초)
+var VEH_DRV_LV=.008;      // 운전자 호감 Lv(부교역자는 레벨×5)마다 속도 +
+var PQ_MAX=40;            // 입구·나루에서 기다리는 사람 한도
+var PQ_GIVEUP=.03;        // 기다리다 돌아가는 비율(초당)
+var WILD_P=.3,WILD_N=[1,3],WILD_SPEED=.9,WILD_DMG=14,WILD_REP=.4,WILD_SCARE=2.5,WILD_STAY=40;   // 산짐승: 주마다 확률·마릿수·걸음·건물 상함·쫓으면 평판·놀라는 거리·머무는 시간(초)
+var CITY_LAND_K=90,CITY_JOIN=.55,CITY_PARK_K=1.8,CITY_VAN_PARK=.5;   // 도시: 땅값(칸당)·정착 배율·주차 필요 배율·차량 정원 1명당 줄어드는 주차 필요
+var CITY_CMP_P=.35,CITY_CMP_REP=2.5,CITY_CMP_WEEKS=2;   // 민원: 주마다 기본 확률·깎이는 평판·챙길 일에 남는 주

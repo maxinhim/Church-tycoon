@@ -31,6 +31,7 @@ function pieceFits(p){
   if(p.y>=PZ)return '주차 구역에는 길을 놓을 수 없어요 (이미 포장돼 걸을 수 있어요)';
   if(p.l<th(p.x,p.y))return '땅보다 낮게는 지을 수 없어요';
   if(p.l<0&&isWater(p.x,p.y))return '물속에는 길을 놓을 수 없어요. 땅 높이의 다리로 건너세요';
+  if(isWater(p.x,p.y)&&stg().noBridge)return '이 강에는 다리를 놓을 수 없어요 · 배로 건너요';
   if(isRamp(p.x,p.y))return '흙 경사로 위에는 길을 놓을 수 없어요';
   if(pieceTop(p)>MAXL)return MAXL+'층 높이보다 높게는 지을 수 없어요';
   if(occ[p.y][p.x])return '건물이 있어요';

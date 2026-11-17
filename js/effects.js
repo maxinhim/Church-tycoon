@@ -62,6 +62,7 @@ function warnings(){
   if(c.park<0.7&&!isLocked('lot'))w.push('주차가 모자라 방문자가 줄어요');
   // 방문자가 실제로 겪은 불편 (무엇을 지으면 되는지까지)
   gripeList().slice(0,5).forEach(function(g){w.push(g.t);});
+  stageWarnings(w);
   if(S.gripPen>=0.5&&alertOn('pen'))w.push('지난주 불편 때문에 성도 만족도 −'+S.gripPen);
   // 할 일: 지금 바로 눌러 마무리할 수 있는 것 (보상·임명·고민)
   var er=evReadyCount();if(er)w.push('🎁 보상을 받을 행사 '+er+'개 · 행사 화면에서 받아요');

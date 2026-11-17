@@ -22,7 +22,12 @@ function renderSelCard(){
   var key=UI.sel?'b'+UI.sel:(UI.selPiece?'p'+UI.selPiece:'f'+UI.selFloor.x+','+UI.selFloor.y);
   if(key!==scKey){scKey=key;scMore=false;scArm=0;}
   var h='',row='',more='';
-  if(UI.sel){
+  if(UI.sel&&defOf(bById(UI.sel)).kind==='city'){
+    // 도시의 이웃 건물: 땅째 사기 (값은 칸 수 × CITY_LAND_K)
+    var cb=bById(UI.sel),cd=defOf(cb),cp=cityPrice(cb),cdm=bDims(cb);
+    h='<div class="sct"><b>'+cd.name+'</b><span>이웃 건물 · '+cdm.w+'×'+cdm.h+'칸</span></div><div class="scw scinfo">'+cd.desc+'</div>';
+    row+=scBtn('citybuy','부지 매입 '+fmtS(cp),S.money>=cp?'pri':'',null,'이 건물을 땅째 사기 '+fmt(cp));
+  }else if(UI.sel){
     var b=bById(UI.sel),bd=defOf(b);
     var sub=[],md=bMode(bd);
     if(bd.cap)sub.push((md==='batch'?(b.run>0?'가동 중 ':'모이는 중 '):'이용 ')+b.inUse+'/'+bCap(b)+'명');
@@ -66,8 +71,9 @@ function renderSelCard(){
   }else if(isWater(UI.selFloor.x,UI.selFloor.y)){
     // 물: 다리 놓기·물 분수·물 빼기
     var wf=UI.selFloor,wn=poolCells(wf.x,wf.y).filter(function(q){return isWater(q.x,q.y);}).length;
-    h='<div class="sct"><b>물</b><span>'+wn+'칸 · 다리로 건너요</span></div>';
-    row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기')+scBtn('wfount','물 분수 '+fmtS(D.wfount.cost),'',null,'이 칸에 물 분수 놓기');
+    h='<div class="sct"><b>물</b><span>'+wn+'칸 · '+(stg().noBridge?'배로만 건너요':'다리로 건너요')+'</span></div>';
+    if(!stg().noBridge)row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기');
+    row+=scBtn('wfount','물 분수 '+fmtS(D.wfount.cost),'',null,'이 칸에 물 분수 놓기');
   }else{
     // 빈 땅·바닥 칸: 바닥 깔기·바꾸기 (땅 높이기·낮추기·경사로·물 채우기/빼기는 없다 — 지형은 시작 지도로만 정해진다)
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);

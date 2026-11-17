@@ -59,7 +59,11 @@ var QUESTS=[
   {id:'b6',g:'guide',after:'b5',n:'건물 키우기',d:'건물을 누르고 투자해 레벨을 올려요 (정원·효과가 커져요)',ok:function(){return S.buildings.some(function(b){return (b.lv||1)>1||(b.bx||0)>0;});},m:300,xp:6},
   {id:'u9',g:'guide',after:'b6',n:'매장 열기',d:'카페·서점 같은 매장을 짓고, 직원 화면에서 청빙한 직원을 관리자로 세워요',need:function(){return !isLocked('shop');},ok:function(){return qMgrd('shop');},m:350,xp:8},
   {id:'u4',g:'guide',after:'u9',n:'부서실 짓기',d:'영유아실·유치부실·초등부실로 성도 가정을 돌봐요',need:function(){return !isLocked('nursery');},ok:function(){return hasBuilt(['nursery','kinder','kids','teens','study','playground','elder','clinic','pantry','counsel','foodbank']);},m:300,xp:6},
-  {id:'u5',g:'guide',after:'u4',n:'소모임 열기',d:'건축 › 소모임에서 운동·취미·음악 모임 하나를 시작해요',need:function(){return !isLocked('pingpong');},ok:function(){return hasCat('club');},m:300,xp:6}
+  {id:'u5',g:'guide',after:'u4',n:'소모임 열기',d:'건축 › 소모임에서 운동·취미·음악 모임 하나를 시작해요',need:function(){return !isLocked('pingpong');},ok:function(){return hasCat('club');},m:300,xp:6},
+  // 스테이지 안내 (그 스테이지에서만): 차량·배를 마련해 운전자 세우기 · 이웃 부지 사기
+  {id:'s1',g:'guide',after:'f6',n:'승합차 운행',d:'직원 화면 › 차량에서 승합차를 마련하고 봉사자나 부교역자를 운전자로 세워요',need:function(){return stg().trans==='road'&&featOk('hire');},ok:function(){return vehs().some(function(v){return !VEH[v.k].free&&vehRun(v);});},m:600,xp:10},
+  {id:'s2',g:'guide',after:'f6',n:'배 늘리기',d:'직원 화면 › 차량에서 배를 마련하고 운전자를 세워 나루에서 기다리는 사람을 더 태워 와요',need:function(){return stg().trans==='water'&&featOk('hire');},ok:function(){return vehs().some(function(v){return !VEH[v.k].free&&vehRun(v);});},m:600,xp:10},
+  {id:'s3',g:'guide',after:'f6',n:'이웃 부지 사기',d:'이웃 건물을 누르고 부지 매입으로 땅을 넓혀요 (주차장 자리를 먼저 마련해 보세요)',need:function(){return !!stg().city;},ok:function(){return (S.landN||0)>=1;},m:500,xp:10}
 ];
 // 스테이지 목표 = 마지막 퀘스트 (스테이지 고르기 카드에도 적는다)
 var STAGE_GOAL='g5';
@@ -89,7 +93,7 @@ function questDone(q){
   if(q.g==='goal'&&typeof celebrate==='function'){
     var lines=['후원금 +'+fmt(q.m),'사역 경험 +'+q.xp];if(q.rep)lines.push('신뢰 +'+q.rep);
     celebrate(q,lines,q.final?'스테이지 목표 달성!':'퀘스트 완료');
-    if(q.final){S.stageClear=S.stageClear||{};S.stageClear[S.stage||'rural']=S.week;}
+    if(q.final){S.stageClear=S.stageClear||{};S.stageClear[S.stage||'rural']=S.week;stageClearSave(S.stage||'rural');}
   }else{
     toast('퀘스트 완료 · '+q.n+' · +'+fmt(q.m)+' · 사역 경험 +'+q.xp+(nx&&nx.g==='first'?' · 다음: '+nx.n:''),2800);sfx('reward',.55,0);
   }
