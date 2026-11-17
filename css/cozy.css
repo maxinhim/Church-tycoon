@@ -412,3 +412,24 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .evc.lock .evi.ico{filter:grayscale(1) brightness(.85)}
 @media (max-height:480px){#scrTabs button.tabi{width:88px;height:34px}}
 #scrTabs{padding-top:7px;padding-bottom:5px;align-items:flex-end}
+
+/* ---------- 봉사자 › 제자 탭: 큰 카드 4열 ---------- */
+.disg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.dcard{position:relative;aspect-ratio:4/5;border-radius:16px;overflow:hidden;border:3px solid #d9a321;background:#efe4cc;box-shadow:0 3px 0 #d9a321,0 6px 12px rgba(0,0,0,.18)}
+.dcard.run{border-color:#7cc276;box-shadow:0 3px 0 #4f9a55}
+.dcard>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+.dis-b,.dis-run,.dis-ap{position:absolute;left:6px;right:6px;top:6px;z-index:2}
+.dis-b{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.dis-btn{padding:3px 0 2px;border-radius:10px;border:2px solid #5a4630;color:#fff;font:400 14px/1.1 var(--f-cozy,inherit);text-shadow:0 1px 0 rgba(0,0,0,.4);cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.dis-btn small{display:block;font:700 9.5px/1.2 sans-serif;opacity:.95}
+.dis-btn.tA{background:#c9627a}.dis-btn.tB{background:#4b7fc4}.dis-btn.tC{background:#3f9a7c}
+.dis-btn:disabled{background:#9a9486;box-shadow:none;cursor:not-allowed}
+.dis-run{padding:5px 7px;border-radius:10px;background:rgba(40,25,12,.85);color:#fff;text-align:center}.dis-run small{font-size:10.5px}
+.dis-run .bar{display:block;height:7px;margin-bottom:3px;border-radius:4px;background:#eadfc6;overflow:hidden}.dis-run .bar i{display:block;height:100%;background:#7cc276}
+.dis-ap{width:calc(100% - 12px)}
+.dc-n{position:absolute;left:0;right:0;bottom:0;padding:24px 6px 7px;background:linear-gradient(180deg,transparent,rgba(40,25,12,.9));color:#fff;font-family:var(--f-display);font-size:18px;text-align:center}
+.dc-lv{position:absolute;right:7px;bottom:34px;padding:0 7px;border-radius:9px;background:rgba(255,255,255,.93);color:#c0392b;font-size:12px;font-weight:700}
+@media (max-width:700px),(max-height:420px){.disg{gap:7px}.dis-btn{font-size:12px}.dc-n{font-size:15px}}
+/* 봉사자 화면의 옅은 글씨를 진하게 */
+#scr .sbody.leadscr .sbulk>span,#scr .sbody.leadscr .tinfo,#scr .sbody.leadscr .shint,#scr .sbody.leadscr .lead-h small,.bsc-e,.bsc-b,.tm-fx,.lb-s small,.lb-s dt{color:#3d3326}
+.bsc-e,.bsc-b{color:#4a3d2c}.lb-s dt{color:#6b5436}.tm-amp small,.lead-h small{color:#5a4a33}

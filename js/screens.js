@@ -10,14 +10,14 @@ var SCREENS={
   events:{title:'행사',tabs:[['events','행사'],['pastor','담임목사'],['assoc','부교역자'],['vol','봉사자']]},
   people:{title:'성도',tabs:[['all','전체'],['vol','봉사자']]},
   status:{title:'현황',tabs:[['ind','지표'],['quest','퀘스트'],['fin','재정']]},
-  officers:{title:'봉사자',tabs:[['off','직분자'],['B','리더'],['C','섬김이']]},
+  officers:{title:'봉사자',tabs:[['dis','제자'],['off','직분자'],['B','리더'],['C','섬김이']]},
   hire:{title:'청빙',tabs:[['all','전체'],['assoc','부교역자'],['C','청빙직원']]},
   roster:{title:'직원',tabs:[['assoc','부교역자'],['staff','직원'],['hire','청빙']]},
   mgr:{title:'관리자 배치',tabs:[['pool','인력']]},
   sup:{title:'보조 인력',tabs:[['pool','직분자']]}
 };
 // 교회 Level이 되어야 열리는 탭 (balance.js FEAT_LV): 잠긴 탭은 자물쇠로 보이고 누르면 몇 Lv에 열리는지 알려 준다
-var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:vol':'vol'};
+var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:dis':'vol','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:vol':'vol'};
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
 /* Gemini 그림(assets/ui, tools/ui_buttons.py): 탭 이름 → 그림 이름. 선택됨·잠김은 CSS 필터 */
@@ -92,7 +92,7 @@ function renderScreen(){
   }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
   }else if(UI.scr==='status'){renderStatusScreen(body);
   }else if(UI.scr==='people'){body.className='sbody';body.innerHTML=peopleStatus()+bulkBar()+peopleHtml();}
-  else if(UI.scr==='officers'){body.className='sbody leadscr';body.innerHTML=evIcons()+bulkBar()+(UI.scrTab==='B'&&leaders().length?delegHtml():'')+offHtml();}
+  else if(UI.scr==='officers'){body.className='sbody leadscr';body.innerHTML=UI.scrTab==='dis'?disHtml():bulkBar()+(UI.scrTab==='B'&&leaders().length?delegHtml():'')+offHtml();}
   else if(UI.scr==='mgr'){body.className='sbody';body.innerHTML=mgrHtml();}
   else if(UI.scr==='sup'){body.className='sbody';body.innerHTML=supHtml();}
   else if(UI.scr==='events'){
@@ -233,20 +233,9 @@ function ppOrder(a,b){
 function scrPeople(){
   var all=(S.people||[]).slice(),tab=UI.scrTab;
   // 봉사자 화면: 갈래별 봉사자·직원. 제자반을 갓 마쳐 아직 갈래가 없는 봉사자는 첫 탭에서 갈래를 고른다
-  if(UI.scr==='officers')return all.filter(function(p){return !p.ext&&ppTrack(p)===(tab==='off'?'A':tab)||(tab==='off'&&p.node==='disciple');}).sort(ppOrder);
+  if(UI.scr==='officers')return all.filter(function(p){return !p.ext&&(tab==='dis'?p.node==='disciple':ppTrack(p)===(tab==='off'?'A':tab));}).sort(ppOrder);
   // 성도 화면: 전체(등록 성도 모두) · 봉사자(제자반을 마친 봉사자와 직원). 고민 단추를 켜면 고민이 있는 사람만
   return all.filter(function(p){return (tab==='vol'?ppClass(p)!=='saint':true)&&(!UI.careOnly||!!careOf(p));}).sort(ppOrder);
-}
-// 직분자·교역 탭 위: 그 탭에 맞는 행사를 아이콘으로 바로 열고 보상을 받는다 (행사 화면과 같은 행사)
-function evIcons(){
-  if(UI.scr!=='officers')return '';
-  var tab=UI.scrTab,vg=tab==='off'?'A':tab==='B'||tab==='C'?tab:'';if(!vg)return '';
-  var ids=Object.keys(EVENTS).filter(function(id){var e=EVENTS[id];return e.grp==='vol'&&e.vg.indexOf(vg)>=0;});
-  return '<div class="sbulk evq"><span>'+VOL_NAME[vg]+' 행사</span>'+ids.map(function(id){
-    var e=EVENTS[id],ln=evLine(id),why=evBlock(id),rdy=evReady(id),run=evRunning(id),ok=rdy||(!why&&!run);
-    return '<span class="evq-w"><button class="evq-b'+(ok?' on':'')+(rdy?' rdy':'')+'" data-act="evquick" data-v="'+id+'" data-ev="'+id+'" aria-label="'+e.name+' · '+ln.t+' — 누르면 바로 시행" title="'+e.name+' · '+ln.t+(why&&!rdy&&!run?' ('+why+')':'')+'">'+
-      '<span class="evr">'+ringSvg(evProg(id))+'<span class="evi'+icoCls('ev',id)+'" style="--c:'+e.col+'">'+icoHtml('ev',id,e.ic)+'</span></span><b>'+e.name+'</b><small>'+ln.t+'</small></button>'+
-      '<button class="evh" data-act="evopen" data-v="'+id+'" aria-label="'+e.name+' 정보·효과 보기" title="정보·효과">?</button></span>';}).join('')+'</div>';
 }
 // 행사 › 담임목사 탭 맨 위: 담임목사의 레벨·학위와 효과
 function pastorHead(){
@@ -291,6 +280,24 @@ function peopleHtml(){
   h+='<div class="evg">'+L.slice(0,n).map(ppCardHtml).join('')+'</div>';
   if(L.length>n)h+='<div class="smore"><button class="btn" data-act="ppmore">더 보기 · '+(L.length-n)+'명</button></div>';
   return h;
+}
+/* ---------- 봉사자 › 제자 탭: 제자반을 마친 성도를 큰 카드(4열)로 — 카드 위 직분·리더·섬김 단추로 바로 갈래를 정한다 ----------
+   단추를 누르면 그 갈래의 첫 단계 교육(DIS_FIRST: 헌신성도·소그룹 리더·섬김이)이 시작되고, 교육이 끝나면 카드의 '임명'을 눌러 마친다 */
+var DIS_FIRST={A:'devoted',B:'sgl',C:'server'},DIS_LBL={A:'직분',B:'리더',C:'섬김'};
+function disCardHtml(p){
+  var bar='';
+  if(p.tr&&p.tr.ready)bar='<button class="btn pri claim dis-ap" data-act="ppappoint" data-v="'+p.id+'">'+nodeDone(p.tr.to,p.g)+'</button>';
+  else if(p.tr)bar='<div class="dis-run" data-pp="'+p.id+'"><span class="bar"><i style="width:'+Math.round(ppProg(p)*100)+'%"></i></span><small>'+nodeTr(p.tr.to,p.g)+' · '+ppLeftText(p)+' 남음</small></div>';
+  else bar='<div class="dis-b">'+['A','B','C'].map(function(t){var to=DIS_FIRST[t],w=ppTrainWhy(p,to),st=PP_TREE[to];
+    return '<button class="dis-btn t'+t+'" data-act="disgo" data-v="'+p.id+':'+t+'"'+(w?' disabled':'')+' title="'+(w||nodeTr(to,p.g)+' · '+fmt(st.cost))+'" aria-label="'+DIS_LBL[t]+' 갈래 — '+(w||nodeTr(to,p.g))+'">'+DIS_LBL[t]+'<small>'+(w?(/Lv/.test(w)?w.replace(/.*?(Lv \d+).*/,'$1~'):'—'):fmtS(st.cost))+'</small></button>';}).join('')+'</div>';
+  return '<div class="dcard'+(p.tr?' run':'')+'" aria-label="'+p.n+' 제자반 수료, 호감 Lv '+p.lv+'">'+bar+
+    '<img alt="" src="'+personFace(p)+'"><span class="dc-lv">♥'+p.lv+'</span><span class="dc-n">'+p.n+'</span></div>';
+}
+function disHtml(){
+  var L=scrPeople();
+  var h='<p class="shint"><b>제자반을 마친 성도</b>예요. 카드 위의 <b>직분·리더·섬김</b> 단추로 갈래를 정하면 첫 단계 교육이 시작돼요 (헌신성도 · 소그룹 리더 · 섬김이).</p>';
+  if(!L.length)return h+'<p class="sempty">제자반을 마친 성도가 아직 없어요. 성도 화면에서 심방·선물로 호감을 쌓아 제자반까지 길러 주세요.</p>';
+  return h+'<div class="disg">'+L.map(disCardHtml).join('')+'</div>';
 }
 /* ---------- 봉사자 화면 4:6 (직분자 · 리더 · 섬김이 탭 모두) ----------
    왼쪽 40%: 고른 사람의 큰 카드(레벨·능력치·지금 맡은 곳) + 그 갈래 사람 카드. 오른쪽 60%: 배치 대상
@@ -415,7 +422,8 @@ function ofPlace(pid){
 }
 function scrOffClick(a,v){
   if(UI.scr!=='officers')return false;
-  if(a==='ofslot'){var s=String(v).split(':');UI.ofPick={t:s[0],v:s[0]==='sup'?+s[1]:s[1]};sfx('click',.4);}
+  if(a==='disgo'){var q=String(v).split(':'),pp=ppById(+q[0]),w=ppTrain(+q[0],DIS_FIRST[q[1]]);if(w){scrToast(w,2000);sfx('error',.4);}else{sfx('coins',.55,0);scrToast(pp.n+' 성도의 '+nodeTr(pp.tr.to,pp.g)+'을(를) 시작했어요',2200);}}
+  else if(a==='ofslot'){var s=String(v).split(':');UI.ofPick={t:s[0],v:s[0]==='sup'?+s[1]:s[1]};sfx('click',.4);}
   else if(a==='tmslot'){UI.ofPick={t:'tm',v:v};sfx('click',.4);}
   else if(a==='ofcancel'){UI.ofPick=null;}
   else if(a==='ofpick'){var w=ofPlace(+v);if(w){scrToast(w,2200);sfx('error',.4);}else{sfx('join',.5,0);UI.leadSel=+v;UI.ofPick=null;}}

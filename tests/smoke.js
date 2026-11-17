@@ -759,13 +759,21 @@ async function ministryChecks(browser, url) {
     return o; });
   await page.click('#scr [data-act="scrclose"]'); await page.click('#fab [data-fab="officers"]');
   const offScr = await page.evaluate(() => { const o = {};
-    o.empty = /아직 이 갈래에 들어선 성도가 없어요/.test(document.getElementById('scrBody').textContent);
-    const p = S.people[0]; p.node = 'deacon'; p.lv = 45; recalc(); renderScreen(); o.list = document.querySelectorAll('#scrBody .lead-l .lcard').length === 1 && !!document.querySelector('#scrBody .lbig') && /집사/.test(document.querySelector('#scrBody .lbig').textContent) && /보조 버프/.test(document.querySelector('#scrBody .lbig').textContent);
-    { const ua = S.unlockAll, mm = S.money, tv = S.tv || 0, xp0 = p.xp + p.lv * 1e3; S.unlockAll = true; S.money = 99999; S.ev.offsem = { cd: 0 }; renderScreen();
-      const ic = document.querySelector('#scrBody [data-act="evquick"][data-v="offsem"]'); o.offIc = !!ic && !!document.querySelector('#scrBody [data-v="offret"]') && !document.querySelector('#scrBody [data-v="minedu"]');
-      ic.click(); o.offRun = evRunning('offsem') && S.money === 99999 - (EVENTS.offsem.cost + 30 * 1);
-      S.ev.offsem.end = evNow() - 1; evTick(); o.offReady = evReady('offsem'); document.querySelector('#scrBody [data-act="evquick"][data-v="offsem"]').click();
-      o.offDone = !evReady('offsem') && (S.tv || 0) > tv && S.ev.offsem.cd === OFF_EV.offsem.cd && p.xp + p.lv * 1e3 > xp0; S.unlockAll = ua; S.money = mm; }
+    o.empty = /제자반을 마친 성도가 아직 없어요/.test(document.getElementById('scrBody').textContent);
+    const p = S.people[0]; p.node = 'deacon'; p.lv = 45; recalc(); openScreen('officers', 'off'); o.list = document.querySelectorAll('#scrBody .lead-l .lcard').length === 1 && !!document.querySelector('#scrBody .lbig') && /집사/.test(document.querySelector('#scrBody .lbig').textContent) && /보조 버프/.test(document.querySelector('#scrBody .lbig').textContent);
+    // 봉사자 화면에는 행사 줄이 없다 (행사는 행사 화면에서만)
+    o.noEv = ['dis', 'off', 'B', 'C'].every(t => { openScreen('officers', t); return !document.querySelector('#scrBody [data-act="evquick"], #scrBody .evq, #scrBody .evq-b'); });
+    // 제자 탭: 제자반을 마친 성도가 큰 카드(4열)로, 카드 위 직분·리더·섬김 단추로 갈래 교육을 바로 시작
+    { const ua = S.unlockAll, mm = S.money; S.unlockAll = true; S.money = 99999; const ds = S.people.slice(3, 12); ds.forEach(q => { q.node = 'disciple'; q.lv = 30; q.tr = null; }); recalc(); openScreen('officers', 'dis');
+      const cs = [...document.querySelectorAll('#scrBody .dcard')], g = getComputedStyle(document.querySelector('#scrBody .disg'));
+      o.disGrid = cs.length === ds.length && cs.length >= 4 && g.gridTemplateColumns.split(' ').length === 4 && cs.every(c => c.querySelectorAll('.dis-btn').length === 3 && !!c.querySelector('img') && /^[가-힣]+$/.test(c.querySelector('.dc-n').textContent)) && [...cs[0].querySelectorAll('.dis-btn')].map(b => b.childNodes[0].textContent).join() === '직분,리더,섬김' && ds.every(q => ppClass(q) === 'volunteer');
+      const q0 = ds[0], id0 = q0.id; const cardOf = id => [...document.querySelectorAll('#scrBody .dcard')].find(c => c.querySelector('.dis-btn') && c.querySelector('.dis-btn').dataset.v.startsWith(id + ':'));
+      const m0 = S.money; cardOf(id0).querySelector('.dis-btn.tC').click();
+      o.disGo = !!q0.tr && q0.tr.to === 'server' && S.money >= m0 - PP_TREE.server.cost && S.money <= m0 - PP_TREE.server.cost + 1000 && !!document.querySelector('#scrBody .dcard.run .dis-run');
+      q0.tr.end = evNow() - .01; peopleTick(); renderScreen(); const ap = document.querySelector('#scrBody .dcard .dis-ap'); o.disApp = !!ap; ap.click();
+      o.disDone = q0.node === 'server' && ppTrack(q0) === 'C' && !cardOf(id0) && document.querySelectorAll('#scrBody .dcard').length === ds.length - 1;
+      openScreen('officers', 'C'); o.disMoved = [...document.querySelectorAll('#scrBody .lead-l .lcard')].some(c => c.textContent.includes(q0.n));
+      ds.forEach(q => { q.node = 'new'; q.tr = null; }); S.unlockAll = ua; S.money = mm; recalc(); }
     S.assoc.push({ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }); recalc(); openScreen('roster', 'assoc');
     const ac = document.querySelector('#scrBody .rcard'); o.assoc = !!ac && /김시온/.test(ac.textContent); ac.click();
     o.asDlg = !!document.querySelector('.rd [data-act="rosdismiss"]') && !!document.querySelector('.rd [data-act="roscheer"]');
@@ -913,7 +921,8 @@ async function ministryChecks(browser, url) {
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
-  check(offScr.offIc && offScr.offRun && offScr.offReady && offScr.offDone, '봉사자 화면 직분자 탭: 직분자 행사 아이콘으로 바로 열고 보상을 받으며, 교역자 행사는 나오지 않음');
+  check(offScr.noEv, '봉사자 화면: 모든 탭에서 행사 아이콘 줄이 없음 (행사는 행사 화면에서만)');
+  check(offScr.disGrid && offScr.disGo && offScr.disApp && offScr.disDone && offScr.disMoved, '봉사자 › 제자 탭(맨 앞): 제자반 수료자를 큰 카드 4열로 보이고, 카드 위 직분·리더·섬김 단추로 갈래 교육을 바로 시작·임명하면 그 갈래 탭으로 옮겨 감')
   check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss, '봉사자 화면: 직분자·리더·섬김이 목록 · 부교역자는 직원 화면에서 카드·격려·사임');
   check(offScr.cands && offScr.hireTab && offScr.hireDlg && offScr.hired && offScr.hireReroll && offScr.hiredTab && offScr.fired, '청빙 화면: 직원 화면의 청빙 탭이 큰 카드 화면으로 바뀌고, 청빙한 봉사자는 성도 명단과 그 갈래 탭에 들어감(주급·내보내기)');
   check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: ? 버튼을 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
@@ -1402,7 +1411,7 @@ async function introChecks(browser, url) {
     const p = S.people[0]; document.querySelector('#scrBody [data-act="ppopen"]').click(); const dl = document.getElementById('scrDlg'); o.gift = dl.querySelector('[data-act="ppgift"]').disabled && !dl.querySelector('[data-act="ppvisit"]').disabled && /Lv 2/.test(ppCareWhy(p, 'gift'));
     p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
     o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
-    S.lvl = 4; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'off' && !document.querySelector('#scrTabs [data-v="B"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
+    S.lvl = 4; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'dis' && [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v).join() === 'dis,off,B,C' && !document.querySelector('#scrTabs [data-v="B"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
   if (!(a.lay && a.logo && a.btn && a.anim && a.wait && paused && pressed && fading && Object.values(st).every(Boolean) && locked && game.in && runs)) console.log('INTRO', JSON.stringify({ a, paused, pressed, fading, st, locked, game, runs }));
   check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·시작 단추(아래 가운데), 로고·단추 그림은 투명 바탕에 마젠타가 남지 않음');
   check(a.anim, '인트로: 로고는 3초, 단추는 1.5초 주기로 오가며 끝없이 움직임');
