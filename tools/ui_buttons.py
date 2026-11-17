@@ -19,7 +19,7 @@ SPEC = {
   4: (2, 3, ['alert', 'alert_glow', 'quest', 'level', 'care_sq_hot', 'care_sq'], 140),
   5: (1, 4, ['badge0', 'badge1', 'badge2', 'badge3'], 96),
   6: (2, 3, ['chip_money', 'chip_money_hi', 'chip_debt', 'chip_mem', 'chip_mem_hi', 'chip_mem3'], 96),
-  7: (5, 3, ['tab_event', 'tab_pastor_on', 'tab_assoc', 'tab_vol', 'tab_all', 'tab_ind', 'tab_quest', 'tab_fin_lock', 'tab_off', 'tab_lead', 'tab_serv', 'tab_hirestaff', 'tab_staff', 'tab_hire', 'tab_pool'], 256),
+  7: (5, 3, ['tab_event', 'tab_pastor', 'tab_assoc', 'tab_vol', 'tab_all', 'tab_ind', 'tab_quest', 'tab_fin', 'tab_off', 'tab_lead', 'tab_serv', 'tab_hirestaff', 'tab_staff', 'tab_hire', 'tab_pool'], 256),
   8: (3, 5, ['ev_' + k for k in 'smallgroup bible creed training communion street bazaar service retreat revival easter vbs thanks christmas'.split()] + [None], 128),
   9: (3, 5, ['ev_' + k for k in 'pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel'.split()], 128),
   10: (3, 4, ['ev_' + k for k in 'offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast'.split()], 128),
@@ -90,7 +90,7 @@ def main():
                 al = np.array(cell)[..., 3] > 128
                 cs, rs = al.sum(0), al.sum(1)
                 xs = np.where(cs > 0.3 * cs.max())[0]; ys = np.where(rs > 0.3 * rs.max())[0]
-                if len(xs) and len(ys):
+                if len(xs) and len(ys) and not nm.startswith('tab_'):
                     cell = cell.crop((xs[0], ys[0], xs[-1] + 1, ys[-1] + 1))
                 # 원형 아이콘인데 가로가 더 길면 이웃 테두리가 붙은 것: 높이만큼의 창을 불투명 화소가 가장 많은 자리에 둔다
                 if nm.split('_')[0] in ('ev', 'tm', 'hud') and cell.width > 1.04 * cell.height:

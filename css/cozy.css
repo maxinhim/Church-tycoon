@@ -405,10 +405,10 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 #scrTabs button.tabi{font-size:0!important;color:transparent;width:104px;height:40px;padding:0;border:0;border-radius:0;box-shadow:none;background:var(--tbi) center/contain no-repeat;position:relative;transform:none}
 #scrTabs button.tabi i{display:none}
 #scrTabs button.tabi small{position:absolute;right:4px;bottom:1px;font-size:9px!important;color:#fff;background:#8a7a5c;padding:0 4px;border-radius:6px;line-height:13px}
-#scrTabs button.tabi.on{filter:sepia(.85) saturate(2.4) brightness(1.2) drop-shadow(0 0 4px #ffe28a);transform:translateY(-2px)}
-#scrTabs button[aria-selected="true"].tabi[style*="pastor_on"]{filter:drop-shadow(0 0 4px #ffe28a)}
+#scrTabs button.tabi.on{filter:sepia(.85) saturate(2.4) brightness(1.2) drop-shadow(0 0 4px #ffe28a);margin-bottom:2px}
 #scrTabs button.tabi.lock{filter:grayscale(1) brightness(.9)}
 .evi.ico{background:none!important;border:0;box-shadow:none;width:86%;height:86%}
 .evi.ico .icoi{width:100%;height:100%;object-fit:contain;display:block}
 .evc.lock .evi.ico{filter:grayscale(1) brightness(.85)}
 @media (max-height:480px){#scrTabs button.tabi{width:88px;height:34px}}
+#scrTabs{padding-top:7px;padding-bottom:5px;align-items:flex-end}

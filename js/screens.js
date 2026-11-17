@@ -20,9 +20,9 @@ var SCREENS={
 var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','officers:off':'vol','officers:B':'vol','officers:C':'vol','people:vol':'vol'};
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
-/* Gemini 그림(assets/ui, tools/ui_buttons.py): 탭 이름 → 그림 이름. 담임목사는 '선택됨' 그림뿐이라 선택됐을 때만, 재정은 '잠김' 그림뿐이라 글자 탭으로 둔다 */
-var TAB_IMG={'행사':'event','담임목사':'pastor_on','부교역자':'assoc','봉사자':'vol','전체':'all','지표':'ind','퀘스트':'quest','직분자':'off','리더':'lead','섬김이':'serv','청빙직원':'hirestaff','직원':'staff','청빙':'hire','인력':'pool'};
-function tabImg(label,on){var f=TAB_IMG[label];if(!f||(label==='담임목사'&&!on))return '';return ' tabi" style="--tbi:url(../assets/ui/tab_'+f+'.png)';}
+/* Gemini 그림(assets/ui, tools/ui_buttons.py): 탭 이름 → 그림 이름. 선택됨·잠김은 CSS 필터 */
+var TAB_IMG={'행사':'event','담임목사':'pastor','부교역자':'assoc','봉사자':'vol','전체':'all','지표':'ind','재정':'fin','퀘스트':'quest','직분자':'off','리더':'lead','섬김이':'serv','청빙직원':'hirestaff','직원':'staff','청빙':'hire','인력':'pool'};
+function tabImg(label,on){var f=TAB_IMG[label];if(!f)return '';return ' tabi" style="--tbi:url(../assets/ui/tab_'+f+'.png)';}
 /* 행사·사역팀 아이콘 그림(assets/ui/ev_*·tm_*.png). 목록에 없는 것은 이모지로 */
 var ICO_EV=' smallgroup bible creed training communion street bazaar service retreat revival easter vbs thanks christmas pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast ',ICO_TM=' evang praise care newcomer edu prayer admin media mission ';
 function icoHtml(kind,id,emoji){var L=kind==='ev'?ICO_EV:ICO_TM;return L.indexOf(' '+id+' ')>=0?'<img class="icoi" alt="" src="assets/ui/'+kind+'_'+id+'.png">':emoji;}
