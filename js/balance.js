@@ -67,7 +67,7 @@ var WEEKS_PER_MONTH=5,YEAR_WEEKS=60;
        섬김: 섬김이 → 사역팀장 → 사역부장 → 사역간사       (Lv 70)
      단계마다 lv(필요 호감 레벨)·cost(값)·dur(교육 주)·give(매주 헌금 더)·sp(영성 자리)·cap(목양 수용력)·upk(운영비 −)·dec(노후 −)
    · 헌금: 성도들의 평균 레벨마다 +PP_GIVE_LV. 영성 자리 = Σ((레벨−1) × PP_SPIRIT_LV + 단계 sp) × PP_SPIRIT_K
-   · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자도 격려(ASSOC_CHEER)로 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
+   · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자는 행사로 경험치를 쌓아 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
 var PP_LV_MAX=99,PP_XP0=10,PP_XP_K=.3,PP_WEEK_XP=1.5,PP_WEEK_XP_LOW=.6;
 var PP_VISIT={cost:40,xp:15,cd:2},PP_GIFT={cost:120,xp:30,cd:4};
 var PP_TREE={
@@ -109,7 +109,7 @@ var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
 var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
 /* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
 var ASSOC_PER=10;
-var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.04,ASSOC_LV_MAX=20,ASSOC_CHEER={cost:100,xp:8,cd:2};
+var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.04,ASSOC_LV_MAX=20;
 var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
 var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만
 var NEED_OK=88;          // 욕구가 이만큼 차면 됐다고 본다 (높을수록 건물을 더 많이 들른다)

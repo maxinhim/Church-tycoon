@@ -172,11 +172,6 @@ function ppCareAll(list,kind){
   list.slice().sort(byLow).forEach(function(p){if(!ppCareOk(p,kind))return;if(S.money<c.cost){o.poor++;return;}var r=ppCare(p.id,kind);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
   return o;
 }
-function asCheerAll(){
-  var o={done:0,poor:0,up:0};
-  S.assoc.map(function(a,i){return {a:a,i:i,lv:a.lv||1,id:i};}).sort(byLow).forEach(function(x){var w=asCheerWhy(x.a);if(w&&w!=='자금이 부족해요')return;if(S.money<ASSOC_CHEER.cost){o.poor++;return;}var r=asCheer(x.i);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
-  return o;
-}
 // 일괄 성장: 갈래가 하나뿐인 성도의 다음 단계 교육 시작(자금이 되는 만큼, 호감 레벨 낮은 사람부터), 교육이 끝난 성도 임명
 function ppSoleNext(p){var n=ppNexts(p);return n.length===1?n[0]:null;}
 function ppTrainOk(p,to){var w=ppTrainWhy(p,to);return !w||w==='자금이 부족해요';}
@@ -272,14 +267,3 @@ function asGain(a,xp){
 }
 // 효과에 쓰는 실력: 별 × (교회에서 기른 사람이면 ASSOC_HOME_K) × 레벨 보정
 function asSkill(a){return a.skill*(a.home?ASSOC_HOME_K:1)*(1+ASSOC_LV_K*((a.lv||1)-1))*stMul(a);}
-function asCheerWhy(a){
-  if((a.lv||1)>=ASSOC_LV_MAX)return '이미 최고 레벨이에요';
-  if(S.week-(a.cw==null?-99:a.cw)<ASSOC_CHEER.cd)return (ASSOC_CHEER.cd-(S.week-a.cw))+'주 뒤에 다시 할 수 있어요';
-  if(S.money<ASSOC_CHEER.cost)return '자금이 부족해요';
-  return '';
-}
-function asCheer(i){
-  var a=S.assoc[i];if(!a)return '사역자를 찾을 수 없어요';
-  var why=asCheerWhy(a);if(why)return why;
-  S.money-=ASSOC_CHEER.cost;a.cw=S.week;var up=asGain(a,ASSOC_CHEER.xp);trustAct(1);recalc();save();return up?'+'+a.lv:'';
-}

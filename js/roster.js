@@ -87,7 +87,8 @@ function rosDetailHtml(e){
     '<button class="btn pri" data-act="rospick"'+(e.role?'':' disabled')+'>📍 근무지 '+(at?'변경':'배치')+'</button>'+
     '<button class="btn" data-act="rostrain"'+(tw?' disabled':'')+' title="'+tw+'">📖 직무 교육<small>'+(s.tr>=ST_TRAIN.max?'최대':fmtS(rosCost(s.tr))+' · 경험 '+ST_TRAIN.xp)+'</small></button>'+
     '<button class="btn" data-act="roscheer"'+(cw?' disabled':'')+' title="'+cw+'">🎁 특별 격려<small>'+fmtS(ST_CHEER.cost)+' · 사기 +'+ST_CHEER.mo+'</small></button>'+
-    '<button class="btn" data-act="rospromo"'+(pw?' disabled':'')+' title="'+pw+'">🎓 직급 승급<small>'+(nx?e.rank+' → '+nx+' · '+fmtS(ST_RANK.cost[r]):'—')+'</small></button></div>';
+    '<button class="btn" data-act="rospromo"'+(pw?' disabled':'')+' title="'+pw+'">🎓 직급 승급<small>'+(nx?e.rank+' → '+nx+' · '+fmtS(ST_RANK.cost[r]):'—')+'</small></button></div>'+
+    (e.as?'<button class="btn rd-x" data-act="rosdismiss">사임시키기</button>':'');
   var why=!e.role?'건물 관리자는 부교역자와 사역간사·청빙직원만 맡을 수 있어요':(tw&&cw&&pw?'':'');
   if(why)h+='<p class="swhy">'+why+'</p>';
   else if(UI.rosPick){
@@ -129,6 +130,11 @@ function scrRosterClick(a,v){
   if(a==='roscheer'){
     why=rosWhyCheer(e);if(why){scrToast(why,2400);sfx('error',.4);return true;}
     S.money-=ST_CHEER.cost;e.st.mo=Math.min(100,e.st.mo+ST_CHEER.mo);e.st.xp+=ST_CHEER.xp;sfx('coins',.5,0);rosDone(e.name+'님의 사기가 올랐어요 · '+Math.round(e.st.mo));return true;
+  }
+  if(a==='rosdismiss'){
+    var ai=(S.assoc||[]).findIndex(function(x){return asUid(x)===+e.key.slice(1);});
+    if(ai<0||!dismissAssoc(ai)){scrToast('사임할 수 없어요',2000);sfx('error',.4);return true;}
+    UI.rosSel=null;rosDone('부교역자가 사임했어요');return true;
   }
   if(a==='rospromo'){
     why=rosWhyPromote(e);if(why){scrToast(why,2400);sfx('error',.4);return true;}
