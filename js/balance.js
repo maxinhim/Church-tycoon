@@ -162,6 +162,7 @@ var LV_TIER=[];for(var lvT=0;lvT<40;lvT++)LV_TIER.push(lvT+1);
    BLD_LV 건물 · EV_LV 행사 · TEAM_LV 사역팀 · PP_CLV 성도의 성장 단계 · FEAT_LV 그 밖의 기능
    관리자가 필요한 건물(매장·교제·예배)은 청빙(FEAT_LV.hire)이 열리는 Lv 2부터 */
 var BLD_LV={
+  purifier:2,
   shop:2,coffeecart:2,cell:2,pray:2,nursery:2,bench_stone:2,bench_iron:2,lot:2,
   room:3,bible:3,kinder:3,bookstore:3,pantry:3,pingpong:3,fitness:3,boardgame:3,guitar:3,bench_back:3,bench_round:3,wc2:3,grill:3,library:3,
   kids:4,cafe:4,hall:4,praise:4,badminton:4,jokgu:4,gateball:4,calli:4,art:4,gazebo:4,counsel:4,bench_flower:4,lectern:4,
@@ -203,6 +204,7 @@ var BATCH_ROT=.6;       // 일괄 가동 시간 = dur × STAY × TEMPO_ROT × BA
 var BATCH_PATIENCE=60;   // 일괄 가동 건물 안에서 정원이 차기를 기다리는 한계(초). 한 주(48초)보다 길어 늦어도 주일 예배는 드린다
 var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 정원 × BATCH_CAP0 × 레벨 배율 (작게 모여 자주 가동, 레벨이 오를수록 크게)
 var BATCH_SUN_WAIT=3;    // 주일에는 (금·토에 가동하지 않았으면) 모인 사람이 이만큼 기다리면 다시 가동한다
+var FLOOR_BEAUTY_K=0.12; // 바닥 타일 분위기(한 칸 +0.1~0.3로 적음)가 실제 분위기·새로 꾸민 효과에 치는 비율 (칸이 아주 많아서)
 var FLOOR_DEMO_K=0.3;    // 바닥 철거비: 깔린 바닥을 걷어내거나 다른 바닥으로 바꿀 때 그 바닥 값의 이만큼이 더 든다 (floors.js floorSwapCost)
 var NOLV_ROT=0.5;        // 레벨이 없는 요소(벤치·화장실·그릴 등, buildings.js NOLV)의 회전 시간 배율: 짧을수록 빨리 돈다
 var SINGLE_ROT=1;        // 한 명씩 건물(매장·편의) Lv 1 회전 시간 배율
@@ -217,7 +219,8 @@ var TIER2_K=3.2,TIER2_COST_K=.9,TIER2_INV_LV=10,TIER1_MAX=4,TIER1_MAX_OPEN=6;
 // 같은 기능의 [티어 1, 티어 2]
 var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
 // 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)
-var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop'];
+// 쉼터의 벤치는 세 가지(벤치·등받이 벤치·꽃 벤치)만 남기고 돌·철제 벤치와 둥근 돌 의자는 줄였다 (지어 둔 것은 그대로)
+var RETIRED=['bakery','market','vending','flowercart','picnic','parasol','swing','info','nurse','busstop','bench_stone','bench_iron','bench_round'];
 
 var VIS_LIFE=[150,70];     // 방문자가 머무는 시간(초): 최소, 더해지는 폭. 걸음이 느려진 만큼 길게
 var VIS_IDLE_LEAVE=.4;    // 들를 곳이 없을 때 바로 돌아가는 확률 (낮을수록 더 둘러보고 더 들른다)

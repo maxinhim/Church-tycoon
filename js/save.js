@@ -1,6 +1,6 @@
 'use strict';
 /* ---------- 저장 ---------- */
-function save(){try{localStorage.setItem(stageKey(S&&S.stage),JSON.stringify(S));}catch(e){}}   // 스테이지마다 따로 저장 (stages.js stageKey)
+function save(){try{localStorage.setItem(stageKey(S&&S.stage,S&&S.test),JSON.stringify(S));}catch(e){}}   // 스테이지마다 따로 저장 (stages.js stageKey)
 function load(key){
   try{
     var raw=localStorage.getItem(key||SAVE_KEY);

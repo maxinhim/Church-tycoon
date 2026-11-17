@@ -3,6 +3,7 @@
    땅 칸에 칠하는 바닥(보도블록·벽돌·자갈·나무·꽃잔디). 걸어 다닐 수 있고 분위기 점수를 조금 올린다.
    S.floor = {"x,y": 정의 id} */
 function isFloorDef(id){return !!D[id]&&D[id].kind==='floor';}
+function floorBeauty(id){return D[id]&&D[id].kind==='floor'?(D[id].beauty||0)*FLOOR_BEAUTY_K:0;}   // 바닥 한 칸이 실제로 치는 분위기
 /* 바닥을 칠할 곳: 땅 칸(S.floor) 또는 데크 조각(p.f, pid로 고른다) */
 function floorSlot(x,y,pid){
   if(pid){var p=pieceById(pid);if(!p||!isDeckPiece(p))return null;
@@ -35,7 +36,7 @@ function floorDemo(prev){return prev&&D[prev]?Math.ceil(D[prev].cost*FLOOR_DEMO_
 function floorSwapCost(prev,id){return (id==='f_erase'?0:D[id].cost)+floorDemo(prev);}
 function paintFloor(x,y,id,pid){
   var why=floorWhy(x,y,id,pid);if(why)return why;
-  var sl=floorSlot(x,y,pid),prev=sl.get(),c=floorSwapCost(prev,id),fr=id==='f_erase'?0:(D[id].beauty||0);
+  var sl=floorSlot(x,y,pid),prev=sl.get(),c=floorSwapCost(prev,id),fr=id==='f_erase'?0:floorBeauty(id);
   S.money-=c;sl.set(id==='f_erase'?null:id);if(fr)addFresh(fr);
   if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:c,fr:fr});
   recalc();save();return '';
@@ -60,7 +61,7 @@ function paintFloorArea(g,id){
   var pl=floorPlan(g,id);
   if(!pl.cells.length)return pl.skip||'깔 수 있는 칸이 없어요';
   if(S.money<pl.cost)return '자금이 '+fmt(pl.cost-S.money)+' 모자라요';
-  var fr=id==='f_erase'?0:(D[id].beauty||0);
+  var fr=id==='f_erase'?0:floorBeauty(id);
   pl.cells.forEach(function(c){floorSlot(c.x,c.y,c.pid).set(id==='f_erase'?null:id);if(fr)addFresh(fr);});
   S.money-=pl.cost;
   if(UI.undo)UI.undo.push({area:pl.cells,id:id,c:pl.cost,fr:fr*pl.cells.length});
@@ -82,7 +83,7 @@ function floorSwap(x,y,id,pid){
   if(id==='f_erase'&&!prev)return '걷어낼 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
   var c=floorSwapCost(prev,id);if(c>0&&S.money<c)return '자금이 '+fmt(c-S.money)+' 모자라요';
-  S.money-=c;sl.set(id==='f_erase'?null:id);if(id!=='f_erase')addFresh(D[id].beauty);recalc();save();return '';
+  S.money-=c;sl.set(id==='f_erase'?null:id);if(id!=='f_erase')addFresh(floorBeauty(id));recalc();save();return '';
 }
 function floorLine(c,ax,ay,bx,by){var a=rotPt(ax,ay),b=rotPt(bx,by),p=P(a[0],a[1],.006),q=P(b[0],b[1],.006);c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);}
 var FLOOR_TEX={f_block:'t_block',f_gravel:'t_gravel',f_step:'t_step',f_clover:'t_clover'};   // 벽돌·나무 바닥은 코드로 그린다 (chFloorTile)

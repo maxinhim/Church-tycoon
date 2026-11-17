@@ -497,6 +497,19 @@ function drawBin(b){
   box(rrect(x-.14,y-.14,x+.14,y+.14),0,.4,'#3f7a52');
   box(rrect(x-.16,y-.16,x+.16,y+.16),.4,.46,'#2f5f40');
 }
+// 정수기: 흰 몸통 위에 파란 물통, 앞에 작은 꼭지
+function drawPurifier(b){
+  var x=b.x+.5,y=b.y+.5;
+  box(rrect(x-.17,y-.15,x+.17,y+.15),0,.62,'#eef3f6');
+  box(rrect(x-.12,y-.11,x+.12,y+.11),.62,.9,'#7fb8e0','#a9d4f2');
+  box(rrect(x-.05,y+.15,x+.05,y+.2),.34,.42,'#5f9fd0');
+  box(rrect(x-.13,y+.12,x+.13,y+.18),.1,.14,'#9aa6ae');
+}
+// 분리수거함: 파랑(종이)·노랑(캔)·초록(플라스틱) 세 칸
+function drawRecycle(b){
+  var x=b.x+.5,y=b.y+.5;
+  ['#4a78c7','#e3b341','#3f9a5a'].forEach(function(c,i){var x0=x-.3+i*.2;box(rrect(x0+.01,y-.13,x0+.19,y+.13),0,.42,c);box(rrect(x0,y-.14,x0+.2,y+.14),.42,.47,shade(c,.8));});
+}
 function drawBoard(b){
   box(axRect(b,.12,.46,.18,.54),0,1.0,'#6b4f3a');box(axRect(b,.82,.46,.88,.54),0,1.0,'#6b4f3a');
   box(axRect(b,.1,.47,.9,.53),.45,.95,'#8a6844');
@@ -571,7 +584,7 @@ function drawCourt(b){
 }
 
 var DECO_DRAW={court:drawCourt,market:drawMarket,topiary:drawTopiary,canal:drawCanal,birdbath:drawBirdbath,fence:drawFence,lamp2:drawLamp2,bollard:drawBollard,
-  stonelamp:drawStoneLamp,bin:drawBin,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol,spr:drawSprFallback};
+  stonelamp:drawStoneLamp,bin:drawBin,purifier:drawPurifier,recycle:drawRecycle,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol,spr:drawSprFallback};
 
 /* ---------- 울타리: 도로 | 주차 구역 | 교회 부지 ----------
    부지 둘레와 부지·주차 구역 경계는 흰 나무 울타리, 주차 구역 둘레와 도로 쪽은 짙은 철망 울타리.

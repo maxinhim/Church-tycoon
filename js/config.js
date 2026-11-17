@@ -12,6 +12,8 @@ var $=function(s){return document.querySelector(s);};
 var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
 // 일반 숫자 (점수·인원 등)
 var fmtN=function(n){return Math.round(n).toLocaleString('ko-KR');};
+// 분위기 점수: 소수점 한 자리까지
+var fmtB=function(v){return (Math.round(v*10)/10).toFixed(1);};
 /* 돈은 만원 단위다 (게임 속 1 = 1만원). 1만원 미만은 '1234만원', 1만(=1억원)부터는 천만 단위에서 반올림한 '1.5억'.
    short를 주면 1억 미만 작은 글씨용 약식('1234만') */
 var fmt=function(n,short){ n=Math.round(n);var neg=n<0,a=Math.abs(n),u=short?'만':'만원',s;

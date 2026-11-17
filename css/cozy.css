@@ -591,3 +591,5 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .scinfo{color:#5a4a33!important;background:#fff6dd!important}
 .flt-g{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 .vc-a .btn{white-space:nowrap}
+/* 리더 탭: 자동 배정(이 리더) · 전체 자동 배치(모든 리더) */
+.lead-hb{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.lead-hb .btn{white-space:nowrap}

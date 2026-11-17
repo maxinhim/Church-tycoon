@@ -385,6 +385,22 @@ async function stageChecks(browser, url) {
     o.cityK = pk > pk0 && stageJoinK({}) < 1 && demolish(cb[1].id) === undefined && !!bById(cb[1].id);
     let tries = 0; while (!S.cmp && tries < 60) { cityWeek(); tries++; } o.cmp = !!S.cmp && warnings().some(t => /민원/.test(t));
     enterStage('rural'); openScreen('roster'); o.noFleet = !document.querySelector('#scrTabs [data-v="fleet"]'); closeScreen();
+    // 테스트 게임: 100억 · 성도 50 · 갈래마다 봉사자 20 · 직원 20 · 부교역자 20 · 모든 기능 · 선교지에도 들어가고 저장은 따로
+    enterStage('miss2', 'test'); const cls = {}; S.people.forEach(p => { const k = ppClass(p) === 'volunteer' ? ppTrack(p) : ppClass(p); cls[k] = (cls[k] || 0) + 1; });
+    o.test = S.test && S.stage === 'miss2' && S.money === 1000000 && S.unlockAll && cls.saint === 50 && cls.A === 20 && cls.B === 20 && cls.C === 20 && cls.staff === 20 && S.people.filter(p => p.ext).length === 10 && S.assoc.length === 20 && S.members === S.people.length;
+    save(); o.test = o.test && !!localStorage.getItem(SAVE_KEY + '-test-miss2'); enterStage('rural', 'cont'); o.test = o.test && !S.test && S.stage === 'rural';
+    // 바닥 분위기: 한 칸 값은 소수점 한 자리(+0.1~0.3)로 보이고, 실제로는 FLOOR_BEAUTY_K배만 친다
+    const fb0 = A.beauty; S.floor['5,5'] = 'f_clover'; recalc(); const fb1 = A.beauty; delete S.floor['5,5']; recalc();
+    o.floorB = FLOOR_IDS.every(id => /^\d\.\d$/.test(String(D[id].beauty)) && new RegExp('분위기 \\+' + D[id].beauty.toFixed(1) + ' \\(한 칸\\)').test(effText(D[id])) && effTags(D[id]).some(t => t === '분위기 +' + D[id].beauty.toFixed(1))) && Math.abs(fb1 - fb0 - D.f_clover.beauty * FLOOR_BEAUTY_K) < 1e-9;
+    // 리더 › 전체 자동 배치: 모든 리더의 빈 칸에 맡을 수 있는 성도를 한꺼번에
+    S.unlockAll = true; S.members = 30; syncPeople(); S.people.forEach((p, i) => { p.node = i < 3 ? 'sgl' : 'new'; p.lv = i < 3 ? 25 : 2; p.assignedSaints = []; p.tr = null; }); recalc();
+    openScreen('officers', 'B'); const ab = document.querySelector('#scrBody [data-act="ldautoall"]'); const L3 = leaders(), want = Math.min(L3.reduce((n, l) => n + leadSlots(l), 0), ppFreeSaints().length);
+    ab.click(); o.leadAll = !!ab && L3.length === 3 && L3.every(l => (l.assignedSaints || []).length === leadSlots(l)) && L3.reduce((n, l) => n + l.assignedSaints.length, 0) === want && document.querySelector('#scrBody [data-act="ldautoall"]').disabled === !ppAutoAllOk(); closeScreen();
+    // 편의: 쉼터 벤치는 세 가지만, 기타에 식수대·정수기·분리수거함·쓰레기통
+    const vis = sub => DEFS.filter(d => d.cat === 'comfort' && !d.hidden && !d.retired && d.sub === sub).map(d => d.id);
+    const rest = vis('rest'), etc = vis('etc');
+    o.comfort = rest.filter(id => D[id].kind === 'bench').join() === 'bench,bench_back,bench_flower' && ['drinkfount', 'purifier', 'recycle', 'bin'].every(id => etc.includes(id)) && GRIPES.drink.ids.includes('purifier');
+    { const ok = build('purifier', 12, 12, 2) && build('recycle', 14, 12, 2); const pb = S.buildings.filter(b => b.def === 'purifier' || b.def === 'recycle'); draw(); o.comfort = o.comfort && ok && pb.length === 2 && !hasLv(pb[0]) && !mgrRole(pb[0]); }
     return o;
   });
   check(r.center, '스테이지: 모든 스테이지의 대예배당이 지도 한가운데');
@@ -394,6 +410,10 @@ async function stageChecks(browser, url) {
   check(r.sea && r.ferry && r.fleet, '어촌: 강이 입구와 교회를 가르고(다리 금지) 나룻배로만 태워 옴 · 직원 › 차량 탭에서 배를 마련 ' + JSON.stringify([r.sea, r.ferry, r.fleet]));
   check(r.city && r.cityK && r.cmp, '도시: 이웃 건물이 가득하고 땅째 사면 그 자리를 쓸 수 있음(철거는 안 됨) · 주차가 더 필요하고 정착이 어려움 · 민원 ' + JSON.stringify([r.city, r.cityK, r.cmp]));
   check(r.noFleet, '농촌에는 차량 탭이 없음');
+  check(r.test, '테스트 게임: 100억·성도 50명·갈래마다 봉사자 20명·직원 20명(청빙직원 10)·부교역자 20명·모든 기능, 선교지에도 들어가고 저장은 따로');
+  check(r.floorB, '바닥 타일 분위기: 한 칸 값은 소수점 한 자리로 보이고(카드·설명), 실제로는 FLOOR_BEAUTY_K배만 침');
+  check(r.leadAll, '리더 › 전체 자동 배치: 모든 리더의 빈 칸에 맡을 수 있는 성도가 한꺼번에 배치됨');
+  check(r.comfort, '편의: 쉼터 벤치는 세 가지(벤치·등받이·꽃), 기타에 식수대·정수기·분리수거함·쓰레기통 — 정수기·분리수거함은 지을 수 있고 레벨·관리자 없음');
   check(errs.length === 0, '스테이지: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
@@ -1437,20 +1457,21 @@ async function introChecks(browser, url) {
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   await page.addInitScript(() => { try { localStorage.clear(); } catch (e) {} });
   await page.goto(url); await page.waitForTimeout(500);
-  const a = await page.evaluate(() => { const el = document.getElementById('intro-screen'), cs = getComputedStyle(el), lg = el.querySelector('.intro-logo'), bt = el.querySelector('.intro-btn'), ls = getComputedStyle(lg), bs = getComputedStyle(bt);
+  const a = await page.evaluate(() => { const el = document.getElementById('intro-screen'), cs = getComputedStyle(el), lg = el.querySelector('.intro-logo'), bt = el.querySelector('.intro-btns'), bn = el.querySelector('.ib.new'), ls = getComputedStyle(lg), bs = getComputedStyle(bn);
     const cv2 = document.createElement('canvas'); cv2.width = lg.naturalWidth; cv2.height = lg.naturalHeight; const g = cv2.getContext('2d'); g.drawImage(lg, 0, 0); const px = (x, y) => [...g.getImageData(x, y, 1, 1).data];
     // 로고 그림에 마젠타가 남아 있지 않은지: 불투명한 화소 가운데 마젠타에 가까운 것의 수
     const d = g.getImageData(0, 0, cv2.width, cv2.height).data; let mag = 0, opq = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40) { opq++; if (d[i] > 200 && d[i + 2] > 200 && d[i + 1] < 110) mag++; }
     const r = lg.getBoundingClientRect(), rb = bt.getBoundingClientRect();
     return { lay: cs.position === 'fixed' && cs.zIndex === '9999' && cs.display === 'flex' && cs.flexDirection === 'column' && cs.justifyContent === 'space-between' && cs.alignItems === 'center' && /intro_bg/.test(cs.backgroundImage) && cs.backgroundSize === 'cover',
       logo: lg.naturalWidth > 600 && px(0, 0)[3] === 0 && px(cv2.width - 1, cv2.height - 1)[3] === 0 && opq > 100000 && mag < opq * .002 && r.top < innerHeight * .3 && Math.abs(r.left + r.width / 2 - innerWidth / 2) < 6 && r.height < innerHeight * .6,
-      btn: bt.querySelector('img').naturalWidth > 300 && rb.bottom > innerHeight * .75 && rb.bottom <= innerHeight && Math.abs(rb.left + rb.width / 2 - innerWidth / 2) < 6 && bs.cursor === 'pointer',
+      btn: [...bt.querySelectorAll('.ib')].map(b => b.textContent + ':' + b.dataset.mode).join() === '처음부터:new,이어하기:cont,테스트:test' && el.querySelector('.ib.cont').disabled && rb.bottom > innerHeight * .75 && rb.bottom <= innerHeight && Math.abs(rb.left + rb.width / 2 - innerWidth / 2) < 6 && bs.cursor === 'pointer' && /linear-gradient/.test(getComputedStyle(bn.querySelector('span')).backgroundImage),
       anim: ls.animationName === 'introFloat' && ls.animationDuration === '3s' && ls.animationDirection === 'alternate' && ls.animationIterationCount === 'infinite' && bs.animationName === 'introPulse' && bs.animationDuration === '1.5s' && bs.animationDirection === 'alternate' && bs.animationIterationCount === 'infinite',
       wait: UI.intro === true && document.getElementById('stage-screen').hidden, t0: S.t }; });
   await page.waitForTimeout(400);
   const paused = await page.evaluate(t0 => S.t === t0, a.t0);
-  await page.click('#intro-screen'); await page.waitForTimeout(60);
-  const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.intro-btn')).transform) || el.classList.contains('out'); });
+  await page.click('#intro-screen .ib.cont', { force: true }); await page.waitForTimeout(60); const contOff = await page.evaluate(() => !document.getElementById('intro-screen').classList.contains('press'));
+  await page.click('#intro-screen .ib.new', { force: true }); await page.waitForTimeout(60);
+  const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && el.dataset.mode === 'new' && UI.introMode === 'new' && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.ib.new')).transform) || el.classList.contains('out'); }) && contOff;
   await page.waitForTimeout(260);
   const fading = await page.evaluate(() => { const el = document.getElementById('intro-screen'), o = +getComputedStyle(el).opacity; return el.classList.contains('out') && o < 1 && o > 0 && /0\.6s/.test(getComputedStyle(el).transitionDuration) && !document.getElementById('stage-screen').hidden; });
   await page.mouse.move(2, 2); await page.waitForTimeout(650);   // 열린 카드 위에 마우스가 있으면 살짝 떠오른다
@@ -1477,9 +1498,9 @@ async function introChecks(browser, url) {
     o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
     S.lvl = 4; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'dis' && [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v).join() === 'dis,off,B,C' && !document.querySelector('#scrTabs [data-v="B"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
   if (!(a.lay && a.logo && a.btn && a.anim && a.wait && paused && pressed && fading && Object.values(st).every(Boolean) && locked && game.in && runs)) console.log('INTRO', JSON.stringify({ a, paused, pressed, fading, st, locked, game, runs }));
-  check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·시작 단추(아래 가운데), 로고·단추 그림은 투명 바탕에 마젠타가 남지 않음');
-  check(a.anim, '인트로: 로고는 3초, 단추는 1.5초 주기로 오가며 끝없이 움직임');
-  check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐');
+  check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·단추 셋(처음부터·이어하기·테스트, 아래 가운데 — 저장이 없으면 이어하기는 흐림), 로고 그림은 투명 바탕에 마젠타가 남지 않음');
+  check(a.anim, '인트로: 로고는 3초, 첫 단추는 1.5초 주기로 오가며 끝없이 움직임');
+  check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 처음부터를 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐 (저장이 없을 때 이어하기는 눌러도 그대로)');
   check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함), 스테이지 1~4는 열려 있고(목표 표시) 선교지 1·2는 잠겨 눌러도 그대로, 고르면 게임이 시작됨');
   if (!Object.values(lk).every(Boolean)) console.log('LOCKUI', JSON.stringify(lk));
   check(lk.fab && lk.fabBlock && lk.fabOpen && lk.offScr, '잠금: Lv 1에는 봉사자 버튼이 잠겨 있고(누르면 Lv 안내), Lv 4에 직분자·리더·섬김이 화면이 열림');

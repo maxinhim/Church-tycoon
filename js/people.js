@@ -63,6 +63,10 @@ function leadXp(l){return l?LEAD_SAINT_XP*(1+l.lv*LEAD_SAINT_LV):0;}
 // 매주: 리더가 맡은 성도에게 호감 경험치
 function leadWeek(){(S.people||[]).forEach(function(l){(l.assignedSaints||[]).forEach(function(i){var s=ppById(i);if(s)ppGain(s,leadXp(l));});});}
 function ppAutoAssign(lid){var l=ppById(lid),n=0;if(!l)return 0;ppFreeSaints().forEach(function(s){if(!ppAssignWhy(l,s)&&!ppAssign(lid,s.id))n++;});return n;}
+// 모든 리더의 빈 칸을 한꺼번에: 호감 Lv 높은 리더부터, 맡을 수 있는 성도를 호감 낮은 사람부터 채운다
+function leadOpen(l){return Math.max(0,leadSlots(l)-(l.assignedSaints||[]).length);}
+function ppAutoAssignAll(){var n=0;leaders().filter(function(l){return leadOpen(l)>0;}).sort(function(a,b){return b.lv-a.lv||a.id-b.id;}).forEach(function(l){n+=ppAutoAssign(l.id);});return n;}
+function ppAutoAllOk(){return ppFreeSaints().length>0&&leaders().some(function(l){return leadOpen(l)>0;});}
 function ppAssign(lid,sid){var l=ppById(lid),s=ppById(sid),why=ppAssignWhy(l,s);if(why)return why;l.assignedSaints.push(sid);return '';}
 function ppUnassign(lid,sid){var l=ppById(lid);if(l)l.assignedSaints=(l.assignedSaints||[]).filter(function(x){return x!==sid;});}
 function ppTrack(p){return ppNode(p).t||'';}

@@ -11,7 +11,7 @@ function effTags(d){
   if(d.park)t.push('주차 +'+d.park);
   if(d.vis)t.push('방문자 +'+Math.round(d.vis*100)+'%');
   if(d.rep&&t.length<2)t.push('평판 ↑');
-  if(d.beauty&&t.length<2)t.push(d.beauty>=1?'분위기 +'+d.beauty:'분위기 ↑');
+  if(d.beauty&&t.length<2)t.push(d.beauty>=1||d.kind==='floor'?'분위기 +'+fmtB(d.beauty):'분위기 ↑');
   if(d.cat==='club'&&t.length<2)t.push('외로움 ↓');
   if(d.fill&&t.length<2){var bn=null;for(var n in d.fill)if(!bn||d.fill[n]>d.fill[bn])bn=n;t.push(NK[bn]+' +'+d.fill[bn]);}
   if(d.income&&t.length<2)t.push('판매 ~'+d.income*SHOP_K);
@@ -25,7 +25,7 @@ function effText(d){
   if(d.kcap)p.push('돌봄 수용 +'+d.kcap);
   if(d.ccap)p.push('편의 수용 +'+d.ccap);
   if(d.fill){for(var n in d.fill)p.push('방문자 '+NK[n]+' +'+d.fill[n]);}
-  if(d.beauty)p.push('분위기 +'+d.beauty);
+  if(d.beauty)p.push('분위기 +'+fmtB(d.beauty)+(d.kind==='floor'?' (한 칸)':''));
   if(d.vis)p.push('방문자 +'+Math.round(d.vis*100)+'%');
   if(d.income)p.push('한 번 팔 때 약 '+d.income*SHOP_K);
   if(gripeFixes(d).length)p.push(gripeFixes(d).join('·')+'을(를) 풀어 줘요');

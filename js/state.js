@@ -62,8 +62,8 @@ function agg(){
   // 낡은 건물(상태 60% 미만)은 수용 효과가 줄어든다
   S.buildings.forEach(function(b){var d=defOf(b),k=staffed(b)?condFactor(b)*bCapK(b):0;a.seats+=d.seats*k;a.fcap+=d.fcap*k;a.ccap+=d.ccap*k;a.kcap+=d.kcap*k;a.park+=d.park*k;a.beauty+=d.beauty;a.vis+=d.vis;a.up+=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);a.rep+=d.rep;});
   ['seats','fcap','ccap','kcap','park'].forEach(function(k){a[k]=Math.round(a[k]);});
-  for(var fk in S.floor){var fd=D[S.floor[fk]];if(fd)a.beauty+=fd.beauty||0;}
-  S.paths.forEach(function(p){var pd=p.f&&D[p.f];if(pd)a.beauty+=pd.beauty||0;if(PATHK[p.k])a.beauty+=PATHK[p.k].beauty||0;});
+  for(var fk in S.floor)a.beauty+=floorBeauty(S.floor[fk]);
+  S.paths.forEach(function(p){if(p.f)a.beauty+=floorBeauty(p.f);if(PATHK[p.k])a.beauty+=PATHK[p.k].beauty||0;});
   return a;
 }
 // 만족도 비중 (합 1): 영성이 가장 크다

@@ -69,23 +69,35 @@ function stageGoalHtml(s){
 function renderStages(){
   var el=document.getElementById('stage-grid');if(!el)return;
   el.innerHTML=STAGES.map(function(s,i){
-    return '<button class="stcard'+(s.open?'':' lock')+'" data-stage="'+s.id+'" aria-label="스테이지 '+(i+1)+' '+s.n+(s.open?'':', 잠김')+'"'+(s.open?'':' aria-disabled="true"')+'>'+
-      '<span class="stpic">'+(s.id==='rural'?'<span class="stphoto"></span>':stageArt(s.id))+(s.open?'':'<span class="stlock" aria-hidden="true"><i>🔒</i>잠김</span>')+stageGoalHtml(s)+'</span>'+
-      '<span class="stno">STAGE '+(i+1)+'</span><b>'+s.n+'</b><small>'+s.d+'</small>'+stageGoalHtml(s)+'</button>';}).join('');
+    var op=stageOpen(s);
+    return '<button class="stcard'+(op?'':' lock')+'" data-stage="'+s.id+'" aria-label="스테이지 '+(i+1)+' '+s.n+(op?'':', 잠김')+'"'+(op?'':' aria-disabled="true"')+'>'+
+      '<span class="stpic">'+(s.id==='rural'?'<span class="stphoto"></span>':stageArt(s.id))+(op?'':'<span class="stlock" aria-hidden="true"><i>🔒</i>잠김</span>')+stageGoalHtml(s)+'</span>'+
+      '<span class="stno">STAGE '+(i+1)+'</span><b>'+s.n+'</b><small>'+s.d+'</small></button>';}).join('');
 }
 // 인트로를 닫고 스테이지 고르기를 보인다: 단추가 눌렸다가(0.95배) 화면이 0.6초 동안 사라진다
-function introStart(){
+/* 인트로 단추 셋 (인트로 그림과 같은 주황 사탕 단추, CSS로 그린다):
+   처음부터(new) — 고른 스테이지를 새로 시작 · 이어하기(cont) — 저장된 스테이지를 이어서(저장이 없으면 흐림) ·
+   테스트(test) — 모든 스테이지(선교지 포함)에 들어가고, 100억·성도 50명·갈래마다 봉사자 20명·직원 20명·부교역자 20명·모든 기능으로 시작(저장은 따로) */
+var INTRO_SUB={new:'처음부터 · 새로 시작할 곳을 골라 주세요',cont:'이어하기 · 이어서 목회할 곳을 골라 주세요',test:'테스트 · 모든 스테이지가 열려 있어요 (100억 · 모든 기능)'};
+function hasSave(){try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k===SAVE_KEY||(k.indexOf(SAVE_KEY+'-')===0&&!/-clear$|-test-/.test(k)))return true;}}catch(e){}return false;}
+function introStart(mode){
   var el=document.getElementById('intro-screen'),st=document.getElementById('stage-screen');
+  mode=mode||(hasSave()?'cont':'new');
   if(!el||el.classList.contains('press')||el.classList.contains('out'))return;
-  el.classList.add('press');if(typeof sfx==='function')sfx('click',.6,0);
+  if(mode==='cont'&&!hasSave()){if(typeof sfx==='function')sfx('error',.4);return;}
+  UI.introMode=mode;renderStages();var sub=document.getElementById('st-sub');if(sub)sub.textContent=INTRO_SUB[mode];
+  if(st)st.classList.toggle('testmode',mode==='test');
+  el.classList.add('press');el.dataset.mode=mode;if(typeof sfx==='function')sfx('click',.6,0);
   setTimeout(function(){if(st)st.hidden=false;el.classList.add('out');},130);
   setTimeout(function(){el.style.display='none';},130+620);
 }
-// 스테이지를 고른다: 잠긴 것은 흔들리기만 하고, 열린 것은 게임으로 들어간다
+// 스테이지가 열려 있는지: 테스트에서는 모두
+function stageOpen(s){return !!s.open||UI.introMode==='test';}
+// 스테이지를 고른다: 잠긴 것은 흔들리기만 하고, 열린 것은 고른 방식(처음부터·이어하기·테스트)으로 들어간다
 function stagePick(id){
   var s=STAGES.filter(function(x){return x.id===id;})[0],st=document.getElementById('stage-screen');if(!s||!st||st.classList.contains('out'))return;
-  if(!s.open){var c=st.querySelector('[data-stage="'+id+'"]');if(c){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');}if(typeof sfx==='function')sfx('error',.4);return;}
-  enterStage(id);if(typeof sfx==='function')sfx('page',.5);   // 스테이지마다 지도·저장이 따로다 (stages.js)
+  if(!stageOpen(s)){var c=st.querySelector('[data-stage="'+id+'"]');if(c){c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');}if(typeof sfx==='function')sfx('error',.4);return;}
+  enterStage(id,UI.introMode||'cont');if(typeof sfx==='function')sfx('page',.5);   // 스테이지마다 지도·저장이 따로다 (stages.js)
   st.classList.add('out');
   setTimeout(function(){st.style.display='none';UI.intro=false;},460);
 }
@@ -96,7 +108,9 @@ function setupIntro(){
   if(!el||!st)return;
   if(window.__CT_TEST&&!window.__CT_INTRO){el.parentNode.removeChild(el);st.parentNode.removeChild(st);return;}
   UI.intro=true;renderStages();
-  el.addEventListener('click',introStart);
+  var bc=el.querySelector('[data-mode="cont"]');if(bc){bc.disabled=!hasSave();bc.classList.toggle('pulse',!bc.disabled);}
+  var bn=el.querySelector('[data-mode="new"]');if(bn)bn.classList.toggle('pulse',!hasSave());
+  el.addEventListener('click',function(e){var b=e.target.closest('[data-mode]');if(b&&!b.disabled)introStart(b.dataset.mode);});
   st.addEventListener('click',function(e){var c=e.target.closest('[data-stage]');if(c)stagePick(c.dataset.stage);});
-  document.addEventListener('keydown',function(e){if(UI.intro&&el.style.display!=='none'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();introStart();}});
+  document.addEventListener('keydown',function(e){if(UI.intro&&el.style.display!=='none'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();introStart(hasSave()?'cont':'new');}});
 }

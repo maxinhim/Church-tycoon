@@ -444,7 +444,8 @@ function leadRightHtml(sel){
   for(var i=0;i<sl;i++)slots+=leadSlotHtml(mine[i],sel);
   var nx=sl<(ppNode(sel).cap||0)?'호감 Lv '+(Math.floor(sel.lv/LEAD_SLOT_LV)+1)*LEAD_SLOT_LV+'에 한 칸 더':'최대 칸이에요';
   var r='<div class="lead-h"><div><b>'+sel.n+' '+ppRankName(sel)+'</b><small>맡은 성도 '+mine.length+' / '+sl+' · '+(sl?'성도마다 매주 ♥ +'+tN(leadXp(sel))+' · '+nx:'소그룹 리더가 되면 성도를 맡아요')+'</small></div>'+
-    '<button class="btn pri" data-act="ldauto"'+(sl&&mine.length<sl&&free.length?'':' disabled')+'>⚡ 자동 배정</button></div>';
+    '<div class="lead-hb"><button class="btn pri" data-act="ldauto"'+(sl&&mine.length<sl&&free.length?'':' disabled')+'>⚡ 자동 배정</button>'+
+    '<button class="btn pri claim" data-act="ldautoall"'+(ppAutoAllOk()?'':' disabled')+' title="모든 리더의 빈 칸에 맡을 수 있는 성도를 한꺼번에">⚡ 전체 자동 배치</button></div></div>';
   r+=sl?'<div class="lead-slots">'+slots+'</div>':'<p class="sempty">이 단계는 성도를 맡지 않아요.</p>';
   if(UI.leadPick&&sl&&mine.length<sl)r+='<div class="lead-pick"><b>담당할 성도를 고르세요 <small>(호감 Lv 낮은 순)</small></b>'+(free.length?'<div class="lp-g">'+free.map(function(s){
     return '<button class="lp" data-act="ldpick" data-v="'+s.id+'" aria-label="'+s.n+' 호감 Lv '+s.lv+'"><img alt="" src="'+personFace(s)+'"><span>'+s.n+'</span><small>♥'+s.lv+'</small></button>';}).join('')+'</div>':'<p class="sempty">맡길 성도가 없어요 (제자반 전 성도만 맡길 수 있어요)</p>')+'</div>';
@@ -459,6 +460,7 @@ function scrLeadClick(a,v){
   else if(a==='ldslot'){UI.leadPick=!UI.leadPick;sfx('click',.4);}
   else if(a==='ldpick'){var w=ppAssign(UI.leadSel,+v);if(w){scrToast(w,2200);sfx('error',.4);}else{sfx('join',.5,0);var l=ppById(UI.leadSel);if((l.assignedSaints||[]).length>=leadSlots(l))UI.leadPick=false;}save();}
   else if(a==='ldfree'){ppUnassign(UI.leadSel,+v);sfx('click',.4);save();}
+  else if(a==='ldautoall'){var na=ppAutoAssignAll();if(na){sfx('appoint',.5,0);scrToast('리더 '+leaders().filter(function(l){return (l.assignedSaints||[]).length;}).length+'명에게 성도 '+na+'명을 배치했어요',2200);save();}else{scrToast('배치할 성도나 빈 칸이 없어요',1800);sfx('error',.4);}renderScreen();return true;}
   else if(a==='ldauto'){var n=ppAutoAssign(UI.leadSel);if(n){sfx('join',.5,0);scrToast('성도 '+n+'명을 배정했어요',1800);save();}else{scrToast('배정할 성도나 빈 칸이 없어요',1800);sfx('error',.4);}UI.leadPick=false;}
   else return false;
   renderScreen();return true;

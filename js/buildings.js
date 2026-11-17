@@ -14,7 +14,8 @@ function mk(id,name,cat,w,h,cost,up,kind,wall,roofc,o){
   if(['bld','lot','floor','terrain','path','gate'].indexOf(kind)<0&&w===1&&h===1)d.cell=true;
   if(kind!=='floor'&&kind!=='terrain'&&kind!=='path'&&kind!=='gate'&&!d.cell){d.w*=G;d.h*=G;}
   // 한 칸짜리는 칸이 작아진 만큼 값도 줄인다: 바닥은 같은 길이의 길이 같은 값이 되게 절반, 칸 건물은 넓이대로 1/4
-  if(kind==='floor'){d.cost=Math.round(d.cost/G);d.beauty=d.beauty/3;}
+  // 바닥 분위기는 한 칸 값(소수점 한 자리)으로 적고, 칸이 많아 실제로는 FLOOR_BEAUTY_K배만 친다 (floorBeauty)
+  if(kind==='floor'){d.cost=Math.round(d.cost/G);}
   DEFS.push(d); return d;
 }
 mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.95,roof:'gable',rh:.55,deco:'crossRidge',seats:24,fill:{word:48},cap:10,dur:5,desc:'작고 따뜻한 첫 예배 공간'});
@@ -120,6 +121,9 @@ mk('lantern','초롱 등','deco',1,1,140,0,'lamp','#7a5530','#f5e6a8',{beauty:0.
    hgt: 높이(칸), 눌러서 고를 때와 카드·미리보기에 쓴다 */
 mk('swing','그네 의자','comfort',1,1,380,1,'spr','#8a6a46','#a07a52',{prop:1,hgt:1.3,dir:'face',ccap:2,fcap:2,fill:{comf:20,fel:14},cap:2,dur:4,beauty:0.8,desc:'지붕 아래 둘이 앉아 이야기하는 그네 의자'});
 mk('library','작은 도서함','deco',1,1,260,0,'spr','#8a6844','#6b4f3a',{hgt:1.2,dir:'face',fill:{word:12,comf:8},cap:2,dur:3,beauty:0.5,vis:0.01,desc:'책을 빌려 읽고 나누는 작은 도서함. 방문자 +1%'});
+// 편의 › 기타: 식수대·정수기·분리수거함 (모두 한 칸 개방형 소품, 레벨 없음)
+mk('purifier','정수기','comfort',1,1,260,1,'purifier','#eef3f6','#5f9fd0',{prop:1,ccap:2,fill:{comf:18},cap:2,dur:2,beauty:0.2,desc:'시원한 물을 받아 마시는 정수기. 목마른 방문자가 쉬어 가요. 편의 수용 +2'});
+mk('recycle','분리수거함','comfort',1,1,120,0,'recycle','#4a78c7','#e3b341',{prop:1,ccap:2,beauty:0.2,desc:'종이·플라스틱·캔을 나눠 버리는 분리수거함. 쓰레기통처럼 쓰여요. 편의 수용 +2'});
 mk('drinkfount','식수대','comfort',1,1,180,0,'spr','#c9c2b6','#9aa3a8',{prop:1,hgt:1.1,dir:'face',ccap:2,fill:{comf:16},cap:2,dur:2,beauty:0.3,desc:'목을 축이는 돌 식수대. 편의 수용 +2'});
 mk('grill','바비큐 그릴','deco',1,1,300,1,'spr','#3d4650','#59626b',{hgt:1.4,dir:'face',fcap:3,fill:{fel:26,comf:6},cap:3,dur:4,beauty:0.3,desc:'함께 구워 먹으며 교제하는 그릴'});
 mk('lectern','야외 강대상','deco',1,1,350,0,'spr','#8a6844','#c9c2b6',{hgt:1.2,dir:'face',beauty:0.7,rep:0.05,desc:'야외 예배에 쓰는 작은 강대상. 평판이 조금 오릅니다'});
@@ -158,12 +162,12 @@ mk('guitar','기타·우쿨렐레 교실','club',2,2,900,7,'bld','#ece4d4','#c98
 mk('band','밴드연습실','club',2,2,1300,10,'bld','#3f4650','#c4503a',{sub:'music',H:.95,roof:'flat',deco:'sign',sign:'밴드',signc:'#c4503a',fcap:10,fill:{fel:36,word:8},cap:8,dur:5,desc:'드럼과 앰프가 있는 밴드 연습실. 찬양팀 청년들의 아지트'});
 mk('choir','합창실','club',3,2,1500,12,'bld','#efe9dc','#3f5ea3',{sub:'music',H:1.0,roof:'gable',rh:.5,deco:'sign',sign:'합창',signc:'#3f5ea3',fcap:16,fill:{fel:38,word:10},cap:14,dur:6,desc:'목소리를 맞추며 하나 되는 합창 모임'});
 mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
-mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.04,desc:'단정한 회색 보도블록'});
-mk('f_brick','벽돌 바닥','floor',1,1,20,0,'floor','#b9694c','#8c4a33',{pat:'brick',beauty:0.05,desc:'따뜻한 붉은 벽돌'});
-mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',beauty:0.03,desc:'밟으면 소리 나는 자갈길'});
-mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.05,desc:'결이 보이는 나무 바닥'});
-mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.08,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
-mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
+mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.1,desc:'단정한 회색 보도블록'});
+mk('f_brick','벽돌 바닥','floor',1,1,20,0,'floor','#b9694c','#8c4a33',{pat:'brick',beauty:0.1,desc:'따뜻한 붉은 벽돌'});
+mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',beauty:0.1,desc:'밟으면 소리 나는 자갈길'});
+mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.1,desc:'결이 보이는 나무 바닥'});
+mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.2,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
+mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.3,desc:'분홍 꽃이 핀 낮은 잔디'});
 mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'철거비',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 철거비가 들어요(바닥 값의 '+Math.round(FLOOR_DEMO_K*100)+'%)'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{hidden:true,short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{hidden:true,short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
@@ -180,10 +184,10 @@ var SUB_OF={room:'service',chapel:'service',grand:'service',outdoor:'service',pr
   cell:'group',youth:'group',hall:'hall',
   shop:'food',dining:'food',bakery:'food',market:'food',cafe:'cafe',coffeecart:'cafe',vending:'cafe',books:'book',bookstore:'book',flowercart:'book',
   pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
-  wc:'toilet',wc2:'toilet',nursery:'dept',kinder:'dept',kids:'dept',teens:'dept',study:'dept',playground:'dept',bench:'rest',bench_stone:'rest',bench_iron:'rest',bench_back:'rest',bench_round:'rest',bench_flower:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
+  wc:'toilet',wc2:'toilet',nursery:'dept',kinder:'dept',kids:'dept',teens:'dept',study:'dept',playground:'dept',bench:'rest',bench_stone:'rest',bench_iron:'rest',bench_back:'rest',bench_round:'rest',bench_flower:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',purifier:'etc',recycle:'etc',info:'etc',nurse:'etc',busstop:'etc'};
 for(var sk in SUB_OF)if(D[sk])D[sk].sub=SUB_OF[sk];
 /* 레벨이 없는 요소: 벤치·화장실·그릴처럼 건물이 아닌 것은 투자·레벨업이 없고, 회전만 NOLV_ROT배로 빨라진다 */
-var NOLV=['bench','bench_stone','bench_iron','bench_back','bench_round','bench_flower','wc','wc2','grill','picnic','parasol','gazebo','bin','drinkfount','swing','library','lectern','piano','speaker','mixer','drums','offering','board','bell','bikerack','busstop'];
+var NOLV=['bench','bench_stone','bench_iron','bench_back','bench_round','bench_flower','wc','wc2','grill','picnic','parasol','gazebo','bin','drinkfount','purifier','recycle','swing','library','lectern','piano','speaker','mixer','drums','offering','board','bell','bikerack','busstop'];
 NOLV.forEach(function(id){if(D[id])D[id].nolv=1;});
 // 한 칸짜리 소품은 그림을 절반 크기로 그리므로 높이도 절반 (입구·출구는 제 높이)
 function heightOf(id){var d=D[id];return heightOfDef(d)*(d.cell&&d.kind!=='gate'?CELL_K:1);}

@@ -14,11 +14,12 @@ var STAGE_SET={
   rural:{},
   mount:{trans:'road',wild:true,walk:true},
   sea:{trans:'water',noBridge:true},
-  city:{trans:'road',city:true}
+  city:{trans:'road',city:true},
+  miss1:{},miss2:{}   // 선교지 1·2: 아직 꾸미기 전 (테스트에서만 들어감 — 평지)
 };
 function stageId(){return (S&&S.stage)||'rural';}
 function stg(){return STAGE_SET[stageId()]||STAGE_SET.rural;}
-function stageKey(id){return !id||id==='rural'?SAVE_KEY:SAVE_KEY+'-'+id;}
+function stageKey(id,test){if(test)return SAVE_KEY+'-test-'+(id||'rural');return !id||id==='rural'?SAVE_KEY:SAVE_KEY+'-'+id;}   // 테스트 게임은 따로 저장
 var SCX=31;   // 대예배당 문 열(가운데)
 // 노선: 태우는 곳(입구·나루) → 내리는 곳(대예배당 문 앞). 칸 좌표(가운데 .5)
 var STAGE_ROUTE={
@@ -113,18 +114,20 @@ function applyStageMap(st,id){
 }
 
 /* ---------- 스테이지 고르기·저장 ---------- */
-function loadStage(id){
-  var raw=null;try{raw=localStorage.getItem(stageKey(id));}catch(e){}
+function loadStage(id,test){
+  var raw=null;try{raw=localStorage.getItem(stageKey(id,test));}catch(e){}
   if(!raw)return null;
-  var o=load(stageKey(id));return o&&(o.stage||'rural')===id?o:null;
+  var o=load(stageKey(id,test));return o&&(o.stage||'rural')===id?o:null;
 }
-// 다른 스테이지로 옮긴다: 지금 것을 저장하고, 그 스테이지의 저장이 있으면 이어서, 없으면 새 지도로 시작한다
-function enterStage(id){
+// 다른 스테이지로 옮긴다: 지금 것을 저장하고 들어간다. mode: 'cont'(기본, 저장이 있으면 이어서) · 'new'(처음부터) · 'test'(테스트 게임, testSetup)
+function enterStage(id,mode){
   if(!STAGE_SET[id])return;
-  if(stageId()===id&&S.stage)return;
-  if(S&&S.stage)save();
-  var o=loadStage(id),dk=(S&&S.diff)||'normal';
+  mode=mode||'cont';
+  if(mode==='cont'&&stageId()===id&&S.stage&&!S.test)return;
+  if(S&&S.stage&&(S.week>0||S.open))save();   // 손대지 않은 빈 시작 상태는 저장하지 않는다 (이어하기가 빈 게임을 가리키지 않게)
+  var o=mode==='new'?null:loadStage(id,mode==='test'),dk=mode==='test'?'easy':((S&&!S.test&&S.diff)||'normal');
   S=o||newState(dk,id);S.stage=id;
+  if(mode==='test'&&!o)testSetup();
   V=[];F=[];WILD.length=0;UI.tool=null;UI.ghost=null;UI.sel=null;UI.undo=[];UI.pc=null;UI.selPiece=null;UI.selFloor=null;UI.lastBuilt=null;
   if(typeof CF!=='undefined')CF.length=0;
   if(!S.cands)refreshCands();rebuildOcc();recalc();if(!o)S.lvl=null;levelTick(true);
@@ -417,3 +420,21 @@ function fleetClick(a,v){
 // 스테이지 목표를 이룬 기록: 스테이지마다 저장이 따로라 따로 둔다 (스테이지 고르기 카드의 ✓)
 function stageClears(){var o={};try{o=JSON.parse(localStorage.getItem(SAVE_KEY+'-clear')||'{}')||{};}catch(e){}if(S&&S.stageClear)for(var k in S.stageClear)o[k]=S.stageClear[k];return o;}
 function stageClearSave(id){var o=stageClears();o[id]=S.week;try{localStorage.setItem(SAVE_KEY+'-clear',JSON.stringify(o));}catch(e){}}
+
+/* ---------- 테스트 게임 (인트로의 '테스트') ----------
+   100억 · 성도 50명(새가족~제자반) · 갈래마다 봉사자 20명(직분자·리더·섬김이) · 직원 20명(장로·권사 10 + 청빙직원 10) · 부교역자 20명 · 모든 기능(S.unlockAll) */
+var TEST_SET={money:1000000,saints:50,vol:20,staff:20,assoc:20};
+var TEST_NODES={saint:['new','new','bapt','bapt','nurture'],A:['devoted','devoted','deacon'],B:['sgl','sgl','cml','kanji'],C:['server','server','tlead','dlead','cstaff']};
+function testSetup(){
+  S.test=true;S.unlockAll=true;S.money=TEST_SET.money;S.diff='easy';
+  var half=Math.floor(TEST_SET.staff/2),n=TEST_SET.saints+TEST_SET.vol*3+half;
+  S.members=n;S.people=[];syncPeople();
+  var P=S.people.slice(),k=0,take=function(c,nodes,lv0,lv1){for(var i=0;i<c;i++){var p=P[k++];if(!p)return;p.node=nodes[i%nodes.length];p.lv=Math.round(lv0+Math.random()*(lv1-lv0));p.xp=0;p.tr=null;}};
+  take(TEST_SET.saints,TEST_NODES.saint,1,20);
+  take(TEST_SET.vol,TEST_NODES.A,25,60);take(TEST_SET.vol,TEST_NODES.B,25,60);take(TEST_SET.vol,TEST_NODES.C,25,70);
+  take(half,['elder'],70,90);   // 직원: 장로(남)·권사(여)
+  for(var j=0;j<TEST_SET.staff-half;j++)volJoin(makeVol('C'));   // 직원: 청빙직원
+  S.assoc=[];for(var a=0;a<TEST_SET.assoc;a++)S.assoc.push(makeCand());
+  S.qd=S.qd||{};S.open=false;
+  rebuildOcc();recalc();addLog('테스트 게임: 100억 · 성도 '+TEST_SET.saints+'명 · 봉사자 '+TEST_SET.vol*3+'명 · 직원 '+TEST_SET.staff+'명 · 부교역자 '+TEST_SET.assoc+'명 · 모든 기능');
+}
