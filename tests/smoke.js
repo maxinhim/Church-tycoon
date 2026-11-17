@@ -719,7 +719,7 @@ async function ministryChecks(browser, url) {
     vb.click(); o.visitAll = S.people.filter(q => q.node === 'new').every(q => q.vw === S.week) && S.people.filter(q => q.node === 'bapt').every(q => q.vw !== S.week) && S.money < m0;
     const gb = [...document.querySelectorAll('#scrBody .sgc')].find(c => /새가족/.test(c.textContent)).querySelector('.sgb.grow'); S.people.filter(q => q.node === 'new').forEach(q => { q.lv = PP_TREE.bapt.lv; }); renderScreen();
     const gb2 = [...document.querySelectorAll('#scrBody .sgc')].find(c => /새가족/.test(c.textContent)).querySelector('.sgb.grow'); o.grow = !!gb2 && gb2.textContent.length < 20; gb2.click(); o.growAll = S.people.filter(q => q.node === 'new').every(q => q.tr && q.tr.to === 'bapt');
-    const hd = document.querySelector('#scr .shead'), mo = hd.querySelector('.smoney').getBoundingClientRect(), cl = hd.querySelector('.sclose').getBoundingClientRect(), tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')], inf = { left: tabs[tabs.length - 1].getBoundingClientRect().right + 1, right: mo.left };
+    const hd = document.querySelector('#scr .shead'), mo = hd.querySelector('.smoney').getBoundingClientRect(), cl = hd.querySelector('.sclose').getBoundingClientRect(), tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')], inf = { left: (tabs.length ? tabs[tabs.length - 1] : hd.querySelector('#scrTitle')).getBoundingClientRect().right + 1, right: mo.left };
     o.head = Math.abs(cl.right - hd.getBoundingClientRect().right) < 20 && mo.right <= cl.left + 1 && tabs.every(t => { const r = t.getBoundingClientRect(); return r.width > 40 && r.right <= inf.left + 1; }) && inf.right <= mo.left + 1;
     S.people.forEach(q => { q.node = 'new'; q.lv = 1; q.tr = null; }); recalc(); UI.ppList = true; renderScreen(); return o; });
   const ppScr = await page.evaluate(() => { const o = {}; UI.ppList = true; renderScreen(); const cards = document.querySelectorAll('#scrBody .ppc');
@@ -733,20 +733,22 @@ async function ministryChecks(browser, url) {
     const d0 = off(); S.t += WEEK * .5; syncScreen(); o.gauge = card().classList.contains('run') && off() < d0 && /교육 중/.test(document.getElementById('scrDlg').textContent);
     p.tr.end = evNow() - .01; peopleTick(); o.ready = card().classList.contains('ready') && /세례 주기/.test(card().textContent) && !document.getElementById('ppBadge').hidden && p.node === 'new';
     document.querySelector('#scrDlg [data-act="ppappoint"]').click(); o.done = p.node === 'bapt' && document.getElementById('ppBadge').hidden && /세례교인/.test(card().textContent);
-    { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } const tv = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v); document.querySelector('#scrTabs [data-v="vol"]').click(); const vc0 = document.querySelectorAll('#scrBody .ppc').length; S.people[2].node = 'disciple'; syncPeople(); renderScreen();
-    o.tab = tv.join() === 'all,vol' && vc0 === 0 && document.querySelectorAll('#scrBody .ppc').length === 1 && !!document.querySelector('#scrBody .pcb') && ppClass(S.people[2]) === 'volunteer'; S.people[2].node = 'new'; syncPeople(); document.querySelector('#scrTabs [data-v="all"]').click();
+    { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } const tv = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v); const vc0 = document.querySelectorAll('#scrBody .sgh.vol').length; S.people[2].node = 'disciple'; syncPeople(); renderScreen();
+    const lay0 = document.querySelector('#scrBody .evg > .sgh.lay'), volAfter = document.querySelectorAll('#scrBody .sgh.vol ~ .ppc').length; UI.ppList = false; renderScreen();
+    const secs = [...document.querySelectorAll('#scrBody .sgwrap > .sgsec')].map(x => x.querySelector('.sgh').className); UI.ppList = true; renderScreen();
+    o.tab = tv.join() === '' && SCREENS.people.tabs.length === 1 && vc0 === 0 && !!lay0 && lay0 === lay0.parentNode.firstElementChild && volAfter === 1 && secs.join() === 'sgh lay,sgh vol' && !!document.querySelector('#scrBody .pcb') && ppClass(S.people[2]) === 'volunteer'; S.people[2].node = 'new'; syncPeople(); renderScreen();
     // 전체 탭 맨 위: 전체 성도 현황 (등록 성도 크게, 명단별·세례·직분자·평균 호감·할 일)
     const inf = document.getElementById('scrInfo'), hb = document.querySelector('#scr .shead');
-    const pf = document.querySelector('#scrBody .pbar .pfs'), lb = document.querySelector('#scrBody .pbar .sgl-list'); o.status = !!pf && inf.hidden && new RegExp('등록' + S.people.length + '명').test(pf.textContent) && /성도\d/.test(pf.textContent) && !/평균|할 일/.test(pf.textContent) && !document.querySelector('#scrBody .pstat') && document.querySelector('#scrBody').firstElementChild.classList.contains('pbar') && !!document.querySelector('#scrBody .pbar .pcb') && !!lb && pf.getBoundingClientRect().left >= lb.getBoundingClientRect().right - 1 && parseFloat(getComputedStyle(pf.querySelector('b')).fontSize) >= 16;
+    const pf = document.querySelector('#scrBody .pbar .pfs'), lb = document.querySelector('#scrBody .pbar .sgl-list'); o.status = !!pf && inf.hidden && new RegExp('등록' + S.people.length + '명').test(pf.textContent) && /평신도\d/.test(pf.textContent) && !/평균|할 일/.test(pf.textContent) && !document.querySelector('#scrBody .pstat') && document.querySelector('#scrBody').firstElementChild.classList.contains('pbar') && !!document.querySelector('#scrBody .pbar .pcb') && !!lb && pf.getBoundingClientRect().left >= lb.getBoundingClientRect().right - 1 && parseFloat(getComputedStyle(pf.querySelector('b')).fontSize) >= 16;
     // 목록 위 '모두 심방': 이 목록에서 할 수 있는 사람 모두 (대기 기간인 사람은 빼고)
-    const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
+    const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; renderScreen(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
     o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
     o.bulk = nv >= 2 && S.money === mb - nv * PP_VISIT.cost && S.people.every(q => !ppCareOk(q, 'visit')) && document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]').disabled && !!document.querySelector('#scrBody [data-act="bulk"][data-v="gift"]:not([disabled])'); S.lvl = lv1;
     // 낮은 레벨부터: 자금이 한 명 몫뿐이면 호감 레벨이 가장 낮은 사람만 심방, 단계 단추는 같은 규칙
     { S.people.forEach(q => { q.vw = -99; q.gw = -99; q.tr = null; q.node = 'new'; }); const sp = S.people.slice().sort((x, y) => x.lv - y.lv || x.id - y.id); sp.forEach((q, i) => { q.lv = 1 + i; });
       S.money = PP_VISIT.cost; const lowId = sp[0].id; ppCareAll(S.people, 'visit'); const lowVisited = ppById(lowId).vw === S.week && S.people.filter(q => q.vw === S.week).length === 1;
       sp.forEach(q => { q.lv = PP_TREE.bapt.lv; }); S.money = PP_TREE.bapt.cost; const r1 = ppTrainAll(S.people, 'bapt'); const trained = S.people.filter(q => q.tr).length === 1 && r1.poor >= 1;
-      S.money = 99999; sp.forEach(q => { if (!q.tr) q.tr = null; }); const r2 = ppTrainAll(S.people, 'bapt'); S.people.forEach(q => { if (q.tr) { q.tr.ready = true; } }); recalc(); document.querySelector('#scrTabs [data-v="all"]').click();
+      S.money = 99999; sp.forEach(q => { if (!q.tr) q.tr = null; }); const r2 = ppTrainAll(S.people, 'bapt'); S.people.forEach(q => { if (q.tr) { q.tr.ready = true; } }); recalc(); renderScreen();
       const gb = document.querySelector('#scrBody [data-act="bulkgrow"][data-k="ap"]'), ic = document.querySelector('#scrBody .bic[data-v="gift"]'); const nb = S.people.length; if (gb) gb.click();
       o.bulkLow = lowVisited && trained && !!gb && !!ic && S.people.every(q => q.node === 'bapt' && !q.tr) && r2.done >= 1 && nb >= 2; }
     // 고민 탭: 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림 (행사 버튼 배지에도 셈)
@@ -1408,7 +1410,7 @@ async function introChecks(browser, url) {
     o.tabs = !tl('events').classList.contains('lock') && !tl('pastor').classList.contains('lock') && tl('assoc').classList.contains('lock') && tl('vol').classList.contains('lock') && !tl('staff') && /Lv 4/.test(tl('vol').textContent);
     tl('vol').click(); o.tabBlock = UI.scrTab === 'events' && /Lv 4/.test(document.getElementById('scrToast').textContent);
     const evs = [...document.querySelectorAll('#scrBody .evc')]; o.evs = evs.filter(e => !e.classList.contains('lock')).length <= 3 && evs.filter(e => e.classList.contains('lock')).length >= 8 && /Lv 2/.test(document.querySelector('#scrBody [data-v="communion"]').textContent);
-    openScreen('people'); UI.ppList = true; renderScreen(); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.length === 2 && pt.find(x => x.dataset.v === 'all') && !pt.find(x => x.dataset.v === 'all').classList.contains('lock') && pt.find(x => x.dataset.v === 'vol').classList.contains('lock') && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
+    openScreen('people'); UI.ppList = true; renderScreen(); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.length === 0 && UI.scrTab === 'all' && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
     const p = S.people[0]; document.querySelector('#scrBody [data-act="ppopen"]').click(); const dl = document.getElementById('scrDlg'); o.gift = dl.querySelector('[data-act="ppgift"]').disabled && !dl.querySelector('[data-act="ppvisit"]').disabled && /Lv 2/.test(ppCareWhy(p, 'gift'));
     p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
     o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
@@ -1557,6 +1559,21 @@ async function slotChecks(browser, url) {
       b.click(); o.reopen = UI.alertOpen && !card.hidden; document.querySelector('#fab button').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.other = !UI.alertOpen && card.hidden;
       return o; });
     check(Object.values(al).every(Boolean), '챙길 일 카드: 카드 안은 그대로, 지도·다른 곳을 누르면 닫힘 ' + JSON.stringify(al)); }
+  { const hb = await page.evaluate(() => { const o = {}; closeScreen(); syncAlert(); UI.alertOpen = false;
+      // 챙길 일 숫자 배지: 흰 바탕 동그라미가 화면 안에 온전히 보임
+      const n = document.getElementById('alN'), r = n.getBoundingClientRect(), cs = getComputedStyle(n);
+      o.badge = !document.getElementById('alert').hidden && r.top >= 0 && r.left >= 0 && r.width >= 15 && r.height >= 15 && cs.backgroundColor === 'rgb(255, 255, 255)' && n.textContent.trim().length > 0;
+      // 봉사자 화면: 전체 심방·선물은 머리띠(탭 오른쪽)의 코드 단추, 본문의 그림 단추는 없음
+      const ua = S.unlockAll; S.unlockAll = true; S.money = 99999; const A = S.people.slice(0, 2); A.forEach(q => { q.node = 'devoted'; q.lv = 20; q.tr = null; q.vw = -99; q.gw = -99; }); recalc();
+      openScreen('officers', 'off'); const inf = document.getElementById('scrInfo'), hv = inf.querySelector('.hdb.visit'), hg = inf.querySelector('.hdb.gift'), L0 = scrPeople().filter(q => ppCareOk(q, 'visit')), nv0 = L0.length; o.dbg = [nv0, inf.hidden, !!hv, hv && hv.textContent];
+      o.head = !inf.hidden && !!hv && !!hg && !hv.disabled && /전체 심방/.test(hv.textContent) && new RegExp(nv0 + '명').test(hv.textContent) && !document.querySelector('#scrBody .bic') && !getComputedStyle(hv).backgroundImage.includes('assets/ui');
+      const m0 = S.money; hv.click(); o.visit = nv0 >= 2 && L0.every(q => q.vw === S.week) && S.money === m0 - nv0 * PP_VISIT.cost && document.querySelector('#scrInfo .hdb.visit').disabled;
+      // 다크 모드여도 전체 화면은 밝은 색 그대로(이름·설명 글씨가 짙은 색)
+      const lum = c => { const m = c.match(/\d+/g).map(Number); return (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255; };
+      o.ink = getComputedStyle(document.getElementById('scr')).getPropertyValue('--ink').trim() === '#2f4a40' && lum(getComputedStyle(document.querySelector('#scrBody .lbig h3')).color) < .45;
+      closeScreen(); openScreen('people'); o.noHead = document.getElementById('scrInfo').hidden; o.dbg = !!o.dbg; closeScreen(); A.forEach(q => { q.node = 'new'; q.lv = 1; }); S.unlockAll = ua; recalc();
+      return o; });
+    check(Object.values(hb).every(Boolean), '챙길 일 숫자가 잘리지 않음 · 봉사자 화면 머리띠의 전체 심방·선물(코드 단추) · 전체 화면은 다크 모드에서도 짙은 글씨 ' + JSON.stringify(hb)); }
   check(errs.length === 0, '슬롯 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }

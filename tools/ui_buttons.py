@@ -99,6 +99,16 @@ def main():
                     cell = cell.crop((x0c, 0, min(cell.width, x0c + w), cell.height))
                 bb = cell.getbbox()
                 if bb: cell = cell.crop(bb)
+                # 챙길 일 단추: 그림 오른쪽 위에 붙은 흰 숫자 방울(반쯤 잘린 것)은 지우고 둥근 판만 남긴다 — 숫자 배지는 CSS가 그린다
+                if nm == 'alert':
+                    arr = np.array(cell); al = arr[..., 3] > 128; H = al.shape[0]
+                    wid = al[H // 2:].sum(1); r0 = H // 2 + int(np.argmax(wid))   # 아래 절반에서 가장 넓은 줄 = 판의 가운데 줄
+                    xs = np.where(al[r0])[0]; cx = (xs[0] + xs[-1]) / 2; r = (xs[-1] - xs[0] + 1) / 2
+                    cy = np.where(al.any(1))[0][-1] - r + 1
+                    yy, xx = np.mgrid[:H, :al.shape[1]]
+                    arr[..., 3] = np.where((xx - cx) ** 2 + (yy - cy) ** 2 <= (r + 1.5) ** 2, arr[..., 3], 0)
+                    cell = Image.fromarray(arr); bb = cell.getbbox()
+                    if bb: cell = cell.crop(bb)
                 s = mx / max(cell.size)
                 if s < 1: cell = cell.resize((round(cell.width * s), round(cell.height * s)), Image.LANCZOS)
                 cell.save(os.path.join(OUT, nm + '.png'), optimize=True)
