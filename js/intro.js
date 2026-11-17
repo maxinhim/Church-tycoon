@@ -60,12 +60,18 @@ function stageArt(id){
   }
   return h+'</svg>';
 }
+// 스테이지 목표: 그 스테이지의 마지막 퀘스트(STAGE_GOAL, quests.js)와 같다. 이룬 스테이지는 ✓
+function stageGoalHtml(s){
+  if(!s.open||typeof QID==='undefined'||!QID[STAGE_GOAL])return '';
+  var q=QID[STAGE_GOAL],done=S&&S.stageClear&&S.stageClear[s.id]!=null;
+  return '<span class="stgoal'+(done?' done':'')+'"><i aria-hidden="true">'+(done?'✓':'🎯')+'</i>목표 · '+q.n+'</span>';
+}
 function renderStages(){
   var el=document.getElementById('stage-grid');if(!el)return;
   el.innerHTML=STAGES.map(function(s,i){
     return '<button class="stcard'+(s.open?'':' lock')+'" data-stage="'+s.id+'" aria-label="스테이지 '+(i+1)+' '+s.n+(s.open?'':', 잠김')+'"'+(s.open?'':' aria-disabled="true"')+'>'+
       '<span class="stpic">'+(s.id==='rural'?'<span class="stphoto"></span>':stageArt(s.id))+(s.open?'':'<span class="stlock" aria-hidden="true"><i>🔒</i>잠김</span>')+'</span>'+
-      '<span class="stno">STAGE '+(i+1)+'</span><b>'+s.n+'</b><small>'+s.d+'</small></button>';}).join('');
+      '<span class="stno">STAGE '+(i+1)+'</span><b>'+s.n+'</b><small>'+s.d+'</small>'+stageGoalHtml(s)+'</button>';}).join('');
 }
 // 인트로를 닫고 스테이지 고르기를 보인다: 단추가 눌렸다가(0.95배) 화면이 0.6초 동안 사라진다
 function introStart(){

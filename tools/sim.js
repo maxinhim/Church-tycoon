@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* 밸런스 시뮬레이터: 게임 코드를 그대로 불러(헤드리스 브라우저) 전략별 봇이 N주를 자동으로 플레이한다.
-   쓰는 법:  node tools/sim.js [--weeks 52] [--diff normal] [--seed 7] [--only balanced,spirit] [--json out.json]
+   쓰는 법:  node tools/sim.js [--weeks 52] [--diff normal] [--seed 7] [--only balanced,spirit] [--json out.json] [--set JOIN_P=0.3,REFER_K=0.03]
+   --set: balance.js 값을 이번 실행에서만 바꿔 비교한다(파일은 그대로)
    전략: idle(아무것도 안 함) · deco(꾸미기만) · shop(매장 중심) · spirit(영성·성례 중심) · balanced(모자란 것부터 고루) · wish(balanced + 성도들의 바람을 먼저 들어줌)
    게임 동작은 바꾸지 않는다(검증·조사 전용). 같은 시드면 결과가 같다. */
 const http = require('http'), fs = require('fs'), path = require('path');
@@ -128,12 +129,13 @@ function runBot(cfg) {
   const rows = [];
   for (let w = 0; w < cfg.weeks && !S.over; w++) {
     week();
-    for (let i = 0; i < 480; i++) { update(0.1); if (S.dlg && i % 60 === 0) { const d = dlgById(S.dlg); let k = d.o.findIndex(o => !o.ok || o.ok()); chooseDlg(k < 0 ? 0 : k); } }
+    let vmax = 0, vsum = 0, vw = 0, jw = 0, m0 = S.members;
+    for (let i = 0; i < 480; i++) { const vb = S.visitsWeek, jb = S.joinedWeek; update(0.1); vmax = Math.max(vmax, V.length); vsum += V.length; if (S.visitsWeek >= vb) { vw += S.visitsWeek - vb; jw += S.joinedWeek - jb; } if (S.dlg && i % 60 === 0) { const d = dlgById(S.dlg); let k = d.o.findIndex(o => !o.ok || o.ok()); chooseDlg(k < 0 ? 0 : k); } }
     hud(true); IND.forEach(d => { if (indReady(d.k)) claimInd(d.k); });
     const c = S.cov, r = S.rcpt || {}, g = S.gripL || {}; let gt = 0; for (const k in g) gt += g[k];
     rows.push({ w: S.week, money: Math.round(S.money), mem: S.members, mood: Math.round(S.mood), items: Math.round((c.items || 0) * 100), bonus: Math.round(S.mood - 85 * (c.items || 0)),
       spirit: Math.round(c.spirit * 100), seat: Math.round(c.seat * 100), past: Math.round(c.past * 100), fel: Math.round(c.fel * 100), park: Math.round(c.park * 100), care: Math.round(c.care * 100), comf: Math.round(c.comf * 100),
-      rep: Math.round(trustIdx()), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: qCount(), il: IND.map(d => ilState()[d.k].lv).join('/'), net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, gk: JSON.stringify(g) + JSON.stringify(S.gripBL || {}), pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length, sc: scoreParts() });
+      rep: Math.round(trustIdx()), cap: Math.round(MOD.cap), seats: Math.round(A.seats), visW: vw, joinW: jw, vmax, vavg: Math.round(vsum / 480), vst: (() => { const o = {}; V.forEach(v => { const k = v.state + (v.member ? "M" : ""); o[k] = (o[k] || 0) + 1; }); return o; })(), vlife: Math.round(V.reduce((s, v) => s + (v.life || 0), 0) / Math.max(1, V.length)), lvl: S.lvl, join: S.joinedWeek0 || 0, goal: qCount(), il: IND.map(d => ilState()[d.k].lv).join('/'), net: r.net || 0, offer: r.offering || 0, shop: (r.shop || 0) - (r.supply || 0), opex: (r.opex || 0) + (r.pay || 0), grip: gt, gk: JSON.stringify(g) + JSON.stringify(S.gripBL || {}), pen: S.gripPen || 0, vis: S.gripNL || 0, bld: S.buildings.length, sc: scoreParts() });
   }
   stat.wishOk = S.wishOk; stat.wishFail = S.wishFail; stat.staffLv = JSON.stringify(S.staff); stat.servants = Object.keys(S.servants || {}).reduce((n, k) => n + S.servants[k].length, 0);
   return { rows, over: !!S.over, stat };
@@ -147,7 +149,9 @@ function runBot(cfg) {
     const errs = []; page.on('pageerror', e => errs.push(e.message));
     await page.addInitScript(seed => { let s = seed; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
       window.__CT_TEST = true; window.__CT_MGR = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {} }, SEED);
-    await page.goto(url); await page.evaluate(() => window.__ct.init());
+    await page.goto(url);
+    const SET = arg('set', ''); if (SET) await page.evaluate(set => { set.split(',').forEach(kv => { const [k, v] = kv.split('='); window.eval(k + '=' + v); }); }, SET);
+    await page.evaluate(() => window.__ct.init());
     out[strat] = await page.evaluate(runBot, { strat, weeks: WEEKS, diff: DIFFK });
     out[strat].errs = errs; await ctx.close();
   }

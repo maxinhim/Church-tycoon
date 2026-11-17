@@ -30,7 +30,7 @@ function drawFx(c){
 var CF=[],celeTimer=0;
 function celebrate(g,lines,kick){
   var el=$('#cele');if(!el)return;
-  sfx('bell',.85,0);setTimeout(function(){sfx('join',.7,0);},300);
+  sfx(kick&&/스테이지/.test(kick)?'levelup':'reward',.7,0);
   el.innerHTML='<div class="cbox" role="status"><div class="ckick">'+(kick||'목표 달성')+'</div><h2>'+g.n+'</h2><ul>'+lines.map(function(l){return '<li>'+l+'</li>';}).join('')+'</ul><p class="chint">눌러서 닫기</p></div>';
   el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   clearTimeout(celeTimer);celeTimer=setTimeout(function(){el.hidden=true;},7000);
@@ -53,17 +53,28 @@ function warnings(){
   else if(lastNet(S)<0)w.push('지난주 적자 '+fmt(lastNet(S)));
   if(S.open&&!hallsReach())w.push('예배 공간에 닿는 길이 없어요. 길을 이어 주세요');
   if(S.members>A.seats)w.push('좌석이 부족해 성도가 떠나요');
-  if(c.spirit!=null&&c.spirit<0.45)w.push('영성이 낮아요 ('+Math.round(c.spirit*100)+'%). 성찬식·세례식을 열고 기도실·성경공부방·찬양실을 갖춰요');
-  if(S.members>MOD.cap)w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
-  if(staleWeeks()>0)w.push('매너리즘: 새로 한 일 없이 '+(S.week-(S.lastNew||0))+'주째예요. 새 건물·꾸미기나 다른 행사를 해 보세요');
+  if(c.spirit!=null&&c.spirit<0.45&&alertOn('spirit'))w.push('영성이 낮아요 ('+Math.round(c.spirit*100)+'%). 성찬식·세례식을 열고 기도실·성경공부방·찬양실을 갖춰요');
+  if(S.members>MOD.cap&&alertOn('past'))w.push('목양이 벅차요. 부교역자·직분자를 세우세요');
+  if(staleWeeks()>0&&alertOn('stale'))w.push('매너리즘: 새로 한 일 없이 '+(S.week-(S.lastNew||0))+'주째예요. 새 건물·꾸미기나 다른 행사를 해 보세요');
   var rp=needRepair().length;if(rp)w.push('수리가 필요한 건물 '+rp+'곳');
   var un=S.buildings.filter(function(b){return needsDoor(b)&&!usable(b);});if(un.length)w.push('이용할 수 없는 건물: '+defOf(un[0]).name+(un.length>1?' 외 '+(un.length-1)+'곳':'')+' · 건물을 눌러 길을 이어 주세요');
   var um=unstaffed();if(um.length)w.push('👤 관리자가 없는 건물: '+defOf(um[0]).name+(um.length>1?' 외 '+(um.length-1)+'곳':'')+' · 건물을 눌러 관리자를 배치하세요');
   if(c.park<0.7&&!isLocked('lot'))w.push('주차가 모자라 방문자가 줄어요');
   // 방문자가 실제로 겪은 불편 (무엇을 지으면 되는지까지)
   gripeList().slice(0,5).forEach(function(g){w.push(g.t);});
-  if(S.gripPen>=0.5)w.push('지난주 불편 때문에 성도 만족도 −'+S.gripPen);
+  if(S.gripPen>=0.5&&alertOn('pen'))w.push('지난주 불편 때문에 성도 만족도 −'+S.gripPen);
+  // 할 일: 지금 바로 눌러 마무리할 수 있는 것 (보상·임명·고민)
+  var er=evReadyCount();if(er)w.push('🎁 보상을 받을 행사 '+er+'개 · 행사 화면에서 받아요');
+  var ir=indReadyCount();if(ir)w.push('📈 현황에서 받을 지표 보상 '+ir+'개 · 왼쪽 아래 자금 칩을 눌러요');
+  var tr=(S.people||[]).filter(function(p){return p.tr&&p.tr.ready;}).length;if(tr)w.push('🎓 교육을 마친 성도 '+tr+'명 · 성도 화면에서 임명해요');
+  var cn=featOk('care')?caresCount():0;if(cn)w.push('💬 고민이 있는 성도 '+cn+'명 · 성도 화면 › 고민');
   return w;
+}
+// 챙길 일 단계: 처음 하는 사람이 버거워하지 않게, 관련 기능이 열리는 교회 Level부터 띄운다 (ALERT_LV, balance.js)
+function alertOn(k){
+  if(S.unlockAll)return true;
+  if(k==='past')return featOk('hire');
+  return (S.lvl||1)>=(ALERT_LV[k]||1);
 }
 function qbar(label,v){
   var p=Math.round(clamp(v,0,1)*100);

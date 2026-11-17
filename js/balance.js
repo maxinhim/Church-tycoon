@@ -8,7 +8,7 @@
 var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 
 /* 수입 */
-var VIS_RATE=0.4;         // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
+var VIS_RATE=0.55;         // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
 var SHOP_K=14;           // 한 번 살 때 = 건물 income × SHOP_K
 var SHOP_COST=0.25;      // 매장 재료비 비율 (판매 순간 빠진다)
 var OFFER_PER=30;        // 주일 헌금: 출석 한 명당
@@ -16,8 +16,8 @@ var VIS_GIVE=6;          // 방문자 헌금: 한 명당
 var SPONSOR0=600,SPONSOR_DROP=6;   // 개척 후원: 시작 금액, 주마다 줄어드는 양
 
 /* 성도 수: 정착·이탈 */
-var JOIN_P=0.15;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
-var REFER_K=0.015;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
+var JOIN_P=0.3;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (스테이지 1: 처음 하는 사람도 모든 기능을 써 보며 성도 100명에 닿게 — 시뮬레이션 35~41주)
+var REFER_K=0.03;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
 var MOOD_LEAVE=45;       // 만족도가 이보다 낮으면 떠나는 성도가 는다
 var MOOD_GAIN=50;        // 만족도가 이보다 높으면 소개로 새 성도가 온다
 
@@ -179,6 +179,8 @@ var TEAM_LV={evang:3,praise:3,care:3,newcomer:4,edu:4,prayer:5,admin:6,media:7,m
 var PP_CLV={bapt:1,nurture:2,disciple:3,devoted:4,sgl:4,server:4,deacon:6,cml:6,tlead:6,elder:8,kanji:8,dlead:8,seminary:10,cstaff:10,assoc:12};
 // gift 선물 · hire 청빙(부교역자·직원)과 봉사자 화면 · entr 입구 꾸미기 · teams 사역팀 · bulk 일괄 심방·교육 · care 성도의 고민 · vol 봉사자 갈래(직분자·리더·섬김이) · deleg 성도 돌봄 맡기기
 var FEAT_LV={gift:2,hire:2,entr:2,teams:3,bulk:3,care:3,vol:4};
+// 챙길 일을 띄우기 시작하는 교회 Level (effects.js alertOn): 영성 낮음·지난주 불편은 Lv 2, 매너리즘은 Lv 3부터. 목양 벅참은 청빙(hire)이 열린 뒤
+var ALERT_LV={spirit:2,pen:2,stale:3};
 // 퀘스트 한 칸마다 받는 돈은 퀘스트 목록(quests.js)에 있다
 
 /* 사역팀 (teams.js): 섬김이를 팀 슬롯(최대 TEAM_MAX칸)에 배치하면 그 수가 팀의 단계(0~TEAM_MAX)가 된다. 넣고 빼고 옮기는 데 값은 들지 않고, 사례비도 없다.
@@ -232,7 +234,8 @@ var SPIRIT_VIS0=.45,SPIRIT_VIS1=.95,SPIRIT_JOIN0=.5,SPIRIT_JOIN1=.9,WORD_JOIN_LO
    기대는 교회 Level을 따라 오른다 (갓 개척한 교회에는 너그럽고, 커질수록 설교·영성을 더 바란다):
    설교 기대 = SERMON_OK0 + SERMON_OK_LV × (Lv−1) (최대 SERMON_OK_MAX), 영성 기대 = SPIRIT_OK0 + SPIRIT_OK_LV × (Lv−1) (최대 SPIRIT_OK_MAX) */
 var SERMON_OK0=.95,SERMON_OK_LV=.03,SERMON_OK_MAX=1.5,SERMON_K=1.3,SERMON_MAX=.6,SPIRIT_OK0=.4,SPIRIT_OK_LV=.04,SPIRIT_OK_MAX=.8,SPIRIT_K=1.3,WORD_UNMET=40;
-var VIS_MAX=60;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
+var VIS_MEM_MAX=40;      // 주일에 예배하러 와서 지도를 걷는 성도 수 한도 (새 방문자 한도 VIS_MAX와 따로 센다)
+var VIS_MAX=80;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
 
 /* 봉사자·부교역자 행사 (ministry.js offEv): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 경험치 xp (+ 신뢰도 trust)
    g = 대상 갈래: 'A' 직분자 · 'B' 리더 · 'C' 섬김이 · 'ABC' 봉사자 모두. g가 없으면 부교역자(와 담임목사). 쉬는 기간 cd(주), 소요 시간 dur(주) */

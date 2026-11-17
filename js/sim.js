@@ -11,10 +11,12 @@ function update(dt){
   if(S.open){
     var spv=(S.cov&&S.cov.spirit!=null)?S.cov.spirit:.6,rate=VIS_RATE*(0.4+trustIdx()/75)*(SPIRIT_VIS0+SPIRIT_VIS1*spv)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
     S.spawnAcc+=rate*dt;
-    while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<VIS_MAX)spawnV(false);}
+    // 새 방문자와 예배하러 온 성도는 한도를 따로 센다 (성도가 늘어 지도가 성도로 차도 새 방문자는 계속 온다 — 예전엔 성도가 자리를 다 차지해 성장이 멈췄다)
+    var nv=0,nm=0;if(S.spawnAcc>=1||S.memAcc>=1)V.forEach(function(v){if(v.member)nm++;else nv++;});
+    while(S.spawnAcc>=1){S.spawnAcc-=1;if(nv<VIS_MAX){spawnV(false);nv++;}}
     if(isSunday()){
       S.memAcc+=Math.min(S.members,A.seats)*0.25/(WEEK/7)*dt;
-      while(S.memAcc>=1){S.memAcc-=1;if(V.length<90)spawnV(true);}
+      while(S.memAcc>=1){S.memAcc-=1;if(nm<VIS_MEM_MAX){spawnV(true);nm++;}}
     }
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);

@@ -2109,6 +2109,20 @@ async function earlyChecks(browser, url) {
     // 첫 걸음을 마치면 성장 목표·건축 안내 퀘스트가 뜬다
     ['f3', 'f4', 'f5', 'f6'].forEach(id => { S.qd[id] = 1; }); hud(true);
     o.back = qActive().some(q => q.g === 'goal') && qActive().some(q => q.g === 'guide') && qActive()[0].g === 'goal';
+    // 스테이지 1 퀘스트: 사역·건축 안내가 두 줄로 하나씩 이어지고, Level로 열리는 기능은 열릴 때까지 기다림. 마지막 성장 목표가 스테이지 목표(성도 100명)
+    { const ua = S.unlockAll, lv0 = S.lvl, qx0 = S.qxp, mo0 = S.money, rp0 = S.rep; S.unlockAll = false; S.lvl = 1; hud(true);
+      const gs = qActive().filter(q => q.g === 'guide').map(q => q.id).join();
+      ['p1', 'u7', 'p3', 'p4'].forEach(id => { S.qd[id] = 1; }); const wait = !qActive().some(q => q.id === 'p5'); S.lvl = 2; const open2 = qActive().some(q => q.id === 'p5');
+      const gl = QUESTS.filter(q => q.g === 'goal'), fq = QID[STAGE_GOAL];
+      o.lanes = gs === 'p1,b1' && wait && open2 && gl[gl.length - 1] === fq && fq.final && /100/.test(fq.d) && QUESTS.filter(q => q.g === 'guide').length >= 20;
+      // 챙길 일 단계: Lv 1에는 매너리즘·영성 경고가 없고, 할 일(교육 마친 성도 임명)은 뜬다
+      S.lvl = 1; S.lastNew = S.week - 20; const p0 = S.people[0], tr0 = p0.tr; p0.tr = { to: 'bapt', ready: true, end: 0 }; const w1 = warnings().join('|');
+      S.lvl = 3; const w3 = warnings().join('|'); p0.tr = tr0; S.lastNew = S.week;
+      o.alertLv = !/매너리즘/.test(w1) && /매너리즘/.test(w3) && /교육을 마친 성도 1명/.test(w1);
+      // 마지막 퀘스트를 이루면 스테이지 목표 달성(축하) · 스테이지 카드에 목표와 ✓
+      ['g1', 'g2', 'g3', 'g4'].forEach(id => { S.qd[id] = 1; }); const mm = S.members; S.members = 100; questTick(); const clr = qDone(STAGE_GOAL) && S.stageClear && S.stageClear.rural != null && /스테이지 목표/.test(document.getElementById('cele').textContent);
+      const gh = stageGoalHtml(STAGES[0]); o.final = clr && /목표 · 성도 100명의 교회/.test(gh) && /✓/.test(gh) && stageGoalHtml(STAGES[1]) === '';
+      S.members = mm; S.unlockAll = ua; S.lvl = lv0; S.qxp = qx0; S.money = mo0; S.rep = rp0; delete S.stageClear; document.getElementById('cele').hidden = true; recalc(); indTick(true); }
     QUESTS.forEach(q => { S.qd[q.id] = 1; });   // 아래 검사들이 퀘스트 보상에 흔들리지 않게
     // Level 곡선: 시작 점수로는 Lv 1, 지표 점수 합으로 오른다
     S.lvl = 1; o.curve = levelOf(churchScore()) === 1 && lvNeed(2) > churchScore() && levelOf(lvNeed(100)) === 100 && lvNeed(9) < 1300;
@@ -2272,6 +2286,9 @@ async function earlyChecks(browser, url) {
   check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
   check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');
   check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');
+  check(r.lanes, '스테이지 1 퀘스트: 사역·건축 안내가 두 줄로 하나씩 이어지고, Level로 열리는 기능은 열릴 때까지 기다리며, 마지막 성장 목표가 스테이지 목표(성도 100명)');
+  check(r.alertLv, '챙길 일: Lv 1에는 매너리즘 경고가 없고(Lv 3부터), 교육을 마친 성도 임명 같은 할 일은 뜸');
+  check(r.final, '스테이지 목표: 마지막 퀘스트를 이루면 축하하고, 스테이지 고르기 카드에 목표(성도 100명의 교회)와 ✓');
   check(r.curve, 'Level 곡선: 시작은 Lv 1, Lv 2는 약 2만, Lv 9는 약 8만, 100까지');
   check(r.lock && r.gift, 'Level 보상: 비싼 꾸미기는 Level로 열리고, 오를 때 축하금(건너뛴 단계 몫까지)');
   check(r.old, '옛 저장: Level을 새 곡선으로 다시 맞추고 첫 걸음은 건너뜀');
