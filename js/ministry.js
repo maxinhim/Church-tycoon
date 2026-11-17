@@ -78,12 +78,13 @@ var GIVEN=['민준','서연','도윤','하은','지호','수빈','예준','지�
 var ASC_OLD=[2,5];
 function makeCand(){
   var sk=1+Math.floor(Math.pow(Math.random(),1.5)*5),fk=Object.keys(FIELDS)[Math.floor(Math.random()*5)];
-  var pay=50+sk*30,pk=hirePortraitPick('subpastor'),g=pk.g;
-  return {name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),title:ASC_OLD.indexOf(pk.pi)>=0?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
+  var pay=ASSOC_PAY[sk-1],pk=hirePortraitPick('subpastor'),g=pk.g;
+  return {name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),title:ASC_OLD.indexOf(pk.pi)>=0?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:HIRE_FEE,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
 }
 function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
 function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}
-function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}
+function assocPay(){return S.assoc.reduce(function(t,a){return t+a.pay;},0)+hirePay();}   // 월 사례비 합계
+function payWeek(){return assocPay()/PAY_MONTH_DIV;}   // 주간 정산에 내는 몫
 function hireAssoc(i,bid){
   if(!featOk('hire'))return '청빙은 '+featWhy('hire');
   var c=S.cands[i];if(!c)return '후보가 없어요';

@@ -114,7 +114,10 @@ var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
 var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
 /* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
 var ASSOC_PER=10;
-var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.04,ASSOC_LV_MAX=20;
+var ASSOC_HOME_K=1.4,ASSOC_LV_K=.04,ASSOC_LV_MAX=20;
+/* 사례비(급여): 화면과 저장 값(pay)은 모두 '월 사례비'(만원)다. 게임 루프의 주간 정산은 월 사례비 ÷ PAY_MONTH_DIV 만큼 낸다(payWeek).
+   부교역자는 별 1~5개에 월 80 → 400만원, 청빙직원은 월 60 → 180만원, 교회에서 기른 부교역자는 별 5개라 400만원. 청빙비(HIRE_FEE)는 0 */
+var PAY_MONTH_DIV=4,ASSOC_PAY=[80,160,240,320,400],STAFF_PAY=[60,90,120,150,180],ASSOC_HOME_PAY=ASSOC_PAY[4],HIRE_FEE=0;
 var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
 var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만
 var NEED_OK=88;          // 욕구가 이만큼 차면 됐다고 본다 (높을수록 건물을 더 많이 들른다)
@@ -275,12 +278,12 @@ var ASC_EV={
    · 관리자가 있어야 가동하는 건물: 예배(추가 예배당) → 부교역자, 교제(소그룹실·친교실) → 직분자·리더, 매장 → 직원. 처음부터 있는 대예배당은 담임목사가 맡는다
    · 성능 배율(효과·회전): 교회에서 기른 사람 MGR_IN_K × (1 + 호감 Lv × MGR_PLV_K, 부교역자는 레벨마다 MGR_LV_K), 밖에서 청빙한 사람 MGR_EX_K0 + 별 × MGR_EX_STEP
    · 건물을 맡은 사람은 성도 돌봄(자동 심방)에서 빠진다 — 둘 중 하나만
-   · 외부 청빙: 후보 3명. 주급 = HIRE_PAY0 + 별 × HIRE_PAY_K (부교역자는 50 + 별 × 30), 청빙비 = 주급 × HIRE_FEE_K, 다시 뽑기 HIRE_REROLL.
-     처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 나온다 */
+   · 외부 청빙: 후보 3명. 월 사례비는 별 등급표(부교역자 ASSOC_PAY, 청빙직원 STAFF_PAY), 청빙비는 없다(HIRE_FEE=0), 다시 뽑기 HIRE_REROLL.
+     처음 HIRE_EARLY번은 별 1개짜리 사례비 낮은 후보가 반드시 한 명 나온다 */
 var MGR_NEED={worship:'pastor',fellow:'pastor',shop:'staff'};   // 예배·교제 건물은 부교역자만, 매장은 직원(교회직원·청빙한 직원)만
 var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['cstaff'];
 var MGR_IN_K=1.3,MGR_PLV_K=.004,MGR_LV_K=.04,MGR_EX_K0=.7,MGR_EX_STEP=.08;
-var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
+var HIRE_REROLL=600,HIRE_EARLY=3;
 
 /* 대예배당(`main`, 시작 건물): 같은 예배당보다 성능(효과·정원·좌석)이 MAIN_K배 */
 var MAIN_K=2.5;
@@ -299,7 +302,7 @@ var ENT_DECO_VIS={lights:.01,flags:.01,planter:.01,lantern:.015,balloon:.02,flow
    성능 배수 = (1 + ST_TRAIN.k×교육 횟수) × (1 + ST_RANK.k×직급) × (ST_MO_LO + (1−ST_MO_LO)×사기/100)
    · 직무 교육: 돈 cost×(1+grow×횟수)만원 + 훈련 경험 xp를 쓰고 즉시 교육 횟수 +1 (최대 max회, 영구)
    · 특별 격려: 돈 cost만원 → 사기 +mo, 훈련 경험 +xp (기다릴 일 없음)
-   · 직급 승급: 돈 cost[직급]만원, 교육 횟수 need[직급] 이상 → 직급 +1, 성능 +, 주급 +pay%
+   · 직급 승급: 돈 cost[직급]만원, 교육 횟수 need[직급] 이상 → 직급 +1, 성능 +, 월 사례비 +pay%
    · 사기는 매주 ST_MO_DECAY씩 떨어지고, 건물을 맡고 있으면 매주 훈련 경험 ST_XP_WEEK이 쌓인다 */
 var ST_TRAIN={cost:300,grow:.5,xp:10,max:10,k:.04};
 var ST_CHEER={cost:200,mo:50,xp:6};

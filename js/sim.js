@@ -48,13 +48,13 @@ function weekEnd(){
   var online=closed?Math.round(m*1.2):0;
   var visGive=Math.round(S.visitsWeek*VIS_GIVE*(0.5+trustIdx()/100));
   var sponsor=Math.round(Math.max(0,SPONSOR0-SPONSOR_DROP*S.week));
-  var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(assocPay());
+  var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(payWeek());
   // 재정 화면에서 항목마다 어떻게 계산됐는지 보여 주려고 계산 재료를 함께 남긴다
   var loanList=S.loans.map(function(l){return {n:LOANS[l.k].name,p:Math.round(l.pay)};});
   var upTop=S.buildings.map(function(b){var d=defOf(b),u=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);return {n:d.name,u:u,w:wearStage(b)};})
     .filter(function(o){return o.u>0;}).sort(function(a,b){return b.u-a.u;}).slice(0,3);
   var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,ppFlat:ppFlat,ppK:ppGiveK(),visits:S.visitsWeek,rep:Math.round(trustIdx()),week:S.week,
-    up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,assoc:Math.round(assocPay()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
+    up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,assoc:Math.round(payWeek()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
   var loan=payLoans();
   // 매장 재료비는 팔 때마다 바로 나갔다(S.weekSup). 정산 때는 나머지만 오간다
   var supply=S.weekSup||0;

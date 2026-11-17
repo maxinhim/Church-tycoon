@@ -125,7 +125,7 @@ function rcptWhy(r,k){
     L.push('낡은 건물은 유지비가 최대 60%까지 늘어나요');
     if(x.upTop&&x.upTop.length)L.push('유지비가 큰 건물: '+x.upTop.map(function(o){return o.n+' '+fmt(o.u)+(o.w?' ('+WEAR_NAME[o.w]+')':'');}).join(', '));
   }
-  else if(k==='pay'){L.push('부교역자 '+fmt(x.assoc)+' (사역팀은 달란트로 꾸려서 사례비가 없어요)');L.push('봉사자 › 부교역자 탭에서 사임시키면 줄어요');}
+  else if(k==='pay'){L.push('월 사례비 합계 ÷ '+PAY_MONTH_DIV+' = 주 '+fmt(x.assoc)+' (사역팀은 사례비가 없어요)');L.push('직원 화면에서 내보내면 줄어요');}
   else if(k==='supply'){L.push('매장 판매 '+fmt(r.shop)+' × '+pct(x.shopRate)+' — 판 만큼 재료를 다시 사 와요');}
   else if(k==='loan'){L.push((x.loans.length?x.loans.map(function(l){return l.n+' 주 '+fmt(l.p);}).join(', '):'대출 상환')+' (원금과 이자를 나눠 갚아요)');L.push('남은 원금은 아래에서 한 번에 갚을 수 있어요');}
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');

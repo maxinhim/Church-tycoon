@@ -21,7 +21,7 @@ function mgrPool(role){
   else{
     var nodes=MGR_STAFF_NODES;
     (S.people||[]).forEach(function(p){if(nodes.indexOf(p.node)<0)return;
-      if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'★'+p.ext.skill+' · 주 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
+      if(p.ext)L.push({key:'p'+p.id,pid:p.id,ext:1,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'ex',k:exK(p.ext.skill)*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'★'+p.ext.skill+' · 월 '+fmtS(p.ext.pay),carer:LEAD_NODES.indexOf(p.node)>=0});
       else L.push({key:'p'+p.id,name:p.n+' '+ppRankName(p),g:p.g,seed:p.seed,src:'in',k:MGR_IN_K*(1+MGR_PLV_K*p.lv)*stMul(p),sub:'호감 Lv '+p.lv,carer:LEAD_NODES.indexOf(p.node)>=0});});
   }
   L.forEach(function(w){w.at=MGB[w.key]||0;});
@@ -70,7 +70,7 @@ function mgrClear(bid){var b=bById(bid);if(b&&b.mgr){delete b.mgr;recalc();save(
 /* ---------- 외부 청빙 ----------
    봉사자 후보는 갈래마다 3명(S.vc: A 직분자 · B 리더 · C 섬김이), 부교역자 후보는 S.cands(ministry.js).
    청빙한 봉사자는 성도 명단(S.people)에 들어간다(p.ext = {skill, pay, story}): 그 갈래의 첫 직책(VOL_NODE)으로 시작하고,
-   봉사자 화면의 해당 탭에 나오며, 여느 성도처럼 심방·교육으로 더 기를 수 있다. 주급(p.ext.pay)은 사례비에 더한다 */
+   봉사자 화면의 해당 탭에 나오며, 여느 성도처럼 심방·교육으로 더 기를 수 있다. 월 사례비(p.ext.pay)는 사례비에 더한다 */
 var VOL_NODE={C:'cstaff'},VOL_TYPES=['C'];   // 청빙할 수 있는 것은 부교역자(ministry.js)와 직원(C, 교회직원으로 성도 명단에 들어간다)뿐
 /* 초상화 8명(hiredata.js)의 성별 — 이름·그림이 어긋나지 않게 */
 var HIRE_PORTRAIT_G={subpastor:'mfmfmmmm',staff:'mfmmffff'};
@@ -85,11 +85,11 @@ function hirePortrait(c,t){   // 후보(또는 성도 p.ext)의 그림 주소. p
 }
 function hirePick(a){return a[Math.floor(Math.random()*a.length)];}
 function makeVol(t,cheap){
-  var sk=cheap?1:1+Math.floor(Math.pow(Math.random(),1.3)*5),pay=HIRE_PAY0+HIRE_PAY_K*sk,pk=hirePortraitPick('staff'),g=pk.g;
-  return {t:t,name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,skill:sk,pay:pay,fee:pay*HIRE_FEE_K,story:pk.story};
+  var sk=cheap?1:1+Math.floor(Math.pow(Math.random(),1.3)*5),pay=STAFF_PAY[sk-1],pk=hirePortraitPick('staff'),g=pk.g;
+  return {t:t,name:hirePick(SURN)+hirePick(g==='m'?PP_MALE:PP_FEMALE),g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,skill:sk,pay:pay,fee:HIRE_FEE,story:pk.story};
 }
 // 후보 3명. 처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 낀다
-function genVol(t){return [makeVol(t,(S.hireN||0)<HIRE_EARLY),makeVol(t),makeVol(t)].sort(function(a,b){return a.fee-b.fee;});}
+function genVol(t){return [makeVol(t,(S.hireN||0)<HIRE_EARLY),makeVol(t),makeVol(t)].sort(function(a,b){return a.pay-b.pay;});}
 function volCands(t){S.vc=S.vc||{};return S.vc[t]||(S.vc[t]=genVol(t));}
 // 새 후보 찾기: 봉사자 세 갈래와 부교역자 후보를 모두 새로
 function volReroll(){

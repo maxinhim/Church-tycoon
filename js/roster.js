@@ -2,7 +2,7 @@
 /* ---------- 직원 화면 · 영웅 로스터 (하단 '👥 직원') ----------
    #scr의 roster 화면: 탭 부교역자 · 직원 · 청빙. 부교역자·직원 탭은 왼쪽 60%에 큰 초상화 카드 격자, 오른쪽 40%에 고른 사람의 상세 패널.
    · 카드 테두리: 교회에서 기른 사람(in)은 황금색, 밖에서 청빙한 사람(ex)은 푸른색. 카드 아래에 근무지(맡은 건물) 뱃지
-   · 상세 패널: 숨 쉬는 큰 초상화, 주급·성능·사기·훈련 경험·한 줄 사연, 그리고 쿨타임 없이 바로 되는 네 버튼
+   · 상세 패널: 숨 쉬는 큰 초상화, 월 사례비·성능·사기·훈련 경험·한 줄 사연, 그리고 쿨타임 없이 바로 되는 네 버튼
        📍 근무지 배치/변경(건물 메인 관리자로 바로 꽂음) · 📖 직무 교육(영구 성능↑) · 🎁 특별 격려(사기↑) · 🎓 직급 승급
    · 직원마다 st = {tr 직무교육 횟수, mo 사기, xp 훈련 경험, rk 직급}을 따로 둔다. 수치는 balance.js ST_* */
 function stOf(o){
@@ -78,7 +78,7 @@ function rosDetailHtml(e){
     '<div class="rd-h"><h3>'+e.name+'</h3><span class="rchip '+(e.ex?'ex':'in')+'">'+e.rank+'</span><span class="rorg">'+(e.ex?'청빙':'양육')+'</span></div>'+
     '<p class="say">“'+story+'”</p>'+
     '<dl class="rd-s"><div><dt>근무지</dt><dd>'+(at?'📍 '+at:'<em>대기 중</em>')+'</dd></div>'+
-    '<div><dt>주급</dt><dd>'+(e.pay?fmt(e.pay):'없음')+'</dd></div>'+
+    '<div><dt>월 사례비</dt><dd>'+(e.pay?fmt(e.pay):'없음')+'</dd></div>'+
     '<div><dt>성능</dt><dd>'+(e.k!=null?kText(e.k):'—')+'</dd></div>'+
     '<div><dt>직무 교육</dt><dd>'+s.tr+' / '+ST_TRAIN.max+'회</dd></div>'+
     '<div><dt>훈련 경험</dt><dd>'+Math.floor(s.xp)+'</dd></div>'+

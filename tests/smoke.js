@@ -1274,7 +1274,7 @@ async function mgrChecks(browser, url) {
     // 선택 카드 → 관리자 화면 → 외부 청빙 창
     UI.sel = shop.id; renderSelCard(); const sc = document.getElementById('selCard'); o.card = /관리자 필요/.test(sc.textContent); sc.querySelector('[data-act="mgr"]').click();
     o.scr = UI.scr === 'mgr' && UI.mgrB === shop.id && /없음/.test(document.getElementById('scrBody').textContent); document.querySelector('#scrBody [data-act="hireopen"]').click();
-    const dl = document.getElementById('scrDlg'), cheap = (HIRE_PAY0 + HIRE_PAY_K) * HIRE_FEE_K, hc = () => [...document.querySelectorAll('#scrBody .hcard')];
+    const dl = document.getElementById('scrDlg'), cheap = HIRE_FEE, hc = () => [...document.querySelectorAll('#scrBody .hcard')];
     o.dlg = UI.scr === 'hire' && UI.scrTab === 'C' && UI.hireFor === shop.id && hc().length === 3 && hc().every(c => !!c.querySelector('img[src*="portraits/hirecard"]') && !!c.querySelector('.hst') && !!c.querySelector('.hc-grade')) && volCands('C')[0].skill === 1 && volCands('C')[0].fee === cheap;
     const m0 = S.money, before = JSON.stringify(volCands('C')); document.querySelector('#scrBody [data-act="hcreroll"]').click();
     const mR = S.money; volReroll();   // 단추로 한 번(퀘스트 보상이 함께 들어올 수 있다), 함수로 한 번 더 정확히
@@ -1318,6 +1318,15 @@ async function mgrChecks(browser, url) {
   check(r.main, '대예배당: 지도 가운데에 고정으로 서 있고(목록에 없음) 문 앞에서 입구까지 길이 이어져 바로 가동');
   check(r.need, '관리자: 예배·교제 건물(부서실 포함)은 부교역자, 매장은 직원이 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
   check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 청빙 화면의 큰 카드 후보 3명(그림·별·등급, 누르면 사연), 초반엔 값싼 별 1개 후보가 반드시');
+  { const r2 = await page.evaluate(() => { const o = {};
+      o.fee = HIRE_FEE === 0 && PAY_MONTH_DIV === 4;
+      o.tbl = ASSOC_PAY[0] === 80 && ASSOC_PAY[4] === 400 && ASSOC_PAY.every((v, i, a) => !i || v > a[i - 1]) && ASSOC_HOME_PAY === 400;
+      refreshCands(); o.cand = S.cands.every(c => c.fee === 0 && c.pay === ASSOC_PAY[c.skill - 1]);
+      o.vol = volCands('C').every(c => c.fee === 0 && c.pay === STAFF_PAY[c.skill - 1]);
+      const a0 = S.assoc.slice(); S.assoc = [{ name: '월급', title: '전도사', field: 'edu', skill: 2, pay: 160, fee: 0 }, { name: '월급2', title: '부목사', field: 'edu', skill: 5, pay: 400, fee: 0 }];
+      o.week = assocPay() >= 560 && Math.abs(payWeek() - assocPay() / 4) < 1e-9; S.assoc = a0; recalc();
+      return o; });
+    check(Object.values(r2).every(Boolean), '사례비: 청빙비 0, 부교역자 월 80~400만원(청빙직원 월 60~180), 주간 정산은 월 사례비 ÷ 4 ' + JSON.stringify(r2)); }
   check(r.reroll && r.hire, '외부 청빙: 다시 뽑기는 큰돈이 들고, 청빙하면 바로 배치되어 가동·주급 지출');
   check(r.pool && r.swap, '관리자: 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르며, 바꿔 배치하면 회전이 빨라짐');
   check(r.excl && r.fit, '관리자: 건물을 맡은 부교역자는 성도 돌봄에서 빠지고, 자격을 잃으면 건물에서 빠짐');
