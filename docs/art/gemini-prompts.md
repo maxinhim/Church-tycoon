@@ -175,3 +175,27 @@ Row 6: white cross sculpture on a stone base; wooden garden pergola arch with cl
   - `intro-ui.webp`: 같은 배경 위에 'Church Tycoon' 로고와 'Tap to Start' 단추를 얹고, 위쪽을 마젠타(#FF00FF)로 덮은 그림.
 - 쓰는 법: `python3 tools/intro_assets.py` → `assets/intro/intro_bg.webp`(표시가 들어가지 않게 1776×999로 자름)·`intro_logo.png`·`intro_btn.png`.
   로고·단추는 'UI 시트의 화소가 배경 그림과 마젠타를 섞은 색으로 설명되면 바탕'이라는 기준으로 떼어 내고, 가장자리의 분홍 물은 안쪽 색을 번지게 해 없앤다. 단추는 짙은 바깥선 안쪽만 쓴다(둘레의 빛은 CSS).
+
+## 성도 아이콘 초상화 시트 (`assets/portraits/icons/members/`)
+성도 화면 카드의 동그란 아이콘(화면에서 54~78px, 큰 화면 ×2 해상도 기준 약 128px)에 들어갈 얼굴들이다. 한 장에 6열 × 4행(24명)을 한 번에 받아 `docs/art/sheets/members.png`에 두고, 칸마다 잘라(`tools/slice_sheet.py`) 동그랗게 오려 쓴다.
+- **칸 배치**: 윗 두 행 = 여성(12명), 아래 두 행 = 남성(12명). 열이 나이대(1열 10대 후반 → 6열 70대)라 `g`(성별)와 나이대로 골라 쓸 수 있다. 같은 열의 윗/아랫 행은 머리·옷 모양이 다르게.
+- **받은 뒤**: 마젠타 배경을 투명하게 → 칸마다 정사각으로 잘라 `member_f1.png`~`member_f12.png`, `member_m1.png`~`member_m12.png`로 저장 → `portraitSvg`(people.js)를 이 그림으로 바꾼다.
+
+### 프롬프트 (영어로 넣는다)
+```
+A character sheet of 24 small head-and-shoulders portrait icons of ordinary Korean church members, arranged in a perfect grid of 6 columns by 4 rows on a single image (landscape, 1536x1024 so each cell is a 256x256 square). Every portrait is centered in its own square cell, with a wide empty margin of at least 24 px between cells so the faces can be cut apart cleanly. The entire background of the image, including all gaps between portraits, is one flat solid pure magenta (#FF00FF) with no gradient, no shadow, no texture, no frame, no circle and no text.
+
+Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling: clean confident outlines, soft cel shading, smooth gradients on skin, large expressive eyes, gentle smiles, slightly rounded cute proportions, warm natural colors. The same art style, line weight, lighting (soft light from the upper left) and face proportions in all 24 portraits, as if drawn by one artist. Each portrait shows only the head and shoulders, facing the viewer, face filling about 60% of the cell height, simple everyday clothes (cardigans, shirts, blouses, knit vests, hoodies, jackets). No hands, no props, no background scenery, no watermark, no logos, no letters.
+
+Rows 1 and 2 (top two rows) are 12 different Korean women. Rows 3 and 4 (bottom two rows) are 12 different Korean men. Each column is an age group, the same for all four rows:
+column 1: late teens (school student, fresh face),
+column 2: twenties (college student or young worker),
+column 3: thirties,
+column 4: forties,
+column 5: fifties to early sixties (some gray hair, light wrinkles; one or two with glasses),
+column 6: seventies (white or gray hair, kind wrinkled smile).
+Within an age group the two rows of the same gender must look clearly different from each other: different hair style and color (black, dark brown, auburn, gray, white; short, bob, long, ponytail, bun, permed, side-parted), different clothes and clothing colors, a few with glasses, a few with a small freckle or dimple. Skin tones are natural East Asian. Expressions vary: warm smile, bright laugh, shy smile, calm gentle look. Absolutely no two faces alike.
+```
+
+### 시트 사용 현황
+아직 받지 않았다. 받으면 여기에 쓸 칸과 못 쓴 칸을 적을 것 (Gemini 작은 별 표시가 오른쪽 아래에 들어오면 그 칸은 쓰지 않거나 지운다).

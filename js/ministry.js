@@ -74,10 +74,12 @@ var FIELDS={
 };
 var SURN=['김','이','박','최','정','강','조','윤','장','임','한','오','서','신','권','황','안','송','류','홍'];
 var GIVEN=['민준','서연','도윤','하은','지호','수빈','예준','지우','현우','유진','성민','은지','동현','혜린','준혁','다은','시온','하람','은혜','소망'];
+/* 초상화(hiredata.js subpastor) 중 연령대가 높은 3번(2)·6번(5)은 부목사 후보로만, 나머지는 전도사 후보로만 나온다 */
+var ASC_OLD=[2,5];
 function makeCand(){
   var sk=1+Math.floor(Math.pow(Math.random(),1.5)*5),fk=Object.keys(FIELDS)[Math.floor(Math.random()*5)];
   var pay=50+sk*30,pk=hirePortraitPick('subpastor'),g=pk.g;
-  return {name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],title:sk>=3?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
+  return {name:SURN[Math.floor(Math.random()*SURN.length)]+GIVEN[Math.floor(Math.random()*GIVEN.length)],title:ASC_OLD.indexOf(pk.pi)>=0?'부목사':'전도사',field:fk,skill:sk,pay:pay,fee:pay*4,g:g,seed:1+Math.floor(Math.random()*99990),pi:pk.pi,story:pk.story};
 }
 function refreshCands(){S.cands=[makeCand(),makeCand(),makeCand()];S.candWeek=S.week;}
 function assocSlots(){return 1+Math.floor(S.members/ASSOC_PER);}
