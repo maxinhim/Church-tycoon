@@ -335,3 +335,63 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 @media (prefers-reduced-motion:no-preference){.fbadge.care{animation:of-pulse 1s ease-in-out infinite}}
 .bic b{font-size:11px;margin-left:3px}
 .bic{width:auto!important;min-width:44px;padding:0 8px;display:inline-flex;align-items:center;gap:2px}
+
+/* ---------- Gemini로 만든 버튼 그림 (assets/ui, tools/ui_buttons.py) ---------- */
+/* 아래 기능 버튼: 원형 그림(라벨 리본 포함). 평소·눌림(.on)·잠김(.lock) */
+.fab{--fi:none}
+.fab[data-fab="build"]{--fi:url(../assets/ui/fab_build.png);--fo:url(../assets/ui/fab_build_on.png);--fk:url(../assets/ui/fab_build_lock.png)}
+.fab[data-fab="minis"]{--fi:url(../assets/ui/fab_events.png);--fo:url(../assets/ui/fab_events_on.png);--fk:url(../assets/ui/fab_events_lock.png)}
+.fab[data-fab="people"]{--fi:url(../assets/ui/fab_people.png);--fo:url(../assets/ui/fab_people_on.png);--fk:url(../assets/ui/fab_people_lock.png)}
+.fab[data-fab="officers"]{--fi:url(../assets/ui/fab_vol.png);--fo:url(../assets/ui/fab_vol_on.png);--fk:url(../assets/ui/fab_vol_lock.png)}
+.fab[data-fab="roster"]{--fi:url(../assets/ui/fab_staff.png);--fo:url(../assets/ui/fab_staff_on.png);--fk:url(../assets/ui/fab_staff_lock.png)}
+.fab .fc,.fab.on .fc,.fab.lock .fc{background:transparent;border:0;box-shadow:none;filter:none;transform:none;overflow:visible;-webkit-backdrop-filter:none;backdrop-filter:none}
+.fab .fc>svg{display:none}
+.fab .fc::before{content:'';position:absolute;left:50%;top:-5%;width:118%;height:134%;transform:translateX(-50%);background:var(--fi) center/contain no-repeat;transition:transform .12s}
+.fab.on .fc::before{background-image:var(--fo);transform:translateX(-50%) translateY(-2px)}
+.fab.lock .fc::before{background-image:var(--fk)}
+.fab.lock .fc::after{content:none}
+.fab:active .fc::before{transform:translateX(-50%) scale(.94)}
+.fab .fl{visibility:hidden}
+/* 지도 위 작은 버튼: 돌리기·설정 */
+.tools button,.gbtn,#bRot{background:center/contain no-repeat;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:50%}
+.tools button svg,.gbtn svg{display:none}
+#bRot{background-image:url(../assets/ui/hud_rot.png)}
+#bGear{background-image:url(../assets/ui/hud_gear.png)}
+#bGear[aria-expanded="true"]{background-color:transparent;filter:drop-shadow(0 0 5px #ffe28a) brightness(1.08)}
+/* 게임 속도·소리 */
+#gearMenu .sp button[data-sp]{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:center/contain no-repeat;font-size:0;color:transparent;box-shadow:none;opacity:.6;filter:grayscale(.4)}
+#gearMenu .sp button[data-sp].on{opacity:1;filter:drop-shadow(0 0 4px #ffe28a)}
+#gearMenu .sp button[data-sp="0"]{background-image:url(../assets/ui/hud_pause.png)}
+#gearMenu .sp button[data-sp="1"]{background-image:url(../assets/ui/hud_x1.png)}
+#gearMenu .sp button[data-sp="2"]{background-image:url(../assets/ui/hud_x2.png)}
+#gearMenu .sp button[data-sp="4"]{background-image:url(../assets/ui/hud_x4.png)}
+#gearMenu .sp button[data-sp="8"]{background-image:url(../assets/ui/hud_x8.png)}
+#bMusic,#bSfx{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:center/contain no-repeat;font-size:0;color:transparent;box-shadow:none}
+#bMusic{background-image:url(../assets/ui/hud_music_off.png)}#bMusic[aria-pressed="true"]{background-image:url(../assets/ui/hud_music.png)}
+#bSfx{background-image:url(../assets/ui/hud_sfx_off.png)}#bSfx[aria-pressed="true"]{background-image:url(../assets/ui/hud_sfx.png)}
+/* 닫기 */
+.sclose,.dclose,.sx{background:url(../assets/ui/hud_close.png) center/contain no-repeat;border:0;box-shadow:none;font-size:0;color:transparent}
+.sclose svg,.dclose svg{display:none}
+/* 챙길 일 단추 */
+.alertb{background:url(../assets/ui/alert.png) center/contain no-repeat;border:0;box-shadow:none;border-radius:0;width:54px;height:56px}
+.alertb .ex{display:none}
+.alertb .aln{right:-2px;top:-2px;background:transparent;border:0;color:#c0261b;min-width:20px;height:20px;font:900 13px/20px sans-serif}
+@media (max-height:480px){.alertb{width:38px;height:40px}.alertb .aln{min-width:15px;height:15px;font-size:10px;line-height:15px}}
+/* 성도 화면: 심방·선물·고민 그림 단추(글자가 그림에 들어 있다) */
+.bgp .bic[data-v="visit"],.bgp .bic[data-v="gift"]{width:96px;height:54px;min-width:0;padding:0;border:0;border-radius:0;box-shadow:none;background:center/contain no-repeat;font-size:0;color:transparent;position:relative}
+.bgp .bic[data-v="visit"]{background-image:url(../assets/ui/visit_off.png)}.bgp .bic[data-v="visit"].on{background-image:url(../assets/ui/visit.png)}
+.bgp .bic[data-v="gift"]{background-image:url(../assets/ui/gift_off.png)}.bgp .bic[data-v="gift"].on{background-image:url(../assets/ui/gift.png)}
+.bgp .bic b{display:none}.bgp .bic i{position:absolute;right:-5px;top:-6px;font-size:11px;color:#fff}
+.pcb{flex:0 0 118px;min-width:0;height:66px;padding:0;border:0;border-radius:0;background:url(../assets/ui/care.png) center/contain no-repeat;box-shadow:none;position:relative;font-size:0;color:transparent}
+.pcb.hot{background-image:url(../assets/ui/care_hot.png);box-shadow:none}
+.pcb i,.pcb b{display:none}
+.pcb span{position:absolute;right:-4px;top:-6px;min-width:22px;height:22px;border-radius:11px;background:#fff;border:2px solid #d8341f;color:#d8341f;font:900 12px/18px sans-serif;text-align:center;display:none}
+.pcb.hot span{display:block}
+.pcb.sel{outline:0;filter:drop-shadow(0 0 5px #fff) drop-shadow(0 0 3px #ffe28a)}
+.pcb.hot,.pcb.sel{background-size:contain;background-repeat:no-repeat;background-position:center;background-color:transparent}
+.bgp .bic[data-v="visit"],.bgp .bic[data-v="gift"]{width:96px!important;display:block}
+#gearMenu .sp{flex-wrap:nowrap;gap:3px}
+#gearMenu .sp button[data-sp],#bMusic,#bSfx{width:32px;height:32px;flex:none}
+.pcb i,.pcb b,.pcb.hot i{display:none!important}
+#bGear[aria-expanded="true"]{background:url(../assets/ui/hud_gear.png) center/contain no-repeat!important;border:0!important}
+#gearMenu{min-width:236px}
