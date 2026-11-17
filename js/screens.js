@@ -87,7 +87,7 @@ function renderScreen(){
   $('#scrTitle').textContent=sc.title;
   $('#scrTabs').innerHTML=sc.tabs.length>1?sc.tabs.map(function(t){var on=UI.scrTab===t[0],lk=tabLocked(UI.scr,t[0]);return '<button role="tab" data-act="scrtab" data-v="'+t[0]+'" aria-selected="'+on+'" class="'+(on?'on':'')+(lk?' lock':'')+tabImg(t[1],on)+'"'+(lk?' aria-disabled="true" title="'+featWhy(tabFeat(UI.scr,t[0]))+'"':'')+'>'+(lk?'<i aria-hidden="true">🔒</i>':'')+t[1]+(lk?'<small>Lv '+featLv(tabFeat(UI.scr,t[0]))+'</small>':'')+'</button>';}).join(''):'';
   $('#scrMoney').textContent=fmt(S.money);
-  var inf=$('#scrInfo');if(inf){inf.innerHTML=UI.scr==='people'?peopleInfo():'';inf.hidden=UI.scr!=='people';}
+  var inf=$('#scrInfo');if(inf){inf.innerHTML='';inf.hidden=true;}
   var body=$('#scrBody'),top=body.scrollTop;
   if(UI.scr==='hire'||(UI.scr==='roster'&&UI.scrTab==='hire')){body.className='sbody hirescr';body.innerHTML=hireHtml();
   }else if(UI.scr==='roster'){body.className='sbody roster';body.innerHTML=rosterHtml();
@@ -262,12 +262,12 @@ function bulkBar(slim){
     '<div class="bgp"><button class="bic'+(ng?' on':'')+'" data-act="bulk" data-v="gift"'+(ng?'':' disabled')+' aria-label="모두 선물 '+ng+'명, '+fmt(ng*PP_GIFT.cost)+'" title="모두 선물 · '+fmt(PP_GIFT.cost)+'씩">🎁<b>선물</b>'+(ng?'<i>'+ng+'</i>':'')+'</button><small class="bcost'+(ng?' on':'')+'">'+fmtS(ng?ng*PP_GIFT.cost:PP_GIFT.cost)+'</small></div></div>'+(gh?'<div class="bgw">'+gh+'</div>':'')+'</div>';
 }
 /* 성도 화면: 현황은 머리띠(탭 오른쪽)의 작은 글(peopleInfo), 본문 맨 위는 한 줄 도구(peopleBar: 고민 · 심방 · 선물 · 전체 ○○ 시작) */
-function peopleInfo(){
-  var all=S.people||[],n=all.length,cl={saint:0,volunteer:0,staff:0},lv=0,todo=0;
-  all.forEach(function(p){cl[ppClass(p)]++;lv+=p.lv;if((p.tr&&p.tr.ready)||ppCanStep(p))todo++;});
-  var it=function(l,v,c){return '<span'+(c?' class="'+c+'"':'')+'>'+l+' <b>'+v+'</b></span>';};
-  return it('등록',n+'명')+it('성도',cl.saint)+it('봉사자',cl.volunteer)+it('직원',cl.staff)+it('세례',all.filter(ppBaptized).length)+it('직분',offTotal())+
-    it('평균 호감','♥'+(n?Math.round(lv/n*10)/10:0))+it('할 일',todo,todo?'hot':'')+(UI.careOnly||UI.scrTab!=='all'?it('목록',scrPeople().length+'명'):'');
+function peopleInfo(){   // 도구 줄 옆의 큼직한 현황 (평균 호감·할 일은 뺐다)
+  var all=S.people||[],cl={saint:0,volunteer:0,staff:0};
+  all.forEach(function(p){cl[ppClass(p)]++;});
+  var it=function(l,v){return '<span class="pf"><i>'+l+'</i><b>'+v+'</b></span>';};
+  return '<div class="pfs" role="group" aria-label="성도 현황">'+it('등록',all.length+'명')+it('성도',cl.saint)+it('봉사자',cl.volunteer)+it('직원',cl.staff)+it('세례',all.filter(ppBaptized).length)+it('직분',offTotal())+
+    (UI.careOnly||UI.scrTab!=='all'?it('목록',scrPeople().length+'명'):'')+'</div>';
 }
 function careBtnHtml(){
   var cn=caresCount();
@@ -275,7 +275,7 @@ function careBtnHtml(){
 }
 function peopleBar(){
   var b=bulkBar(true),back='<button class="btn sgl-list on" data-act="pplist">🃏 단계 보기</button>';
-  return b?b.replace('<div class="sbulk">','<div class="sbulk pbar">'+careBtnHtml()+(UI.ppList?back:'')):'<div class="sbulk pbar">'+careBtnHtml()+(UI.ppList?back:'')+'</div>';
+  return b?b.replace('<div class="sbulk">','<div class="sbulk pbar">'+careBtnHtml()+(UI.ppList?back:'')+peopleInfo()):'<div class="sbulk pbar">'+careBtnHtml()+(UI.ppList?back:'')+peopleInfo()+'</div>';
 }
 /* 성도 화면 기본 보기: 단계마다 돌봄이 가장 필요한 대표 한 명을 큰 카드로(숨 쉬는 초상화). 카드 위 단추(심방·선물·다음 단계 교육·임명)는
    그 단계에 있는 사람 모두에게 한 번에 적용된다(호감 낮은 사람부터, 자금이 되는 만큼). 한 사람씩 보려면 '명단' 단추(UI.ppList) */
@@ -307,7 +307,7 @@ function stageCardHtml(st){
     (why?'<small class="sg-why">'+why+'</small>':'')+'</div></div>';
 }
 function stageBar(){
-  return '<div class="sbulk pbar">'+careBtnHtml()+'<button class="btn sgl-list" data-act="pplist">📋 명단 보기</button></div>';
+  return '<div class="sbulk pbar">'+careBtnHtml()+'<button class="btn sgl-list" data-act="pplist">📋 명단 보기</button>'+peopleInfo()+'</div>';
 }
 function stagesHtml(){
   var S0=ppStages();
