@@ -13,16 +13,19 @@
    다음 주 성도 만족도가 내려간다(최대 8, 불편마다 무게가 다르다). 현황 › 챙길 일에 무엇이 모자란지 보인다. */
 // s: 건물 설명에 붙는 짧은 이름 (이 건물이 무엇을 풀어 주는지)
 var GRIPES={
+  sermon:{n:'설교가 와닿지 않았던',fix:'담임목사·부교역자의 설교(말씀 효과)를 키우세요 — 행사 › 담임목사·부교역자의 서적 구매·말씀 연구·학위, 부교역자 레벨'},
+  spirit:{n:'영적인 분위기를 느끼지 못한',fix:'영성을 키우세요 — 기도실·찬양실·성경공부방, 성찬식 같은 성례 행사'},
+  word:{n:'예배를 드리지 못하고 돌아간',fix:'예배 건물(부서실 포함)을 더 짓고 레벨을 올리고 부교역자를 배치하세요'},
   wc:{s:'화장실',n:'화장실을 못 찾은',fix:'화장실',ids:['wc','wc2']},
   food:{s:'배고픔',n:'배가 고파도 먹을 곳이 없던',fix:'매점·빵집·식당·카페',ids:['shop','bakery','dining','cafe','grill','market','cook']},
-  drink:{s:'목마름',n:'목이 말라도 마실 곳이 없던',fix:'식수대·자판기·커피 카트·카페',ids:['drinkfount','vending','coffeecart','cafe','shop','books','bakery'],near:24*G},
-  lonely:{s:'외로움',n:'어울릴 곳이 없어 외로웠던',fix:'소모임(운동·취미·음악)·소그룹실·청년부실',ids:['cell','youth'],cat:'club'},
-  seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','picnic','gazebo','lounge','swing','parasol','elder'],near:18*G},
-  bin:{n:'쓰레기 버릴 곳이 없던',fix:'매장 둘레에 쓰레기통'},
+  drink:{s:'목마름',n:'목이 말라도 마실 곳이 없던',fix:'식수대·자판기·커피 카트·카페',ids:['drinkfount','purifier','vending','coffeecart','cafe','shop','books','bakery'],near:24*G},
+  lonely:{s:'외로움',n:'어울릴 곳이 없어 외로웠던',fix:'소모임(운동·취미·음악)·소그룹실·청년부실',ids:['cell','youth','teens'],cat:'club'},
+  seat:{s:'다리 아픔',n:'다리가 아파도 쉴 곳이 없던',fix:'벤치·피크닉 테이블·정자·휴게실을 다니는 길 곳곳에',ids:['bench','bench_stone','bench_iron','bench_back','bench_round','bench_flower','picnic','gazebo','lounge','swing','parasol','elder'],near:18*G},
+  bin:{n:'쓰레기 버릴 곳이 없던',fix:'매장 둘레에 쓰레기통·분리수거함'},
   bare:{n:'볼거리 없이 삭막하다고 느낀',fix:'다니는 길 둘레에 나무·화단·장식'},
   crowd:{n:'건물 앞에서 기다리다 화가 난',fix:'건물 레벨을 올리거나 하나 더 지으세요'}
 };
-var GRIPE_ORDER=['wc','food','drink','lonely','seat','bin','bare','crowd'];
+var GRIPE_ORDER=['sermon','spirit','word','wc','food','drink','lonely','seat','bin','bare','crowd'];
 // 이 건물이 그 불편을 풀어 주는지
 function gripeFits(g,d){return !!g.ids&&(g.ids.indexOf(d.id)>=0||(!!g.cat&&d.cat===g.cat));}
 // 건물 설명용: 이 건물이 풀어 주는 불편 이름들
@@ -34,10 +37,10 @@ var TRASHY=['cafe','bakery','vending','coffeecart','shop'];
 /* 장식 목록: 둘러본 곳이 삭막한지, 쓰레기통이 가까운지 볼 때 쓴다 (recalc 때마다 다시 만든다) */
 var DECOR=[],BINS=[];
 function rebuildDecor(){
-  DECOR=[];BINS=[];
+  DECOR=[];BINS=[];GRIPE_ON={};if(typeof NEED_ON!=='undefined')NEED_ON={};
   S.buildings.forEach(function(b){
     var d=defOf(b),bd=bDims(b),p={x:b.x+bd.w/2,y:b.y+bd.h/2,v:d.beauty||0};
-    if(b.def==='bin')BINS.push(p);
+    if(b.def==='bin'||b.def==='recycle')BINS.push(p);
     if(p.v>0&&(d.cat==='garden'||d.cat==='deco'||d.prop))DECOR.push(p);
   });
 }
@@ -77,6 +80,7 @@ function gripeTick(v,dt,walkedNow){
 // 갈 곳을 고를 때: 급한 일이 있으면 그 시설부터 찾아간다. 못 찾으면 불편을 겪고 넘어간다 (true = 길을 잡았다)
 function urgeGo(v){
   var k=v.urge,g=GRIPES[k];if(!k||!g)return false;
+  if(!gripeOn(k)){gripeDone(v,k);return false;}   // 풀어 줄 시설이 아직 잠겨 있으면 불편으로 치지 않는다
   var all=S.buildings.filter(function(b){return gripeFits(g,defOf(b))&&bOpen(b);});
   var open=all.filter(function(b){return wxOpen(defOf(b))&&!(v.blocked[b.id]>S.clock);});
   open.sort(function(a,b){return Math.abs(a.x-v.x)+Math.abs(a.y-v.y)-Math.abs(b.x-v.x)-Math.abs(b.y-v.y);});
@@ -100,9 +104,23 @@ function gripeDone(v,k){
   if(v.urge===k)v.urge='';
 }
 // 건물을 쓰고 나올 때: 그 건물이 풀어 주는 급한 일을 지운다. 앉아 있던 실내는 다리도 조금 쉰다
+// 설교의 질: 말씀 효과 × 그 건물을 맡은 사람(대예배당은 담임목사, 예배당은 부교역자)의 성능
+function sermonQ(b){return MOD.word*(S.freeMgr&&!b.fixed?1:mgrK(b));}
+// 설교·영성에 거는 기대: 교회 Level이 오를수록 높아진다
+function sermonOk(){return Math.min(SERMON_OK_MAX,SERMON_OK0+SERMON_OK_LV*((S.lvl||1)-1));}
+function spiritOk(){return Math.min(SPIRIT_OK_MAX,SPIRIT_OK0+SPIRIT_OK_LV*((S.lvl||1)-1));}
+// 그 불편을 풀어 줄 시설이 지금 열려 있는지 (아직 잠긴 시설 때문에 생기는 불편은 치지 않는다). recalc 때 다시 본다
+var GRIPE_ON={};
+function gripeOn(k){
+  if(GRIPE_ON[k]!=null)return GRIPE_ON[k];
+  var g=GRIPES[k],on=true;
+  if(g&&(g.ids||g.cat))on=DEFS.some(function(d){return !d.hidden&&!d.retired&&gripeFits(g,d)&&!isLocked(d.id);});
+  return (GRIPE_ON[k]=on);
+}
 function gripeUsed(v,b){
   if(v.wcT==null)gripeInit(v);
-  var d=defOf(b);for(var k in GRIPES)if(gripeFits(GRIPES[k],d))gripeDone(v,k);
+  var d=defOf(b);
+  if(d.cat==='worship'&&d.fill&&d.fill.word&&!d.nomgr){v.worshiped=true;var pr=clamp((sermonOk()-sermonQ(b))*SERMON_K,0,SERMON_MAX);if(Math.random()<pr){addGripe('sermon',null);vexed(v,'sermon');v.annoy+=.5;}}for(var k in GRIPES)if(gripeFits(GRIPES[k],d))gripeDone(v,k);
   v.walked*=0.5;
 }
 function gripeBought(v,b){if(TRASHY.indexOf(b.def)>=0&&Math.random()<0.5)v.trash=true;}
@@ -116,6 +134,9 @@ function gripeLook(v){
 function gripeLeave(v){
   if(v.wcT==null)return;
   S.gripN=(S.gripN||0)+1;
+  var sp=(S.cov&&S.cov.spirit!=null)?S.cov.spirit:1;
+  if(v.worshiped&&Math.random()<clamp((spiritOk()-sp)*SPIRIT_K,0,1)){addGripe('spirit');vexed(v,'spirit');v.annoy+=.4;}
+  if(!v.worshiped&&v.needs.word<WORD_UNMET){addGripe('word');vexed(v,'word');v.annoy+=.5;}
   if(v.trash){addGripe('bin');vexed(v,'bin');v.annoy+=0.3;}
   if(v.looks>=4&&v.nice/v.looks<0.2){addGripe('bare');vexed(v,'bare');v.annoy+=0.5;}
 }

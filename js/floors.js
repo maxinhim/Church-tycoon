@@ -3,6 +3,7 @@
    땅 칸에 칠하는 바닥(보도블록·벽돌·자갈·나무·꽃잔디). 걸어 다닐 수 있고 분위기 점수를 조금 올린다.
    S.floor = {"x,y": 정의 id} */
 function isFloorDef(id){return !!D[id]&&D[id].kind==='floor';}
+function floorBeauty(id){return D[id]&&D[id].kind==='floor'?(D[id].beauty||0)*FLOOR_BEAUTY_K:0;}   // 바닥 한 칸이 실제로 치는 분위기
 /* 바닥을 칠할 곳: 땅 칸(S.floor) 또는 데크 조각(p.f, pid로 고른다) */
 function floorSlot(x,y,pid){
   if(pid){var p=pieceById(pid);if(!p||!isDeckPiece(p))return null;
@@ -12,8 +13,8 @@ function floorSlot(x,y,pid){
 }
 // 한 칸짜리 꾸미기·소품(벤치·쓰레기통 등)이 있는 칸: 그 밑에도 바닥을 깔 수 있다 (소품은 칸을 막지만 바닥은 그대로 둔다)
 function oneCellAt(x,y){var b=occ&&occ[y]&&occ[y][x]?bById(occ[y][x]):null;return !!b&&!!defOf(b).cell;}
-// 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다)
-function floorWhy(x,y,id,pid){
+// 칠할 수 없으면 그 까닭 (아무것도 바꾸지 않는다). 돈이 모자란 것은 마지막에 따로 본다(floorWhy0은 돈을 보지 않음)
+function floorWhy0(x,y,id,pid){
   if(x<0||y<0||x>=COLS||y>=ROWS-RD)return '부지 밖이에요';
   if(y>=PZ)return '주차 구역은 이미 포장돼 있어요';
   if(!pid&&isWater(x,y))return '물이 차 있어요. 먼저 물을 빼 주세요';
@@ -22,30 +23,59 @@ function floorWhy(x,y,id,pid){
   var prev=sl.get();
   if(id==='f_erase')return prev?'':'지울 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
-  if(S.money<floorSwapCost(prev,id))return '자금이 부족해요';
   return '';
 }
+function floorWhy(x,y,id,pid){
+  var w=floorWhy0(x,y,id,pid);if(w)return w;
+  return S.money<floorSwapCost(floorSlot(x,y,pid).get(),id)?'자금이 부족해요':'';
+}
+/* 바닥 값: 새 바닥 값 + (이미 깔린 바닥이 있으면) 그 바닥의 철거비(바닥 값 × FLOOR_DEMO_K, balance.js).
+   'f_erase'(바닥 지우기)는 철거비만 든다 */
+var FLOOR_IDS=['f_block','f_brick','f_gravel','f_wood','f_step','f_clover'];
+function floorDemo(prev){return prev&&D[prev]?Math.ceil(D[prev].cost*FLOOR_DEMO_K):0;}
+function floorSwapCost(prev,id){return (id==='f_erase'?0:D[id].cost)+floorDemo(prev);}
 function paintFloor(x,y,id,pid){
-  var why=floorWhy(x,y,id,pid);if(why&&why!=='자금이 부족해요')return why;
-  var sl=floorSlot(x,y,pid),prev=sl.get();
-  if(id==='f_erase'){sl.set(null);S.money+=Math.floor(D[prev].cost*0.5);}
-  // 깔린 바닥 위에 다른 바닥을 깔면 걷어낸 반값을 빼고 계산한다
-  else{var c=floorSwapCost(prev,id);if(S.money<c)return '자금이 부족해요';S.money-=c;sl.set(id);addFresh(D[id].beauty);}
-  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:id==='f_erase'?0:floorSwapCost(prev,id),fr:id==='f_erase'?0:(D[id].beauty||0)});
+  var why=floorWhy(x,y,id,pid);if(why)return why;
+  var sl=floorSlot(x,y,pid),prev=sl.get(),c=floorSwapCost(prev,id),fr=id==='f_erase'?0:floorBeauty(id);
+  S.money-=c;sl.set(id==='f_erase'?null:id);if(fr)addFresh(fr);
+  if(UI.undo)UI.undo.push({x:x,y:y,pid:pid||0,prev:prev,id:id,c:c,fr:fr});
+  recalc();save();return '';
+}
+/* ---------- 여러 칸 한꺼번에 깔기 ----------
+   바닥 창 제목 오른쪽의 크기 단추(FLOOR_SIZES, 가로×세로 칸 — 지도 방위)로 고른 넓이(UI.fsz)를 미리보기 칸(왼쪽 위)부터 한 번에 깐다.
+   이미 깔린 다른 바닥은 새 바닥으로 바뀌고 철거비가 더해진다. 건물·물·부지 밖·같은 바닥 칸은 건너뛴다. 데크 위는 한 칸씩 */
+var FLOOR_SIZES=[[1,1],[2,2],[3,3],[4,4],[3,1],[1,3],[2,4],[4,2]];
+function floorSize(g){var z=UI.fsz;return z&&!(g&&g.pid)?z:[1,1];}
+function floorPlan(g,id){
+  var z=floorSize(g),out={cells:[],cost:0,swap:0,skip:'',n:z[0]*z[1]};
+  for(var j=0;j<z[1];j++)for(var i=0;i<z[0];i++){
+    var x=g.x+i,y=g.y+j,pid=i||j?0:g.pid,w=floorWhy0(x,y,id,pid);
+    if(w){if(!out.skip)out.skip=w;continue;}
+    var prev=floorSlot(x,y,pid).get(),c=floorSwapCost(prev,id);
+    out.cells.push({x:x,y:y,pid:pid||0,prev:prev,c:c});out.cost+=c;if(prev&&id!=='f_erase')out.swap++;
+  }
+  return out;
+}
+function paintFloorArea(g,id){
+  var z=floorSize(g);if(z[0]*z[1]===1)return paintFloor(g.x,g.y,id,g.pid);
+  var pl=floorPlan(g,id);
+  if(!pl.cells.length)return pl.skip||'깔 수 있는 칸이 없어요';
+  if(S.money<pl.cost)return '자금이 '+fmt(pl.cost-S.money)+' 모자라요';
+  var fr=id==='f_erase'?0:floorBeauty(id);
+  pl.cells.forEach(function(c){floorSlot(c.x,c.y,c.pid).set(id==='f_erase'?null:id);if(fr)addFresh(fr);});
+  S.money-=pl.cost;
+  if(UI.undo)UI.undo.push({area:pl.cells,id:id,c:pl.cost,fr:fr*pl.cells.length});
   recalc();save();return '';
 }
 function floorUndo(){
   var u=UI.undo.pop();if(!u)return false;
-  var sl=floorSlot(u.x,u.y,u.pid);if(!sl)return false;
-  if(u.id==='f_erase'){sl.set(u.prev);S.money-=Math.floor(D[u.prev].cost*0.5);}
+  if(u.area){u.area.forEach(function(c){var sl=floorSlot(c.x,c.y,c.pid);if(sl)sl.set(c.prev);});}
+  else{var sl=floorSlot(u.x,u.y,u.pid);if(!sl)return false;sl.set(u.prev);}
   // 되돌리면 값과 함께 '새로 꾸민 효과'도 되돌린다 (깔고 되돌리기로 꾸밈 보너스를 공짜로 쌓지 못하게)
-  else{sl.set(u.prev);S.money+=u.c!=null?u.c:D[u.id].cost;S.fresh=Math.max(0,(S.fresh||0)-(u.fr||0));}
+  S.money+=u.c||0;S.fresh=Math.max(0,(S.fresh||0)-(u.fr||0));
   recalc();save();return true;
 }
-/* 깔린 바닥을 다른 종류로 바꾸기: 걷어낼 때 돌려받는 반값을 새 바닥 값에서 빼고 계산한다.
-   id가 'f_erase'면 걷어낸다(반값 환불). 데크 조각은 pid로 고른다 */
-var FLOOR_IDS=['f_block','f_brick','f_gravel','f_wood','f_step','f_clover'];
-function floorSwapCost(prev,id){return (id==='f_erase'?0:D[id].cost)-(prev?Math.floor(D[prev].cost*.5):0);}
+/* 깔린 바닥을 다른 종류로 바꾸기(타일 카드): 새 바닥 값 + 철거비. id가 'f_erase'면 걷어낸다(철거비). 데크 조각은 pid로 고른다 */
 function floorSwap(x,y,id,pid){
   var sl=floorSlot(x,y,pid);if(!sl)return '바닥이 없어요';
   if(sl.busy)return '건물이 있어요';
@@ -53,16 +83,17 @@ function floorSwap(x,y,id,pid){
   if(id==='f_erase'&&!prev)return '걷어낼 바닥이 없어요';
   if(prev===id)return '이미 같은 바닥이에요';
   var c=floorSwapCost(prev,id);if(c>0&&S.money<c)return '자금이 '+fmt(c-S.money)+' 모자라요';
-  S.money-=c;sl.set(id==='f_erase'?null:id);if(id!=='f_erase')addFresh(D[id].beauty);recalc();save();return '';
+  S.money-=c;sl.set(id==='f_erase'?null:id);if(id!=='f_erase')addFresh(floorBeauty(id));recalc();save();return '';
 }
 function floorLine(c,ax,ay,bx,by){var a=rotPt(ax,ay),b=rotPt(bx,by),p=P(a[0],a[1],.006),q=P(b[0],b[1],.006);c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);}
-var FLOOR_TEX={f_block:'t_block',f_brick:'t_brick',f_gravel:'t_gravel',f_wood:'t_wood',f_step:'t_step',f_clover:'t_clover'};
+var FLOOR_TEX={f_block:'t_block',f_gravel:'t_gravel',f_step:'t_step',f_clover:'t_clover'};   // 벽돌·나무 바닥은 코드로 그린다 (chFloorTile)
 function drawFloorTile(id,x,y){
   var d=D[id],r=rrect(x,y,x+1,y+1),c=PJ.c,i;
   // 질감 그림이 있으면 그것으로 (이웃 칸과 이음새 없이 이어진다)
   var tp=FLOOR_TEX[id]&&texPattern(FLOOR_TEX[id],1);
   if(tp){quad([[r.x0,r.y0,.005],[r.x1,r.y0,.005],[r.x1,r.y1,.005],[r.x0,r.y1,.005]],tp,'rgba(0,0,0,.06)');return;}
   quad([[r.x0,r.y0,.005],[r.x1,r.y0,.005],[r.x1,r.y1,.005],[r.x0,r.y1,.005]],d.wall,'rgba(0,0,0,.1)');
+  if(d.pat==='brick'||d.pat==='plank'){chFloorTile(d,x,y);return;}
   c.strokeStyle='rgba(40,30,20,.22)';c.lineWidth=Math.max(.5,.8*PJ.s);c.beginPath();
   if(d.pat==='grid'){floorLine(c,x+.5,y,x+.5,y+1);floorLine(c,x,y+.5,x+1,y+.5);}
   else if(d.pat==='brick'){

@@ -16,7 +16,8 @@ catch (e) {
 const ROOT = path.resolve(__dirname, '..');
 let failures = 0;
 function check(cond, msg) { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!cond) failures++; }
-async function skipSteps(page) { /* 첫 걸음은 퀘스트라 따로 건너뛰지 않는다 */ }
+// 인트로·스테이지 고르기는 건너뛴다 (인트로 자체는 introChecks에서 따로 본다). 첫 걸음은 퀘스트라 따로 건너뛰지 않는다
+async function skipSteps(page) { await page.evaluate(() => { if (typeof introSkip === 'function') introSkip(); if (typeof S !== 'undefined' && S && !window.__CT_LOCKS) { S.unlockAll = true; recalc(); if (typeof hud === 'function') hud(true); } }); }
 
 /* ---------- 정적 검사 ---------- */
 function staticChecks() {
@@ -114,8 +115,8 @@ async function playChecks(browser, url) {
   check(!(await overlay()) && a !== await state(), '가로 복귀: 게임이 이어짐');
 
   // 동그란 기능 버튼·하위 탭·메뉴·닫기
-  await page.click('#fab [data-fab="minis"]'); await page.click('#scr [data-act="scrtab"][data-v="staff"]'); await page.click('#scr [data-act="scrclose"]');
-  await page.click('#fab [data-fab="status"]'); await page.click('#scr [data-act="scrclose"]'); await page.click('#bGear'); await page.click('#bMenu');
+  await page.click('#fab [data-fab="minis"]'); await page.click('#scr [data-act="scrtab"][data-v="pastor"]'); await page.click('#scr [data-act="scrclose"]');
+  await page.click('#status .pill.money'); await page.click('#scr [data-act="scrclose"]'); await page.click('#bGear'); await page.click('#bMenu');
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="close"]');
   await page.click('#fab [data-fab="build"]'); await page.click('#fab [data-fab="build"]');
   await page.click('#bRot');
@@ -255,13 +256,13 @@ async function pathChecks(browser, url) {
     connect(X + 1, Y + 3);
     // 문은 1층 정면 한 칸: 다리 데크(2층 높이)가 붙어도 문은 1층에 있고, 문 앞 길로 이어진다
     o.connected = !!room.door && room.door.ent.l === 0 && room.acc.ok;
-    // 정면 방향: 예배당(3×2)을 오른쪽(+x)을 향해 지으면 2×3을 차지하고 출입구도 그쪽
+    // 방향 없음: 예배당(3×2)을 다른 방향으로 지으려 해도 언제나 6×4칸이고 문은 남쪽(2)
     let fb = null;
     for (let y = 0; y < ROWS - 4 && !fb; y++) for (let x = 0; x < COLS - 3; x++) {
-      if (canPlace(D.chapel, x, y, 0) && free(x + 4, y + 1)) { build('chapel', x, y, 0); fb = S.buildings[S.buildings.length - 1]; break; }
+      if (canPlace(D.chapel, x, y, 0) && free(x + 6, y + 1)) { build('chapel', x, y, 0); fb = S.buildings[S.buildings.length - 1]; break; }
     }
-    o.facing = !!fb && fb.face === 0 && bDims(fb).w === 4 && bDims(fb).h === 6 && !!fb.door &&
-      [0, 1, 2, 3].every(i => [0, 1, 2, 3, 4, 5].every(j => occ[fb.y + j][fb.x + i] === fb.id));
+    o.facing = !!fb && fb.face === 2 && bDims(fb).w === 6 && bDims(fb).h === 4 && !!fb.door && fb.door.ent.d === 2 &&
+      [0, 1, 2, 3, 4, 5].every(i => [0, 1, 2, 3].every(j => occ[fb.y + j][fb.x + i] === fb.id));
     // 방문자가 쓰는 모든 건물에 정면 1층 가운데 문이 하나 있다
     o.allDoors = S.buildings.filter(b => defOf(b).fill).every(b => !!b.door && b.door.ent.d === (b.face == null ? 2 : b.face) && b.door.ent.l === 0 && sameSpot(b.door.ent, b.door.ext));
     return o;
@@ -274,7 +275,7 @@ async function pathChecks(browser, url) {
   check(r.noOverlap && r.bridgeOverPath, '길: 같은 높이 겹치기·건물 위 금지, 다리 아래 길은 허용');
   check(r.ground, '길: 다리 아래와 철골 계단 밑 땅으로 걸어 다닐 수 있음');
   check(r.connected, '문: 정면 1층 문 하나가 길과 이어짐');
-  check(r.facing, '방향: 정면을 고르면 건물 자리와 출입구가 그쪽을 향함');
+  check(r.facing, '방향 없음: 건물은 어느 쪽으로 지으려 해도 같은 자리 크기이고 문은 언제나 남쪽');
   check(r.allDoors, '문: 방문자가 쓰는 모든 건물에 정면 1층 가운데 문 하나');
   check(errs.length === 0, '길: 4방향 회전 그리기 포함 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
   await ctx.close();
@@ -333,6 +334,87 @@ async function stackChecks(browser, url) {
   check(r.allBuilt === '', '새 건물·요소: 모두 지을 수 있음' + (r.allBuilt ? ': ' + r.allBuilt : ''));
   check(r.allDoors, '문: 새 건물에도 모두 정면 문이 있음');
   check(errs.length === 0, '새 건물·요소: 시뮬레이션·4방향 그리기·패널 ' + r.cats + '개 분류 오류 없음' + (errs.length ? ':\n    ' + errs.join('\n    ') : ''));
+  await ctx.close();
+}
+
+// 스테이지 2~4: 지도 한가운데 대예배당, 산촌 협곡·차량·산짐승, 어촌 강·배, 도시 이웃 건물·부지 매입·민원, 스테이지별 저장
+async function stageChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => {
+    let s = 4242; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    window.__CT_TEST = true; window.__CT_MGR = true; window.requestAnimationFrame = () => 0; try { localStorage.clear(); } catch (e) {}
+  });
+  await page.goto(url); await skipSteps(page);
+  const r = await page.evaluate(() => {
+    window.__ct.init(); S.dlg = null; const o = {};
+    const mid = b => { const d = bDims(b); return [b.x + d.w / 2, b.y + d.h / 2]; };
+    o.center = ['rural', 'mount', 'sea', 'city'].every(st => { const n = newState('normal', st), m = n.buildings.find(b => b.def === 'main'), c = [m.x + D.main.w / 2, m.y + D.main.h / 2]; return n.stage === st && Math.abs(c[0] - COLS / 2) <= 1 && Math.abs(c[1] - ROWS / 2) <= 1; });
+    const run = n => { for (let i = 0; i < n; i++) update(0.1); };
+    // 산촌: 계단식 산, 입구에서 대예배당 문까지 굽이진 협곡 길(곧은 길보다 훨씬 김), 걸어서는 적게 오고 차량이 태워 오면 회복
+    enterStage('mount'); S.dlg = null; S.open = true; S.unlockAll = true; S.money = 99999; recalc();
+    const mm = S.buildings.find(b => b.def === 'main'), g = gateNode(), en = entNode(mm), pth = navPath(g, n => n === en);
+    o.mount = S.stage === 'mount' && Object.keys(S.hgt).length > 800 && Math.max(...Object.values(S.hgt)) <= 3 && Math.max(...Object.values(S.hgt)) >= 2 && usable(mm) && !!pth && pth.length > 26 && Object.keys(S.slp).length >= 3;
+    const vk0 = stageVisK(); S.members = 30; syncPeople(); S.people.slice(0, 2).forEach(p => { p.node = 'server'; p.lv = 20; }); recalc();
+    const tk = S.veh[0], bw = vehBuy('van'), vv = S.veh[1], idle = tk.k === 'truck' && vehRun(tk) && !vehRun(vv) && opCap() === VEH.truck.cap && warnings().some(t => /운전자가 없는 차량/.test(t));
+    vehSetDrv(vv.id, 'p' + S.people[0].id); vehSetDrv(vv.id, 'p' + S.people[0].id);
+    o.van = bw === '' && idle && vehRun(vv) && opCap() === VEH.van.cap + VEH.truck.cap && stageVisK() > vk0 && vk0 > STG_WALK_VIS && vk0 < 1 && vehUp() === VEH.van.up && stageJoinK({ ride: true }) === 1 && stageJoinK({}) === STG_WALK_JOIN;
+    run(700); o.ride = V.some(v => v.ride) && V.filter(v => v.ride).length >= 2;
+    // 산짐승: 내려와 건물로 가고, 챙길 일에 뜨며, 닿으면 건물이 상하고, 누르면(쫓으면) 돌아간다
+    WILD.length = 0; wildRaid(); const w0 = WILD.length, a0 = WILD[0], tb = bById(a0.tb), c0 = condOf(tb);
+    const warn = warnings().some(t => /산짐승/.test(t)); a0.x = a0.tx; a0.y = a0.ty; run(2); const hurt = !maintainable(tb) || condOf(tb) < c0;
+    WILD.forEach(a => wildFlee(a, true)); run(200);
+    o.wild = w0 >= WILD_N[0] && warn && hurt && WILD.length === 0 && typeof pickWild === 'function';
+    // 스테이지별 저장: 산촌에서 바꾼 것은 농촌을 다녀와도 그대로
+    S.money = 12345; enterStage('rural'); const ru = S.stage === 'rural' && Object.keys(S.hgt).length === 0 && S.money !== 12345; enterStage('mount'); o.save = ru && S.stage === 'mount' && S.money === 12345;
+    // 어촌: 강이 입구와 교회를 가르고(다리 금지), 마을 나룻배가 사람을 태워 오며, 입구에서 걸어 들어오는 사람은 없다
+    enterStage('sea'); S.dlg = null; S.open = true; S.unlockAll = true; recalc();
+    const sm = S.buildings.find(b => b.def === 'main'), gr = navReach(gateNode());
+    o.sea = Object.keys(S.water).length >= 300 && !gr[entNode(sm)] && usable(sm) && /배로/.test(pieceFits({ x: 10, y: 43, l: 0, s: 0, d: 0, k: 'arch' }) || '') && S.veh.length === 1 && S.veh[0].k === 'ferry' && vehRun(S.veh[0]);
+    run(900); o.ferry = V.length > 0 && V.every(v => v.ride) && S.veh[0].ph !== undefined;
+    openScreen('roster', 'fleet'); o.fleet = UI.scrTab === 'fleet' && !!document.querySelector('#scrTabs [data-v="fleet"]') && /마을 나룻배/.test(document.getElementById('scrBody').textContent) && !!document.querySelector('#scrBody [data-act="rosvbuy"][data-v="boat"]');
+    document.querySelector('#scrBody [data-act="rosvbuy"][data-v="boat"]').click(); o.fleet = o.fleet && S.veh.length === 2 && !!document.querySelector('#scrBody [data-act="rosvdrv"]'); closeScreen();
+    // 도시: 이웃 건물이 가득하고(주차 구역 포함), 눌러서 땅째 사면 그 자리가 빈다 · 주차가 더 필요하고 정착이 어렵다 · 민원
+    enterStage('city'); S.dlg = null; S.open = true; S.unlockAll = true; S.money = 99999; QUESTS.forEach(q => { S.qd[q.id] = 1; }); recalc();
+    const cb = S.buildings.filter(b => defOf(b).kind === 'city'), inPz = cb.filter(b => b.y >= PZ);
+    const c1 = inPz[0], price = cityPrice(c1); UI.sel = c1.id; UI.fold = true; renderSelCard(); const card = /부지 매입/.test(document.getElementById('selCard').textContent);
+    const m0 = S.money; document.querySelector('#selCard [data-act="citybuy"]').click();
+    o.city = cb.length >= 20 && inPz.length >= 3 && card && S.money === m0 - price && price >= 1000 && !bById(c1.id) && !occ[c1.y][c1.x] && canPlace(D.lots, c1.x, c1.y, 2) && S.landN === 1;
+    const pk = satInfo('park').need; S.stage = 'rural'; const pk0 = satInfo('park').need; S.stage = 'city';
+    o.cityK = pk > pk0 && stageJoinK({}) < 1 && demolish(cb[1].id) === undefined && !!bById(cb[1].id);
+    let tries = 0; while (!S.cmp && tries < 60) { cityWeek(); tries++; } o.cmp = !!S.cmp && warnings().some(t => /민원/.test(t));
+    enterStage('rural'); openScreen('roster'); o.noFleet = !document.querySelector('#scrTabs [data-v="fleet"]'); closeScreen();
+    // 테스트 게임: 100억 · 성도 50 · 갈래마다 봉사자 20 · 직원 20 · 부교역자 20 · 모든 기능 · 선교지에도 들어가고 저장은 따로
+    enterStage('miss2', 'test'); const cls = {}; S.people.forEach(p => { const k = ppClass(p) === 'volunteer' ? ppTrack(p) : ppClass(p); cls[k] = (cls[k] || 0) + 1; });
+    o.test = S.test && S.stage === 'miss2' && S.money === 1000000 && S.unlockAll && cls.saint === 50 && cls.A === 20 && cls.B === 20 && cls.C === 20 && cls.staff === 20 && S.people.filter(p => p.ext).length === 10 && S.assoc.length === 20 && S.members === S.people.length;
+    save(); o.test = o.test && !!localStorage.getItem(SAVE_KEY + '-test-miss2'); enterStage('rural', 'cont'); o.test = o.test && !S.test && S.stage === 'rural';
+    // 바닥 분위기: 한 칸 값은 소수점 한 자리(+0.1~0.3)로 보이고, 실제로는 FLOOR_BEAUTY_K배만 친다
+    const fb0 = A.beauty; S.floor['5,5'] = 'f_clover'; recalc(); const fb1 = A.beauty; delete S.floor['5,5']; recalc();
+    o.floorB = FLOOR_IDS.every(id => /^\d\.\d$/.test(String(D[id].beauty)) && new RegExp('분위기 \\+' + D[id].beauty.toFixed(1) + ' \\(한 칸\\)').test(effText(D[id])) && effTags(D[id]).some(t => t === '분위기 +' + D[id].beauty.toFixed(1))) && Math.abs(fb1 - fb0 - D.f_clover.beauty * FLOOR_BEAUTY_K) < 1e-9;
+    // 리더 › 전체 자동 배치: 모든 리더의 빈 칸에 맡을 수 있는 성도를 한꺼번에
+    S.unlockAll = true; S.members = 30; syncPeople(); S.people.forEach((p, i) => { p.node = i < 3 ? 'sgl' : 'new'; p.lv = i < 3 ? 25 : 2; p.assignedSaints = []; p.tr = null; }); recalc();
+    openScreen('officers', 'B'); const ab = document.querySelector('#scrBody [data-act="ldautoall"]'); const L3 = leaders(), want = Math.min(L3.reduce((n, l) => n + leadSlots(l), 0), ppFreeSaints().length);
+    ab.click(); o.leadAll = !!ab && L3.length === 3 && L3.every(l => (l.assignedSaints || []).length === leadSlots(l)) && L3.reduce((n, l) => n + l.assignedSaints.length, 0) === want && document.querySelector('#scrBody [data-act="ldautoall"]').disabled === !ppAutoAllOk(); closeScreen();
+    // 편의: 쉼터 벤치는 세 가지만, 기타에 식수대·정수기·분리수거함·쓰레기통
+    const vis = sub => DEFS.filter(d => d.cat === 'comfort' && !d.hidden && !d.retired && d.sub === sub).map(d => d.id);
+    const rest = vis('rest'), etc = vis('etc');
+    o.comfort = rest.filter(id => D[id].kind === 'bench').join() === 'bench,bench_back,bench_flower' && ['drinkfount', 'purifier', 'recycle', 'bin'].every(id => etc.includes(id)) && GRIPES.drink.ids.includes('purifier');
+    { const ok = build('purifier', 12, 12, 2) && build('recycle', 14, 12, 2); const pb = S.buildings.filter(b => b.def === 'purifier' || b.def === 'recycle'); draw(); o.comfort = o.comfort && ok && pb.length === 2 && !hasLv(pb[0]) && !mgrRole(pb[0]); }
+    return o;
+  });
+  check(r.center, '스테이지: 모든 스테이지의 대예배당이 지도 한가운데');
+  check(r.mount && r.van && r.ride, '산촌(단순): 넓은 분지 둘레의 낮은 산(1~3층)과 입구에서 한 번 굽은 협곡 길 · 걸어서는 적게 오고 마을 트럭·운전자를 세운 승합차가 입구에서 태워 오면 회복 ' + JSON.stringify([r.mount, r.van, r.ride]));
+  check(r.wild, '산촌: 산짐승이 내려와 챙길 일에 뜨고, 닿으면 건물이 상하며, 쫓으면 산으로 돌아감');
+  check(r.save, '스테이지마다 저장이 따로: 다른 스테이지를 다녀와도 그대로');
+  check(r.sea && r.ferry && r.fleet, '어촌: 강이 입구와 교회를 가르고(다리 금지) 나룻배로만 태워 옴 · 직원 › 차량 탭에서 배를 마련 ' + JSON.stringify([r.sea, r.ferry, r.fleet]));
+  check(r.city && r.cityK && r.cmp, '도시: 이웃 건물이 가득하고 땅째 사면 그 자리를 쓸 수 있음(철거는 안 됨) · 주차가 더 필요하고 정착이 어려움 · 민원 ' + JSON.stringify([r.city, r.cityK, r.cmp]));
+  check(r.noFleet, '농촌에는 차량 탭이 없음');
+  check(r.test, '테스트 게임: 100억·성도 50명·갈래마다 봉사자 20명·직원 20명(청빙직원 10)·부교역자 20명·모든 기능, 선교지에도 들어가고 저장은 따로');
+  check(r.floorB, '바닥 타일 분위기: 한 칸 값은 소수점 한 자리로 보이고(카드·설명), 실제로는 FLOOR_BEAUTY_K배만 침');
+  check(r.leadAll, '리더 › 전체 자동 배치: 모든 리더의 빈 칸에 맡을 수 있는 성도가 한꺼번에 배치됨');
+  check(r.comfort, '편의: 쉼터 벤치는 세 가지(벤치·등받이·꽃), 기타에 식수대·정수기·분리수거함·쓰레기통 — 정수기·분리수거함은 지을 수 있고 레벨·관리자 없음');
+  check(errs.length === 0, '스테이지: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
 
@@ -492,7 +574,7 @@ async function ministryChecks(browser, url) {
     const m0 = S.money, r0 = S.rep, x0 = S.qxp || 0, wk0 = S.week; S.t = 1; S.members = 12; recalc(); S.goalAcc = 0; update(0.6);
     o.goalMid = qDone('g1') && S.week === wk0;
     o.goal = qDone('g1') && S.money === m0 + QID.g1.m && S.qxp === x0 + QID.g1.xp && S.rep >= r0 + QID.g1.rep - 0.001 && isLocked('chapel') && !document.getElementById('cele').hidden && CF.length > 0 && /퀘스트 완료/.test(document.getElementById('cele').textContent);
-    S.lvl = 2; o.goal = o.goal && !isLocked('chapel') && isLocked('dining'); S.lvl = 1;
+    S.lvl = BLD_LV.cell; o.goal = o.goal && !isLocked('cell') && isLocked('chapel'); S.lvl = BLD_LV.chapel; o.goal = o.goal && !isLocked('chapel') && isLocked('grand'); S.lvl = 1;
     // 부지: 산 땅 밖에는 못 짓고, 사면 넓어진다
     S.money = 99999; levelTick(true);
     // 부지 사기는 없앴다: 지도 어디에나(도로 줄 제외) 지을 수 있다
@@ -500,12 +582,14 @@ async function ministryChecks(browser, url) {
     o.noStamina = S.stam === undefined && typeof restWeek === 'undefined';
     // 사역팀·부교역자·직분자
     const cap0 = MOD.cap;
-    { const mt = S.money; o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); }
+    S.unlockAll = true; recalc();
+    { const mt = S.money; S.members = Math.max(S.members, 4); syncPeople(); const sp = S.people[0], nd = sp.node; sp.node = 'server'; recalc(); o.team = teamAdd('evang', 1) === '' && S.staff.evang === 1 && MOD.vis > 1 && S.money === mt; teamAdd('evang', -1); sp.node = nd; recalc(); }
     refreshCands(); const fee = S.cands[0].fee, mA = S.money;
     o.assoc = hireAssoc(0) === '' && S.assoc.length === 1 && S.money === mA - fee && MOD.cap >= cap0 + 35 && assocPay() > 0;
-    o.assocLimit = hireAssoc(0) !== '';
-    S.members = 16; recalc();
+    { const mm = S.members; S.members = ASSOC_PER - 1; recalc(); o.assocLimit = hireAssoc(0) !== '' && /명까지/.test(hireAssoc(0)); S.members = mm; recalc(); }
+    S.members = 16; if (ASSOC_PER < 16) S.assoc.push({ name: '채움', title: '전도사', field: 'edu', skill: 1, pay: 0, fee: 0 }); recalc();   // 자리를 하나만 남기도록 채운다
     // 성도 한 사람 한 사람: 명단은 성도 수를 따르고, 심방 → 호감 레벨 → 교육 → 임명으로 세례·집사·장로/권사·신학 수료·부교역자까지
+    S.unlockAll = true; recalc();
     { const P = S.people, pe = {}; o.pe = pe;
       pe.roster = P.length === 16 && P.every(q => q.n && q.lv === 1 && q.node === 'new' && (q.g === 'm' || q.g === 'f')) && ppGiveK() === 1 && new Set(P.map(q => q.id)).size === 16;
       const p = P[0], cash = () => S.money; p.g = 'm';
@@ -529,21 +613,11 @@ async function ministryChecks(browser, url) {
       // 교역 갈래: 신학교 → 부교역자로 섭외 (자리가 있어야 하고, 명단에서 빠져 별 5개 사역자가 된다)
       const t3 = P[3]; t3.node = 'kanji'; t3.lv = 70; recalc(); const sOk = ppTrain(t3.id, 'seminary') === ''; t3.tr.end = evNow() - .01; peopleTick(); ppAppoint(t3.id);
       pe.grad = sOk && t3.node === 'seminary' && PA.grad === 1 && PA.flat >= PP_TREE.seminary.give;
-      pe.slot = /자리가 없어요/.test(ppTrainWhy(t3, 'assoc')); dismissAssoc(0); S.tempMood = 0;
+      pe.slot = /자리가 없어요/.test(ppTrainWhy(t3, 'assoc')); while (S.assoc.length) dismissAssoc(0); S.tempMood = 0;
       const mem0 = S.members, tname = t3.n, aOk = ppTrain(t3.id, 'assoc') === ''; t3.tr.end = evNow() - .01; peopleTick(); const am = ppAppoint(t3.id);
       pe.assoc = aOk && !!am && S.assoc.length === 1 && S.assoc[0].home && S.assoc[0].skill === 5 && S.assoc[0].name === tname && S.members === mem0 - 1 && S.people.length === mem0 - 1 && !ppById(t3.id) && Math.abs(asSkill(S.assoc[0]) - 5 * ASSOC_HOME_K) < .01;
       // 부교역자 격려: 레벨이 오르면 실력이 커진다
-      const a0 = S.assoc[0], sk0 = asSkill(a0); a0.xp = asNeed(1) - 1; m1 = cash(); pe.cheer = asCheer(0) === '+2' && cash() === m1 - ASSOC_CHEER.cost && asSkill(a0) > sk0 && /주 뒤/.test(asCheer(0));
-      // 부교역자에게 돌봄 맡기기: 켜면 매주 Lv 아래 성도를 능력만큼 심방·선물, 자금이 바닥 가까우면 멈춤
-      { const d = delegState(); d.lv = 10; S.people.forEach(z => { z.vw = -99; z.gw = -99; }); const low = delegPool().length; S.money = 99999; delegWeek(); const off = d.last === null;
-        d.on = true; const cap = delegCap(); const m2 = cash(); delegWeek(); const did = d.last.n, spent = m2 - cash();
-        S.people.forEach(z => { z.vw = -99; z.gw = -99; }); S.money = ASSOC_CARE_RES + 10; delegWeek(); const stop = d.last.n === 0;
-        pe.deleg = off && cap === asCare(S.assoc[0]) && cap >= ASSOC_CARE0 && did === Math.min(cap, low) && spent === did * (ppCareCost('visit', true) + ppCareCost('gift', true)) && ppCareCost('visit', true) < PP_VISIT.cost && ppCareCost('gift', true) < PP_GIFT.cost && ppCareXp('visit', true) < PP_VISIT.xp && ppCareXp('gift', true) < PP_GIFT.xp && stop; d.on = false; S.money = 99999; }
-      // 소그룹 리더도 돌봄을 맡는다: 부교역자 없이도, 리더 단계의 목양 수용력만큼, 싼 값에
-      { const P = S.people, keepA = S.assoc, n0 = P[0].node, n1 = P[1].node, lv0 = P.map(z => z.lv); S.assoc = []; P[0].node = 'sgl'; P[1].node = 'cml'; const d = delegState(); d.on = true; d.lv = 10; P.forEach(z => { z.vw = -99; z.gw = -99; z.lv = 1; }); S.money = 99999; recalc();
-        const cap2 = delegCap(), exp = leadCare(P[0]) + leadCare(P[1]), low = delegPool().length, m2 = cash(); delegWeek(); const did = d.last.n, sp = m2 - cash();
-        pe.lead = cap2 === exp && exp === Math.round(PP_TREE.sgl.cap * LEAD_CARE_K) + Math.round(PP_TREE.cml.cap * LEAD_CARE_K) && delegHelpers() === 2 && did === Math.min(cap2, low) && sp === did * (ppCareCost('visit', true) + ppCareCost('gift', true)) && P[2].lv > 1 && /소그룹 리더/.test(delegHtml());
-        P[0].node = n0; P[1].node = n1; P.forEach((z, i) => { z.lv = lv0[i]; }); S.assoc = keepA; d.on = false; S.money = 99999; recalc(); }
+      const a0 = S.assoc[0], sk0 = asSkill(a0); a0.xp = asNeed(1) - 1; m1 = cash(); pe.cheer = asGain(a0, 1) === 1 && a0.lv === 2 && asSkill(a0) > sk0;
       // 교육 행사: 보상 수령 때 모든 성도 경험치
       S.unlockAll = true; const xs = S.people.map(z => z.lv * 1000 + z.xp); S.ev.bible = { cd: 0 }; const be = runEvent('bible'); S.ev.bible.end = evNow() - .01; evTick(); const got = claimEvent('bible');
       pe.edu = be === '' && !!got && /모든 성도 경험치/.test(got[0]) && S.people.every((z, i) => z.lv * 1000 + z.xp > xs[i]) && !!EVENTS.creed && !!EVENTS.training;
@@ -580,7 +654,7 @@ async function ministryChecks(browser, url) {
       // 성도가 줄면 마음이 덜 붙은 사람부터 떠나고, 한 주가 지나면 조금씩 정이 든다
       const keep = S.people.find(z => z.node === 'elder'); S.members = 6; recalc(); pe.shrink = S.people.length === 6 && !!ppById(keep.id);
       const x0 = S.people[S.people.length - 1].xp, l0 = S.people[S.people.length - 1].lv; peopleWeek(); pe.week = S.people[S.people.length - 1].xp > x0 || S.people[S.people.length - 1].lv > l0;
-      pe.say = S.people.every(z => typeof ppThought(z) === 'string' && ppThought(z).length > 3) && /<svg/.test(portraitSvg(S.people[0]));
+      pe.say = S.people.every(z => typeof ppThought(z) === 'string' && ppThought(z).length > 3) && /members\/member_[fm]\d+\.png/.test(portraitHtml(S.people[0]));
       // 예전 저장: rank(0~4)는 단계로, 수로만 세던 직분은 사람에게 나눠 준다
       S.people = [{ id: 1, n: '가', g: 'm', seed: 1, lv: 5, xp: 0, rank: 2, gift: 'edu', jw: 0, vw: -99, gw: -99, tr: null }]; S.members = 1; S.ppId = 2; recalc(); pe.legacy = S.people[0].node === 'deacon' && S.people[0].rank === undefined && S.off.deacon === 1;
       S.people = undefined; S.members = 30; S.off = { deacon: 3, kwonsa: 1, elder: 2 }; recalc(); pe.legacy = pe.legacy && S.people.length === 30 && S.off.deacon === 3 && S.off.kwonsa === 1 && S.off.elder === 2;
@@ -606,8 +680,8 @@ async function ministryChecks(browser, url) {
     // 사역자·행사·현황 패널이 그려진다
     ['staff', 'events', 'status', 'menu'].forEach(t => { UI.tab = t; UI.fold = false; renderPanel(); });
     o.panels = document.getElementById('panel').textContent.length > 0;
-    // 난이도: 테스트로 새로 시작하면 자금 50,000
-    restart('easy'); o.easy = S.diff === 'easy' && S.money === 50000;
+    // 난이도: 테스트로 새로 시작하면 자금 100억(1,000,000만원)
+    restart('easy'); o.easy = S.diff === 'easy' && S.money === 1000000;
     restart('normal');
     // 균형: 아무것도 하지 않으면 1년 동안 저절로 커지지 않고, 초반에 바로 파산하지도 않는다
     let minMoney = S.money;
@@ -631,8 +705,6 @@ async function ministryChecks(browser, url) {
   check(r.pe.bapt && r.pe.grow && r.pe.last70, '성장 단계: 세례 → 양육반 → 제자반 뒤 세 갈래(직분·교역·섬김), 마지막 단계는 모두 Lv 70부터');
   check(r.pe.deacon && r.pe.elder && r.pe.kwonsa && r.pe.cstaff, '성장 단계: 헌신성도 → 집사 → 장로(남)·권사(여), 섬김 끝 교회직원도 직분자이고 운영비·노후를 줄임');
   check(r.pe.grad && r.pe.slot && r.pe.assoc && r.pe.cheer, '성장 단계: 소그룹 리더 … 간사 → 신학교 → 부교역자로 섭외하면 명단에서 빠져 별 5개 사역자, 격려로 레벨이 오름');
-  check(r.pe.deleg, '부교역자: 성도 돌봄을 맡기면 매주 능력만큼 호감 Lv 아래 성도를 심방·선물하고, 자금이 바닥 가까우면 멈춤');
-  check(r.pe.lead, '소그룹 리더: 부교역자 없이도 리더 단계만큼 성도 돌봄을 맡고, 값은 절반·호감은 75%');
   if (!Object.values(r.pe.ce || {}).every(Boolean)) console.log('CARE', JSON.stringify(r.pe.ce));
   check(r.pe.ce.made && r.pe.ce.data && r.pe.ce.wise && r.pe.ce.bad && r.pe.ce.texts && r.pe.ce.money && r.pe.ce.poor, '고민: 사연마다 정답은 하나(자금 불필요)이고 나머지 셋은 불이익, 선택마다 결과 글이 다름, 돈이 드는 오답은 자금이 나감');
   check(r.pe.ce.pair && r.pe.ce.due && r.pe.ce.shuffle && r.pe.ce.block, '갈등: 두 성도 모두에게 결과, 기한을 넘기면 마음이 멀어짐, 선택지 순서는 사건마다 섞임');
@@ -642,22 +714,24 @@ async function ministryChecks(browser, url) {
   check(r.dlgShown && r.dlg, '목회 고민: 카드가 뜨고, 고르면 효과가 나고 닫힘');
   check(r.worn && r.repair, '노후: 낡으면 좌석이 줄고, 수리하면 돌아옴 (한 주 기본 0.8씩 낡고, 수리비는 건물 값의 10%까지)');
   check(r.panels, '패널: 사역자·행사·현황·메뉴 탭이 그려짐');
-  check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 50,000');
+  check(r.easy, '난이도: 테스트 난이도로 새로 시작하면 자금 100억(1,000,000만원)');
   check(r.passive, '균형: 손대지 않으면 30주 동안 저절로 커지지 않고 초반 파산도 없음');
   check(r.lawn, '지도 밖: 빈 공간이 잔디색으로 채워짐');
   // 화면 조작: 동그란 기능 버튼으로 패널 열고 닫기, 건물을 지으면 수치 글씨
   await page.evaluate(() => { window.requestAnimationFrame = () => 0; S.dlg = null; showDlg(); S.money = 99999; levelTick(true); UI.cat = 'worship'; closeDock(); });
   const closedAtStart = await page.evaluate(() => document.getElementById('dock').hidden);
-  await page.click('#fab [data-fab="status"]');
-  const quick = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && /지표/.test(document.getElementById('scrTabs').textContent) && /퀘스트/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .indc').length === 5 && document.querySelector('#fab [data-fab="status"]').classList.contains('on'); });
+  await page.click('#status .pill.money');
+  const quick = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && /지표/.test(document.getElementById('scrTabs').textContent) && /퀘스트/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .indc').length === 5; });
   await page.click('#scr [data-act="scrclose"]');
   const toggled = await page.evaluate(() => document.getElementById('dock').hidden && document.getElementById('scr').hidden);
   await page.click('#fab [data-fab="minis"]');
   // 행사 버튼은 화면 전체를 쓰는 행사 화면을 연다 (지도 위 창은 닫힘). 탭: 행사·사역자
-  const minis = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && r.height >= innerHeight - 1 && /행사/.test(document.getElementById('scrTabs').textContent) && /사역팀/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .evc').length === Object.keys(EVENTS).filter(k => !EVENTS[k].hidden).length; });
+  const minis = await page.evaluate(() => { const sc = document.getElementById('scr'), r = sc.getBoundingClientRect(); return !sc.hidden && document.getElementById('dock').hidden && r.width >= innerWidth - 1 && r.height >= innerHeight - 1 && /행사/.test(document.getElementById('scrTabs').textContent) && !/사역팀/.test(document.getElementById('scrTabs').textContent) && document.querySelectorAll('#scrBody .evc').length === Object.keys(EVENTS).filter(k => !EVENTS[k].hidden && !EVENTS[k].grp).length && document.querySelectorAll('#scrTabs [role="tab"]').length === 4 && ['pas', 'asc', 'vol'].every(g => Object.keys(EVENTS).filter(k => EVENTS[k].grp === g).length >= 7) && EVENTS.minedu.grp === 'asc' && EVENTS.offsem.grp === 'vol'; });
   // 행사 카드 → 정보 창 → 행사 시작 → 원형 게이지가 차오름 → 다 차면 보상 수령을 눌러야 보상
   const evFlow = await page.evaluate(() => { const o = {}; const m0 = S.money, r0 = S.rep;
-    document.querySelector('#scrBody .evc[data-v="street"]').click();
+    // 카드 모서리의 ? 버튼만 정보·효과 창을 연다 (카드의 다른 곳은 바로 시행)
+    const q0 = document.querySelectorAll('#scrBody .evc').length; o.qBtn = q0 > 5 && [...document.querySelectorAll('#scrBody .evc')].every(c => c.querySelector('.evh') && c.querySelector('.evh').textContent === '?');
+    document.querySelector('#scrBody .evc[data-v="street"] .evh').click();
     const dl = document.getElementById('scrDlg'); o.dlg = !dl.hidden && /노방전도/.test(dl.textContent) && /진행 중 효과/.test(dl.textContent) && /마무리 보상/.test(dl.textContent) && /소요 시간/.test(dl.textContent);
     dl.querySelector('[data-act="evstart"]').click();
     o.started = S.money === m0 - EVENTS.street.cost && evRunning('street') && !evReady('street') && MOD.vis > 1.3 && evBlock('street') === '진행 중이에요';
@@ -668,8 +742,13 @@ async function ministryChecks(browser, url) {
     // 시간이 다 차면: 효과는 멈추고 보상 대기, 받기 전에는 다시 열 수 없다
     S.ev.street.end = evNow() - .01; evTick();
     o.ready = evReady('street') && !evRunning('street') && MOD.vis < 1.3 && S.rep === r0 && card().classList.contains('ready') && /보상 수령/.test(card().textContent) && !document.getElementById('evBadge').hidden && /보상을 먼저/.test(evBlock('street'));
-    card().click(); const cb = document.querySelector('#scrDlg [data-act="evclaim"]'); o.claimBtn = !!cb; cb.click();
+    card().querySelector('.evh').click(); const cb = document.querySelector('#scrDlg [data-act="evclaim"]'); o.claimBtn = !!cb; cb.click();
     o.claimed = !evReady('street') && S.rep > r0 && S.ev.street.cd === EVENTS.street.cd && document.getElementById('evBadge').hidden && /뒤/.test(card().textContent) && claimEvent('street') === null;
+    // 카드의 빈 곳·아이콘·비용을 누르면 정보 창 없이 바로 시행, 보상이 차면 바로 수령
+    { UI.scrSel = null; renderScreen(); const id2 = Object.keys(EVENTS).find(k => !EVENTS[k].hidden && !EVENTS[k].grp && k !== 'street' && !evBlock(k)), c2 = () => document.querySelector('#scrBody .evc[data-v="' + id2 + '"]'), m2 = S.money;
+      c2().querySelector('.evi').click(); o.goIcon = !!id2 && evRunning(id2) && S.money === m2 - evCost(EVENTS[id2]) && document.getElementById('scrDlg').hidden;
+      S.ev[id2].end = evNow() - .01; evTick(); renderScreen(); c2().querySelector('.evp').click(); o.goClaim = !evReady(id2) && !evRunning(id2) && S.ev[id2].cd > 0 && document.getElementById('scrDlg').hidden;
+      c2().click(); o.goWait = !evRunning(id2) && document.getElementById('scrDlg').hidden; }
     // 바자회: 돈은 시작할 때가 아니라 보상 수령 때 들어온다
     S.unlockAll = true; const m1 = S.money; runEvent('bazaar'); const paid = S.money === m1 - EVENTS.bazaar.cost; S.ev.bazaar.end = evNow() - .01; evTick(); const m2 = S.money; const got = claimEvent('bazaar');
     o.bazaar = paid && S.money === m2 + 600 + S.members * 12 && got.length === 2;
@@ -680,14 +759,52 @@ async function ministryChecks(browser, url) {
     // 예전 저장(남은 주 left)은 진행 중으로 이어진다
     S.ev.smallgroup = { cd: 0, left: 2 }; o.old = evRunning('smallgroup') === false && (evState('smallgroup'), evRunning('smallgroup')) && S.ev.smallgroup.left === undefined;
     S.ev = {}; recalc(); renderScreen(); return o; });
-  await page.click('#scr [data-act="scrtab"][data-v="staff"]');
-  const staffTab = await page.evaluate(() => UI.scrTab === 'staff' && document.querySelectorAll('#scrBody .teamc').length === Object.keys(STAFF).length && /달란트/.test(document.getElementById('scrBody').textContent) && !document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]'));
+  const pasTab = await page.evaluate(() => { const o = {}, ua = S.unlockAll, mm = S.money; S.unlockAll = true; S.money = 99999; S.pastor = null;
+    document.querySelector('#scr [data-act="scrtab"][data-v="pastor"]').click();
+    const ids = [...document.querySelectorAll('#scrBody .evc')].map(e => e.dataset.v);
+    o.tab = !!document.querySelector('#scrBody .pashd') && ['pbook', 'pstudy', 'pmemo', 'psem', 'pdeg'].every(i => ids.includes(i)) && !ids.includes('minedu') && EVENTS.psem.dur >= 4 && EVENTS.pdeg.dur >= 20;
+    const k0 = pastorK(), le = S.lastEv; runEvent('pstudy'); S.ev.pstudy.end = evNow() - .01; evTick(); const g = claimEvent('pstudy');
+    o.xp = pastorSt().xp === PAS_EV.pstudy.xp && /담임목사 경험치/.test(g.join()) && S.lastEv === le;
+    pasGain(pasNeed(1)); o.lv = pastorSt().lv === 2 && pastorK() > k0 && Math.abs(mgrK(S.buildings.find(b => b.fixed)) - pastorK()) < 1e-9;
+    runEvent('pdeg'); S.ev.pdeg.end = evNow() - .01; evTick(); claimEvent('pdeg'); recalc(); o.deg = pastorSt().deg === 1 && pastorTitle() === PAS_DEG[0] && MOD.word > 1;
+    document.querySelector('#scr [data-act="scrtab"][data-v="assoc"]').click(); const ai = [...document.querySelectorAll('#scrBody .evc')].map(e => e.dataset.v);
+    o.asc = ['abook', 'astudy', 'asem', 'adeg', 'minedu', 'minfel'].every(i => ai.includes(i)) && evBlock('abook') !== '';
+    S.assoc.push({ name: '박요한', title: '전도사', field: 'edu', skill: 2, pay: 110, fee: 440 }); recalc(); S.ev.abook = { cd: 0 }; const m1 = S.money; runEvent('abook'); S.ev.abook.end = evNow() - .01; evTick(); claimEvent('abook');
+    o.ascXp = S.money === m1 - (ASC_EV.abook.base + ASC_EV.abook.per) && S.assoc[0].xp === ASC_EV.abook.xp; S.assoc.length = 0;
+    document.querySelector('#scr [data-act="scrtab"][data-v="vol"]').click(); const vi = [...document.querySelectorAll('#scrBody .evc')].map(e => e.dataset.v);
+    o.vol = ['offsem', 'offret', 'leadsch', 'leadmt', 'servws', 'servthx', 'volpic'].every(i => vi.includes(i)) && document.querySelectorAll('#scrBody .ssec').length === 4;
+    const p = S.people[0], n0 = p.node, l0 = p.lv; p.node = 'server'; p.lv = 25; const x0 = p.xp; S.ev.servws = { cd: 0 }; runEvent('servws'); S.ev.servws.end = evNow() - .01; evTick(); claimEvent('servws');
+    o.volXp = p.xp + (p.lv - 25) * 1e3 > x0 && volTargets('A').length === 0 && volTargets('ABC').length === 1; p.node = n0; p.lv = l0; p.xp = 0;
+    // 지도에서 담임목사를 누르면 이 탭이 열린다
+    closeScreen(); draw(); const f = FIGHIT.find(h => h.k === 'pastor'), cr = cv.getBoundingClientRect();
+    if (f) onTap(cr.left + f.x, cr.top + f.y + f.h / 2); o.tap = !!f && UI.scr === 'events' && UI.scrTab === 'pastor';
+    S.ev = {}; S.pastor = null; S.unlockAll = ua; S.money = mm; recalc(); openScreen('events'); return o; });
+  if (!Object.values(pasTab).every(Boolean)) console.log('PAS', JSON.stringify(pasTab));
+  check(pasTab.tab && pasTab.xp && pasTab.lv && pasTab.deg, '행사 › 담임목사 탭: 서적·말씀 연구·암송·세미나(김)·학위(매우 김), 마치면 담임목사 경험치·레벨(대예배당 성능)·학위');
+  check(pasTab.asc && pasTab.ascXp, '행사 › 부교역자 탭: 부교역자 행사와 교역자 연수·교제의 밤, 마치면 부교역자 모두 경험치');
+  check(pasTab.vol && pasTab.volXp, '행사 › 봉사자 탭: 직분자·리더·섬김이·모두 묶음, 그 갈래 봉사자에게 경험치');
+  check(pasTab.tap, '지도에서 담임목사를 누르면 행사 › 담임목사 탭이 열림');
+  const staffTab = await page.evaluate(() => { const ua = S.unlockAll; S.unlockAll = true; const noTab = !SCREENS.events.tabs.some(t => t[0] === 'staff'); openScreen('officers', 'C');
+    const ok = noTab && UI.scrTab === 'C' && document.querySelectorAll('#scrBody .lead-r .teamc').length === Object.keys(STAFF).length && /섬김이/.test(document.getElementById('scrBody').textContent) && !document.querySelector('#scrBody [data-act="hire"]') && !document.querySelector('#scrBody [data-act="appoint"]');
+    if (!ok) console.log('STAFFTAB', noTab, UI.scrTab, document.querySelectorAll('#scrBody .lead-r .teamc').length, !!document.querySelector('#scrBody [data-act="hire"]'), !!document.querySelector('#scrBody [data-act="appoint"]'));
+    S.unlockAll = ua; return ok; });
   await page.keyboard.press('Escape');
   // 성도 화면: 성도마다 이름·초상화 카드, 누르면 세부 정보(한마디·호감·심방·다음 단계)
   await page.evaluate(() => { S.members = 8; recalc(); });   // 손대지 않은 30주 뒤라 성도가 거의 없으니 다시 채운다
   await page.click('#fab [data-fab="people"]');
-  const ppScr = await page.evaluate(() => { const o = {}; const cards = document.querySelectorAll('#scrBody .ppc');
-    o.grid = !document.getElementById('scr').hidden && cards.length === S.people.length && cards.length === S.members && !!cards[0].querySelector('svg.pt') && !!cards[0].querySelector('.hlv') && /성도/.test(document.getElementById('scrTitle').textContent);
+  // 성도 화면 기본 보기: 단계마다 대표 한 명 큰 카드(숨 쉬는 초상화), 카드 위 단추는 그 단계 모두에게 · 머리띠의 자금·닫기는 오른쪽 위 고정, 탭은 잘리지 않음
+  const stg = await page.evaluate(() => { const o = {}; S.money = 99999; S.people.forEach((q, i) => { q.node = i < 3 ? 'bapt' : 'new'; q.lv = 3 + i; q.tr = null; q.vw = -99; q.gw = -99; }); recalc(); renderScreen();
+    const cs = [...document.querySelectorAll('#scrBody .sgc')]; o.cards = cs.length === 2 && !document.querySelector('#scrBody .ppc') && cs.every(c => !!c.querySelector('.sg-art img') && getComputedStyle(c.querySelector('.sg-art img')).animationName === 'rbreath');
+    const nw = cs.find(c => /새가족/.test(c.textContent)), vb = nw.querySelector('.sgb.visit'), m0 = S.money, nNew = S.people.filter(q => q.node === 'new').length;
+    o.btns = !!vb && /심방/.test(vb.textContent) && !!nw.querySelector('.sgb.gift') !== undefined && /\d+명/.test(vb.textContent);
+    vb.click(); o.visitAll = S.people.filter(q => q.node === 'new').every(q => q.vw === S.week) && S.people.filter(q => q.node === 'bapt').every(q => q.vw !== S.week) && S.money < m0;
+    const gb = [...document.querySelectorAll('#scrBody .sgc')].find(c => /새가족/.test(c.textContent)).querySelector('.sgb.grow'); S.people.filter(q => q.node === 'new').forEach(q => { q.lv = PP_TREE.bapt.lv; }); renderScreen();
+    const gb2 = [...document.querySelectorAll('#scrBody .sgc')].find(c => /새가족/.test(c.textContent)).querySelector('.sgb.grow'); o.grow = !!gb2 && gb2.textContent.length < 20; gb2.click(); o.growAll = S.people.filter(q => q.node === 'new').every(q => q.tr && q.tr.to === 'bapt');
+    const hd = document.querySelector('#scr .shead'), mo = hd.querySelector('.smoney').getBoundingClientRect(), cl = hd.querySelector('.sclose').getBoundingClientRect(), tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')], inf = { left: (tabs.length ? tabs[tabs.length - 1] : hd.querySelector('#scrTitle')).getBoundingClientRect().right + 1, right: mo.left };
+    o.head = Math.abs(cl.right - hd.getBoundingClientRect().right) < 20 && mo.right <= cl.left + 1 && tabs.every(t => { const r = t.getBoundingClientRect(); return r.width > 40 && r.right <= inf.left + 1; }) && inf.right <= mo.left + 1;
+    S.people.forEach(q => { q.node = 'new'; q.lv = 1; q.tr = null; }); recalc(); UI.ppList = true; renderScreen(); return o; });
+  const ppScr = await page.evaluate(() => { const o = {}; UI.ppList = true; renderScreen(); const cards = document.querySelectorAll('#scrBody .ppc');
+    o.grid = !document.getElementById('scr').hidden && cards.length === S.people.length && cards.length === S.members && !!cards[0].querySelector('img.pt') && !!cards[0].querySelector('.hlv') && /성도/.test(document.getElementById('scrTitle').textContent);
     cards[0].click(); const dl = document.getElementById('scrDlg'), id = +cards[0].dataset.v, p = ppById(id);
     o.dlg = !dl.hidden && dl.textContent.includes(p.n) && /“.+”/.test(dl.textContent) && /매주 헌금/.test(dl.textContent) && !!dl.querySelector('[data-act="ppvisit"]') && !!dl.querySelector('[data-act="ppgift"]') && /다음 단계/.test(dl.textContent) && /세례/.test(dl.querySelector('.sopt').textContent) && dl.querySelector('[data-act="pptrain"]').disabled === (p.lv < PP_TREE.bapt.lv || S.money < PP_TREE.bapt.cost); o.dbg = [dl.textContent.slice(0, 200)];
     const m0 = S.money; dl.querySelector('[data-act="ppvisit"]').click(); o.visit = S.money === m0 - PP_VISIT.cost && document.querySelector('#scrDlg [data-act="ppvisit"]').disabled;
@@ -697,21 +814,27 @@ async function ministryChecks(browser, url) {
     const d0 = off(); S.t += WEEK * .5; syncScreen(); o.gauge = card().classList.contains('run') && off() < d0 && /교육 중/.test(document.getElementById('scrDlg').textContent);
     p.tr.end = evNow() - .01; peopleTick(); o.ready = card().classList.contains('ready') && /세례 주기/.test(card().textContent) && !document.getElementById('ppBadge').hidden && p.node === 'new';
     document.querySelector('#scrDlg [data-act="ppappoint"]').click(); o.done = p.node === 'bapt' && document.getElementById('ppBadge').hidden && /세례교인/.test(card().textContent);
-    { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } document.querySelector('#scrTabs [data-v="grow"]').click(); o.tab = document.querySelectorAll('#scrBody .ppc').length === 1;
+    { const xc = document.querySelector('#scrDlg [data-act="evclose"]'); if (xc) xc.click(); else { UI.scrSel = null; renderScreen(); } } const tv = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v); const vc0 = document.querySelectorAll('#scrBody .sgh.vol').length; S.people[2].node = 'disciple'; syncPeople(); renderScreen();
+    const lay0 = document.querySelector('#scrBody .evg > .sgh.lay'), volAfter = document.querySelectorAll('#scrBody .sgh.vol ~ .ppc').length; UI.ppList = false; renderScreen();
+    const secs = [...document.querySelectorAll('#scrBody .sgwrap > .sgsec')].map(x => x.querySelector('.sgh').className); UI.ppList = true; renderScreen();
+    o.tab = tv.join() === '' && SCREENS.people.tabs.length === 1 && vc0 === 0 && !!lay0 && lay0 === lay0.parentNode.firstElementChild && volAfter === 1 && secs.join() === 'sgh lay,sgh vol' && !!document.querySelector('#scrBody .pcb') && ppClass(S.people[2]) === 'volunteer'; S.people[2].node = 'new'; syncPeople(); renderScreen();
+    // 전체 탭 맨 위: 전체 성도 현황 (등록 성도 크게, 명단별·세례·직분자·평균 호감·할 일)
+    const inf = document.getElementById('scrInfo'), hb = document.querySelector('#scr .shead');
+    const pf = document.querySelector('#scrBody .pbar .pfs'), lb = document.querySelector('#scrBody .pbar .sgl-list'); o.status = !!pf && inf.hidden && new RegExp('등록' + S.people.length + '명').test(pf.textContent) && /평신도\d/.test(pf.textContent) && !/평균|할 일/.test(pf.textContent) && !document.querySelector('#scrBody .pstat') && document.querySelector('#scrBody').firstElementChild.classList.contains('pbar') && !!document.querySelector('#scrBody .pbar .pcb') && !!lb && pf.getBoundingClientRect().left >= lb.getBoundingClientRect().right - 1 && parseFloat(getComputedStyle(pf.querySelector('b')).fontSize) >= 16;
     // 목록 위 '모두 심방': 이 목록에서 할 수 있는 사람 모두 (대기 기간인 사람은 빼고)
-    const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; document.querySelector('#scrTabs [data-v="all"]').click(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
+    const lv0 = S.lvl; S.money += 5000; levelTick(true); const lv1 = S.lvl; S.lvl = 100; renderScreen(); const nv = S.people.filter(q => ppCareOk(q, 'visit')).length, mb = S.money; const bv = document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]'); bv.click();
     o.bdbg = [nv, mb - S.money, S.people.filter(q => ppCareOk(q, 'visit')).length, !!document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]')];
     o.bulk = nv >= 2 && S.money === mb - nv * PP_VISIT.cost && S.people.every(q => !ppCareOk(q, 'visit')) && document.querySelector('#scrBody [data-act="bulk"][data-v="visit"]').disabled && !!document.querySelector('#scrBody [data-act="bulk"][data-v="gift"]:not([disabled])'); S.lvl = lv1;
     // 낮은 레벨부터: 자금이 한 명 몫뿐이면 호감 레벨이 가장 낮은 사람만 심방, 단계 단추는 같은 규칙
     { S.people.forEach(q => { q.vw = -99; q.gw = -99; q.tr = null; q.node = 'new'; }); const sp = S.people.slice().sort((x, y) => x.lv - y.lv || x.id - y.id); sp.forEach((q, i) => { q.lv = 1 + i; });
       S.money = PP_VISIT.cost; const lowId = sp[0].id; ppCareAll(S.people, 'visit'); const lowVisited = ppById(lowId).vw === S.week && S.people.filter(q => q.vw === S.week).length === 1;
       sp.forEach(q => { q.lv = PP_TREE.bapt.lv; }); S.money = PP_TREE.bapt.cost; const r1 = ppTrainAll(S.people, 'bapt'); const trained = S.people.filter(q => q.tr).length === 1 && r1.poor >= 1;
-      S.money = 99999; sp.forEach(q => { if (!q.tr) q.tr = null; }); const r2 = ppTrainAll(S.people, 'bapt'); S.people.forEach(q => { if (q.tr) { q.tr.ready = true; } }); recalc(); document.querySelector('#scrTabs [data-v="all"]').click();
+      S.money = 99999; sp.forEach(q => { if (!q.tr) q.tr = null; }); const r2 = ppTrainAll(S.people, 'bapt'); S.people.forEach(q => { if (q.tr) { q.tr.ready = true; } }); recalc(); renderScreen();
       const gb = document.querySelector('#scrBody [data-act="bulkgrow"][data-k="ap"]'), ic = document.querySelector('#scrBody .bic[data-v="gift"]'); const nb = S.people.length; if (gb) gb.click();
       o.bulkLow = lowVisited && trained && !!gb && !!ic && S.people.every(q => q.node === 'bapt' && !q.tr) && r2.done >= 1 && nb >= 2; }
     // 고민 탭: 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림 (행사 버튼 배지에도 셈)
-    { const q = S.people[1]; S.cares = [{ id: 90, k: 'lonely', a: q.id, b: 0, w: S.week }]; syncEvBadge(); document.querySelector('#scrTabs [data-v="care"]').click();
-      const cs = document.querySelectorAll('#scrBody .ppc'); o.care = cs.length === 1 && !!cs[0].querySelector('.pcare') && !document.getElementById('ppBadge').hidden;
+    { const q = S.people[1]; S.cares = [{ id: 90, k: 'lonely', a: q.id, b: 0, w: S.week }]; syncEvBadge(); renderScreen(); syncEvBadge(); const bb0 = document.getElementById('ppBadge'), cb0 = document.querySelector('#scrBody .pcb'); o.careBtn = cb0.classList.contains('hot') && getComputedStyle(cb0).backgroundImage !== 'none' && bb0.textContent === '!' && bb0.classList.contains('care') && !bb0.hidden && /^!/.test(cb0.textContent);
+      cb0.click(); const cs = document.querySelectorAll('#scrBody .ppc'); o.care = cs.length === 1 && cs[0].querySelector('.pcare').textContent === '!' && !document.getElementById('ppBadge').hidden;
       cs[0].click(); const dl = document.getElementById('scrDlg'), btns = dl.querySelectorAll('[data-act="carepick"]'); o.care = o.care && /외로움/.test(dl.textContent) && btns.length === 4;
       // 고른 결과로 성도가 떠나면 창이 닫히므로, 떠날 확률은 이 검사에서만 막는다
       const ok = [...btns].find(b => !b.disabled), R0 = Math.random; Math.random = () => 0.99; ok.click(); Math.random = R0;
@@ -719,18 +842,36 @@ async function ministryChecks(browser, url) {
     return o; });
   await page.click('#scr [data-act="scrclose"]'); await page.click('#fab [data-fab="officers"]');
   const offScr = await page.evaluate(() => { const o = {};
-    o.empty = /아직 이 갈래에 들어선 성도가 없어요/.test(document.getElementById('scrBody').textContent);
-    const p = S.people[0]; p.node = 'deacon'; p.lv = 45; recalc(); renderScreen(); o.list = document.querySelectorAll('#scrBody .ppc').length === 1 && /집사 1명/.test(document.getElementById('scrBody').textContent);
-    { const ua = S.unlockAll, mm = S.money, tv = S.tv || 0, xp0 = p.xp + p.lv * 1e3; S.unlockAll = true; S.money = 99999; S.ev.offsem = { cd: 0 }; renderScreen();
-      const ic = document.querySelector('#scrBody [data-act="evquick"][data-v="offsem"]'); o.offIc = !!ic && !!document.querySelector('#scrBody [data-v="offret"]') && !document.querySelector('#scrBody [data-v="minedu"]');
-      ic.click(); o.offRun = evRunning('offsem') && S.money === 99999 - (EVENTS.offsem.cost + 30 * 1);
-      S.ev.offsem.end = evNow() - 1; evTick(); o.offReady = evReady('offsem'); document.querySelector('#scrBody [data-act="evquick"][data-v="offsem"]').click();
-      o.offDone = !evReady('offsem') && (S.tv || 0) > tv && S.ev.offsem.cd === OFF_EV.offsem.cd && p.xp + p.lv * 1e3 > xp0; S.unlockAll = ua; S.money = mm; }
-    S.assoc.push({ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }); recalc(); document.querySelector('#scrTabs [data-v="assoc"]').click();
-    const ac = document.querySelector('#scrBody [data-act="asopen"]'); o.assoc = !!ac && /김시온/.test(ac.textContent); ac.click();
-    const dl = document.getElementById('scrDlg'); o.asDlg = !dl.hidden && !!dl.querySelector('[data-act="ascheer"]') && !!dl.querySelector('[data-act="dismiss"]');
-    dl.querySelector('[data-act="dismiss"]').click(); o.dismiss = S.assoc.length === 0 && document.getElementById('scrDlg').hidden;
-    document.querySelector('#scrTabs [data-v="cands"]').click(); o.cands = !!document.querySelector('#scrBody [data-act="searchA"]');
+    o.empty = /제자반을 마친 성도가 아직 없어요/.test(document.getElementById('scrBody').textContent);
+    const p = S.people[0]; p.node = 'deacon'; p.lv = 45; recalc(); openScreen('officers', 'off'); o.list = document.querySelectorAll('#scrBody .lead-l .lcard').length === 1 && !!document.querySelector('#scrBody .lbig') && /집사/.test(document.querySelector('#scrBody .lbig').textContent) && /보조 버프/.test(document.querySelector('#scrBody .lbig').textContent);
+    // 봉사자 화면에는 행사 줄이 없다 (행사는 행사 화면에서만)
+    o.noEv = ['dis', 'off', 'B', 'C'].every(t => { openScreen('officers', t); return !document.querySelector('#scrBody [data-act="evquick"], #scrBody .evq, #scrBody .evq-b'); });
+    // 제자 탭: 제자반을 마친 성도가 큰 카드(4열)로, 카드 위 직분·리더·섬김 단추로 갈래 교육을 바로 시작
+    { const ua = S.unlockAll, mm = S.money; S.unlockAll = true; S.money = 99999; const ds = S.people.slice(3, 12); ds.forEach(q => { q.node = 'disciple'; q.lv = 30; q.tr = null; }); recalc(); openScreen('officers', 'dis');
+      const cs = [...document.querySelectorAll('#scrBody .dcard')], g = getComputedStyle(document.querySelector('#scrBody .disg'));
+      o.disGrid = cs.length === ds.length && cs.length >= 4 && g.gridTemplateColumns.split(' ').length === 4 && cs.every(c => c.querySelectorAll('.dis-btn').length === 3 && !!c.querySelector('img') && /^[가-힣]+$/.test(c.querySelector('.dc-n').textContent)) && [...cs[0].querySelectorAll('.dis-btn')].map(b => b.childNodes[0].textContent).join() === '직분,리더,섬김' && ds.every(q => ppClass(q) === 'volunteer');
+      const q0 = ds[0], id0 = q0.id; const cardOf = id => [...document.querySelectorAll('#scrBody .dcard')].find(c => c.querySelector('.dis-btn') && c.querySelector('.dis-btn').dataset.v.startsWith(id + ':'));
+      const m0 = S.money; cardOf(id0).querySelector('.dis-btn.tC').click();
+      o.disGo = !!q0.tr && q0.tr.to === 'server' && S.money >= m0 - PP_TREE.server.cost && S.money <= m0 - PP_TREE.server.cost + 1000 && !!document.querySelector('#scrBody .dcard.run .dis-run');
+      q0.tr.end = evNow() - .01; peopleTick(); renderScreen(); const ap = document.querySelector('#scrBody .dcard .dis-ap'); o.disApp = !!ap; ap.click();
+      o.disDone = q0.node === 'server' && ppTrack(q0) === 'C' && !cardOf(id0) && document.querySelectorAll('#scrBody .dcard').length === ds.length - 1;
+      openScreen('officers', 'C'); o.disMoved = [...document.querySelectorAll('#scrBody .lead-l .lcard')].some(c => c.textContent.includes(q0.n));
+      ds.forEach(q => { q.node = 'new'; q.tr = null; }); S.unlockAll = ua; S.money = mm; recalc(); }
+    S.assoc.push({ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }); recalc(); openScreen('roster', 'assoc');
+    const ac = document.querySelector('#scrBody .rcard'); o.assoc = !!ac && /김시온/.test(ac.textContent); ac.click();
+    o.asDlg = !!document.querySelector('.rd [data-act="rosdismiss"]') && !!document.querySelector('.rd [data-act="roscheer"]');
+    document.querySelector('.rd [data-act="rosdismiss"]').click(); o.dismiss = S.assoc.length === 0 && /사임/.test(document.getElementById('scrToast').textContent);
+    openScreen('roster', 'hire');
+    { const mm = S.money, n0 = S.people.length, m0 = S.members; S.money = 99999;
+      const cards = [...document.querySelectorAll('#scrBody .hcard')];
+      o.cands = UI.scr === 'roster' && UI.scrTab === 'hire' && cards.length === HIRE_CAND0 + S.cands.length && cards.every(c => !!c.querySelector('img[src*="portraits/hirecard"]') && !!c.querySelector('.hc-grade') && !!c.querySelector('.hc-name')) && document.querySelectorAll('#scrTabs [role="tab"]').length === 3;
+      const cc = [...document.querySelectorAll('#scrBody .hcard.tC')]; o.hireTab = cc.length === HIRE_CAND0;
+      const c0 = volCands('C')[0]; cc[0].click(); const hd = document.getElementById('scrDlg'); o.hireDlg = !hd.hidden && hd.textContent.includes(c0.name) && /“.+”/.test(hd.textContent);
+      hd.querySelector('[data-act="hctake"]').click(); const np = S.people[S.people.length - 1];
+      o.hired = S.people.length === n0 + 1 && S.members === m0 + 1 && np.n === c0.name && np.node === 'cstaff' && !!np.ext && ppTrack(np) === 'C' && S.money >= 99999 - c0.fee && S.money <= 99999 - c0.fee + 1000 && hirePay() === c0.pay && volCands('C').length === HIRE_CAND0 - 1;   // 퀘스트 보상이 함께 들어올 수 있다
+      o.hireReroll = !document.querySelector('#scrBody [data-act="hcreroll"]') && volCands('C').length === HIRE_CAND0 - 1;   // 새 후보 찾기 단추는 없다
+      openScreen('roster', 'staff'); const rc = document.querySelector('#scrBody .rcard.ex'); o.hiredTab = UI.scr === 'roster' && document.querySelectorAll('#scrBody .rcard.ex').length === 1 && !!rc.querySelector('.hc-grade') && !!rc.querySelector('.hst') && !!rc.querySelector('.rc-story') && /성능/.test(rc.querySelector('.rc-k').textContent) && /월 /.test(rc.querySelector('.rc-pay').textContent);
+      hireFire(np.id); o.fired = S.people.length === n0 && S.members === m0 && hirePay() === 0; S.money = mm; renderScreen(); }
     p.lv = 1; S.people.forEach(q => { q.node = 'new'; q.tr = null; }); S.tempMood = 0; recalc(); return o; });
   await page.keyboard.press('Escape');
   const scrClosed = await page.evaluate(() => document.getElementById('scr').hidden && !UI.scr);
@@ -740,7 +881,7 @@ async function ministryChecks(browser, url) {
   await page.click('#dock [data-act="cat"][data-v="worship"]');
   await page.click('#cards [data-v="room"]');
   // 고르면 패널이 닫히고, 미리보기 둘레에 ✓·✕와 방향 화살표 4개 (건물은 안내 띠 없음)
-  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 4 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
+  const onMap = await page.evaluate(() => { syncPlace(); const pl = document.getElementById('place'); return document.getElementById('dock').hidden && !pl.hidden && document.getElementById('pbar').hidden && [...pl.querySelectorAll('.parr')].filter(e => !e.hidden).length === 0 && !!pl.querySelector('[data-pl="ok"]') && !!pl.querySelector('[data-pl="no"]'); });
   const btnPos = await page.evaluate(() => { syncPlace(); const r = s => document.querySelector(s).getBoundingClientRect(); const ok = r('#place [data-pl="ok"]'), no = r('#place [data-pl="no"]'); const bx = plBox(); return ok.left < no.left && ok.bottom <= bx.t + 4 && no.bottom <= bx.t + 4; });
   const effCard = await page.evaluate(() => /좌석 \+24/.test(document.querySelector('#cards [data-v="room"]').textContent));
   await page.click('#fab [data-fab="minis"]');
@@ -749,7 +890,7 @@ async function ministryChecks(browser, url) {
   await page.click('#fab [data-fab="build"]'); await page.click('#dock [data-act="cat"][data-v="worship"]'); await page.click('#cards [data-v="room"]');
   const placed = await page.evaluate(() => { for (let y = 18; y < ROWS - 1; y++) for (let x = 6; x < COLS - 6; x++) if (canPlace(D.room, x, y, UI.face)) { UI.ghost = { x, y }; renderDetail(); return true; } return false; });
   // 화살표로 정면 방향 바꾸기
-  const faced = await page.evaluate(() => { syncPlace(); const el = [...document.querySelectorAll('#place .parr')].find(e => +e.dataset.v !== UI.face); const want = +el.dataset.v; el.click(); syncPlace(); return UI.face === want && el.classList.contains('on'); });
+  const faced = await page.evaluate(() => { syncPlace(); UI.face = 0; return plFace() === 2 && !turnable(D.room) && !turnable(D.bench) && turnable(D.fence_w) && fixFace(D.fence_w, 0) === 0 && fixFace(D.room, 0) === 2 && (UI.face = 2, true); });
   const barQuiet = await page.evaluate(() => { renderPbar(); return document.getElementById('pbar').hidden; });
   const blockedTip = await page.evaluate(() => { const g = { ...UI.ghost }; UI.ghost = { x: S.buildings[0].x, y: S.buildings[0].y }; syncPlace(); const ok = document.querySelector('#place [data-pl="ok"]'); const off = ok.classList.contains('off'); plLock = 0; ok.click(); const t = document.getElementById('toast'); const said = !t.hidden && t.textContent.length > 0; UI.ghost = g; syncPlace(); return off && said; });
   // 길·바닥을 깔 때: 바닥은 아래 띠 없이 ✓ 옆 값만, 길은 안내 문장 없이 이름·값·고르는 버튼만
@@ -816,7 +957,7 @@ async function ministryChecks(browser, url) {
     if (UI.sel !== b.id) return 'not picked';
     syncSelCard(); const el = document.getElementById('selCard');
     if (!document.getElementById('dock').hidden || el.hidden) return 'dock or no card';
-    const r = el.getBoundingClientRect(); if (r.width > 320 || r.height > 120) return 'too big ' + Math.round(r.width) + 'x' + Math.round(r.height);
+    const r = el.getBoundingClientRect(); if (r.width > 320 || r.height > 160) return 'too big ' + Math.round(r.width) + 'x' + Math.round(r.height);
     el.querySelector('[data-act="scmore"]').click();
     // 대예배당은 철거·이동 단추가 없고, 함수를 직접 불러도 그대로다
     if (el.querySelector('[data-act="scdem"]') || el.querySelector('[data-act="move"]') || canMove(b)) return 'main chapel has demolish/move';
@@ -849,30 +990,35 @@ async function ministryChecks(browser, url) {
     const cv2 = document.createElement('canvas'); cv2.width = 200; cv2.height = 200; const g2 = cv2.getContext('2d');
     const keep = { c: PJ.c, ox: PJ.ox, oy: PJ.oy, s: PJ.s };
     const shot = (id, f) => { g2.clearRect(0, 0, 200, 200); PJ.c = g2; PJ.ox = 100; PJ.oy = 60; PJ.s = 1.4; const b = { x: 0, y: 0, def: id, id: 3, face: f }; ensureDoors(b); drawEntity(b, 0); return cv2.toDataURL(); };
-    const out = ['bench', 'room', 'lamp2', 'wc', 'pray'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, f))).size >= 2 && shot(id, 0) !== shot(id, 2));
+    const out = ['bench', 'room', 'wc', 'pray'].every(id => new Set([0, 1, 2, 3].map(f => shot(id, 2) && (() => { const b = { x: 0, y: 0, def: id, id: 3, face: f }; ensureDoors(b); return JSON.stringify([bDims(b), b.door && b.door.ent.d]); })())).size === 1) && new Set([0, 2].map(f => shot('fence_w', f))).size === 2;
     PJ.c = keep.c; PJ.ox = keep.ox; PJ.oy = keep.oy; PJ.s = keep.s;
     return out;
   });
   const smallBtns = await page.evaluate(() => { startPlace('bench'); syncPlace(); const r = document.querySelector('#place [data-pl="ok"]').getBoundingClientRect(); const a = document.querySelector('#place .parr').getBoundingClientRect(); endPlace(); return r.width <= 40 && a.width <= 34; });
   check(closedAtStart && quick && toggled, '기능 버튼: 현황 버튼은 지표·퀘스트가 있는 전체 화면을 열고 ✕로 닫힘');
-  check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(행사·사역자 탭), Esc로 닫힘');
+  if (!(minis && staffTab && scrClosed)) console.log('SCR', minis, staffTab, scrClosed);
+  check(minis && staffTab && scrClosed, '행사 화면: 행사 버튼이 화면 전체를 쓰는 행사 화면을 열고(사역팀 탭은 봉사자 › 섬김이로 옮김), Esc로 닫힘');
   if (!Object.values(ppScr).every(Boolean) || !Object.values(offScr).every(Boolean)) console.log('PPSCR', JSON.stringify(ppScr), JSON.stringify(offScr));
   check(ppScr.grid && ppScr.dlg && ppScr.visit, '성도 화면: 성도마다 이름·초상화·호감 레벨 카드, 누르면 한마디·헌금·심방·선물·다음 단계');
-  check(ppScr.care, '성도 화면: 고민 탭에 말풍선 카드, 세부 정보에 사연과 선택지, 고르면 풀림');
+  check(Object.values(stg).every(Boolean), '성도 화면: 단계마다 대표 한 명을 큰 카드(숨 쉬는 초상화)로, 카드 위 심방·선물·교육 단추가 그 단계 모두에게 적용, 자금·닫기는 오른쪽 위 고정·탭은 잘리지 않음 ' + JSON.stringify(stg));
+  check(ppScr.care && ppScr.careBtn && ppScr.status, '성도 화면: 현황은 탭 오른쪽 작은 글, 본문 맨 위는 고민·심방·선물·일괄 시작 한 줄, 고민이 생기면 성도 버튼에 빨간 느낌표·고민 단추 빨갛게·성도 아이콘 위 빨간 느낌표, 세부 정보에 사연과 선택지, 고르면 풀림');
   check(ppScr.bulkLow, '성도 화면: 일괄 심방·교육·임명은 호감 레벨 낮은 사람부터, 자금이 되는 만큼 (전체 세례 주기 단추)');
   check(ppScr.bulk, '성도 화면: 목록 위 모두 심방·모두 선물로 보이는 성도에게 한꺼번에');
   check(ppScr.gauge && ppScr.ready && ppScr.done && ppScr.tab, '성도 화면: 교육을 시작하면 초상화 둘레 게이지가 차고, 다 차면 세례 주기를 눌러 임명(버튼 배지)');
-  check(offScr.offIc && offScr.offRun && offScr.offReady && offScr.offDone, '직분자 탭: 직분자 행사 아이콘으로 바로 열고 보상을 받으며, 교역자 행사는 직분 탭에 나오지 않음');
-  check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss && offScr.cands, '직분자 화면: 직분별 목록, 부교역자 카드·격려·사임, 청빙 탭');
-  check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: 카드를 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
+  check(offScr.noEv, '봉사자 화면: 모든 탭에서 행사 아이콘 줄이 없음 (행사는 행사 화면에서만)');
+  check(offScr.disGrid && offScr.disGo && offScr.disApp && offScr.disDone && offScr.disMoved, '봉사자 › 제자 탭(맨 앞): 제자반 수료자를 큰 카드 4열로 보이고, 카드 위 직분·리더·섬김 단추로 갈래 교육을 바로 시작·임명하면 그 갈래 탭으로 옮겨 감')
+  check(offScr.empty && offScr.list && offScr.assoc && offScr.asDlg && offScr.dismiss, '봉사자 화면: 직분자·리더·섬김이 목록 · 부교역자는 직원 화면에서 카드·격려·사임');
+  check(offScr.cands && offScr.hireTab && offScr.hireDlg && offScr.hired && offScr.hireReroll && offScr.hiredTab && offScr.fired, '청빙 화면: 직원 화면의 청빙 탭이 큰 카드 화면으로 바뀌고, 청빙한 봉사자는 성도 명단과 그 갈래 탭에 들어감(주급·내보내기)');
+  check(evFlow.dlg && evFlow.started && evFlow.fx, '행사 화면: ? 버튼을 누르면 정보 창, 시작하면 값을 내고 진행 효과가 적용되며 불꽃 표시');
+  check(evFlow.qBtn && evFlow.goIcon && evFlow.goClaim && evFlow.goWait, '행사 아이콘: 모서리 ? 버튼만 정보·효과 창을 열고, 아이콘·비용·빈 곳을 누르면 바로 시행(보상이 차면 바로 수령)');
   check(evFlow.gauge && evFlow.ready, '행사 화면: 원형 게이지가 시간에 맞춰 차고, 다 차면 효과가 멈추고 보상 수령 대기(버튼 배지)');
   check(evFlow.claimAll, '행사 화면: 끝난 행사가 여럿이면 모두 보상 수령 버튼으로 한꺼번에 받음');
   check(evFlow.claimBtn && evFlow.claimed && evFlow.bazaar && evFlow.old, '행사 화면: 보상 수령을 눌러야 보상을 받고 그때부터 쉬는 기간, 예전 저장도 이어짐');
-  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕·방향 화살표 4개, 건물은 안내 띠 없음');
+  check(onMap, '지도에서 짓기: 고르면 패널이 닫히고 미리보기 둘레에 ✓·✕ (건물은 방향 화살표·안내 띠 없음)');
   check(btnPos, '지도에서 짓기: ✓는 왼쪽 위, ✕는 오른쪽 위 (미리보기보다 위)');
   check(effCard, '건축 카드: 지으면 생기는 효과("좌석 +24")를 미리 보여 줌');
   check(cancelled, '기능 버튼: 짓다가 다른 패널로 옮기면 미리보기가 사라짐');
-  check(faced, '지도에서 짓기: 화살표를 누르면 정면 방향이 바뀜');
+  check(faced, '지도에서 짓기: 건물·소품은 돌릴 수 없고(언제나 남쪽), 울타리처럼 놓는 방향이 모양인 것만 돌림');
   check(quietLine, '길·바닥 깔기: 안내 문구 박스 없음 (바닥은 ✓ 옆 값만, 길은 고르는 버튼만)');
   check(placed && fx && barQuiet, '건축 효과: 지을 때 효과 글씨·안내 띠를 띄우지 않음 (효과는 건축 카드에서만)');
   check(card === 'ok', '지은 것 누르기: 패널 대신 건물 위 작은 카드, 철거는 두 번 눌러야 (' + card + ')');
@@ -897,7 +1043,7 @@ async function ministryChecks(browser, url) {
   check(twoStep, '건축: 고른 분류의 건물은 가로 한 줄, 취소하면 직전에 고른 것이 보이고, 뒤로는 분류 목록');
   check(pathOk && escEnds, '지도에서 짓기: 길은 ✓로 한 칸씩 잇고 띠에서 종류를 고름, Esc로 끝냄');
   check(floorDir && floorTap, '지도에서 짓기: 바닥은 화살표 방향으로 ✓마다 한 칸씩 깔리고, 지도를 누르면 자리만 옮김');
-  check(rotates, '건물 방향: 화살표로 정면을 바꾸면 벤치·예배실·쌍등·정류장·피크닉 테이블 그림이 돎');
+  check(rotates, '건물 방향: 벤치·예배실·화장실·기도실은 방향 값과 상관없이 같은 자리·남쪽 문, 울타리는 놓는 방향대로 그려짐');
   // 꾸미기 이어 짓기: 울타리는 짓는 방향을 따라 눕고, 벤치는 화살표가 정면이고 옆으로 늘어서고, 파라솔은 화살표 없이 입구 쪽을 봄
   const decoLine = await page.evaluate(() => {
     const spot = id => { for (let y = 14; y < PZ - 3; y++) for (let x = 3; x < COLS - 6; x++) { let ok = true; for (let i = 0; i < 8; i++) for (let j = -2; j < 4; j++) if (!canPlace(D[id], x + i, y + j, 2)) ok = false; if (ok) return { x, y }; } return null; };
@@ -906,15 +1052,15 @@ async function ministryChecks(browser, url) {
     plLock = 0; plOk(); plLock = 0; plOk();
     const f2 = S.buildings.slice(-2); if (!(f2[0].def === 'fence_w' && f2[1].x === f2[0].x + 1 && f2[1].face === 2)) return 'fence line';
     endPlace(); startPlace('bench'); p = spot('bench'); UI.ghost = { ...p }; syncPlace();
-    if (arrowMode(D.bench) !== 'face') return 'bench mode'; plDir(2); plLock = 0; plOk();
+    if (arrowMode(D.bench) !== 'line') return 'bench mode'; plDir(2); plLock = 0; plOk();
     const bn = S.buildings[S.buildings.length - 1]; if (bn.face !== 2 || (UI.ghost.x === p.x && UI.ghost.y === p.y)) return 'bench';
     endPlace(); startPlace('planter'); p = spot('planter'); UI.ghost = { ...p }; syncPlace();
     const noArr = arrowMode(D.planter) === 'line'; plLock = 0; plOk(); const pa = S.buildings[S.buildings.length - 1];
-    endPlace(); if (!noArr || pa.face !== gateFace(D.planter, pa.x, pa.y)) return 'planter';
-    if (turnable(D.tree) || !turnable(D.fence_w) || !turnable(D.bench)) return 'turnable';
+    endPlace(); if (!noArr || pa.face !== 2) return 'planter';
+    if (turnable(D.tree) || !turnable(D.fence_w) || turnable(D.bench)) return 'turnable';
     return 'ok';
   });
-  check(decoLine === 'ok', '꾸미기 이어 짓기: 울타리는 짓는 방향대로, 벤치는 정면 화살표, 방향 없는 것은 입구 쪽 자동 (' + decoLine + ')');
+  check(decoLine === 'ok', '꾸미기 이어 짓기: 울타리는 짓는 방향대로, 벤치·화분은 이어 놓는 화살표만(방향은 남쪽 고정) (' + decoLine + ')');
   check(smallBtns, '지도에서 짓기: ✓·✕ 38px, 화살표 32px로 작아짐');
   // 그림 조각: 모두 불러와 쓰고, 그림이 없으면 벡터로 그린다
   await page.waitForFunction(() => SPR_N === SPR_TOTAL, null, { timeout: 8000 }).catch(() => {});
@@ -1127,21 +1273,43 @@ async function entranceChecks(browser, url) {
     o.flatStart = START_TERRAIN === 'flat' && Object.keys(S.hgt).length === 0 && Object.keys(S.slp).length === 0 && Object.keys(S.water).length === 0 && typeof terApply === 'function' && typeof startTerrain === 'function';
     o.mainStrong = bCapK(mn) === MAIN_K && bPerf(mn) > bPerf({ def: 'room', lv: 1, id: 0, x: 0, y: 0 }) * 1.5 && bCap(mn) > bCap({ def: 'room', lv: 1, id: 0, x: 0, y: 0, face: 2 }) * 1.5;
     const cats = ['worship', 'fellow', 'shop', 'care', 'comfort', 'club', 'park'];
-    o.tier1 = cats.every(c => DEFS.some(d => d.cat === c && !d.retired && !d.hidden && d.tier !== 2 && !isLocked(d.id))) && !isLocked('shop') && !isLocked('room') && !isLocked('cell') && !isLocked('wc');
-    o.enter0 = (recalc(), S.entr.lv === 1 && S.entr.st === 'basic' && entrVis() === 1);
-    S.money = 99999; const m0 = S.money, v0 = MOD.vis;
-    o.up = entrUp() === '' && S.entr.lv === 2 && S.money === m0 - ENT_LV_COST[2] && MOD.vis > v0 && entrVis() > 1 && entrUpWhy() === '' && (S.entr.lv = ENT_MAX, entrUpWhy()) === '최고 레벨이에요';
-    S.entr.lv = 1; S.money = 99999; const m1 = S.money;
-    o.style = entrStyle('stone') === '' && S.entr.st === 'stone' && S.money === m1 - ENT_STYLE_COST.stone && entrStyle('stone') === '' && S.money === m1 - ENT_STYLE_COST.stone && entrStyle('nope') !== '';
-    S.money = 0; o.poor = entrStyle('garden') === '자금이 부족해요' && entrUpWhy() === '자금이 부족해요';
-    S.money = 99999; const m2 = S.money;
-    o.ban = entrBanner_(0) === '' && S.entr.ban === 0 && S.money === m2 - ENT_BANNER_COST[0] && entrVis() > 1 && !!entrBanner() && entrBanner().n === ENT_BANNERS[0].n;
-    entrBannerOff(); o.banoff = entrBanner() === null && entrBanner_(0) === '' && S.money === m2 - ENT_BANNER_COST[0];
-    closeScreen(); openScreen('gate'); renderScreen(); o.scr = /교회 입구/.test(document.getElementById('scrTitle').textContent) && /레벨 올리기/.test(document.getElementById('scrBody').textContent);
-    document.querySelector('#scrTabs [data-v="sty"]').click(); o.tabSty = document.querySelectorAll('#scrBody .entc').length === ENT_STYLES.length;
-    document.querySelector('#scrTabs [data-v="ban"]').click(); o.tabBan = document.querySelectorAll('#scrBody .entc').length === ENT_BANNERS.length;
-    document.querySelector('#scrBody [data-act="entban"]').click(); o.clickBan = S.entr.ban === 0 || S.entr.ban === 1;
-    closeScreen(); S.entr.ban = 2; draw(); S.entr.st = 'garden'; draw(); S.entr.st = 'basic'; draw(); o.draw = true;
+    o.tier1 = ['wc', 'bench', 'lots', 'tree', 'flower', 'bin'].every(id => !isLocked(id)) && ['shop', 'cell', 'pray', 'nursery', 'room', 'kids', 'chapel', 'grand'].every(id => isLocked(id)) &&
+      ['gift', 'hire', 'entr', 'teams', 'bulk', 'care', 'vol'].every(k => !featOk(k)) && typeof delegWeek === 'undefined' && !ppNodeOpen('nurture') && ppNodeOpen('bapt') && evBlock('bible') === '' && /Lv 2/.test(evBlock('communion')) && evBlock('pbook') === '' && /Lv/.test(evBlock('pdeg')) && /Lv 2/.test(lockLabel('shop'));
+    { S.lvl = 2; const l2 = ['shop', 'cell', 'pray', 'nursery', 'coffeecart'].every(id => !isLocked(id)) && isLocked('room') && featOk('gift') && featOk('hire') && !featOk('teams') && ppNodeOpen('nurture') && !ppNodeOpen('disciple') && evBlock('communion') !== lockText(1) + ' 열 수 있어요';
+      S.lvl = 4; const l4 = !isLocked('room') && !isLocked('kids') && isLocked('chapel') && featOk('vol') && featOk('teams') && ppNodeOpen('sgl') && !ppNodeOpen('deacon') && tierNames(4).includes('초등부실') && tierNames(4).some(n => /봉사자/.test(n));
+      S.lvl = 12; const l12 = !isLocked('grand') && ppNodeOpen('assoc') && Object.keys(FEAT_LV).every(featOk) && Object.keys(EV_LV).every(id => tierOk(EVENTS[id].goal));
+      // 관리자가 필요한 건물은 청빙이 열리는 Lv보다 먼저 열리지 않는다
+      const mgrOk = DEFS.filter(d => d.kind === 'bld' && !d.hidden && !d.retired && mgrRole({ def: d.id })).every(d => (BLD_LV[d.id] || 1) >= FEAT_LV.hire);
+      o.tierD = JSON.stringify([o.tier1, l2, l4, l12, mgrOk]);
+      S.lvl = 1; o.tier1 = o.tier1 && l2 && l4 && l12 && mgrOk && Object.keys(BLD_LV).every(id => D[id]) && Object.keys(EV_LV).every(id => EVENTS[id]) && Object.keys(PP_CLV).every(id => PP_TREE[id]) && Object.keys(TEAM_LV).every(id => STAFF[id]); S.unlockAll = true; recalc(); }
+    o.enter0 = (recalc(), S.entr.lv === 1 && S.entr.st === 'brick' && S.entr.sg === 'm0' && entrVis() === 1 && ENT_MAX === 100);
+    S.money = 99999999; const m0 = S.money, v0 = MOD.vis;
+    // 투자는 레벨이 오를수록 가파르게 비싸다 (Lv 100까지)
+    o.cost = entrLvCost(2) > 0 && entrLvCost(3) > entrLvCost(2) * 2 && entrLvCost(50) > entrLvCost(10) * 20 && entrLvCost(100) > entrLvCost(50) * 3;
+    o.up = entrUp() === '' && S.entr.lv === 2 && S.money === m0 - entrLvCost(2) && MOD.vis > v0 && entrVis() > 1 && entrUpWhy() === '' && (S.entr.lv = ENT_MAX, entrUpWhy()) === '최고 레벨이에요';
+    S.entr.lv = 1; S.money = 99999999; const m1 = S.money;
+    o.style = entrStyle('marble') === '' && S.entr.st === 'marble' && S.money === m1 - ENT_STYLE_COST.marble && entrStyle('marble') === '' && S.money === m1 - ENT_STYLE_COST.marble && entrStyle('nope') !== '';
+    S.money = 0; o.poor = entrStyle('garden') === '자금이 부족해요' && entrUpWhy() === '자금이 부족해요' && entrSign('m9') === '자금이 부족해요' && entrDeco('flower') === '자금이 부족해요';
+    S.money = 99999999; const m2 = S.money;
+    o.ban = entrSign('m1') === '' && S.entr.sg === 'm1' && S.money === m2 - ENT_SIGN_COST.m1 && entrVis() > 1 && entrSign('m0') === '' && S.entr.sg === 'm0' && entrSign('m1') === '' && S.money === m2 - ENT_SIGN_COST.m1 && entrSign('nope') !== '';
+    // 꾸미기: 사면 켜지고, 누르면 켜고 끄고, 함께 여러 개를 켤 수 있다
+    S.entr.dOn = []; S.entr.dOwn = []; const m3 = S.money, vv = entrVis();
+    o.deco = entrDeco('lights') === '' && S.entr.dOn.indexOf('lights') >= 0 && S.money === m3 - ENT_DECO_COST.lights && entrVis() > vv && entrDeco('lights') === '' && S.entr.dOn.length === 0 && entrDeco('lights') === '' && S.money === m3 - ENT_DECO_COST.lights && entrDeco('balloon') === '' && S.entr.dOn.length === 2 && entrDeco('nope') !== '';
+    // 교회 이름은 최대 12글자
+    S.name = '가나다라마바사아자차카타파하'; recalc(); o.name = Array.from(S.name).length === NAME_MAX && NAME_MAX === 12; S.name = '새빛교회'; recalc();
+    // 입구 창: 건축 패널처럼 열리고 분류 칩(컨셉·안내문·꾸미기)·그림 카드·투자 단추가 있다
+    S.entr.lv = 1; S.money = 99999999; closeDock(); openEntrDock();
+    o.dock = !document.getElementById('dock').hidden && /교회 입구/.test(document.getElementById('dtitle').textContent) && document.querySelectorAll('#subtabs .csb').length === 3 && document.querySelectorAll('#cards .card.ec').length === ENT_STYLES.length && /투자/.test(document.getElementById('detail').textContent);
+    document.querySelector('#subtabs [data-v="sign"]').click(); o.tabSign = document.querySelectorAll('#cards .card.ec').length === ENT_SIGNS.length;
+    document.querySelector('#cards [data-v="m3"]').click(); o.clickSign = S.entr.sg === 'm3' && S.entr.sgOwn.indexOf('m3') >= 0;
+    document.querySelector('#subtabs [data-v="deco"]').click(); o.tabDeco = document.querySelectorAll('#cards .card.ec').length === ENT_DECOS.length;
+    document.querySelector('#cards [data-v="flags"]').click(); o.clickDeco = S.entr.dOn.indexOf('flags') >= 0;
+    const elv0 = S.entr.lv; document.querySelector('#detail [data-act="einvest"]').click(); o.invest = S.entr.lv === elv0 + 1;
+    document.querySelector('#detail [data-act="einvest10"]').click(); o.invest10 = S.entr.lv > elv0 + 1;
+    document.querySelector('#subtabs [data-v="style"]').click(); document.querySelector('#cards [data-v="concrete"]').click(); o.clickStyle = S.entr.st === 'concrete';
+    o.tabClose = (closeDock(), document.getElementById('dock').hidden && !UI.entr);
+    S.entr.dOn = ENT_DECOS.map(x => x.id); S.entr.dOwn = S.entr.dOn.slice();
+    ENT_STYLES.forEach(s => ENT_SIGNS.forEach(g => { S.entr.st = s.id; S.entr.sg = g.id; S.open = !S.open; draw(); })); S.open = false; S.entr.st = 'brick'; S.entr.sg = 'm0'; S.entr.dOn = []; S.entr.lv = 1; draw(); o.draw = true;
     // 길 옆에 놓으면 정면이 길 쪽을 향한다 (직접 돌렸으면 그대로, 길이 없으면 그대로)
     S.unlockAll = true; S.money = 99999; UI.tab = 'build'; UI.fold = false; startPlace('cell');
     UI.faceHand = false; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fW = UI.face;
@@ -1149,14 +1317,14 @@ async function entranceChecks(browser, url) {
     UI.faceHand = false; UI.face = 3; UI.ghost = { x: 10, y: 10 }; plAutoFace(); const fN = UI.face;
     UI.faceHand = true; UI.face = 2; UI.ghost = { x: 32, y: 40 }; plAutoFace(); const fH = UI.face;
     UI.faceHand = false; UI.face = 2; UI.ghost = { x: 33, y: 40 }; plAutoFace(); const fG = UI.face;   // 한 칸 떨어져 있어도 길 쪽
-    o.face = fW === 1 && fE === 0 && fN === 3 && fH === 2 && fG === 1; endPlace();
+    o.face = [fW, fE, fH, fG].every(f => fixFace(D.cell, f) === 2) && plFace() === 2 && plAutoFace() === null; endPlace();
     // 벤치도 길 쪽을 본다
     startPlace('bench'); UI.faceHand = false; UI.face = 2; UI.ghost = { x: 32, y: 42 }; plAutoFace(); const bW = UI.face; UI.face = 2; UI.ghost = { x: 29, y: 42 }; plAutoFace(); const bE = UI.face; endPlace();
-    o.face = o.face && bW === 1 && bE === 0;
+    o.face = o.face && fixFace(D.bench, bW) === 2 && fixFace(D.bench, bE) === 2;
     // 화장실도 개수 제한이 없고, 부교역자 정원은 성도 ASSOC_PER명마다 한 자리(최대 없음)
     { let wcs = 0; for (let x = 4; x < 60 && wcs < 7; x += 2) for (let y = 40; y < 56 && wcs < 7; y += 2) { if (build('wc', x, y, 2)) wcs++; }
-      const m0 = S.members; S.members = 20; const s20 = assocSlots(); S.members = 200; const s200 = assocSlots(); S.members = m0;
-      o.wcUnl = wcs >= 7 && !tierWhy('wc') && s20 === 2 && s200 === 11 && ASSOC_PER === 20;
+      const m0 = S.members; S.members = ASSOC_PER; const s20 = assocSlots(); S.members = 10 * ASSOC_PER; const s200 = assocSlots(); S.members = m0;
+      o.wcUnl = wcs >= 7 && !tierWhy('wc') && s20 === 2 && s200 === 11 && ASSOC_PER === 10;
       S.buildings.filter(b => b.def === 'wc').forEach(b => demolish(b.id)); }
     // 벤치는 처음부터 개수 제한이 없다 (라운지의 티어 1이지만 묶음 한도를 받지 않는다)
     { const n0 = S.buildings.length; let made = 0; for (let x = 4; x < 60 && made < 8; x += 2) for (let y = 60 - 14; y < 60 && made < 8; y += 2) { if (build('bench', x, y, 2)) made++; }
@@ -1165,31 +1333,32 @@ async function entranceChecks(browser, url) {
     { const fx = 22, fy = 44; for (let x = fx; x < fx + 4; x++) { S.floor[x + ',' + fy] = 'f_block'; } recalc();
       const onBench = build('bench', fx + 1, fy, 2), tileOk = !floorWhy(fx + 1, fy, 'f_brick'); const bn2 = S.buildings.find(x => x.def === 'bench' && x.x === fx + 1 && x.y === fy);
       o.propTile = onBench && !!bn2 && tileOk && !floorWhy(fx + 1, fy, 'f_brick') === true && (paintFloor(fx + 1, fy, 'f_brick'), S.floor[(fx + 1) + ',' + fy] === 'f_brick');
-      // 교회 입구까지 이어진 두 칸 폭 길: 한쪽 칸에 소품은 놓을 수 있고(다른 칸으로 지나간다), 다른 쪽까지 막으면 길이 끊겨 못 놓는다
+      // 교회 입구까지 이어진 세 칸 폭 길: 한쪽 칸에 소품은 놓을 수 있고(다른 칸으로 지나간다), 나머지 칸까지 막으면 길이 끊겨 못 놓는다
       const y0 = 40; S.buildings.filter(x => defOf(x).cell).forEach(x => demolish(x.id));
       const oneSide = propCutWhy(D.bench, ENT, y0) === '';
-      occ[y0][ENT + 1] = -1; const cutBlocked = propCutWhy(D.bench, ENT, y0) !== ''; occ[y0][ENT + 1] = 0;
+      occ[y0][ENT + 1] = -1; occ[y0][ENT + 2] = -1; const cutBlocked = propCutWhy(D.bench, ENT, y0) !== ''; occ[y0][ENT + 1] = 0; occ[y0][ENT + 2] = 0;
       o.propCut = oneSide && cutBlocked && propCutWhy(D.bench, 500, 500) === '';
       if (bn2) { demolish(bn2.id); } }
     { const bn3 = build('bench', 2, 2, 2); o.sitDraw = !!bn3 || true; draw(); if (bn3) { const b3 = S.buildings.find(x => x.def === 'bench'); if (b3) demolish(b3.id); } }
 
-    // 레벨 100·투자 ×10·건물 위 레벨 아이콘, 일괄 심방·선물 옆 비용
-    const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money, got = investMany(rm, 10);
-    o.lv100 = BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
+    // 레벨 100·건물 위 레벨 아이콘, 일괄 심방·선물 옆 비용
+    const rm = S.buildings.find(x => x.def === 'main'); rm.lv = 1; rm.bx = 0; const lv0 = bLv(rm), mm = S.money; for (let k = 0; k < BLV_XP * 10; k++) investBld(rm); const got = bLv(rm) - lv0;
+    o.lv100 = typeof investMany === 'undefined' && BLV_XP >= 5 && BFX[rm.id] > 0 && BLV_MAX === 100 && got === 10 && bLv(rm) === lv0 + 10 && S.money < mm && (rm.lv = 100, investWhy(rm)) === '최고 레벨이에요' && bPerf(rm) > 1 && lvM(100) > lvM(10) && lvM(10) === 9 && stageOf(100) === 3; rm.lv = 1;
     draw(); o.badge = hasLv(rm) && !D.tree.fill;
-    S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
+    S.people.slice(0, 3).forEach(q => { q.lv = 2; }); recalc(); openScreen('people'); UI.ppList = true; renderScreen(); const bc = [...document.querySelectorAll('#scrBody .bcost')].map(x => x.textContent); closeScreen();
     o.bcost = bc.length === 2 && bc.every(t => /만/.test(t));
     return o; });
   check(r.flatStart, '시작 지도: 평지로 시작 (땅 높이·경사·물 없음), 지형 시스템 함수는 그대로');
   check(r.mainStrong, '대예배당: 같은 예배당보다 성능·정원이 크게(MAIN_K) 시작');
-  check(r.tier1, '시작: 기능별 1티어 건물(방·교제·매장·돌봄·편의·소모임·주차)이 하나씩은 바로 지을 수 있음');
-  check(r.enter0 && r.up && r.style && r.poor, '교회 입구: 기본 Lv 1, 레벨을 올리면 방문자 증가, 모양은 사서 끼움, 자금 부족이면 안 됨');
+  if (!r.tier1) console.log('TIER', r.tierD);
+  check(r.tier1, '잠금: Lv 1에는 대예배당·편의·조경·심방·세례·행사 몇 개만 열려 있고, 교회 Level이 오르며 건물·행사·성장 단계·기능(선물·청빙·사역팀·봉사자 등)이 차례로 열림');
+  check(r.enter0 && r.cost && r.up && r.style && r.poor && r.name, '교회 입구: 기본 Lv 1, 최대 Lv 100·투자는 가파르게 비쌈, 컨셉은 사서 끼움, 자금 부족이면 안 됨, 교회 이름은 12글자까지');
   check(r.benchNoLimit, '벤치: 개수 제한 없이 여러 개 지을 수 있음');
-  check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 20명마다 한 자리, 최대 없음');
+  check(r.wcUnl, '화장실: 개수 제한 없음 · 부교역자 정원은 성도 ASSOC_PER명마다 한 자리, 최대 없음');
   check(r.propTile && r.propCut, '소품: 벤치·쓰레기통 밑에도 바닥을 깔 수 있고, 길을 끊는 자리에는 소품을 놓지 못함');
-  check(r.face, '건축: 길 옆에 놓으면 정면(문)이 길 쪽을 향하고, 직접 돌렸거나 길이 없으면 그대로');
-  check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100(투자 ×10)·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
-  check(r.ban && r.banoff && r.scr && r.tabSty && r.tabBan && r.clickBan && r.draw, '교회 입구: 현수막은 사서 걸고 떼며, 입구 화면 탭·그림에 오류 없음');
+  check(r.face, '건축: 길 옆에 놓아도 방향은 바뀌지 않음 (자동 방향 없음, 문은 남쪽)');
+  check(r.lv100 && r.badge && r.bcost, '건물 레벨 최대 100·건물 위 레벨 아이콘, 일괄 심방·선물 옆에 비용');
+  check(r.ban && r.deco && r.dock && r.tabSign && r.clickSign && r.tabDeco && r.clickDeco && r.invest && r.invest10 && r.clickStyle && r.tabClose && r.draw, '교회 입구: 안내문은 사서 걸고 꾸미기는 켜고 끄며, 작은 건축 패널 모양의 창(컨셉·안내문·꾸미기 칩, 그림 카드, 투자)이 열리고 모든 조합 그림에 오류 없음');
   check(errs.length === 0, '교회 입구·시작 밸런스: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
@@ -1205,41 +1374,313 @@ async function mgrChecks(browser, url) {
     const mn = S.buildings[0], md = bDims(mn);
     let pathOk = true; for (let y = mn.y + md.h; y < PZ; y++) for (let x = ENT; x < ENT + EW; x++) if (S.floor[x + ',' + y] !== 'f_block') pathOk = false;
     o.main = mn.def === 'main' && mn.fixed === true && Math.abs(mn.x + md.w / 2 - COLS / 2) <= 2 && Math.abs(mn.y + md.h / 2 - (ROWS - RD) / 2) <= 3 && pathOk && usable(mn) && bOpen(mn) && !S.freeMgr && !mgrRole(mn) && mgrOf(mn).name === '담임목사' && !DEFS.some(d => d.id === 'main' && !d.hidden) && !build('main', 2, 2, 2);
-    const put = id => { build(id, id === 'shop' ? 36 : id === 'cell' ? 20 : 38, id === 'room' ? 22 : 34, 2); const b = S.buildings[S.buildings.length - 1]; const lp = linkPlan(b); if (lp && !lp.why) lp.tiles.forEach(t => { S.floor[t.x + ',' + t.y] = 'f_block'; }); recalc(); return b; };
+    const put = id => { build(id, id === 'shop' ? 40 : id === 'cell' ? 20 : 38, id === 'room' ? 22 : 34, 2); const b = S.buildings[S.buildings.length - 1]; const lp = linkPlan(b); if (lp && !lp.why) lp.tiles.forEach(t => { S.floor[t.x + ',' + t.y] = 'f_block'; }); recalc(); return b; };
     const c0 = A.ccap, shop = put('shop'), cell = put('cell'), room = put('room');
-    o.need = mgrRole(shop) === 'staff' && mgrRole(cell) === 'leader' && mgrRole(room) === 'pastor' && !mgrRole({ def: 'wc' }) && !mgrRole({ def: 'kids' }) && unstaffed().length === 3 && usable(shop) && !bOpen(shop) && !staffed(cell) && A.ccap === c0 && warnings().some(w => /관리자가 없는 건물/.test(w));
+    o.need = mgrRole(shop) === 'staff' && mgrRole(cell) === 'pastor' && mgrRole(room) === 'pastor' && !mgrRole({ def: 'wc' }) && mgrRole({ def: 'kids' }) === 'pastor' && mgrRole({ def: 'nursery' }) === 'pastor' && !mgrRole({ def: 'playground' }) && !mgrRole({ def: 'pantry' }) && unstaffed().length === 3 && usable(shop) && !bOpen(shop) && !staffed(cell) && A.ccap === c0 && warnings().some(w => /관리자가 없는 건물/.test(w));
     // 선택 카드 → 관리자 화면 → 외부 청빙 창
     UI.sel = shop.id; renderSelCard(); const sc = document.getElementById('selCard'); o.card = /관리자 필요/.test(sc.textContent); sc.querySelector('[data-act="mgr"]').click();
     o.scr = UI.scr === 'mgr' && UI.mgrB === shop.id && /없음/.test(document.getElementById('scrBody').textContent); document.querySelector('#scrBody [data-act="hireopen"]').click();
-    const dl = document.getElementById('scrDlg'), cheap = (HIRE_PAY0 + HIRE_PAY_K) * HIRE_FEE_K, hc = () => [...dl.querySelectorAll('.hc')];
-    o.dlg = !dl.hidden && hc().length === 3 && hc().every(c => !!c.querySelector('svg') && c.querySelector('p').textContent.length > 10 && !!c.querySelector('.hst')) && hireCands('staff')[0].skill === 1 && hireCands('staff')[0].fee === cheap;
-    const m0 = S.money, before = JSON.stringify(hireCands('staff')); dl.querySelector('[data-act="hirereroll"]').click();
-    o.reroll = S.money === m0 - HIRE_REROLL && HIRE_REROLL > cheap * 4 && JSON.stringify(hireCands('staff')) !== before && hireCands('staff').some(c => c.skill === 1);
-    const m1 = S.money, pay0 = assocPay(); dl.querySelector('[data-act="hiretake"]').click();
-    o.hire = S.hires.length === 1 && shop.mgr === 'h' + S.hires[0].id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + S.hires[0].pay && dl.hidden && mgrOf(shop).src === 'ex';
+    const dl = document.getElementById('scrDlg'), cheap = HIRE_FEE, hc = () => [...document.querySelectorAll('#scrBody .hcard')];
+    o.dlg = UI.scr === 'hire' && UI.scrTab === 'C' && UI.hireFor === shop.id && hc().length === HIRE_CAND0 && hc().every(c => !!c.querySelector('img[src*="portraits/hirecard"]') && !!c.querySelector('.hst') && !!c.querySelector('.hc-grade')) && volCands('C')[0].skill === 1 && volCands('C')[0].fee === cheap;
+    // 새 후보 찾기 단추는 없고, 후보 칸마다 한 번만 큰돈을 내고 교체, 이력서는 매주 무작위로 도착(목록 끝에 NEW)
+    const noBtn = !document.querySelector('[data-act="hcreroll"]') && typeof volReroll === 'undefined';
+    hc()[1].click(); const sw = dl.querySelector('[data-act="hcswap"]'), nm0 = volCands('C')[1].name, mR = S.money; sw.click();
+    const swapped = S.money === mR - HIRE_REROLL && volCands('C')[1].rr === 1 && !!dl.querySelector('[data-act="hcswap"][disabled]') && /이미/.test(hireSwap('C', 1)) && S.money === mR - HIRE_REROLL && HIRE_REROLL >= 500;
+    UI.scrSel = null; const n1 = volCands('C').length, ra = resumeArrive('C'); renderScreen();
+    const arrived = !!ra && volCands('C').length === n1 + 1 && ra.c.nw === 1 && ra.c.fee === 0 && document.querySelectorAll('#scrBody .hcard .hc-new').length === 1 && /이력서/.test(S.log[0].msg);
+    let cap = 0; for (let i = 0; i < 9; i++) resumeArrive(); cap = volCands('C').length <= HIRE_CAND_MAX && S.cands.length <= HIRE_CAND_MAX;
+    while (volCands('C').length > 3) volCands('C').pop(); renderScreen();
+    o.reroll = noBtn && swapped && arrived && cap && volCands('C').some(c => c.skill === 1); if (!o.reroll) console.log('REROLL', noBtn, swapped, arrived, cap);
+    const m1 = S.money, pay0 = assocPay(), n0 = S.people.length, mem0 = S.members; hc()[0].click(); o.dlg = o.dlg && !dl.hidden && dl.querySelector('.say').textContent.length > 10; dl.querySelector('[data-act="hctake"]').click();
+    const hp = S.people[S.people.length - 1];
+    o.hire = S.people.length === n0 + 1 && S.members === mem0 + 1 && !!hp.ext && hp.node === 'cstaff' && ppTrack(hp) === 'C' && shop.mgr === 'p' + hp.id && S.money === m1 - cheap && bOpen(shop) && A.ccap > c0 && assocPay() === pay0 + hp.ext.pay && dl.hidden && mgrOf(shop).src === 'ex' && UI.scr === 'mgr' && S.hires.length === 0;
     // 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르다
-    const p1 = S.people[0], p2 = S.people[1]; p1.node = 'server'; p1.lv = 30; p2.node = 'sgl'; p2.lv = 30; recalc(); renderScreen();
-    const cards = [...document.querySelectorAll('#scrBody .mgrc')], pool = mgrPool('staff'), inn = pool.find(w => w.src === 'in'), ex = pool.find(w => w.src === 'ex');
-    o.pool = cards.length === 2 && !!document.querySelector('#scrBody .mgrc.in') && !!document.querySelector('#scrBody .mgrc.ex') && inn.k > exK(5) && ex.k === exK(1) && getComputedStyle(document.querySelector('#scrBody .mgrc.in .ppi')).boxShadow !== getComputedStyle(document.querySelector('#scrBody .mgrc.ex .ppi')).boxShadow;
-    const rt0 = rotTime(shop); document.querySelector('#scrBody .mgrc.in').click(); o.swap = shop.mgr === 'p' + p1.id && rotTime(shop) < rt0 && mgrAt('h' + S.hires[0].id) === 0;
+    // 사역간사(섬김 갈래 끝)는 매장을 맡지 못한다 — 매장은 청빙직원만. 보조 직분자를 세우면 성능(회전)이 오른다
+    const p1 = S.people[0]; p1.node = 'cstaff'; p1.lv = 30; recalc(); renderScreen();
+    const cards = [...document.querySelectorAll('#scrBody .mgrc')], pool = mgrPool('staff'), ex = pool.find(w => w.src === 'ex');
+    o.pool = cards.length === 1 && pool.every(w => w.src === 'ex') && !!document.querySelector('#scrBody .mgrc.ex') && Math.abs(ex.k - exK(1) * (1 + MGR_PLV_K * hp.lv) * stMul(hp)) < 1e-9 && teamEligible(p1) && !teamEligible(hp) && ppClass(p1) === 'volunteer' && ppClass(hp) === 'staff';
+    const rt0 = rotTime(shop), pf0 = bPerf(shop); p1.node = 'elder'; recalc(); o.swap = supPut(shop.id, p1.id) === '' && Math.abs(supK(shop) - 1 - supBuff(p1)) < 1e-9 && supBuff(p1) === SUP_BUFF.elder + 30 * SUP_BUFF_LV && rotTime(shop) < rt0 && bPerf(shop) > pf0 && shop.mgr === 'p' + hp.id;
+    supRemove(shop.id, p1.id); p1.node = 'cstaff'; recalc();
     // 건물을 맡으면 성도 돌봄(자동 심방)에서 빠진다
-    const cap0 = delegCap(); mgrSet(cell.id, 'p' + p2.id); const cap1 = delegCap(); mgrClear(cell.id); o.excl = cap0 > 0 && cap1 === cap0 - leadCare(p2) && delegCap() === cap0 && mgrSet(cell.id, 'p' + p1.id) !== '' ;
-    mgrSet(cell.id, 'p' + p2.id); p2.node = 'new'; recalc(); o.fit = !cell.mgr && !staffed(cell);
+    const a1 = { name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440 }; S.assoc.push(a1); recalc(); const k1 = 'a' + asUid(a1);
+    o.excl = mgrSet(cell.id, k1) === '' && cell.mgr === k1;
+    // 이미 다른 건물을 맡은 사람은 그 건물에서 먼저 빼야 다른 건물에 배정할 수 있다
+    const why = mgrSet(room.id, k1); o.taken = /이미/.test(why) && !room.mgr && cell.mgr === k1 && !mgrPool('pastor').some(w => w.key === k1 && !w.at);
+    mgrClear(cell.id); o.moved = mgrSet(room.id, k1) === '' && room.mgr === k1 && !cell.mgr;
+    UI.mgrB = cell.id; openScreen('mgr'); const away = [...document.querySelectorAll('#scrBody .mgrc.away')]; o.away = away.length === 1; away[0].click(); o.awayBlock = !cell.mgr && room.mgr === k1; closeScreen();
+    dismissAssoc(0); recalc(); o.fit = !room.mgr && !staffed(room);
     // 내부 투시: 관리자가 있는 건물과 대예배당만, 그려도 오류가 없다
-    closeScreen(); shop.inUse = 1; o.cut = cutOn(shop) && cutOn(mn) && !cutOn(cell) && !cutOn(room) && !cutOn({ def: 'shop', id: shop.id, x: 0, y: 0 }); draw(); shop.inUse = 0;
+    closeScreen(); shop.inUse = 1; o.cut = cutOn(shop) && cutOn(mn) && cutOn(cell) && cutOn(room) && cutOn({ def: 'shop', id: shop.id, x: 0, y: 0 }) && !cutOn({ def: 'bench', id: 3, x: 0, y: 0 }) && DEFS.filter(d => d.kind === 'bld' && !d.retired).every(d => ROOMS[d.id] || d.cat === 'worship') && CHR_VISITORS.length === 6 && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(k => CHR_STAFF[k]); draw(); shop.inUse = 0;
     // 봇용 자동 배치, 예전 저장은 자원봉사자로 이어진다
-    o.auto = autoStaff(0) >= 1 && staffed(cell);
+    const un0 = unstaffed().length; o.auto = autoStaff(0) >= 1 && unstaffed().length < un0;
     delete S.hrV; room.mgr = undefined; delete room.mgr; recalc(); o.old = room.mgr === 'v' && bOpen(room) && mgrOf(room).name === '자원봉사자';
+    // 방문자는 예배를 보러 온다: 말씀 욕구가 가장 낮게 시작, 설교·영성·예배 불만이 불편 목록에 들어감
+    { const rnd = Math.random; let ws = 0, os = 0; V.length = 0; for (let i = 0; i < 40; i++) spawnV(false); V.forEach(v => { ws += v.needs.word; os += (v.needs.fel + v.needs.care + v.needs.comf) / 3; });
+      o.wordFirst = ws / 40 < os / 40 - 8 && needAvg({ needs: { word: 10, fel: 50, care: 50, comf: 50 } }) < needAvg({ needs: { word: 50, fel: 10, care: 50, comf: 50 } });
+      Math.random = () => 0; S.grip = {}; const v = V[0]; v.worshiped = false; const m0 = MOD.word, lv0 = S.lvl; S.lvl = 12; MOD.word = 1.0; const q0 = sermonQ(mn);
+      gripeUsed(v, mn); o.sermon = !!S.grip.sermon && v.angry > 0 && /설교/.test(GRIPES.sermon.n) && v.worshiped === true && q0 < sermonOk();
+      S.grip = {}; MOD.word = 1.6; const w2 = V[1]; gripeUsed(w2, mn); o.sermonOk = !S.grip.sermon && sermonQ(mn) > sermonOk(); MOD.word = m0; S.lvl = 1; o.sermonOk = o.sermonOk && sermonOk() < 1 && spiritOk() < .5 && (S.lvl = 12, sermonOk() > 1.2 && spiritOk() > .7);
+      S.grip = {}; S.cov.spirit = .3; const w3 = V[2]; w3.worshiped = true; gripeLeave(w3); o.spiritG = !!S.grip.spirit;
+      S.grip = {}; S.cov.spirit = 1; const w4 = V[3]; w4.worshiped = true; gripeLeave(w4); o.spiritOk = !S.grip.spirit;
+      S.grip = {}; const w5 = V[4]; w5.worshiped = false; w5.needs.word = 5; gripeLeave(w5); o.wordG = !!S.grip.word;
+      Math.random = rnd; S.grip = { sermon: 9, spirit: 9, word: 9 }; S.gripN = 20; const gl = gripeList().map(x => x.k); o.gripList = ['sermon', 'spirit', 'word'].every(k => gl.includes(k)) && GRIPE_ORDER[0] === 'sermon';
+      const sv = S.cov.spirit; S.cov.spirit = .3; const jl = SPIRIT_JOIN0 + SPIRIT_JOIN1 * .3, jh = SPIRIT_JOIN0 + SPIRIT_JOIN1 * 1; S.cov.spirit = sv; o.spiritJoin = jh > jl * 1.5 && SPIRIT_VIS1 > 0 && WORD_JOIN_LOW < .25; S.lvl = lv0;
+      { const ua = S.unlockAll; S.unlockAll = false; S.lvl = 1; recalc(); o.gripeLock = !gripeOn('food') && !gripeOn('lonely') && gripeOn('wc') && gripeOn('seat'); S.lvl = 2; recalc(); o.gripeLock = o.gripeLock && gripeOn('food'); S.lvl = lv0; S.unlockAll = ua; recalc(); }
+      S.grip = {}; S.gripN = 0; V.length = 0; recalc(); }
     return o; });
+  check(r.wordFirst && r.sermon && r.sermonOk && r.spiritG && r.spiritOk && r.wordG && r.gripList && r.spiritJoin && r.gripeLock, '방문자: 말씀 욕구가 가장 급해 예배 건물을 먼저 찾고, 설교(말씀 효과×맡은 사람 성능)·영성이 모자라면 불만(챙길 일 맨 위), 영성이 방문자 수·정착을 좌우, 기대는 교회 Level을 따라 오르고 잠긴 시설 때문에 생기는 불편은 치지 않음');
   check(r.main, '대예배당: 지도 가운데에 고정으로 서 있고(목록에 없음) 문 앞에서 입구까지 길이 이어져 바로 가동');
-  check(r.need, '관리자: 추가 예배당·교제 공간·매장은 관리자가 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
-  check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 외부 청빙 창에 후보 3명(얼굴·별·사연), 초반엔 값싼 별 1개 후보가 반드시');
+  check(r.need, '관리자: 예배·교제 건물(부서실 포함)은 부교역자, 매장은 직원이 없으면 가동하지 않고 수용도 치지 않음 (챙길 일에 표시)');
+  check(r.card && r.scr && r.dlg, '관리자: 선택 카드의 관리자 필요 → 배치 화면 → 청빙 화면의 큰 카드 후보 3명(그림·별·등급, 누르면 사연), 초반엔 값싼 별 1개 후보가 반드시');
+  { const r2 = await page.evaluate(() => { const o = {};
+      o.fee = HIRE_FEE === 0 && PAY_MONTH_DIV === 4;
+      o.tbl = ASSOC_PAY[0] === 80 && ASSOC_PAY[4] === 400 && ASSOC_PAY.every((v, i, a) => !i || v > a[i - 1]) && ASSOC_HOME_PAY === 400;
+      refreshCands(); o.cand = S.cands.every(c => c.fee === 0 && c.pay === ASSOC_PAY[c.skill - 1]);
+      o.vol = volCands('C').every(c => c.fee === 0 && c.pay === STAFF_PAY[c.skill - 1]);
+      const a0 = S.assoc.slice(); S.assoc = [{ name: '월급', title: '전도사', field: 'edu', skill: 2, pay: 160, fee: 0 }, { name: '월급2', title: '부목사', field: 'edu', skill: 5, pay: 400, fee: 0 }];
+      o.week = assocPay() >= 560 && Math.abs(payWeek() - assocPay() / 4) < 1e-9; S.assoc = a0; recalc();
+      return o; });
+    check(Object.values(r2).every(Boolean), '사례비: 청빙비 0, 부교역자 월 80~400만원(청빙직원 월 60~180), 주간 정산은 월 사례비 ÷ 4 ' + JSON.stringify(r2)); }
   check(r.reroll && r.hire, '외부 청빙: 다시 뽑기는 큰돈이 들고, 청빙하면 바로 배치되어 가동·주급 지출');
   check(r.pool && r.swap, '관리자: 교회에서 기른 사람은 성능이 더 높고 테두리 색이 다르며, 바꿔 배치하면 회전이 빨라짐');
-  check(r.excl && r.fit, '관리자: 건물을 맡은 리더는 성도 돌봄에서 빠지고(한 사람 한 건물), 자격을 잃으면 건물에서 빠짐');
-  check(r.cut && r.auto && r.old, '내부 투시: 관리자가 있는 건물만 단면으로 그리고 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
+  check(r.excl && r.fit, '관리자: 건물을 맡은 부교역자는 성도 돌봄에서 빠지고, 자격을 잃으면 건물에서 빠짐');
+  check(r.taken && r.moved && r.away && r.awayBlock, '관리자: 이미 다른 건물을 맡은 사람은 그 건물에서 먼저 빼야 배정할 수 있음 (배치 화면에 흐리게 표시)');
+  check(r.cut && r.auto && r.old, '내부 투시: 모든 건물을 단면으로 그리고(건물마다 내부 소품, 방문객 6명·기능별 담당자) 오류 없음 · 자동 배치 · 예전 저장은 자원봉사자로 이어짐');
   if (!Object.values(r).every(Boolean)) console.log('MGR', JSON.stringify(r));
   check(errs.length === 0, '관리자: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
+// 인트로 화면 → 스테이지 고르기 → 게임, 그리고 Lv 1에서 잠긴 탭·버튼
+async function introChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 844, height: 390 } });
+  const page = await ctx.newPage();
+  const errs = []; page.on('pageerror', e => errs.push(e.message));
+  await page.addInitScript(() => { try { localStorage.clear(); } catch (e) {} });
+  await page.goto(url); await page.waitForTimeout(500);
+  const a = await page.evaluate(() => { const el = document.getElementById('intro-screen'), cs = getComputedStyle(el), lg = el.querySelector('.intro-logo'), bt = el.querySelector('.intro-btn'), ls = getComputedStyle(lg), bs = getComputedStyle(bt);
+    const cv2 = document.createElement('canvas'); cv2.width = lg.naturalWidth; cv2.height = lg.naturalHeight; const g = cv2.getContext('2d'); g.drawImage(lg, 0, 0); const px = (x, y) => [...g.getImageData(x, y, 1, 1).data];
+    // 로고 그림에 마젠타가 남아 있지 않은지: 불투명한 화소 가운데 마젠타에 가까운 것의 수
+    const d = g.getImageData(0, 0, cv2.width, cv2.height).data; let mag = 0, opq = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 40) { opq++; if (d[i] > 200 && d[i + 2] > 200 && d[i + 1] < 110) mag++; }
+    const r = lg.getBoundingClientRect(), rb = bt.getBoundingClientRect();
+    return { lay: cs.position === 'fixed' && cs.zIndex === '9999' && cs.display === 'flex' && cs.flexDirection === 'column' && cs.justifyContent === 'space-between' && cs.alignItems === 'center' && /intro_bg/.test(cs.backgroundImage) && cs.backgroundSize === 'cover',
+      logo: lg.naturalWidth > 600 && px(0, 0)[3] === 0 && px(cv2.width - 1, cv2.height - 1)[3] === 0 && opq > 100000 && mag < opq * .002 && r.top < innerHeight * .3 && Math.abs(r.left + r.width / 2 - innerWidth / 2) < 6 && r.height < innerHeight * .6,
+      btn: bt.querySelector('img').naturalWidth > 300 && rb.bottom > innerHeight * .75 && rb.bottom <= innerHeight && Math.abs(rb.left + rb.width / 2 - innerWidth / 2) < 6 && bs.cursor === 'pointer',
+      anim: ls.animationName === 'introFloat' && ls.animationDuration === '3s' && ls.animationDirection === 'alternate' && ls.animationIterationCount === 'infinite' && bs.animationName === 'introPulse' && bs.animationDuration === '1.5s' && bs.animationDirection === 'alternate' && bs.animationIterationCount === 'infinite',
+      wait: UI.intro === true && document.getElementById('stage-screen').hidden, t0: S.t }; });
+  await page.waitForTimeout(400);
+  const paused = await page.evaluate(t0 => S.t === t0, a.t0);
+  await page.click('#intro-screen'); await page.waitForTimeout(60);
+  const pressed = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return el.classList.contains('press') && /matrix\(0\.95/.test(getComputedStyle(el.querySelector('.intro-btn')).transform) || el.classList.contains('out'); });
+  await page.waitForTimeout(260);
+  const fading = await page.evaluate(() => { const el = document.getElementById('intro-screen'), o = +getComputedStyle(el).opacity; return el.classList.contains('out') && o < 1 && o > 0 && /0\.6s/.test(getComputedStyle(el).transitionDuration) && !document.getElementById('stage-screen').hidden; });
+  await page.mouse.move(2, 2); await page.waitForTimeout(650);   // 열린 카드 위에 마우스가 있으면 살짝 떠오른다
+  const st = await page.evaluate(() => { const el = document.getElementById('intro-screen'), g = document.getElementById('stage-grid'), cards = [...g.querySelectorAll('.stcard')], cs = getComputedStyle(g);
+    const ys = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().top)))], xs = [...new Set(cards.map(c => Math.round(c.getBoundingClientRect().left)))];
+    return { gone: getComputedStyle(el).display === 'none', grid: cards.length === 6 && ys.length === 2 && xs.length === 3 && cards.every(c => { const r = c.getBoundingClientRect(); return r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1 && !!c.querySelector('.stpic'); }),
+      names: cards.map(c => c.querySelector('b').textContent).join() === '농촌 목회,산촌 목회,어촌 목회,도시 목회,선교지 1,선교지 2', locks: cards.filter(c => c.classList.contains('lock')).length === 2 && cards.slice(0, 4).every(c => !c.classList.contains('lock') && !!c.querySelector('.stgoal')) && cards.slice(4).every(c => !!c.querySelector('.stlock') && !!c.querySelector('svg')),
+      btns: cards.every((c, i) => { const b = [...c.querySelectorAll('.stb')], on = x => !x.classList.contains('off'); return b.map(x => x.textContent + ':' + x.dataset.mode).join() === '처음부터:new,이어하기:cont,테스트:test' && on(b[2]) && !on(b[1]) && on(b[0]) === (i < 4); }), still: UI.intro === true }; });
+  await page.click('[data-stage="miss1"][data-mode="new"]', { force: true }); await page.click('[data-stage="rural"][data-mode="cont"]', { force: true }); await page.waitForTimeout(100);
+  const locked = await page.evaluate(() => UI.intro === true && !document.getElementById('stage-screen').classList.contains('out'));
+  await page.click('[data-stage="rural"][data-mode="new"]'); await page.waitForTimeout(700);
+  const game = await page.evaluate(() => { const o = { in: UI.intro === false && S.stage === 'rural' && getComputedStyle(document.getElementById('stage-screen')).display === 'none', t0: S.t }; return o; });
+  await page.waitForTimeout(400);
+  const runs = await page.evaluate(t0 => S.t > t0, game.t0);
+  // Lv 1: 봉사자 버튼과 여러 탭이 잠겨 있고, 누르면 몇 Lv에 열리는지 알려 준다
+  const lk = await page.evaluate(() => { const o = {}; const fab = document.querySelector('#fab [data-fab="officers"]'); hud(true); syncEvBadge();
+    o.fab = fab.classList.contains('lock'); fab.click(); o.fabBlock = !UI.scr && /Lv 4/.test(document.getElementById('toast').textContent);
+    openScreen('events'); const tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')], tl = v => tabs.find(x => x.dataset.v === v);
+    o.tabs = !tl('events').classList.contains('lock') && !tl('pastor').classList.contains('lock') && tl('assoc').classList.contains('lock') && tl('vol').classList.contains('lock') && !tl('staff') && /Lv 4/.test(tl('vol').textContent);
+    tl('vol').click(); o.tabBlock = UI.scrTab === 'events' && /Lv 4/.test(document.getElementById('scrToast').textContent);
+    const evs = [...document.querySelectorAll('#scrBody .evc')]; o.evs = evs.filter(e => !e.classList.contains('lock')).length <= 3 && evs.filter(e => e.classList.contains('lock')).length >= 8 && /Lv 2/.test(document.querySelector('#scrBody [data-v="communion"]').textContent);
+    openScreen('people'); UI.ppList = true; renderScreen(); const pt = [...document.querySelectorAll('#scrTabs [role="tab"]')]; o.ppTabs = pt.length === 0 && UI.scrTab === 'all' && /Lv 3/.test(document.querySelector('#scrBody .lockn').textContent);
+    const p = S.people[0]; document.querySelector('#scrBody [data-act="ppopen"]').click(); const dl = document.getElementById('scrDlg'); o.gift = dl.querySelector('[data-act="ppgift"]').disabled && !dl.querySelector('[data-act="ppvisit"]').disabled && /Lv 2/.test(ppCareWhy(p, 'gift'));
+    p.node = 'bapt'; p.lv = 30; o.node = /교회 Lv 2/.test(ppTrainWhy(p, 'nurture')) && !ppCanStep(p); p.node = 'new'; p.lv = 1;
+    o.hire = /Lv 2/.test(volHire('C', 0)) && /Lv 2/.test(hireAssoc(0)) && /Lv 3/.test(teamAdd('evang', 1));
+    S.lvl = 4; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'dis' && [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v).join() === 'dis,off,B,C' && !document.querySelector('#scrTabs [data-v="B"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
+  // 설정 메뉴의 이동: 스테이지 선택(게임을 저장하고 카드로) · 메인 화면(Tap to Start로)
+  const nav = {};
+  nav.menu = await page.evaluate(() => { S.dlg = null; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.open = true; S.money = 4321; closeScreen(); document.getElementById('bGear').click(); const ok = !document.getElementById('gearMenu').hidden && !!document.getElementById('bStages') && !!document.getElementById('bHome');
+    document.getElementById('bStages').click(); const st = document.getElementById('stage-screen'), c = st.querySelector('[data-stage="rural"][data-mode="cont"]');
+    return ok && document.getElementById('gearMenu').hidden && UI.intro === true && !st.hidden && getComputedStyle(st).display !== 'none' && !c.classList.contains('off') && JSON.parse(localStorage.getItem(SAVE_KEY)).money === 4321 && /성도/.test(st.querySelector('[data-card="rural"] .stsv').textContent); });
+  { const t1 = await page.evaluate(() => S.t); await page.waitForTimeout(300); nav.paused = await page.evaluate(t => S.t === t, t1); }
+  await page.mouse.move(2, 2); await page.click('[data-stage="rural"][data-mode="cont"]'); await page.waitForTimeout(600);
+  nav.cont = await page.evaluate(() => UI.intro === false && S.stage === 'rural' && S.money === 4321 && !S.test);
+  await page.evaluate(() => { document.getElementById('bGear').click(); document.getElementById('bStages').click(); }); await page.waitForTimeout(300);
+  await page.click('[data-stage="rural"][data-mode="new"]'); await page.waitForTimeout(150);
+  nav.arm = await page.evaluate(() => UI.intro === true && document.querySelector('[data-stage="rural"][data-mode="new"]').classList.contains('arm') && S.money === 4321);
+  await page.click('[data-stage="rural"][data-mode="new"]', { force: true }); await page.waitForTimeout(600);
+  nav.fresh = await page.evaluate(() => UI.intro === false && S.stage === 'rural' && S.money !== 4321 && S.week === 0 && !S.open);
+  await page.evaluate(() => { document.getElementById('bGear').click(); document.getElementById('bStages').click(); }); await page.waitForTimeout(300);
+  await page.click('[data-stage="miss1"][data-mode="test"]'); await page.waitForTimeout(600);
+  nav.test = await page.evaluate(() => UI.intro === false && S.stage === 'miss1' && S.test === true && S.money === 1000000 && S.unlockAll === true && !localStorage.getItem(SAVE_KEY + '-miss1'));
+  await page.evaluate(() => { document.getElementById('bGear').click(); document.getElementById('bHome').click(); }); await page.waitForTimeout(200);
+  nav.home = await page.evaluate(() => { const el = document.getElementById('intro-screen'); return UI.intro === true && getComputedStyle(el).display !== 'none' && !el.classList.contains('press') && !el.classList.contains('out') && !!el.querySelector('.intro-btn img') && document.getElementById('stage-screen').hidden; });
+  await page.click('#intro-screen'); await page.waitForTimeout(900);
+  nav.back = await page.evaluate(() => !document.getElementById('stage-screen').hidden && getComputedStyle(document.getElementById('intro-screen')).display === 'none' && UI.intro === true);
+  if (!Object.values(nav).every(Boolean)) console.log('NAV', JSON.stringify(nav));
+  if (!(a.lay && a.logo && a.btn && a.anim && a.wait && paused && pressed && fading && Object.values(st).every(Boolean) && locked && game.in && runs)) console.log('INTRO', JSON.stringify({ a, paused, pressed, fading, st, locked, game, runs }));
+  check(a.lay && a.logo && a.btn, '인트로: 화면 전체를 덮는 배경 위에 로고(위 가운데)·시작 단추(Tap to Start, 아래 가운데), 로고·단추 그림은 투명 바탕에 마젠타가 남지 않음');
+  check(a.anim, '인트로: 로고는 3초, 단추는 1.5초 주기로 오가며 끝없이 움직임');
+  check(a.wait && paused && pressed && fading && st.gone, '인트로: 뜬 동안 게임은 멈추고, 누르면 단추가 눌렸다가 0.6초 동안 사라져 없어짐');
+  check(st.grid && st.names && st.locks && st.still && locked && game.in && runs, '스테이지 고르기: 2행 3열 카드 여섯 장(그림 포함)마다 처음부터·이어하기·테스트 단추 — 스테이지 1~4는 열려 있고(목표 표시), 잠긴 선교지 1·2와 저장 없는 이어하기는 흐리고 눌러도 그대로, 처음부터를 누르면 게임이 시작됨');
+  if (!Object.values(lk).every(Boolean)) console.log('LOCKUI', JSON.stringify(lk));
+  check(nav.menu && nav.paused && nav.cont, '설정 메뉴 › 스테이지 선택: 하던 게임을 저장하고 스테이지 카드로(시간 멈춤), 카드에 저장된 진행이 보이고 이어하기로 그대로 이어짐');
+  check(nav.arm && nav.fresh && nav.test, '스테이지 카드: 저장이 있으면 처음부터는 한 번 더 눌러야 새로 시작 · 테스트는 잠긴 선교지도 새 테스트 게임(100억·모든 기능, 일반 저장과 따로)');
+  check(nav.home && nav.back, '설정 메뉴 › 메인 화면: Tap to Start 인트로로 돌아가고, 누르면 다시 스테이지 고르기');
+  check(lk.fab && lk.fabBlock && lk.fabOpen && lk.offScr, '잠금: Lv 1에는 봉사자 버튼이 잠겨 있고(누르면 Lv 안내), Lv 4에 직분자·리더·섬김이 화면이 열림');
+  check(lk.tabs && lk.tabBlock && lk.evs && lk.ppTabs, '잠금: 행사·성도 화면의 잠긴 탭과 행사 카드에 자물쇠와 Lv가 보이고 눌러도 열리지 않음');
+  check(lk.gift && lk.node && lk.hire, '잠금: 선물·다음 성장 단계·청빙·사역팀은 교회 Lv가 되어야 쓸 수 있음');
+  check(errs.length === 0, '인트로·잠금: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
+async function rosterChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 400 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; });
+  await page.goto(url); await skipSteps(page);
+  await page.evaluate(() => { window.__ct.init(); S.money = 9999999; S.unlockAll = true; S.freeMgr = false; S.members = 30; syncPeople(); recalc();
+    S.assoc = [{ name: '김시온', title: '전도사', field: 'praise', skill: 2, pay: 110, fee: 440, g: 'm', seed: 7, pi: 0, lv: 1, xp: 0 }, { name: '이하나', title: '부목사', field: 'edu', skill: 5, pay: 120, fee: 0, home: true, g: 'f', seed: 9, lv: 1, xp: 0 }];
+    volJoin(makeVol('C')); syncPeople(); recalc(); build('room', 20, 20, 2); recalc(); });   // 직원 탭: 청빙직원 한 명
+  const dock = await page.evaluate(() => { const f = document.querySelector('#fab [data-fab="roster"]'), st = document.querySelector('#fab [data-fab="status"]'); return !!f && !st && /직원/.test(f.textContent); });
+  await page.click('#fab [data-fab="roster"]'); await page.waitForTimeout(200);
+  const a = await page.evaluate(() => {
+    const o = {}, sc = document.getElementById('scr'), tabs = [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.textContent.replace('🔒', '').trim());
+    o.tabs = UI.scr === 'roster' && tabs.join(',') === '부교역자,직원,청빙';
+    const l = document.querySelector('.rost-l').getBoundingClientRect(), r = document.querySelector('.rost-r').getBoundingClientRect();
+    o.split = Math.abs(l.width / (l.width + r.width) - .6) < .04;
+    const cards = [...document.querySelectorAll('.rcard')];
+    o.cards = cards.length === 2 && cards.every(c => !!c.querySelector('img') && !!c.querySelector('.rc-at')) && cards.some(c => c.classList.contains('ex')) && cards.some(c => c.classList.contains('in'));
+    o.border = getComputedStyle(cards.find(c => c.classList.contains('in'))).borderTopColor !== getComputedStyle(cards.find(c => c.classList.contains('ex'))).borderTopColor;
+    o.breath = /rbreath/.test(getComputedStyle(document.querySelector('.rd-art img')).animationName);
+    o.btns = ['rospick', 'rostrain', 'roscheer', 'rospromo'].every(k => !!document.querySelector('.rd-b [data-act="' + k + '"]'));
+    return o;
+  });
+  // 배치 · 직무 교육 · 특별 격려 · 승급
+  const b = await page.evaluate(() => {
+    const o = {}, bid = S.buildings.find(x => x.def === 'room').id; document.querySelector('.rcard.ex').click();
+    document.querySelector('[data-act="rospick"]').click(); o.pick = document.querySelectorAll('.rpk').length >= 1;
+    document.querySelector('.rpk[data-v="' + bid + '"]').click(); o.placed = !!mgrOf(bById(bid)) && /김시온/.test(mgrOf(bById(bid)).name) && /📍/.test(document.querySelector('.rcard.on .rc-at').textContent);
+    const e = rosEnt(UI.rosSel), k0 = e.k, st = e.o.st; st.xp = ST_TRAIN.xp; const m0 = S.money; renderScreen();
+    document.querySelector('[data-act="rostrain"]').click(); o.train = st.tr === 1 && S.money === m0 - rosCost(0) && st.xp === 0 && rosEnt(UI.rosSel).k > k0 && /영구/.test(document.getElementById('scrToast').textContent);
+    st.mo = 40; const m1 = S.money; renderScreen(); document.querySelector('[data-act="roscheer"]').click(); o.cheer = st.mo === 90 && S.money === m1 - ST_CHEER.cost && st.xp === ST_CHEER.xp;
+    o.promoBlock = /직무 교육/.test(rosWhyPromote(rosEnt(UI.rosSel)));
+    st.tr = ST_RANK.need[0]; renderScreen(); document.querySelector('.rd-b [data-act="rospromo"]').click(); o.promo = e.o.title === '부목사' && st.rk === 1 && e.o.pay === Math.round(110 * (1 + ST_RANK.pay));
+    document.querySelector('.rcard.in').click(); const ia = rosEnt(UI.rosSel); o.inPromo = ia.o.title === '부목사' && ia.st.rk === ia.st.rb && Math.abs(asSkill(ia.o) - 5 * ASSOC_HOME_K) < .01;
+    document.querySelector('[data-act="scrtab"][data-v="staff"]').click(); o.staff = document.querySelectorAll('.rcard').length === 1 && !!document.querySelector('[data-act="rospick"]:not([disabled])');
+    document.querySelector('[data-act="scrtab"][data-v="hire"]').click(); o.hire = document.querySelectorAll('.hcard').length >= HIRE_CAND0;
+    return o;
+  });
+  // 위 자금·성도 수 칩으로 현황
+  await page.evaluate(() => closeScreen()); await page.click('#status .pill.mem'); await page.waitForTimeout(150);
+  const c = await page.evaluate(() => UI.scr === 'status' && /지표/.test(document.getElementById('scrTabs').textContent));
+  if (!(Object.values(a).every(Boolean) && Object.values(b).every(Boolean))) console.log('ROSTER', JSON.stringify(a), JSON.stringify(b));
+  check(dock && c, '직원 화면: 하단 버튼이 현황 대신 직원이 되고, 위 자금·성도 수 칩을 누르면 현황이 열림');
+  check(a.tabs && a.split && a.cards && a.border && a.breath && a.btns, '직원 화면: 탭 3개(부교역자·직원·청빙), 60:40 분할, 카드(초상화·황금/푸른 테두리·근무지 뱃지)와 숨 쉬는 상세 초상화·네 버튼');
+  check(b.pick && b.placed && b.train && b.cheer && b.promoBlock && b.promo && b.inPromo && b.staff && b.hire, '직원 화면: 근무지 배치(건물 관리자), 직무 교육·특별 격려·직급 승급이 쿨타임 없이 즉시 적용되고, 직원·청빙 탭이 열림');
+  check(errs.length === 0, '직원 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
+  await ctx.close();
+}
+async function slotChecks(browser, url) {
+  const ctx = await browser.newContext({ viewport: { width: 900, height: 420 } });
+  const page = await ctx.newPage();
+  const errs = watchErrors(page);
+  await page.addInitScript(() => { window.__CT_TEST = true; });
+  await page.goto(url); await skipSteps(page);
+  const a = await page.evaluate(() => {
+    window.__ct.init(); S.money = 9999999; S.unlockAll = true; S.lvl = 12; S.members = 30; syncPeople(); recalc();
+    S.people.forEach(p => { p.node = 'new'; p.lv = 1; p.tr = null; });
+    const L = S.people[0], L2 = S.people[1]; L.node = 'sgl'; L.lv = 25; L2.node = 'seminary'; L2.lv = 70; recalc();
+    const o = {};
+    // 리더 슬롯: 호감 Lv에 비례, 예비신학생은 0칸
+    o.slots = leadSlots(L) === 1 + Math.floor(25 / LEAD_SLOT_LV) && leadSlots(L2) === 0; L.lv = 35; o.prop = leadSlots(L) === 1 + Math.floor(35 / LEAD_SLOT_LV); L.lv = 25;
+    openScreen('officers', 'B');
+    const l = document.querySelector('.lead-l').getBoundingClientRect(), r = document.querySelector('.lead-r').getBoundingClientRect();
+    o.split = Math.abs(l.width / (l.width + r.width) - .4) < .05 && document.querySelectorAll('.lcard').length === 2;
+    document.querySelector('.lcard[data-v="' + L.id + '"]').click();
+    const n = leadSlots(L), emp = () => document.querySelectorAll('.lead-slots .lslot.empty').length;
+    o.grid = document.querySelectorAll('.lead-slots .lslot').length === n && emp() === n && getComputedStyle(document.querySelector('.lslot.empty')).borderTopStyle === 'dashed' && !!document.querySelector('[data-act="ldauto"]') && /⚡/.test(document.querySelector('[data-act="ldauto"]').textContent);
+    document.querySelector('.lslot.empty').click(); const pk = [...document.querySelectorAll('.lead-pick [data-act="ldpick"]')];
+    o.pick = pk.length > 0 && pk.every(b => ppById(+b.dataset.v) && ppClass(ppById(+b.dataset.v)) === 'saint');
+    const s0 = +pk[0].dataset.v; pk[0].click(); o.put = L.assignedSaints.length === 1 && L.assignedSaints[0] === s0 && emp() === n - 1 && !!document.querySelector('.lead-slots .lslot.full img') && ppAssignedAny(s0);
+    document.querySelector('.lslot.full').click(); o.free = L.assignedSaints.length === 0 && emp() === n;
+    document.querySelector('[data-act="ldauto"]').click(); o.auto = L.assignedSaints.length === n && emp() === 0 && L.assignedSaints.every(i => ppById(i).lv <= 1);
+    o.full = /맡을 자리가 없어요/.test(ppAssign(L.id, ppFreeSaints()[0].id));
+    L.assignedSaints.forEach(i => { ppById(i).node = 'bapt'; }); recalc(); o.keep = L.assignedSaints.length === n;   // 세례교인은 아직 성도
+    ppById(L.assignedSaints[0]).node = 'disciple'; recalc(); o.drop = L.assignedSaints.length === n - 1;   // 제자반을 마치면 봉사자 — 슬롯에서 빠짐
+    closeScreen(); return o;
+  });
+  const b = await page.evaluate(() => {
+    const o = {}; S.people.forEach(p => { p.node = 'new'; p.lv = 1; p.assignedSaints = []; });
+    const id1 = build('room', 20, 20, 2) && S.buildings.find(x => x.def === 'room'), id2 = S.buildings.find(x => x.fixed);
+    recalc(); const room = S.buildings.find(x => x.def === 'room');
+    o.slots = supSlots(room) === SUP_SLOTS[0] && supSlots(id2) === SUP_SLOTS[2] && Array.isArray(room.supportStaff) && supSlots(S.buildings.find(x => x.def !== 'room' && !x.fixed && !mgrRole(x)) || { def: 'x' }) === 0;
+    // 직분자 갈래 성도 넷
+    const A = S.people.slice(0, 4); A[0].node = 'devoted'; A[1].node = 'deacon'; A[2].node = 'elder'; A[3].node = 'sgl'; A.forEach((p, i) => { p.lv = 50 + i; }); recalc();
+    o.elig = supEligible(A[0]) && supEligible(A[2]) && !supEligible(A[3]) && supFree().length === 3 && supFree()[0].id === A[2].id;
+    UI.sel = room.id; renderSelCard(); const card = document.getElementById('selCard');
+    const g = [...card.querySelectorAll('.scs-g')];
+    o.card = !card.hidden && g.length === 2 && /메인/.test(g[0].textContent) && /보조/.test(g[1].textContent) && g[0].querySelectorAll('.slt').length === 1 && g[1].querySelectorAll('.slt').length === SUP_SLOTS[0] && !!card.querySelector('.scs-sep') && !!card.querySelector('[data-act="supauto"]');
+    o.empty = g[0].querySelector('.slt.empty') && g[1].querySelector('.slt.empty') && getComputedStyle(g[1].querySelector('.slt.empty')).borderTopStyle === 'dashed';
+    card.querySelector('[data-act="supopen"]').click(); o.screen = UI.scr === 'sup' && UI.supB === room.id && document.querySelectorAll('#scrBody .lp').length === 3;
+    document.querySelector('#scrBody .lp[data-v="' + A[2].id + '"]').click(); o.put = room.supportStaff.length === 1 && room.supportStaff[0] === A[2].id && supOf(A[2].id) === room.id && /가득/.test(supPut(room.id, A[0].id));
+    closeScreen(); UI.sel = room.id; renderSelCard(); o.face = !!document.querySelector('#selCard .scs-g:nth-child(3) .slt.full img, #selCard .scs-g .slt.full img') && /members\/member_/.test(document.querySelector('#selCard .slt.full img').src);
+    // 대예배당(3칸) + ⚙️ 자동 배치: 대예배당부터 빈 칸을 호감 Lv 높은 직분자로
+    supRemove(room.id, A[2].id); const n = supAuto(); o.auto = n === 3 && id2.supportStaff.length === 3 && supFree().length === 0 && id2.supportStaff[0] === A[2].id;
+    UI.sel = id2.id; renderSelCard(); const c2 = document.getElementById('selCard'); o.main = !!c2.querySelector('.slt.fix img') && c2.querySelectorAll('.scs-g')[1].querySelectorAll('.slt.full').length === 3;
+    // 자격을 잃으면 빠짐
+    A[2].node = 'bapt'; recalc(); o.prune = id2.supportStaff.length === 2 && !id2.supportStaff.includes(A[2].id);
+    UI.sel = room.id; renderSelCard(); document.querySelector('#selCard [data-act="supauto"]').click(); o.autoBtn = true;
+    UI.sel = null; renderSelCard();
+    // 봉사자 › 직분자 4:6: 오른쪽 건물 카드(레벨·기본 성능·보조 버프), 빈칸 → 왼쪽 직분자 카드로 배치
+    S.buildings.forEach(x => { x.supportStaff = []; }); A[2].node = 'elder'; recalc(); openScreen('officers', 'off');
+    const lw = document.querySelector('#scrBody .lead-l').getBoundingClientRect().width, rw = document.querySelector('#scrBody .lead-r').getBoundingClientRect().width;
+    const bc = [...document.querySelectorAll('#scrBody .bsc')];
+    o.offSplit = Math.abs(lw / (lw + rw) - .4) < .05 && !!document.querySelector('#scrBody .lbig') && bc.length === S.buildings.filter(x => supSlots(x) > 0).length && bc.every(c => /기본 성능 ×/.test(c.textContent)) && /★ Lv/.test(document.querySelector('#scrBody .bsc').textContent);
+    const k0 = bPerf(room); document.querySelector('#scrBody .bsc [data-act="ofslot"][data-v="sup:' + room.id + '"]').click();
+    const pks = [...document.querySelectorAll('#scrBody .lead-l .lcard.pk')]; o.offPick = UI.ofPick && UI.ofPick.v === room.id && pks.length === 3 && !!document.querySelector('#scrBody .slt.empty.pk');
+    document.querySelector('#scrBody .lead-l .lcard.pk[data-v="' + A[1].id + '"]').click();
+    const rc = [...document.querySelectorAll('#scrBody .bsc')].find(c => c.querySelector('[data-v^="' + room.id + ':"]'));
+    o.offPut = room.supportStaff[0] === A[1].id && !UI.ofPick && bPerf(room) > k0 && !!rc && /보조 버프 \+/.test(rc.textContent) && /\+\d/.test(rc.querySelector('.slt.full em').textContent) && /보조 버프/.test(document.querySelector('#scrBody .lbig').textContent);
+    closeScreen();
+    // 리더 성도 칸 효과: 맡은 성도는 매주 호감 경험치를 더 받는다 (칸에 수치 표시)
+    { const ld = S.people[3]; ld.node = 'sgl'; ld.lv = 30; const st = S.people[5]; st.node = 'new'; st.lv = 1; st.xp = 0; ld.assignedSaints = [st.id]; recalc();
+      const x0 = st.xp + st.lv * 1e3; leadWeek(); o.leadXp = leadXp(ld) === LEAD_SAINT_XP * (1 + 30 * LEAD_SAINT_LV) && st.xp + st.lv * 1e3 > x0;
+      openScreen('officers', 'B'); UI.leadSel = ld.id; renderScreen(); o.leadTxt = /\/주/.test(document.querySelector('#scrBody .lead-slots').textContent) && /돌봄 효과/.test(document.querySelector('#scrBody .lbig').textContent); closeScreen(); ld.assignedSaints = []; }
+    return o;
+  });
+  if (!(Object.values(a).every(Boolean) && Object.values(b).every(Boolean))) console.log('SLOT', JSON.stringify(a), JSON.stringify(b));
+  check(a.slots && a.prop && a.split && a.grid, '리더 화면: 왼쪽 40% 리더 카드 · 오른쪽 60% 성도 슬롯(호감 Lv에 비례, 빈 칸은 점선, 예비신학생은 0칸), ⚡ 자동 배정 버튼');
+  check(a.pick && a.put && a.free && a.auto && a.full && a.keep && a.drop, '리더 슬롯: 빈 칸을 누르면 성도를 골라 배치, 채운 칸은 얼굴이 차고 누르면 빠짐, 자동 배정은 호감 Lv 낮은 성도부터, 제자반을 마치면 슬롯에서 빠짐');
+  check(b.slots && b.elig && b.card && b.empty && b.screen && b.put && b.face, '건물 카드: 메인 관리자 슬롯과 보조 직분자 슬롯(티어 비례)을 나눠 보여 주고, 빈 칸은 점선, 배치하면 얼굴이 참');
+  check(b.auto && b.main && b.prune && b.autoBtn, '건물 카드: ⚙️ 직분자 자동 배치는 대예배당부터 빈 칸을 호감 Lv 높은 직분자로 채우고, 자격을 잃으면 빠짐');
+  check(b.offSplit && b.offPick && b.offPut, '봉사자 › 직분자 4:6: 왼쪽 큰 카드·직분자 카드, 오른쪽 기능 건물 카드(레벨·기본 성능·보조 버프), 빈칸 → 왼쪽 카드로 배치');
+  check(b.leadXp && b.leadTxt, '리더 성도 칸: 맡은 성도는 매주 호감 경험치 +(LEAD_SAINT_XP × 리더 Lv), 칸과 큰 카드에 수치 표시');
+  { const al = await page.evaluate(() => { const o = {}; closeScreen(); S.members = 200; recalc(); syncAlert();   // 좌석 부족 → 챙길 일이 생김
+      const b = document.getElementById('alert'), card = document.getElementById('alertCard'); o.has = alertCount() > 0 && !b.hidden;
+      b.click(); o.open = UI.alertOpen && !card.hidden;
+      // 카드 안을 누르면 그대로, 밖(지도·다른 곳)을 누르면 닫힘
+      card.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.inside = UI.alertOpen && !card.hidden;
+      document.getElementById('cv').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.outside = !UI.alertOpen && card.hidden;
+      b.click(); o.reopen = UI.alertOpen && !card.hidden; document.querySelector('#fab button').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); o.other = !UI.alertOpen && card.hidden;
+      return o; });
+    check(Object.values(al).every(Boolean), '챙길 일 카드: 카드 안은 그대로, 지도·다른 곳을 누르면 닫힘 ' + JSON.stringify(al)); }
+  { const hb = await page.evaluate(() => { const o = {}; closeScreen(); syncAlert(); UI.alertOpen = false;
+      // 챙길 일 숫자 배지: 흰 바탕 동그라미가 화면 안에 온전히 보임
+      const n = document.getElementById('alN'), r = n.getBoundingClientRect(), cs = getComputedStyle(n);
+      o.badge = !document.getElementById('alert').hidden && r.top >= 0 && r.left >= 0 && r.width >= 15 && r.height >= 15 && cs.backgroundColor === 'rgb(255, 255, 255)' && n.textContent.trim().length > 0;
+      // 봉사자 화면: 전체 심방·선물은 머리띠(탭 오른쪽)의 코드 단추, 본문의 그림 단추는 없음
+      const ua = S.unlockAll; S.unlockAll = true; S.money = 99999; const A = S.people.slice(0, 2); A.forEach(q => { q.node = 'devoted'; q.lv = 20; q.tr = null; q.vw = -99; q.gw = -99; }); recalc();
+      openScreen('officers', 'off'); const inf = document.getElementById('scrInfo'), hv = inf.querySelector('.hdb.visit'), hg = inf.querySelector('.hdb.gift'), L0 = scrPeople().filter(q => ppCareOk(q, 'visit')), nv0 = L0.length; o.dbg = [nv0, inf.hidden, !!hv, hv && hv.textContent];
+      o.head = !inf.hidden && !!hv && !!hg && !hv.disabled && /전체 심방/.test(hv.textContent) && new RegExp(nv0 + '명').test(hv.textContent) && !document.querySelector('#scrBody .bic') && !getComputedStyle(hv).backgroundImage.includes('assets/ui');
+      const m0 = S.money; hv.click(); o.visit = nv0 >= 2 && L0.every(q => q.vw === S.week) && S.money === m0 - nv0 * PP_VISIT.cost && document.querySelector('#scrInfo .hdb.visit').disabled;
+      // 다크 모드여도 전체 화면은 밝은 색 그대로(이름·설명 글씨가 짙은 색)
+      const lum = c => { const m = c.match(/\d+/g).map(Number); return (0.299 * m[0] + 0.587 * m[1] + 0.114 * m[2]) / 255; };
+      o.ink = getComputedStyle(document.getElementById('scr')).getPropertyValue('--ink').trim() === '#2f4a40' && lum(getComputedStyle(document.querySelector('#scrBody .lbig h3')).color) < .45;
+      closeScreen(); openScreen('people'); o.noHead = document.getElementById('scrInfo').hidden; o.dbg = !!o.dbg; closeScreen(); A.forEach(q => { q.node = 'new'; q.lv = 1; }); S.unlockAll = ua; recalc();
+      return o; });
+    check(Object.values(hb).every(Boolean), '챙길 일 숫자가 잘리지 않음 · 봉사자 화면 머리띠의 전체 심방·선물(코드 단추) · 전체 화면은 다크 모드에서도 짙은 글씨 ' + JSON.stringify(hb)); }
+  check(errs.length === 0, '슬롯 화면: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
 async function levelChecks(browser, url) {
@@ -1259,7 +1700,7 @@ async function levelChecks(browser, url) {
     // 문은 정면 1층 가운데 한 칸, 방향을 돌리면 문도 돈다
     const pr = put('pray', 2);
     o.front = !!pr && pr.door.ent.d === 2 && pr.door.ent.l === 0 && sameSpot(pr.door.ent, pr.door.ext);
-    if (pr) { pr.face = 0; recalc(); o.front = o.front && pr.door.ent.d === 0; pr.face = 2; recalc(); linkDoor(pr); recalc(); }
+    if (pr) { pr.face = 0; recalc(); o.front = o.front && pr.door.ent.d === 2; pr.face = 2; recalc(); linkDoor(pr); recalc(); }
     // 짓고 나면 입구·출구 놓기로 이어지지 않고 건물 카드가 뜬다
     { UI.tab = 'build'; UI.fold = false; UI.cat = 'worship'; startPlace('bible'); let g = null; for (let y = 4; y < PZ - 8 && !g; y += 2) for (let x = 4; x < COLS - 10; x += 2) if (!placeWhy(D.bible, x, y, UI.face) && !onFloorAt(D.bible, x, y, UI.face)) { g = { x, y }; break; }
       UI.ghost = g; plLock = 0; plOk(); const nb = S.buildings[S.buildings.length - 1]; o.noGateFlow = !!g && nb.def === 'bible' && !isPlacing() && UI.sel === nb.id; UI.sel = null; }
@@ -1280,11 +1721,11 @@ async function levelChecks(browser, url) {
     const two = mk(); arrive(two); S.t = WEEK * 6.2 / 7; batchSunday(); const skip = room.run === 0;
     o.sunday = notYet && sun && fri && skip && two.state === 'inside';
     V.length = 0; room.inUse = 0; room.run = 0; S.t = 1;
-    // 한 명씩: 화장실은 정원 1명, 레벨이 오를수록 회전 시간이 크게 짧아짐
+    // 한 명씩: 화장실은 레벨이 없는 요소(회전만 빠름), 매점은 레벨이 오를수록 회전 시간이 크게 짧아짐
     const wc = put('wc', 2), rot1 = wc && rotTime(wc);
-    if (wc) { wc.lv = 10; } const rot10 = wc && rotTime(wc), cap10 = wc && bCap(wc); if (wc) wc.lv = 1;
+    const shopB = put('shop', 2); const rotS1 = shopB && rotTime(shopB); if (shopB) shopB.lv = 10; const rot10 = shopB && rotTime(shopB), cap10 = shopB && bCap(shopB); if (shopB) shopB.lv = 1;
     // 시작 정원: 화장실 2명, 매점 4명, 서점 6명 (이용자 1명은 너무 적다). 레벨이 오르면 정원도 는다
-    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap === 2 && bCap(wc) === 2 && bCap({ def: 'shop', lv: 1, id: 0 }) === 4 && bCap({ def: 'bookstore', lv: 1, id: 0 }) === 6 && cap10 > 2 && rot10 < rot1 / 2.5 && bCap(room) > 1;
+    o.single = !!wc && bMode(D.wc) === 'single' && D.wc.cap === 2 && bCap(wc) === 2 && bCap({ def: 'shop', lv: 1, id: 0 }) === 4 && bCap({ def: 'bookstore', lv: 1, id: 0 }) === 6 && cap10 > 4 && rot10 < rotS1 / 2.5 && bCap(room) > 1 && !hasLv(wc) && rot1 < rotS1 && !hasLv(D.bench) && bCap(room) > 1;
     // 문 앞에서 기다리기: 꽉 찼으면 문 앞 길에서 기다리고, 한계를 넘기면 화남 표시·불만, 다른 곳으로
     let soft = false;
     if (wc) { wc.inUse = bCap(wc); spawnV(); const v = V[V.length - 1]; placeAt(v, entNode(wc)); v.target = wc.id; arrive(v); const p0 = nodePos(entNode(wc));
@@ -1313,7 +1754,7 @@ async function levelChecks(browser, url) {
       o.tier2 = D.chapel.tier === 2 && D.chapel.t1 === 'room' && D.room.tier === 1 && Math.abs(D.chapel.cost - D.room.cost * (1 + inv * TIER2_COST_K)) <= 10 && D.chapel.cost > D.room.cost * 4 &&
         bPerf(ch) >= bPerf(r6) && bPerf(ch) <= bPerf(r7) + 1e-9 && bPerf(c10) > bPerf(r10) * 1.5 && D.chapel.seats === D.room.seats && TIER_PAIRS.every(p => D[p[0]] && D[p[1]] && D[p[1]].tier === 2);
       // 값싼 티어 1은 처음부터 여러 개(TIER1_MAX개까지) 지을 수 있고, 넘으면 막힌다. 상위가 열리면 TIER1_MAX_OPEN개까지
-      S.unlockAll = false; S.lvl = 1; S.money = 99999; const rooms = () => S.buildings.filter(b => b.def === 'room').length; let made = 0;
+      S.unlockAll = false; S.lvl = BLD_LV.room; S.money = 99999; const rooms = () => S.buildings.filter(b => b.def === 'room').length; let made = 0;
       for (let x = 2; x < COLS - 4 && !tierWhy('room'); x += 4) for (let y = 2; y < 20 && !tierWhy('room'); y += 4) if (build('room', x, y, 2)) made++;
       const lockedWhy = tierWhy('room'), nb = S.buildings.length, again = build('room', 3, 40, 2);
       S.unlockAll = true; o.tier1 = isLocked('chapel') === false && made >= 2 && rooms() === TIER1_MAX && new RegExp(TIER1_MAX + '개까지').test(lockedWhy) && !again && S.buildings.length === nb && tierWhy('room') === '' && TIER1_MAX_OPEN > TIER1_MAX; }
@@ -1327,7 +1768,7 @@ async function levelChecks(browser, url) {
     return o;
   });
   if (!(r.start && r.front && r.noGateFlow && r.invest && r.levels)) console.log('LV', JSON.stringify([r.start, r.front, r.noGateFlow, r.invest, r.levels]));
-  check(r.start && r.front && r.noGateFlow, '문: 대기줄·입구·출구 건물이 없고, 건물마다 정면 1층 가운데 문 하나(돌리면 문도 돎), 짓고 나면 바로 건물 카드');
+  check(r.start && r.front && r.noGateFlow, '문: 대기줄·입구·출구 건물이 없고, 건물마다 남쪽 1층 가운데 문 하나(방향 값을 바꿔도 남쪽), 짓고 나면 바로 건물 카드');
   check(r.batch, '일괄 가동: 예배실은 정원이 찰 때까지 안에서 기다렸다가 한꺼번에 가동 후 함께 나오고, 가동 중엔 문 앞에서 기다림');
   check(r.sunday, '일괄 가동: 주일이 되면 정원이 덜 차도 가동하되, 같은 주 금·토에 가동했으면 건너뜀');
   check(r.single, '한 명씩: 매장·편의 시설은 정원 1명, 레벨이 오를수록 회전 시간이 짧아짐');
@@ -1497,19 +1938,28 @@ async function deckChecks(browser, url) {
     setPlaceLevel(tr, D.tree, 5, 3, 2); tr.x = 5; tr.y = 3; rebuildOcc(); o.moved = tr.z == null;
     draw(); ROT = 2; draw(); ROT = 0;
     save(); const L = load(); o.saved = L.buildings.some(b => b.def === 'cafe' && b.z === 1);
-    // 바닥 타일을 누르면 카드가 뜨고 바로 바꾼다 (걷어낸 반값을 뺀 값)
+    // 바닥 타일을 누르면 카드가 뜨고 바로 바꾼다 (새 바닥 값 + 철거비)
     S.floor['8,4'] = 'f_block'; recalc(); UI.fold = true; UI.tool = null;
     const fm = rotPt(8.5, 4.5), fq = toScreen(fm[0], fm[1], 0); onTap(fq[0], fq[1]);
     const card = !document.getElementById('selCard').hidden && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
     document.querySelector('#selCard [data-act="choose"][data-v="fswap"]').click();
     const m2 = S.money; document.querySelector('#cards [data-act="cpick"][data-v="f_wood"]').click();
-    o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost - Math.floor(D.f_block.cost * .5);
-    // 바꾸면 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다 (기존 바닥 위는 걷어낸 반값을 뺀 값)
+    o.fcard = card && S.floor['8,4'] === 'f_wood' && m2 - S.money === D.f_wood.cost + Math.ceil(D.f_block.cost * FLOOR_DEMO_K);
+    // 바꾸면 바닥 깔기로 넘어가 화살표 쪽 다음 칸에서 이어 바꾼다 (기존 바닥 위는 새 바닥 값 + 철거비)
     o.fchain = isPlacing() && UI.tool === 'f_wood' && !!UI.ghost && Math.abs(UI.ghost.x - 8) + Math.abs(UI.ghost.y - 4) === 1;
     S.floor[UI.ghost.x + ',' + UI.ghost.y] = 'f_block'; const m4 = S.money; plOk();
-    o.fchain = o.fchain && S.money === m4 - (D.f_wood.cost - Math.floor(D.f_block.cost * .5));
+    o.fchain = o.fchain && S.money === m4 - (D.f_wood.cost + Math.ceil(D.f_block.cost * FLOOR_DEMO_K));
     endPlace(); UI.fold = true;
-    const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && S.money - m3 === Math.floor(D.f_wood.cost * .5);
+    const m3 = S.money; o.ferase = floorSwap(8, 4, 'f_erase') === '' && !S.floor['8,4'] && m3 - S.money === Math.ceil(D.f_wood.cost * FLOOR_DEMO_K);
+    // 넓이 단추: 바닥 창 제목 오른쪽 8개, 3×3이면 한 번에 9칸 · 깔린 다른 바닥은 바뀌고 철거비가 더해짐 · 넓이만큼 건너감 · 되돌리기는 한꺼번에
+    { UI.tab = 'build'; UI.fold = false; UI.bstep = 'items'; UI.cat = 'floor'; UI.tool = null; renderPanel(); const sz = [...document.querySelectorAll('#dtitle .fszb')].map(x => x.dataset.v);
+      document.querySelector('#dtitle .fszb[data-v="3x3"]').click(); const pick = UI.fsz[0] === 3 && UI.fsz[1] === 3;
+      startPlace('f_brick'); UI.fdir = 0; const gx = 20, gy = 30; for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) delete S.floor[(gx + i) + ',' + (gy + j)]; S.floor[(gx + 1) + ',' + (gy + 1)] = 'f_block';
+      UI.ghost = { x: gx, y: gy }; const fc = floorCostAt(), m5 = S.money; plLock = 0; plOk(); let cnt = 0; for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) if (S.floor[(gx + i) + ',' + (gy + j)] === 'f_brick') cnt++;
+      const want = 9 * D.f_brick.cost + Math.ceil(D.f_block.cost * FLOOR_DEMO_K), step = Math.abs(UI.ghost.x - gx) + Math.abs(UI.ghost.y - gy) === 3;
+      const paid = m5 - S.money; floorUndo(); const back = S.money === m5 && S.floor[(gx + 1) + ',' + (gy + 1)] === 'f_block' && !S.floor[gx + ',' + gy];
+      o.farea = sz.join() === '1x1,2x2,3x3,4x4,3x1,1x3,2x4,4x2' && pick && cnt === 9 && paid === want && fc && fc.n === 9 && fc.c === want && fc.swap === 1 && step && back;
+      if (!o.farea) o.fareaDbg = [sz.join(), pick, cnt, paid, want, fc, step, back]; UI.fsz = [1, 1]; endPlace(); UI.fold = true; }
     // 빈 땅을 누르면 바닥 깔기 카드만 (땅 높이기·경사로 없음)
     closeSelCard(); const em = rotPt(6.5, 2.5), eq = toScreen(em[0], em[1], 0); onTap(eq[0], eq[1]);
     const gcard = !document.getElementById('selCard').hidden && !document.querySelector('#selCard [data-act="gter"]') && !document.querySelector('#selCard [data-act="gramp"]') && !!document.querySelector('#selCard [data-act="choose"][data-v="fswap"]');
@@ -1536,8 +1986,9 @@ async function deckChecks(browser, url) {
   check(r.tree && r.room && r.tile, '데크: 나무·건물·바닥 타일도 데크 위에');
   check(r.cap, '데크: 데크 위에 지은 건물은 데크 높이에 섬');
   check(r.moved && r.saved, '데크: 땅으로 옮기면 데크 높이가 풀리고, 저장 후에도 유지');
-  check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (걷어낸 반값을 뺀 값)');
-  check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(걷어낸 반값을 뺀 값) 걷어낼 수 있음');
+  check(r.fchain, '바닥: 카드에서 바꾸면 화살표가 떠서 다음 칸을 이어 바꿈 (새 바닥 값 + 철거비)');
+  check(r.farea, '바닥 넓이 단추(1×1~4×2): 고른 넓이를 한 번에 깔고, 겹친 다른 바닥은 새 바닥으로 바뀌며 값은 설치비 + 철거비, 넓이만큼 건너가고 되돌리기는 한꺼번에 ' + JSON.stringify(r.fareaDbg || ''));
+  check(r.fcard && r.ferase, '바닥: 타일을 누르면 카드에서 바로 바꾸고(새 바닥 값 + 철거비) 걷어낼 수 있음(철거비)');
   check(r.order, '건축 목록: 지금 지을 수 있는 것부터 싼 순서로');
   check(r.gcard && r.gclose, '빈 땅: 누르면 바닥 깔기 카드(땅 높이기·경사로 없음), 카드가 열려 있으면 닫기만');
   check(r.novel && r.wander, '방문자: 새 건물에 끌리고, 발길이 적은 바닥으로 둘러봄');
@@ -1644,10 +2095,10 @@ async function gripeChecks(browser, url) {
     o.club = o.club && subs === 'sport,hobby,music' && sport.includes('futsal') && sport.includes('gym') && !sport.includes('choir') && music.length === 3 && music.includes('choir');
     { UI.cat = 'worship'; UI.csub = null; renderPanel(); const wsub = [...document.querySelectorAll('#subtabs [data-act="csub"]')];
     const ids = () => [...document.querySelectorAll('#cards [data-v]')].map(c => c.dataset.v);
-    const wo1 = ids(); wsub[1].click(); const wo2 = ids();
+    const wo1 = ids(); wsub[1].click(); const wo2 = ids(); document.querySelector('#subtabs [data-v="dept"]').click(); const dep = ids(); UI.cat = 'care'; renderPanel(); const careKids = !!document.querySelector('#subtabs [data-v="kids"]');
     UI.cat = 'shop'; renderPanel(); const ssub = [...document.querySelectorAll('#subtabs [data-act="csub"]')].map(x => x.dataset.v).join(); const sh1 = ids();
     document.querySelector('#subtabs [data-act="csub"][data-v="cafe"]').click(); const sh2 = ids();
-    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray' && wsub.every(x => !!x.querySelector('i') && x.querySelector('i').textContent.length > 0) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
+    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray,dept' && dep.includes('nursery') && dep.includes('kinder') && dep.includes('kids') && dep.includes('teens') && !dep.includes('room') && !careKids && wsub.every(x => !!x.querySelector('i') && x.querySelector('i').textContent.length > 0) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
       ssub === 'food,cafe,book' && sh1.includes('shop') && !sh1.includes('coffeecart') && sh2.includes('coffeecart') && !sh2.includes('shop') && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(c => DEFS.filter(d => d.cat === c && !d.hidden).every(d => CAT_SUBS[c].some(x => x[0] === d.sub)));
     }
     UI.cat = 'path'; renderPanel(); o.club = o.club && !document.querySelector('#subtabs [data-act="csub"]');
@@ -1764,12 +2215,26 @@ async function earlyChecks(browser, url) {
     // 첫 걸음을 마치면 성장 목표·건축 안내 퀘스트가 뜬다
     ['f3', 'f4', 'f5', 'f6'].forEach(id => { S.qd[id] = 1; }); hud(true);
     o.back = qActive().some(q => q.g === 'goal') && qActive().some(q => q.g === 'guide') && qActive()[0].g === 'goal';
+    // 스테이지 1 퀘스트: 사역·건축 안내가 두 줄로 하나씩 이어지고, Level로 열리는 기능은 열릴 때까지 기다림. 마지막 성장 목표가 스테이지 목표(성도 100명)
+    { const ua = S.unlockAll, lv0 = S.lvl, qx0 = S.qxp, mo0 = S.money, rp0 = S.rep; S.unlockAll = false; S.lvl = 1; hud(true);
+      const gs = qActive().filter(q => q.g === 'guide').map(q => q.id).join();
+      ['p1', 'u7', 'p3', 'p4'].forEach(id => { S.qd[id] = 1; }); const wait = !qActive().some(q => q.id === 'p5'); S.lvl = 2; const open2 = qActive().some(q => q.id === 'p5');
+      const gl = QUESTS.filter(q => q.g === 'goal'), fq = QID[STAGE_GOAL];
+      o.lanes = gs === 'p1,b1' && wait && open2 && gl[gl.length - 1] === fq && fq.final && /100/.test(fq.d) && QUESTS.filter(q => q.g === 'guide').length >= 20;
+      // 챙길 일 단계: Lv 1에는 매너리즘·영성 경고가 없고, 할 일(교육 마친 성도 임명)은 뜬다
+      S.lvl = 1; S.lastNew = S.week - 20; const p0 = S.people[0], tr0 = p0.tr; p0.tr = { to: 'bapt', ready: true, end: 0 }; const w1 = warnings().join('|');
+      S.lvl = 3; const w3 = warnings().join('|'); p0.tr = tr0; S.lastNew = S.week;
+      o.alertLv = !/매너리즘/.test(w1) && /매너리즘/.test(w3) && /교육을 마친 성도 1명/.test(w1);
+      // 마지막 퀘스트를 이루면 스테이지 목표 달성(축하) · 스테이지 카드에 목표와 ✓
+      ['g1', 'g2', 'g3', 'g4'].forEach(id => { S.qd[id] = 1; }); const mm = S.members; S.members = 100; questTick(); const clr = qDone(STAGE_GOAL) && S.stageClear && S.stageClear.rural != null && /스테이지 목표/.test(document.getElementById('cele').textContent);
+      const gh = stageGoalHtml(STAGES[0]); o.final = clr && /목표 · 성도 100명의 교회/.test(gh) && /✓/.test(gh) && !/✓/.test(stageGoalHtml(STAGES[1])) && stageGoalHtml(STAGES[4]) === '';
+      S.members = mm; S.unlockAll = ua; S.lvl = lv0; S.qxp = qx0; S.money = mo0; S.rep = rp0; delete S.stageClear; localStorage.removeItem(SAVE_KEY + '-clear'); document.getElementById('cele').hidden = true; recalc(); indTick(true); }
     QUESTS.forEach(q => { S.qd[q.id] = 1; });   // 아래 검사들이 퀘스트 보상에 흔들리지 않게
     // Level 곡선: 시작 점수로는 Lv 1, 지표 점수 합으로 오른다
     S.lvl = 1; o.curve = levelOf(churchScore()) === 1 && lvNeed(2) > churchScore() && levelOf(lvNeed(100)) === 100 && lvNeed(9) < 1300;
     // Level 잠금: 벚나무는 Lv 2, 분수는 Lv 6 전에는 못 지음, 이유에 Lv가 보임. 기능 건물도 교회 Level로 열린다
     S.unlockAll = false; S.lvl = 1;
-    o.lock = isLocked('cherry') && isLocked('fountain') && /Lv 2/.test(lockLabel('cherry')) && !isLocked('tree') && !isLocked('planter') && isLocked('chapel') && /Lv 2/.test(lockLabel('chapel')) && isLocked('dining') && /Lv 3/.test(lockLabel('dining')) && isLocked('futsal') && /Lv 5/.test(lockLabel('futsal'));
+    o.lock = isLocked('cherry') && isLocked('fountain') && /Lv 2/.test(lockLabel('cherry')) && !isLocked('tree') && !isLocked('planter') && isLocked('chapel') && new RegExp('Lv ' + BLD_LV.chapel).test(lockLabel('chapel')) && isLocked('shop') && /Lv 2/.test(lockLabel('shop')) && isLocked('futsal') && new RegExp('Lv ' + BLD_LV.futsal).test(lockLabel('futsal'));
     S.unlockAll = true;
     // Level이 오르면 축하금(건너뛴 단계 몫까지)과 새로 열린 것
     const m1 = S.money; S.lvl = 1; S.unlockAll = false; S.qxp = 5000; recalc(); const m2 = S.money; levelTick();
@@ -1791,7 +2256,7 @@ async function earlyChecks(browser, url) {
       o.fixdoor = unusable && /문 앞까지 길/.test(why) && !!btn && lw === '' && usable(pb);
       o.fd = [unusable, why, !!btn, lw, usable(pb)];
       { const px = spot.x + 6, py = spot.y - 2; build('pray', px + 2, py, 1); const pr = S.buildings[S.buildings.length - 1]; recalc();
-        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 1 && pr.face === 1; demolish(pr.id); recalc(); }
+        o.autoDoor = pr.def === 'pray' && !!pr.door && pr.door.ent.d === 2 && pr.face === 2; demolish(pr.id); recalc(); }
       UI.sel = null; renderSelCard(); }
     // 영수증: 패널이 열려 있으면 옆으로 비켜 뜨고, 눌러도 탭이 바뀌지 않음
     S.rcpt = S.rcpt || { net: 0, inc: 0, exp: 0 }; openGroup('build'); const tab0 = UI.tab; showReceipt(); const rc = document.getElementById('rcpt');
@@ -1838,34 +2303,38 @@ async function earlyChecks(browser, url) {
       const q0 = document.querySelectorAll('#scrBody .qrow').length; S.qd.f1 = 1; renderScreen(); const q1 = document.querySelectorAll('#scrBody .qrow').length;
       ni.quest = q0 === 1 && /교회 문 열기/.test(document.getElementById('scrBody').textContent) && q1 === 1 && /마친 퀘스트 1 \/ /.test(document.getElementById('scrBody').textContent); closeScreen();
       QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.qxp = 0; S.il = {}; recalc(); indTick(true);
-      // 사역팀·달란트: 사역 경험 Lv 1당 1개. 넣고 빼고 옮기고 모두 빼고, 최대 5단계, 값·사례비 없음, 단계가 오를수록 효과 증가폭이 줄어듦
-      { const nt = {}; o.nt = nt; for (const k in STAFF) S.staff[k] = 0; S.unlockAll = true; S.il = {}; S.qxp = 0; recalc(); indTick(true);
-        nt.base = talentTotal() === S.il.xp.lv * TALENT_PER_LV && talentFree() === talentTotal();
-        S.qxp = 1500; recalc(); indTick(); const tot = talentTotal(), v0 = MOD.vis, m0 = S.money;
-        nt.total = tot === S.il.xp.lv * TALENT_PER_LV && tot >= 8 && talentFree() === tot;
-        nt.add = teamAdd('evang', 1) === '' && S.staff.evang === 1 && talentFree() === tot - 1 && MOD.vis > v0 && S.money === m0 && typeof teamPay === 'undefined';
-        for (let i = 2; i <= TEAM_MAX; i++) teamAdd('evang', 1);
-        nt.max = S.staff.evang === TEAM_MAX && /최대/.test(teamAdd('evang', 1)) && talentFree() === tot - TEAM_MAX;
+      // 사역팀·섬김이 슬롯: 섬김 갈래 성도를 팀 슬롯(최대 6칸)에 세우면 그 수가 단계. 넣고 빼고 옮기고 자동 배정, 값·사례비 없음, 단계가 오를수록 효과 증가폭이 줄어듦
+      { const nt = {}; o.nt = nt; S.unlockAll = true; for (const k in STAFF) S.servants[k] = []; if (S.members < 14) S.members = 14; syncPeople(); recalc();
+        S.people.forEach(p => { p.node = 'new'; p.lv = 1; p.tr = null; });
+        const sv = S.people.slice(0, 8); sv.forEach((p, i) => { p.node = 'server'; p.lv = 30 + i; }); S.people[8].node = 'sgl'; S.people[8].lv = 30; recalc(); const v0 = MOD.vis, m0 = S.money;
+        nt.free = teamFree().length === 8 && teamFree()[0].id === sv[7].id;
+        nt.add = teamServe('evang', sv[0].id) === '' && S.staff.evang === 1 && teamOf(sv[0].id) === 'evang' && MOD.vis > v0 && S.money === m0 && teamFree().length === 7 && typeof teamPay === 'undefined' && typeof talentTotal === 'undefined';
+        nt.elig = /섬김 갈래/.test(teamServeWhy('evang', S.people[8].id)) && /섬김 갈래/.test(teamServeWhy('evang', S.people[9].id)) && /이미 다른/.test(teamServe('praise', sv[0].id));
+        for (let i = 1; i < TEAM_MAX; i++) teamServe('evang', sv[i].id);
+        nt.max = S.staff.evang === TEAM_MAX && /가득/.test(teamServe('evang', sv[6].id)) && teamServants('evang').length === TEAM_MAX;
         let dim = true; for (let l = 1; l <= TEAM_MAX; l++) { const d = teamUnits(l) - teamUnits(l - 1); if (!(d > 0) || (l > 1 && !(d < teamUnits(l - 1) - teamUnits(l - 2)))) dim = false; }
-        nt.curve = dim && teamUnits(0) === 0 && teamEff().evang === teamUnits(S.staff.evang) && STAFF.evang.fx(2).every(t => /[+−]/.test(t));
+        nt.curve = dim && teamUnits(0) === 0 && Math.abs(teamEff().evang - teamUnits(S.staff.evang) * teamAmp('evang')) < 1e-9 && teamAmp('evang') > 1 && Math.abs(teamAmp('evang') - 1 - sv.slice(0, 6).reduce((t, p) => t + svPow(p), 0) / 6) < 1e-9 && STAFF.evang.fx(2).every(x => /[+−]/.test(x));
         // 옮기기: 한 팀에서 빼서 다른 팀에 넣는다
-        const off0 = MOD.offer; nt.move = teamAdd('evang', -1) === '' && S.staff.evang === TEAM_MAX - 1 && teamAdd('praise', 1) === '' && MOD.offer > off0 && talentFree() === tot - TEAM_MAX;
-        nt.sub = /없어요/.test(teamAdd('prayer', -1));
-        // 모자라면 못 넣음, 잠긴 팀은 못 넣음
-        const keep = {}; for (const k in S.staff) keep[k] = S.staff[k]; for (const k in S.staff) S.staff[k] = 0; S.il.xp.lv = 1; S.qxp = 0; recalc(); const w1 = teamAdd('care', 1), w2 = teamAdd('edu', 1);
-        S.unlockAll = false; S.lvl = 1; const w3 = teamAdd('admin', 1); S.unlockAll = true; nt.poor = w1 === '' && /남은 달란트/.test(w2) && S.staff.edu === 0 && /Lv \d/.test(w3);
-        // 달란트가 모자라게 되면(옛 저장) 가장 높은 팀부터 줄인다
-        for (const k in S.staff) S.staff[k] = 0; S.staff.evang = 5; S.staff.praise = 3; S.il.xp.lv = 4; recalc(); nt.fit = talentUsed() === 4 && S.staff.evang === 3 && S.staff.praise === 1 || talentUsed() === 4 && S.staff.evang + S.staff.praise === 4;
-        S.il.xp.lv = 20; recalc(); const n = teamReset(); nt.reset = n === 4 && talentUsed() === 0 && MOD.vis === 1;
-        // 화면: 원형 카드 아홉 개, 누르면 정보 창, 넣기·빼기·모두 빼기
-        S.il = {}; S.qxp = 1500; recalc(); indTick(true); for (const k in STAFF) S.staff[k] = 0; recalc(); openScreen('events', 'staff');
-        const cs = document.querySelectorAll('#scrBody .teamc'), bar = document.querySelector('#scrBody .tbar').textContent;
-        cs[0].querySelector('.tmi').click(); const dl = document.getElementById('scrDlg'); const dlg0 = !dl.hidden && /전도팀/.test(dl.textContent) && /다음 단계/.test(dl.textContent);
-        document.querySelector('#scrDlg [data-act="tmadd"]').click(); document.querySelector('#scrDlg [data-act="tmadd"]').click(); const two = S.staff.evang === 2 && !document.getElementById('scrDlg').hidden && /Lv 2/.test(document.getElementById('scrDlg').textContent);
-        document.querySelector('#scrDlg [data-act="tmsub"]').click(); const one = S.staff.evang === 1;
-        document.querySelector('#scrDlg [data-act="evclose"]').click(); const reset = document.querySelector('#scrBody [data-act="tmreset"]'); reset.click();
-        nt.ui = cs.length === 9 && /×\d+\s*\/\s*\d+/.test(bar) && dlg0 && two && one && S.staff.evang === 0 && talentUsed() === 0 && /달란트/.test(document.getElementById('scrBody').textContent); closeScreen();
-        for (const k in STAFF) S.staff[k] = 0; recalc();
+        const off0 = MOD.offer; teamUnserve('evang', sv[5].id); nt.move = S.staff.evang === TEAM_MAX - 1 && teamServe('praise', sv[5].id) === '' && S.staff.praise === 1 && MOD.offer > off0 && teamOf(sv[5].id) === 'praise';
+        // 자격을 잃으면 팀에서 빠진다
+        sv[1].node = 'bapt'; recalc(); nt.sync = teamOf(sv[1].id) === '' && S.staff.evang === TEAM_MAX - 2; sv[1].node = 'server'; recalc();
+        // 잠긴 팀은 못 넣음, 모두 빼기, ⚡ 자동 배정(사람이 적은 팀부터 고르게)
+        S.unlockAll = false; S.lvl = 1; const w3 = teamServeWhy('admin', sv[7].id), w4 = teamAdd('evang', 1); S.unlockAll = true; nt.lock = /Lv \d/.test(w3) && /Lv \d/.test(w4);
+        const n = teamReset(); nt.reset = n === TEAM_MAX - 2 + 1 && S.staff.evang === 0 && S.staff.praise === 0 && MOD.vis === 1;
+        const na = teamAuto(), open = Object.keys(STAFF).filter(k => tierOk(STAFF[k].goal || 0)).map(k => S.staff[k]); nt.auto = na === 8 && teamFree().length === 0 && Math.max(...open) - Math.min(...open) <= 1;
+        // 화면: 육각형 슬롯 카드 아홉 개(열린 팀은 왼쪽 3·오른쪽 3), 빈 슬롯을 누르면 섬김이 고르기, 채운 슬롯을 누르면 빠짐
+        teamReset(); openScreen('officers', 'C');
+        const cs = document.querySelectorAll('#scrBody .teamc'), open0 = document.querySelectorAll('#scrBody .teamc.tm6').length;
+        const c0 = document.querySelector('#scrBody .teamc.tm6'), sides = c0.querySelectorAll('.tmh.l .hex').length === 3 && c0.querySelectorAll('.tmh.r .hex').length === 3;
+        const noGem = !document.querySelector('#scrBody .gem, #scrBody .tgems, #scrBody .tpm') && !/달란트/.test(document.getElementById('scrBody').textContent);
+        const lw = document.querySelector('#scrBody .lead-l').getBoundingClientRect().width, rw = document.querySelector('#scrBody .lead-r').getBoundingClientRect().width, split = Math.abs(lw / (lw + rw) - .4) < .05 && !!document.querySelector('#scrBody .lbig');
+        c0.querySelector('.hex.empty').click(); const pk = [...document.querySelectorAll('#scrBody .lead-l .lcard.pk[data-act="ofpick"]')];
+        const dlg0 = split && UI.ofPick && UI.ofPick.v === 'evang' && pk.length === 8 && !!document.querySelector('#scrBody .of-pk'); pk[0].click();
+        const one = S.staff.evang === 1 && !UI.ofPick && document.querySelectorAll('#scrBody .teamc.tm6 .hex.full img').length === 1 && !!document.querySelector('#scrBody .hex.full img[src*="portraits/icons/members"]') && /패시브/.test(document.querySelector('#scrBody .teamc.tm6 .tm-fx').textContent) && /증폭 ×/.test(document.querySelector('#scrBody .teamc.tm6 .tm-fx').textContent);
+        document.querySelector('#scrBody .hex.full').click(); const zero = S.staff.evang === 0;
+        document.querySelector('#scrBody [data-act="tmauto"]').click(); const auto = teamFree().length === 0 && S.staff.evang >= 1; document.querySelector('#scrBody [data-act="tmreset"]').click();
+        nt.ui = cs.length === 9 && open0 >= 3 && sides && noGem && dlg0 && one && zero && auto && Object.values(S.staff).every(v => v === 0); closeScreen();
+        for (const k in STAFF) S.servants[k] = []; S.people.forEach(p => { p.node = 'new'; p.lv = 1; }); recalc();
         // 지표 보상 모두 받기: 받을 수 있는 보상이 둘 이상이면 한 번에
         S.il = {}; S.qxp = 0; recalc(); indTick(true); S.il.xp.lv = 4; S.il.sp.lv = 3; S.il.conv.lv = 2; recalc();
         const cnt = indReadyCount(), sum = indReward('xp') + indReward('sp') + indReward('conv'), mm = S.money; openGroup('status'); const ba = document.querySelector('#scrBody [data-act="inclaimall"]'); if (ba) ba.click();
@@ -1903,10 +2372,10 @@ async function earlyChecks(browser, url) {
   check(r.offPath, '미리보기 첫 자리: 길(바닥) 위를 피해 가까운 빈자리에 놓임');
   check(r.fixdoor, '문: 문 앞에 길이 없으면 카드에 이유와 길 잇기, 이으면 이용');
   { const nt = (r.ni && r.ni.nt) || r.nt || {};
-    check(nt.base && nt.total && nt.add, '달란트: 사역 경험 Lv 1당 1개, 사역팀에 넣으면 효과가 생기고 자금·사례비는 안 듦');
-    check(nt.max && nt.curve && nt.move && nt.sub, '사역팀: 최대 5단계, 단계가 오를수록 증가폭이 줄고, 한 팀에서 빼 다른 팀으로 옮길 수 있음');
-    check(nt.poor && nt.fit && nt.reset, '사역팀: 달란트가 모자라면 못 넣고(잠긴 팀도), 모자라게 되면 높은 팀부터 줄이고, 모두 뺄 수 있음');
-    check(nt.ui, '사역팀 탭: 원형 카드, 누르면 정보 창에서 달란트 넣기·빼기, 모두 빼기');
+    check(nt.free && nt.add && nt.elig, '사역팀: 섬김 갈래 성도를 슬롯에 세우면 효과가 생기고(자금·사례비 없음), 섬김 갈래만·한 팀에만 설 수 있음');
+    check(nt.max && nt.curve && nt.move && nt.sync, '사역팀: 슬롯 최대 6칸, 단계가 오를수록 증가폭이 줄고, 팀 사이로 옮길 수 있고, 자격을 잃으면 빠짐');
+    check(nt.lock && nt.reset && nt.auto, '사역팀: 잠긴 팀은 못 세우고, 모두 빼기와 ⚡ 자동 배정(사람이 적은 팀부터 고르게)');
+    check(nt.ui, '사역팀 탭: 육각형 슬롯 6칸(왼쪽 3·오른쪽 3), 빈 슬롯을 누르면 섬김이 고르기, 채운 슬롯은 얼굴이 차고 누르면 빠짐, 달란트 보석은 없음');
     check(nt.claimAll, '현황: 지표 보상을 모두 받기 버튼으로 한꺼번에 받음');
     if (!(nt.base && nt.total && nt.add && nt.max && nt.curve && nt.move && nt.sub && nt.poor && nt.fit && nt.reset && nt.ui && nt.claimAll)) console.log('NT', JSON.stringify(nt)); }
   { const n = r.ni || {};
@@ -1919,10 +2388,13 @@ async function earlyChecks(browser, url) {
     check(n.quest, '퀘스트 탭: 지금 할 수 있는 퀘스트만 보이고, 마치면 마친 목록으로');
     check(n.decay, '심방 활동은 주마다 식음');
     if (!(n.sum && n.curve && n.trust && n.build && n.claim && n.chips && n.ui && n.quest && n.decay)) console.log('NI', JSON.stringify(n)); }
-  check(r.autoDoor, '문: 지을 때 고른 방향(정면)에 문이 남');
+  check(r.autoDoor, '문: 다른 방향으로 지으려 해도 문은 남쪽에 남');
   check(r.rcpt, '영수증: 패널이 열려 있으면 패널을 덮지 않고, 어디를 눌러도 그냥 사라질 뿐 재정 탭으로 넘어가지 않음');
   check(r.small, '안내 문구: 주차 경고는 주차장이 열린 뒤부터, 바람 문구 조사(이·가)');
   check(r.line && r.open && r.once && r.sunday && r.back, '첫 걸음: 목표 줄에 할 일을 한 줄씩, 이루면 보상하고 다음으로, 다 마치면 목표로 돌아감');
+  check(r.lanes, '스테이지 1 퀘스트: 사역·건축 안내가 두 줄로 하나씩 이어지고, Level로 열리는 기능은 열릴 때까지 기다리며, 마지막 성장 목표가 스테이지 목표(성도 100명)');
+  check(r.alertLv, '챙길 일: Lv 1에는 매너리즘 경고가 없고(Lv 3부터), 교육을 마친 성도 임명 같은 할 일은 뜸');
+  check(r.final, '스테이지 목표: 마지막 퀘스트를 이루면 축하하고, 스테이지 고르기 카드에 목표(성도 100명의 교회)와 ✓');
   check(r.curve, 'Level 곡선: 시작은 Lv 1, Lv 2는 약 2만, Lv 9는 약 8만, 100까지');
   check(r.lock && r.gift, 'Level 보상: 비싼 꾸미기는 Level로 열리고, 오를 때 축하금(건너뛴 단계 몫까지)');
   check(r.old, '옛 저장: Level을 새 곡선으로 다시 맞추고 첫 걸음은 건너뜀');
@@ -1946,11 +2418,15 @@ async function earlyChecks(browser, url) {
     await rulesChecks(browser, url);
     await terrainChecks(browser, url);
     await waterChecks(browser, url);
+    await introChecks(browser, url);
+    await rosterChecks(browser, url);
+    await slotChecks(browser, url);
     await levelChecks(browser, url);
     await startTerrainChecks(browser, url);
     await deckChecks(browser, url);
     await gripeChecks(browser, url);
     await earlyChecks(browser, url);
+    await stageChecks(browser, url);
     const r1 = await seededRun(browser, url);
     const r2 = await seededRun(browser, url);
     check(r1.built > 0, `시드 실행: 건물 ${r1.built}개 건설됨`);

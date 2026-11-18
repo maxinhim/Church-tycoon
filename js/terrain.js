@@ -138,6 +138,15 @@ function cellWhy(x,y,id){return floorWhy(x,y,id,UI.ghost&&UI.ghost.pid);}
 // 바닥 미리보기: 고른 칸 표시
 function drawTerGhost(){
   var g=UI.ghost,x=g.x,y=g.y;if(x<0||y<0||x>=COLS||y>=ROWS)return;
+  var fz=isFloorDef(UI.tool)?floorSize(g):[1,1];
+  if(fz[0]*fz[1]>1){   // 여러 칸 바닥: 칸마다 깔 수 있으면 노랑, 건너뛰면 빨강, 바깥 테두리는 넓이 전체
+    for(var j=0;j<fz[1];j++)for(var i=0;i<fz[0];i++){var cx=x+i,cy=y+j;if(cx>=COLS||cy>=ROWS)continue;
+      var ck=!floorWhy0(cx,cy,UI.tool,0);
+      atZ(th(cx,cy)*LV+(isRamp(cx,cy)?.45:0),function(){footprint(cx,cy,1,1,ck?'rgba(255,210,63,.22)':'rgba(235,70,60,.28)',ck?'rgba(255,210,63,.5)':'rgba(255,90,74,.6)',[2,3]);});}
+    var aok=floorAreaOk();
+    atZ(th(x,y)*LV,function(){footprint(x,y,Math.min(fz[0],COLS-x),Math.min(fz[1],ROWS-y),'rgba(0,0,0,0)',aok?'#ffd23f':'#ff5a4a',[5,3]);});
+    return;
+  }
   var ok=!cellWhy(x,y,UI.tool),z=ghostZ(),col=ok?'#ffd23f':'#ff5a4a';
   atZ(isRamp(x,y)&&!g.pid?th(x,y)*LV+.45:z,function(){footprint(x,y,1,1,ok?'rgba(255,210,63,.22)':'rgba(235,70,60,.3)',col,[4,3]);});
 }

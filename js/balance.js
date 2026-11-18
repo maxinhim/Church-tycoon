@@ -8,16 +8,16 @@
 var BUILD_K=2,PRICY_CATS=['worship','fellow','club','shop','care','comfort','park'];
 
 /* 수입 */
-var VIS_RATE=0.85;        // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
-var SHOP_K=8;            // 한 번 살 때 = 건물 income × SHOP_K
+var VIS_RATE=0.55;         // 방문자가 오는 빠르기(초당, 평판·주차·사역 보정 전). 올리면 매장 수입·정착·붐빔이 함께 는다
+var SHOP_K=14;           // 한 번 살 때 = 건물 income × SHOP_K
 var SHOP_COST=0.25;      // 매장 재료비 비율 (판매 순간 빠진다)
 var OFFER_PER=30;        // 주일 헌금: 출석 한 명당
-var VIS_GIVE=3;          // 방문자 헌금: 한 명당
+var VIS_GIVE=6;          // 방문자 헌금: 한 명당
 var SPONSOR0=600,SPONSOR_DROP=6;   // 개척 후원: 시작 금액, 주마다 줄어드는 양
 
 /* 성도 수: 정착·이탈 */
-var JOIN_P=0.1;          // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (한 사람씩 돌볼 수 있게 예전 0.09에서 낮춤)
-var REFER_K=0.015;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
+var JOIN_P=0.3;         // 방문자 한 명의 정착 확률 계수. 성장 속도를 가장 크게 좌우한다 (스테이지 1: 처음 하는 사람도 모든 기능을 써 보며 성도 100명에 닿게 — 시뮬레이션 35~41주)
+var REFER_K=0.03;       // 만족도가 높을 때 소개로 오는 새 성도: 성도 × REFER_K × (만족도−MOOD_GAIN)/(100−MOOD_GAIN)
 var MOOD_LEAVE=45;       // 만족도가 이보다 낮으면 떠나는 성도가 는다
 var MOOD_GAIN=50;        // 만족도가 이보다 높으면 소개로 새 성도가 온다
 
@@ -49,7 +49,7 @@ var SACRAMENT={communion:{span:8,w:.6},baptism:{span:12,w:.35},retreat:{span:16,
 var BEAUTY_K=0.15,FRESH_K=1,FRESH_DECAY=0.85;
 
 /* 방문자 불편 */
-var GRIPE_W={wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};   // 불편마다 무게
+var GRIPE_W={sermon:1.4,spirit:1,word:1.2,wc:1,food:.8,drink:.5,lonely:.6,seat:.6,bin:.3,bare:.6,crowd:1.2};   // 불편마다 무게
 var GRIPE_MAX=8;         // 만족도를 깎는 최대치
 var GRIPE_K=11;          // 불편 비율 × 이 값만큼 깎는다
 var GRIPE_N0=14;         // 방문자가 이보다 적으면 이 수로 나눈다 (초반에 몇 명에 크게 흔들리지 않게)
@@ -64,10 +64,10 @@ var WEEKS_PER_MONTH=5,YEAR_WEEKS=60;
    · 성장 단계(PP_TREE): 새가족 → 세례 → 양육반 → 제자반 → 세 갈래
        직분: 헌신성도 → 집사 → 장로(남)·권사(여)          (Lv 70)
        교역: 소그룹 리더 → 공동체 리더 → 간사 → 신학교 입학 → (부교역자로 섭외)   (Lv 70)
-       섬김: 섬김이 → 사역팀장 → 사역부장 → 교회직원       (Lv 70)
+       섬김: 섬김이 → 사역팀장 → 사역부장 → 사역간사       (Lv 70)
      단계마다 lv(필요 호감 레벨)·cost(값)·dur(교육 주)·give(매주 헌금 더)·sp(영성 자리)·cap(목양 수용력)·upk(운영비 −)·dec(노후 −)
    · 헌금: 성도들의 평균 레벨마다 +PP_GIVE_LV. 영성 자리 = Σ((레벨−1) × PP_SPIRIT_LV + 단계 sp) × PP_SPIRIT_K
-   · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자도 격려(ASSOC_CHEER)로 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
+   · 교회에서 기른 부교역자: 별 5개, 효과 × ASSOC_HOME_K, 사례비 ASSOC_HOME_PAY. 부교역자는 행사로 경험치를 쌓아 레벨이 오르고 레벨마다 효과 +ASSOC_LV_K */
 var PP_LV_MAX=99,PP_XP0=10,PP_XP_K=.3,PP_WEEK_XP=1.5,PP_WEEK_XP_LOW=.6;
 var PP_VISIT={cost:40,xp:15,cd:2},PP_GIFT={cost:120,xp:30,cd:4};
 var PP_TREE={
@@ -81,14 +81,27 @@ var PP_TREE={
   sgl:{n:'소그룹 리더',act:'소그룹 리더',tr:'리더 훈련',done:'소그룹 리더 세우기',lv:25,cost:250,dur:4,d:4,t:'B',give:2,sp:.8,cap:8,next:['cml']},
   cml:{n:'공동체 리더',act:'공동체 리더',tr:'공동체 리더 훈련',done:'공동체 리더 세우기',lv:40,cost:450,dur:6,d:5,t:'B',give:3,sp:1,cap:15,next:['kanji']},
   kanji:{n:'간사',act:'간사',tr:'간사 수련',done:'간사 임명',lv:55,cost:800,dur:8,d:6,t:'B',give:4,sp:1.3,cap:20,next:['seminary']},
-  seminary:{n:'신학 수료',act:'신학교 입학',tr:'신학교 수업',done:'졸업 축하',lv:70,cost:2500,dur:12,d:7,t:'B',give:120,sp:2,cap:25,next:['assoc']},
+  seminary:{n:'예비신학생',act:'신학교 입학',tr:'신학교 수업',done:'졸업 축하',lv:70,cost:2500,dur:12,d:7,t:'B',give:120,sp:2,cap:25,next:['assoc']},
   assoc:{n:'부교역자',act:'부교역자로 섭외',tr:'부교역자 수련',done:'부교역자 임명',lv:70,cost:1200,dur:3,d:8,t:'B',next:[]},
   server:{n:'섬김이',act:'섬김이',tr:'섬김 훈련',done:'섬김이 세우기',lv:25,cost:200,dur:4,d:4,t:'C',give:2,sp:.4,cap:2,upk:.005,dec:.01,next:['tlead']},
   tlead:{n:'사역팀장',act:'사역팀장',tr:'팀장 훈련',done:'사역팀장 임명',lv:40,cost:400,dur:6,d:5,t:'C',give:3,sp:.5,cap:4,upk:.01,dec:.02,next:['dlead']},
   dlead:{n:'사역부장',act:'사역부장',tr:'부장 훈련',done:'사역부장 임명',lv:55,cost:700,dur:8,d:6,t:'C',give:5,sp:.6,cap:6,upk:.015,dec:.03,next:['cstaff']},
-  cstaff:{n:'교회직원',act:'교회직원 임명',tr:'직원 수습',done:'교회직원 임명',lv:70,cost:1500,dur:10,d:7,t:'C',give:8,sp:.8,cap:8,upk:.03,dec:.05,next:[]}
+  cstaff:{n:'사역간사',act:'사역간사 임명',tr:'간사 수습',done:'사역간사 임명',lv:70,cost:1500,dur:10,d:7,t:'C',give:8,sp:.8,cap:8,upk:.03,dec:.05,next:[]}
 };
-var PP_TRACK={A:{n:'직분',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'교역',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김',desc:'섬김이 → 사역팀장 → 사역부장 → 교회직원. 운영비와 건물 노후를 줄이는 섬김'}};
+/* 명단 구분 (people.js ppClass): 제자반 수료(깊이 PP_VOL_D) 이상은 '봉사자', 각 갈래의 끝(장로·권사 / 사역간사 / 부교역자)과 청빙직원은 '직원',
+   그 앞은 '성도'. 사역팀 한 팀에 세울 수 있는 봉사자는 TEAM_SERVANTS_MAX명 */
+var PP_VOL_D=3,PP_STAFF_NODES=['elder','assoc'];   // 섬김 갈래 끝(사역간사)은 봉사자로 남아 사역팀만 맡는다. 청빙직원(p.ext)은 직원
+/* 할당 슬롯 (봉사자 화면·사역팀·건물 카드)
+   · 소그룹 리더: 맡을 수 있는 성도 칸 = 1 + 호감 Lv ÷ LEAD_SLOT_LV (단계의 cap이 위쪽 한계, 예비신학생은 0)
+   · 사역팀: 섬김이(섬김 갈래) 최대 TEAM_MAX명 — 사역팀의 단계는 배치한 섬김이 수와 같다
+   · 건물: 메인 관리자 1명 + 보조 인력(직분자 갈래) 칸 = 티어 1 SUP_SLOTS[0], 티어 2 SUP_SLOTS[1], 대예배당 SUP_SLOTS[2] */
+var LEAD_SLOT_LV=10,SUP_SLOTS=[1,2,3];
+/* 슬롯 효과
+   · 리더 성도 칸: 맡은 성도는 매주 호감 경험치 +LEAD_SAINT_XP × (1 + 리더 호감 Lv × LEAD_SAINT_LV)
+   · 건물 보조 칸: 직분자 한 명마다 건물 성능(효과·회전) +(SUP_BUFF[단계] + 호감 Lv × SUP_BUFF_LV)
+   · 사역팀 칸: 팀 효과 × 섬김이 증폭(1 + 배치한 섬김이 평균(호감 Lv × TEAM_SV_LV + TEAM_SV_NODE[단계])) */
+var LEAD_SAINT_XP=1.5,LEAD_SAINT_LV=.02,SUP_BUFF={devoted:.04,deacon:.06,elder:.1},SUP_BUFF_LV=.001,TEAM_SV_LV=.004,TEAM_SV_NODE={server:0,tlead:.03,dlead:.06,cstaff:.1};
+var PP_TRACK={A:{n:'직분자',desc:'헌신성도 → 집사 → 장로·권사. 헌금과 목양 수용력, 만족·이탈을 돕는 직분자'},B:{n:'리더',desc:'소그룹 리더 → 공동체 리더 → 간사 → 신학교. 목양 수용력과 영성, 끝에는 부교역자'},C:{n:'섬김이',desc:'섬김이 → 사역팀장 → 사역부장 → 사역간사. 사역팀에서 일하며 운영비와 건물 노후를 줄이는 섬김이'}};
 var PP_UPK_MAX=.25,PP_DEC_MAX=.4;
 var PP_GIVE_LV=.005;
 // 교육 행사: 보상 수령 때 모든 성도 경험치 + xp. 값 = base + 성도 × per
@@ -98,15 +111,14 @@ var PP_SPIRIT_LV=.01,PP_SPIRIT_K=.15;
    사연마다 정답은 하나: 고르면 호감 경험치 CARE_GOOD(갈등이면 두 사람 모두). 오답 셋은 레벨이 내려가고(데이터에 선택지별로) 떠날 수도 있다.
    돈이 드는 오답의 값은 CARE_COST(·2), 선물 값은 PP_GIFT.cost. CARE_DUE주 안에 고르지 않으면 레벨 −2, CARE_LEAVE 확률로 떠남, 만족 −CARE_IGNORE_MOOD */
 var CARE_P_PER=.01,CARE_P_MAX=.45,CARE_MAX=3,CARE_MIN_MEM=6,CARE_GOOD=60,CARE_COST=300,CARE_DUE=3,CARE_LEAVE=.3,CARE_IGNORE_MOOD=1.5;
-/* 부교역자에게 성도 돌봄 맡기기: 매주 부교역자 한 사람이 (ASSOC_CARE0 + ASSOC_CARE_K × 실력)명을 심방하고, 선물 때가 된 사람에게는 선물도 한다.
-   맡길 성도는 호감 Lv(S.deleg.lv) 아래인 사람만, 레벨이 낮은 순으로. 교회 자금이 ASSOC_CARE_RES 아래로 내려가면 멈춘다 */
-var ASSOC_CARE0=4,ASSOC_CARE_K=2,ASSOC_CARE_RES=800,DELEG_LV0=25,DELEG_STEP=5;
-/* 소그룹 리더(소그룹 리더·공동체 리더·간사·신학교 입학)도 성도 돌봄을 맡는다: 한 주에 단계의 목양 수용력(cap) × LEAD_CARE_K명.
-   맡아서 하는 심방·선물은 값이 DELEG_COST_K배, 호감 경험치가 DELEG_XP_K배 (직접 하는 것보다 싸고 효과는 조금 작다) */
-var LEAD_NODES=['sgl','cml','kanji','seminary'],LEAD_CARE_K=.25,DELEG_COST_K=.5,DELEG_XP_K=.75;
+/* 소그룹 리더 단계들. 심방·선물을 값싸게(cheap) 할 때 값 DELEG_COST_K배·경험치 DELEG_XP_K배 */
+var LEAD_NODES=['sgl','cml','kanji','seminary'],DELEG_COST_K=.5,DELEG_XP_K=.75;
 /* 부교역자 정원: 성도 ASSOC_PER명마다 한 자리 (최대 인원 없음). 정원 = 1 + floor(성도 / ASSOC_PER) */
-var ASSOC_PER=20;
-var ASSOC_HOME_K=1.4,ASSOC_HOME_PAY=120,ASSOC_LV_K=.08,ASSOC_LV_MAX=5,ASSOC_CHEER={cost:100,xp:8,cd:2};
+var ASSOC_PER=10;
+var ASSOC_HOME_K=1.4,ASSOC_LV_K=.04,ASSOC_LV_MAX=20;
+/* 사례비(급여): 화면과 저장 값(pay)은 모두 '월 사례비'(만원)다. 게임 루프의 주간 정산은 월 사례비 ÷ PAY_MONTH_DIV 만큼 낸다(payWeek).
+   부교역자는 별 1~5개에 월 80 → 400만원, 청빙직원은 월 60 → 180만원, 교회에서 기른 부교역자는 별 5개라 400만원. 청빙비(HIRE_FEE)는 0 */
+var PAY_MONTH_DIV=4,ASSOC_PAY=[80,160,240,320,400],STAFF_PAY=[60,90,120,150,180],ASSOC_HOME_PAY=ASSOC_PAY[4],HIRE_FEE=0;
 var STAY=0.8;            // 건물 안에 머무는 시간 배율 (회전 시간 = dur × STAY × TEMPO_ROT, bldlv.js)
 var CROWD_ANNOY=.8;      // 문 앞에서 기다리다 화가 나 돌아설 때의 불만
 var NEED_OK=88;          // 욕구가 이만큼 차면 됐다고 본다 (높을수록 건물을 더 많이 들른다)
@@ -139,18 +151,43 @@ var TRUST_REP=1,TRUST_LV=1.5,TRUST_OFF=2,TRUST_PAST=20,TRUST_VIS=2,TRUST_VIS_MAX
 var IND_B={sp:26,mood:50,conv:40,trust:50,xp:10},IND_U={sp:14,mood:24,conv:12,trust:14,xp:30},IND_P=1.2,IND_MAX=50;
 var IND_GIFT0=40,IND_GIFT_K=25;
 /* 교회 Level = 다섯 지표 점수의 합. L이 되려면 합 ≥ LV_BASE + LV_K × (L−1)^LV_P (한 번 오른 Level은 내려가지 않는다) */
-var LV_MAX=100,LV_BASE=200,LV_K=36,LV_P=1.4;
+var LV_MAX=100,LV_BASE=150,LV_K=36,LV_P=1.4;   // 처음 점수는 150 안팎: 첫 걸음 퀘스트와 편의 시설만으로 Lv 2(186)에 닿는다
 // Level이 오를 때 축하금 = LV_GIFT0 + LV_GIFT_K × 새 Level (Lv 2는 250, Lv 10은 650)
 var LV_GIFT0=150,LV_GIFT_K=50;
-// 건물·사역팀·행사가 열리는 교회 Level (예전 목표 1·2·3개째)
-var LV_TIER=[1,2,3,5];
+// 건물·사역팀·행사의 잠금 단계 n은 교회 Lv n+1에 열린다 (LV_TIER[n])
+var LV_TIER=[];for(var lvT=0;lvT<40;lvT++)LV_TIER.push(lvT+1);
+/* ---------- 교회 Level에 열리는 것 ----------
+   처음(Lv 1)에는 대예배당과 편의·조경, 심방·세례, 행사 몇 개만 열려 있고, 교회 Level이 오르면서 기능이 하나씩 열린다.
+   적혀 있지 않은 것은 Lv 1부터 쓴다. (꾸미기는 ministry.js LV_UNLOCK)
+   BLD_LV 건물 · EV_LV 행사 · TEAM_LV 사역팀 · PP_CLV 성도의 성장 단계 · FEAT_LV 그 밖의 기능
+   관리자가 필요한 건물(매장·교제·예배)은 청빙(FEAT_LV.hire)이 열리는 Lv 2부터 */
+var BLD_LV={
+  purifier:2,
+  shop:2,coffeecart:2,cell:2,pray:2,nursery:2,bench_stone:2,bench_iron:2,lot:2,
+  room:3,bible:3,kinder:3,bookstore:3,pantry:3,pingpong:3,fitness:3,boardgame:3,guitar:3,bench_back:3,bench_round:3,wc2:3,grill:3,library:3,
+  kids:4,cafe:4,hall:4,praise:4,badminton:4,jokgu:4,gateball:4,calli:4,art:4,gazebo:4,counsel:4,bench_flower:4,lectern:4,
+  chapel:5,books:5,teens:5,youth:5,study:5,playground:5,dining:5,lounge:5,elder:5,hoops:5,craft:5,cook:5,band:5,choir:5,spire:5,
+  dawn:6,mission:6,clinic:6,foodbank:6,gym:6,futsal:6,parktower:6,outdoor:6,
+  grand:8
+};
+var EV_LV={
+  bible:1,street:1,communion:2,smallgroup:2,christmas:2,easter:2,thanks:2,creed:3,bazaar:3,service:4,vbs:4,training:5,retreat:6,revival:8,
+  pbook:1,pstudy:1,pmemo:2,ppray:3,psem:5,pconf:8,pdeg:10,
+  abook:2,astudy:3,amemo:3,minedu:4,minfel:5,asem:6,adeg:10,
+  offvow:4,leadtea:4,servtool:4,volpray:4,offsem:5,leadsch:5,servws:5,volpic:6,leadmt:6,servthx:6,offret:7,volfeast:8
+};
+var TEAM_LV={evang:3,praise:3,care:3,newcomer:4,edu:4,prayer:5,admin:6,media:7,mission:8};
+var PP_CLV={bapt:1,nurture:2,disciple:3,devoted:4,sgl:4,server:4,deacon:6,cml:6,tlead:6,elder:8,kanji:8,dlead:8,seminary:10,cstaff:10,assoc:12};
+// gift 선물 · hire 청빙(부교역자·직원)과 봉사자 화면 · entr 입구 꾸미기 · teams 사역팀 · bulk 일괄 심방·교육 · care 성도의 고민 · vol 봉사자 갈래(직분자·리더·섬김이) · deleg 성도 돌봄 맡기기
+var FEAT_LV={gift:2,hire:2,entr:2,teams:3,bulk:3,care:3,vol:4};
+// 챙길 일을 띄우기 시작하는 교회 Level (effects.js alertOn): 영성 낮음·지난주 불편은 Lv 2, 매너리즘은 Lv 3부터. 목양 벅참은 청빙(hire)이 열린 뒤
+var ALERT_LV={spirit:2,pen:2,stale:3};
 // 퀘스트 한 칸마다 받는 돈은 퀘스트 목록(quests.js)에 있다
 
-/* 사역팀과 달란트 (teams.js): 사역 경험 지표 레벨 1당 달란트 1개(TALENT_PER_LV).
-   달란트를 사역팀에 넣으면 그 팀의 단계(0~TEAM_MAX)가 오른다. 넣고 빼고 다른 팀으로 옮기는 데 값은 들지 않고, 사례비도 없다.
+/* 사역팀 (teams.js): 섬김이를 팀 슬롯(최대 TEAM_MAX칸)에 배치하면 그 수가 팀의 단계(0~TEAM_MAX)가 된다. 넣고 빼고 옮기는 데 값은 들지 않고, 사례비도 없다.
    효과 = 팀마다 정해진 기본 효과 × 단계 효과 배수 (TEAM_K × TEAM_CURVE[단계]). 단계가 오를수록 늘어나는 폭이 줄어들어
    달란트를 여러 팀에 나누는 것과 한 팀에 모으는 것이 균형을 이룬다 */
-var TEAM_MAX=5,TALENT_PER_LV=1,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9];
+var TEAM_MAX=6,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9,3.1];
 
 /* 건물 운영·레벨·티어 (bldlv.js)
    · 운영 방식: 예배·교제 건물은 '일괄 가동'(정원이 차면 한꺼번에 BATCH 시간 동안 가동 후 내보냄, 주일이 되면 정원이 덜 차도 가동),
@@ -159,7 +196,7 @@ var TEAM_MAX=5,TALENT_PER_LV=1,TEAM_K=2.5,TEAM_CURVE=[0,1,1.7,2.2,2.6,2.9];
      레벨마다 효과 +BLV_FX, 정원·좌석·수용 +BLV_CAP, 회전 속도 +BLV_ROT (한 명씩 건물)
    · 같은 기능의 기본(티어 1)·상위(티어 2) 건물: 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 6~7), 값은 티어 1의 Lv 10 누적 투자만큼 더 비싸다.
      티어 1은 티어 2가 열리기 전엔 TIER1_MAX개, 열린 뒤엔 TIER1_MAX_OPEN개까지 */
-var VIS_SPEED=.5;       // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
+var VIS_SPEED=.32;      // 방문자 걷기 속도 배율 (동선이 눈에 보이게 느리게)
 var TEMPO_ROT=1.4;       // 건물 안에 머무는 시간 배율
 var VIS_PATIENCE=14;     // 문 앞 길에서 기다리는 한계(초). 넘으면 화남 표시·불만·다른 곳으로
 var ANGRY_T=9;           // 화남 표시가 떠 있는 시간(초). 이 동안 방문자를 누르면 불만 사유가 보인다
@@ -167,52 +204,143 @@ var BATCH_ROT=.6;       // 일괄 가동 시간 = dur × STAY × TEMPO_ROT × BA
 var BATCH_PATIENCE=60;   // 일괄 가동 건물 안에서 정원이 차기를 기다리는 한계(초). 한 주(48초)보다 길어 늦어도 주일 예배는 드린다
 var BATCH_CAP0=.5;       // 일괄 가동 건물의 한 번 정원 = 정의된 정원 × BATCH_CAP0 × 레벨 배율 (작게 모여 자주 가동, 레벨이 오를수록 크게)
 var BATCH_SUN_WAIT=3;    // 주일에는 (금·토에 가동하지 않았으면) 모인 사람이 이만큼 기다리면 다시 가동한다
+var FLOOR_BEAUTY_K=0.12; // 바닥 타일 분위기(한 칸 +0.1~0.3로 적음)가 실제 분위기·새로 꾸민 효과에 치는 비율 (칸이 아주 많아서)
+var FLOOR_DEMO_K=0.3;    // 바닥 철거비: 깔린 바닥을 걷어내거나 다른 바닥으로 바꿀 때 그 바닥 값의 이만큼이 더 든다 (floors.js floorSwapCost)
+var NOLV_ROT=0.5;        // 레벨이 없는 요소(벤치·화장실·그릴 등, buildings.js NOLV)의 회전 시간 배율: 짧을수록 빨리 돈다
 var SINGLE_ROT=1;        // 한 명씩 건물(매장·편의) Lv 1 회전 시간 배율
 /* 레벨은 100까지. 효과·정원·회전은 Lv 10까지는 레벨마다 BLV_FX·BLV_CAP·BLV_ROT씩 오르고, 그 뒤로는 오르는 폭이 BLV_TAIL배로 느려진다(lvM).
-   투자 한 번 = 한 레벨(BLV_XP=1), 값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)): Lv 10까지 건물 값의 약 7배, Lv 100까지 약 370배.
+   투자 BLV_XP(10)번 = 한 레벨(한 번은 경험치 10%라 게이지가 눈에 띄게 오른다), 투자 한 번의 값 = 건물 값 × BLV_INVEST × (1 + BLV_INVEST_UP × (레벨−1)): 한 레벨 약 건물 값의 1/3, Lv 10까지 약 4배.
    모습은 3단계: Lv BLV_STAGE[0] 이하 천막, BLV_STAGE[1] 이하 보통, 그 위 큰 시설 */
-var BLV_MAX=100,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=1,BLV_INVEST=.55,BLV_INVEST_UP=.12,BLV_TAIL=.25,BLV_STAGE=[5,20];
+var BLV_MAX=100,BLV_FX=.2,BLV_CAP=.2,BLV_ROT=.25,BLV_XP=10,BLV_INVEST=.033,BLV_INVEST_UP=.09,BLV_TAIL=.25,BLV_STAGE=[5,20];
 /* 티어 2는 티어 1 성능 × TIER2_K(= 티어 1 Lv 12쯤), 값은 티어 1 Lv 10 누적 투자 × TIER2_COST_K만큼 더 (TIER2_INV_LV까지의 투자).
    값싼 티어 1 여러 개(TIER1_MAX개, 상위가 열리면 TIER1_MAX_OPEN개까지)와 비싼 티어 2 하나 사이: 티어 1은 같은 값에 성능이 더 나오지만 땅·운영비·관리자가 개수만큼 들고,
    티어 2는 한 칸에 모아 레벨 한도 없이 크게 키운다 */
-var TIER2_K=3.2,TIER2_COST_K=.5,TIER2_INV_LV=10,TIER1_MAX=4,TIER1_MAX_OPEN=6;
+var TIER2_K=3.2,TIER2_COST_K=.9,TIER2_INV_LV=10,TIER1_MAX=4,TIER1_MAX_OPEN=6;
 // 같은 기능의 [티어 1, 티어 2]
 var TIER_PAIRS=[['room','chapel'],['cell','hall'],['shop','dining'],['coffeecart','cafe'],['bookstore','books'],['wc','wc2'],['bench','lounge']];
 // 기능을 묶으며 더 짓지 않는 매장·편의 시설 (이미 지은 것은 그대로 쓴다)
-var RETIRED=['bakery','market','vending','flowercart','drinkfount','picnic','parasol','swing','info','nurse','busstop'];
+// 쉼터의 벤치는 세 가지(벤치·등받이 벤치·꽃 벤치)만 남기고 돌·철제 벤치와 둥근 돌 의자는 줄였다 (지어 둔 것은 그대로)
+var RETIRED=['bakery','market','vending','flowercart','picnic','parasol','swing','info','nurse','busstop','bench_stone','bench_iron','bench_round'];
 
-var VIS_LIFE=[110,50];     // 방문자가 머무는 시간(초): 최소, 더해지는 폭. 걸음이 느려진 만큼 길게
+var VIS_LIFE=[150,70];     // 방문자가 머무는 시간(초): 최소, 더해지는 폭. 걸음이 느려진 만큼 길게
 var VIS_IDLE_LEAVE=.4;    // 들를 곳이 없을 때 바로 돌아가는 확률 (낮을수록 더 둘러보고 더 들른다)
 var VIS_STROLL=.3;        // 건물을 고르기 전에 길을 한 바퀴 거닐 확률 (곳곳의 길을 고루 다니게)
 var VIS_STROLL_MAX=3;     // 한 방문에서 거니는 최대 횟수
 var STROLL_TRAF=2.5,STROLL_DIST=.05;   // 거닐 곳 고르기: 발길이 많은 길을 피하는 무게, 가까움을 따지는 무게
-var VIS_MAX=110;         // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
+/* 방문자는 예배를 보러 온다: 새 방문자의 말씀 욕구가 가장 낮게 시작하고(VIS_WORD0) 예배 건물부터 찾는다(VIS_WORD_FIRST: 클수록 먼저).
+   평균 욕구는 말씀에 NEED_W_WORD배 무게. 오는 사람 수는 영성 점수로 SPIRIT_VIS0 + SPIRIT_VIS1 × 영성(0~1)배,
+   정착 확률은 SPIRIT_JOIN0 + SPIRIT_JOIN1 × 영성배이고 말씀 욕구가 안 채워지면 WORD_JOIN_LOW배만 */
+var VIS_WORD0=[8,26],VIS_OTHER0=[26,56],VIS_WORD_FIRST=26,NEED_W_WORD=2.5,VIS_WORD_PULL=5;
+var SPIRIT_VIS0=.45,SPIRIT_VIS1=.95,SPIRIT_JOIN0=.5,SPIRIT_JOIN1=.9,WORD_JOIN_LOW=.1;
+/* 설교·영성 불만: 예배를 마친 방문자가 설교가 와닿지 않으면(말씀 효과 × 맡은 사람의 성능 < 기대) 그 차이 × SERMON_K 확률(최대 SERMON_MAX)로 불만,
+   떠날 때 영성 점수가 기대보다 낮으면 그 차이 × SPIRIT_K 확률로 불만. 말씀 욕구가 WORD_UNMET 아래인 채 떠나면 '예배를 못 드린' 불만.
+   기대는 교회 Level을 따라 오른다 (갓 개척한 교회에는 너그럽고, 커질수록 설교·영성을 더 바란다):
+   설교 기대 = SERMON_OK0 + SERMON_OK_LV × (Lv−1) (최대 SERMON_OK_MAX), 영성 기대 = SPIRIT_OK0 + SPIRIT_OK_LV × (Lv−1) (최대 SPIRIT_OK_MAX) */
+var SERMON_OK0=.95,SERMON_OK_LV=.03,SERMON_OK_MAX=1.5,SERMON_K=1.3,SERMON_MAX=.6,SPIRIT_OK0=.4,SPIRIT_OK_LV=.04,SPIRIT_OK_MAX=.8,SPIRIT_K=1.3,WORD_UNMET=40;
+var VIS_MEM_MAX=40;      // 주일에 예배하러 와서 지도를 걷는 성도 수 한도 (새 방문자 한도 VIS_MAX와 따로 센다)
+var VIS_MAX=80;          // 지도에 한꺼번에 있는 방문자 수 한도 (걸음이 느려 오래 머무는 만큼)
 
-/* 직분자·교역자 행사 (ministry.js): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 호감·경험치 xp (+ 신뢰도 trust)
-   직분자 = 직분 갈래(집사·장로·권사·교회직원), 교역자 = 교역 갈래 성도 + 부교역자. 쉬는 기간 cd(주), 소요 시간 dur(주) */
+/* 봉사자·부교역자 행사 (ministry.js offEv): 비용 = base + 대상 인원 × per, 마무리 보상 = 대상 모두에게 경험치 xp (+ 신뢰도 trust)
+   g = 대상 갈래: 'A' 직분자 · 'B' 리더 · 'C' 섬김이 · 'ABC' 봉사자 모두. g가 없으면 부교역자(와 담임목사). 쉬는 기간 cd(주), 소요 시간 dur(주) */
 var OFF_EV={
-  offsem:{base:300,per:30,xp:30,trust:1,cd:6,dur:1,goal:1},
-  offret:{base:900,per:70,xp:60,trust:2,cd:12,dur:2,goal:2},
-  minedu:{base:400,per:50,xp:30,trust:1,cd:6,dur:1,goal:1},
-  minfel:{base:1000,per:90,xp:60,trust:2,cd:12,dur:2,goal:2}
+  offsem:{g:'A',base:300,per:30,xp:30,trust:1,cd:6,dur:1,goal:1},
+  offret:{g:'A',base:900,per:70,xp:60,trust:2,cd:12,dur:2,goal:2},
+  offvow:{g:'A',base:100,per:10,xp:12,trust:1,cd:3,dur:3/7,goal:0},
+  leadtea:{g:'B',base:80,per:10,xp:10,trust:1,cd:2,dur:3/7,goal:0},
+  leadsch:{g:'B',base:300,per:30,xp:30,trust:1,cd:6,dur:2,goal:1},
+  leadmt:{g:'B',base:500,per:50,xp:40,trust:2,cd:8,dur:1,goal:1},
+  servtool:{g:'C',base:80,per:10,xp:10,trust:1,cd:2,dur:3/7,goal:0},
+  servws:{g:'C',base:250,per:25,xp:28,trust:1,cd:6,dur:1,goal:1},
+  servthx:{g:'C',base:400,per:40,xp:36,trust:2,cd:8,dur:3/7,goal:1},
+  volpray:{g:'ABC',base:200,per:10,xp:14,trust:1,cd:4,dur:1,goal:0},
+  volpic:{g:'ABC',base:600,per:30,xp:24,trust:2,cd:10,dur:1,goal:1},
+  volfeast:{g:'ABC',base:1500,per:60,xp:60,trust:3,cd:16,dur:3/7,goal:2},
+  minedu:{base:400,per:150,xp:14,trust:1,cd:6,dur:1,goal:1},
+  minfel:{base:1000,per:200,xp:24,trust:2,cd:12,dur:2,goal:2}
 };
+/* 담임목사 (ministry.js pastorSt): 행사 › 담임목사 탭의 행사로 경험치를 쌓아 레벨이 오른다 (다음 레벨까지 PAS_XP0 + PAS_XP_K × 레벨).
+   레벨마다 대예배당 성능 +PAS_LV_K, 목양 수용력 +PAS_CAP. 학위(최대 PAS_DEG_MAX)마다 말씀 효과 +PAS_DEG_WORD, 받을 때 평판 +PAS_DEG_REP.
+   행사: cost 값, xp 경험치, cd 쉬는 주, dur 걸리는 주(세미나는 길고 학위는 매우 길다), goal 열리는 단계 */
+var PAS_LV_MAX=50,PAS_XP0=40,PAS_XP_K=12,PAS_LV_K=.03,PAS_CAP=3,PAS_DEG_WORD=.05,PAS_DEG_REP=4,PAS_DEG_MAX=3;
+var PAS_EV={
+  pbook:{cost:60,xp:12,cd:1,dur:3/7,goal:0},
+  pstudy:{cost:40,xp:20,cd:2,dur:1,goal:0},
+  pmemo:{cost:30,xp:16,cd:2,dur:1,goal:0},
+  ppray:{cost:120,xp:36,cd:4,dur:1,goal:0},
+  psem:{cost:900,xp:180,cd:8,dur:5,goal:1},
+  pconf:{cost:1800,xp:320,cd:12,dur:8,goal:2},
+  pdeg:{cost:6000,xp:900,cd:20,dur:24,goal:2}
+};
+/* 부교역자 행사: 값 = base + 부교역자 수 × per, 부교역자 모두 경험치 xp. 부교역자 레벨은 1~ASSOC_LV_MAX, 다음 레벨까지 AS_XP0 + AS_XP_K × 레벨 */
+var AS_XP0=10,AS_XP_K=4;
+var ASC_EV={
+  abook:{base:40,per:40,xp:6,cd:1,dur:3/7,goal:0},
+  astudy:{base:40,per:30,xp:10,cd:2,dur:1,goal:0},
+  amemo:{base:30,per:20,xp:8,cd:2,dur:1,goal:0},
+  asem:{base:500,per:300,xp:60,cd:8,dur:4,goal:1},
+  adeg:{base:3000,per:1500,xp:250,cd:20,dur:20,goal:2}
+};
+
 
 /* 건물 관리자 (managers.js)
    · 관리자가 있어야 가동하는 건물: 예배(추가 예배당) → 부교역자, 교제(소그룹실·친교실) → 직분자·리더, 매장 → 직원. 처음부터 있는 대예배당은 담임목사가 맡는다
    · 성능 배율(효과·회전): 교회에서 기른 사람 MGR_IN_K × (1 + 호감 Lv × MGR_PLV_K, 부교역자는 레벨마다 MGR_LV_K), 밖에서 청빙한 사람 MGR_EX_K0 + 별 × MGR_EX_STEP
    · 건물을 맡은 사람은 성도 돌봄(자동 심방)에서 빠진다 — 둘 중 하나만
-   · 외부 청빙: 후보 3명. 주급 = HIRE_PAY0 + 별 × HIRE_PAY_K (부교역자는 50 + 별 × 30), 청빙비 = 주급 × HIRE_FEE_K, 다시 뽑기 HIRE_REROLL.
-     처음 HIRE_EARLY번은 별 1개짜리 값싼 후보가 반드시 한 명 나온다 */
-var MGR_NEED={worship:'pastor',fellow:'leader',shop:'staff'};
-var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'],MGR_STAFF_NODES=['server','tlead','dlead','cstaff'];
+   · 외부 청빙: 후보 3명. 월 사례비는 별 등급표(부교역자 ASSOC_PAY, 청빙직원 STAFF_PAY), 청빙비는 없다(HIRE_FEE=0), 후보 칸마다 한 번 교체 HIRE_REROLL.
+     처음 HIRE_EARLY번은 별 1개짜리 사례비 낮은 후보가 반드시 한 명 나온다 */
+var MGR_NEED={worship:'pastor',fellow:'pastor',shop:'staff'};   // 예배·교제 건물은 부교역자만, 매장은 청빙직원만
+var MGR_LEADER_NODES=['devoted','deacon','elder','sgl','cml','kanji','seminary'];   // 매장 관리자는 청빙직원(p.ext)만
 var MGR_IN_K=1.3,MGR_PLV_K=.004,MGR_LV_K=.04,MGR_EX_K0=.7,MGR_EX_STEP=.08;
-var HIRE_PAY0=10,HIRE_PAY_K=14,HIRE_FEE_K=4,HIRE_REROLL=600,HIRE_EARLY=3;
+/* 이력서: 청빙 후보는 처음 HIRE_CAND0명씩, 그 뒤로는 매주 HIRE_RESUME_P 확률로 부교역자나 청빙직원 이력서가 한 장 도착해 목록에 더해진다(갈래마다 최대 HIRE_CAND_MAX명).
+   후보 칸마다 한 번만 HIRE_REROLL만원을 내고 다른 후보로 바꿀 수 있다 */
+var HIRE_REROLL=800,HIRE_EARLY=3,HIRE_CAND0=2,HIRE_CAND_MAX=4,HIRE_RESUME_P=.3;
 
 /* 대예배당(`main`, 시작 건물): 같은 예배당보다 성능(효과·정원·좌석)이 MAIN_K배 */
 var MAIN_K=2.5;
-/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX. 레벨마다 방문자 ENT_VIS. 레벨업 값은 도달하는 레벨별(ENT_LV_COST[목표 레벨]).
-   모양(ENT_STYLE_COST)은 한 번 사면 계속 쓴다. 현수막(ENT_BANNER_COST, 목록 순서)은 사서 걸면 방문자 ENT_BAN_VIS */
-var ENT_MAX=5,ENT_VIS=0.06,ENT_BAN_VIS=0.02;
-var ENT_LV_COST=[0,0,200,500,1000,2000];
-var ENT_STYLE_COST={basic:0,stone:300,wood:500,glass:800,garden:1200};
-var ENT_BANNER_COST=[150,250,350,500,700];
+/* 교회 입구 (entrance.js): 레벨 1~ENT_MAX(100). 투자 한 번 = 한 레벨, 값은 도달하는 레벨 L마다 entrLvCost(L) = ENT_LV_BASE × (L−1)^ENT_LV_POW (레벨이 오를수록 가파르게 비싸다).
+   방문자 증가는 건물 레벨처럼 Lv 10까지는 레벨마다 ENT_VIS씩, 그 뒤로는 BLV_TAIL배로 느리게(lvM).
+   컨셉(ENT_STYLE_COST)·안내문(ENT_SIGN_COST)·꾸미기(ENT_DECO_COST)는 한 번 사면 계속 쓴다. 안내문·꾸미기를 걸면 방문자 ENT_SIGN_VIS·ENT_DECO_VIS */
+var ENT_MAX=100,ENT_VIS=0.025,ENT_LV_BASE=300,ENT_LV_POW=1.9;
+function entrLvCost(L){return L<2?0:Math.round(ENT_LV_BASE*Math.pow(L-1,ENT_LV_POW)/10)*10;}
+var ENT_STYLE_COST={brick:0,concrete:400,stone:300,wood:500,marble:1200,glass:800,garden:1200};
+var ENT_SIGN_COST={m0:0,m1:100,m2:150,m3:200,m4:250,m5:350,m6:450,m7:600,m8:800,m9:1000};
+var ENT_SIGN_VIS={m0:0,m1:.01,m2:.01,m3:.01,m4:.015,m5:.015,m6:.02,m7:.02,m8:.025,m9:.03};
+var ENT_DECO_COST={lights:300,flags:350,planter:400,lantern:600,balloon:700,flower:1000};
+var ENT_DECO_VIS={lights:.01,flags:.01,planter:.01,lantern:.015,balloon:.02,flower:.03};
+
+/* 직원 화면(roster.js)의 즉시 육성. 직원(부교역자·사역간사·청빙직원)마다 st={tr 직무교육 횟수, mo 사기 0~100, xp 훈련 경험, rk 직급}.
+   성능 배수 = (1 + ST_TRAIN.k×교육 횟수) × (1 + ST_RANK.k×직급) × (ST_MO_LO + (1−ST_MO_LO)×사기/100)
+   · 직무 교육: 돈 cost×(1+grow×횟수)만원 + 훈련 경험 xp를 쓰고 즉시 교육 횟수 +1 (최대 max회, 영구)
+   · 특별 격려: 돈 cost만원 → 사기 +mo, 훈련 경험 +xp (기다릴 일 없음)
+   · 직급 승급: 돈 cost[직급]만원, 교육 횟수 need[직급] 이상 → 직급 +1, 성능 +, 월 사례비 +pay%
+   · 사기는 매주 ST_MO_DECAY씩 떨어지고, 건물을 맡고 있으면 매주 훈련 경험 ST_XP_WEEK이 쌓인다 */
+var ST_TRAIN={cost:300,grow:.5,xp:10,max:10,k:.04};
+var ST_CHEER={cost:200,mo:50,xp:6};
+var ST_RANK={k:.12,cost:[1500,4000],need:[3,6],pay:.25,assoc:['전도사','부목사','수석부목사'],staff:['사원','선임','팀장']};
+var ST_MO_DECAY=2,ST_MO_LO=.9,ST_XP_WEEK=2;
+
+/* ---------- 스테이지 2~4 (js/stages.js) ----------
+   산촌(mount): 좁은 협곡 끝 분지에 교회. 걸어서 오는 방문자는 STG_WALK_VIS배만 오고 정착도 STG_WALK_JOIN배. 차량(승합차·미니버스)이
+     운전자(봉사자·부교역자)와 함께 입구에서 태워 오면 그만큼 회복된다. 이따금 산짐승이 내려와 건물을 상하게 하고 방문자를 놀라게 한다
+   어촌(sea): 입구와 교회 사이를 큰 강이 가른다(다리를 놓을 수 없다). 배로 태워 와야만 교회에 온다 (처음엔 마을 나룻배 하나)
+   도시(city): 지도에 이웃 건물이 가득하다. 건물을 땅째 비싸게 사서(CITY_LAND_K × 칸 수) 주차장·시설 자리를 만든다.
+     주차 필요가 CITY_PARK_K배, 정착은 CITY_JOIN배 × (0.6 + 0.4 × 신뢰도/80). 이웃 민원이 들어와 평판이 깎인다 */
+var STG_WALK_VIS=.7,STG_WALK_JOIN=.85;   // 산촌: 걸어서 올 때 방문자 수·정착 배율
+var STG_SEA_VIS=.75,STG_SEA_JOIN=.7;     // 어촌: 강 건너 작은 마을이라 오는 방문자가 적고(나룻배·배로만 온다) 뱃길이 낯설어 덜 정착한다
+var STG_RIDE_FULL=12;                    // 산촌·도시: 운행 중인 차량 정원 합이 이만큼이면 방문자 수 회복이 다 찬다
+// 차량·배: n 이름 · cap 정원 · spd 칸/초 · cost 값 · up 주간 유지비 · w 다니는 곳(road 길 / water 물)
+var VEH={
+  truck:{n:'마을 트럭',cap:4,spd:2.6,cost:0,up:0,w:'road',free:true},   // 산촌 처음: 이장님이 몰아 준다
+  van:{n:'승합차',cap:8,spd:4,cost:1800,up:20,w:'road'},
+  bus:{n:'미니버스',cap:16,spd:3.4,cost:4200,up:40,w:'road'},
+  ferry:{n:'마을 나룻배',cap:4,spd:1.1,cost:0,up:0,w:'water',free:true},
+  boat:{n:'작은 배',cap:8,spd:1.7,cost:2600,up:30,w:'water'},
+  ship:{n:'통통배',cap:16,spd:1.5,cost:6000,up:60,w:'water'}
+};
+var VEH_LOAD=2.5;           // 타고 내리는 시간(초)
+var VEH_DRV_LV=.008;      // 운전자 호감 Lv(부교역자는 레벨×5)마다 속도 +
+var PQ_MAX=40;            // 입구·나루에서 기다리는 사람 한도
+var PQ_GIVEUP=.03;        // 기다리다 돌아가는 비율(초당)
+var WILD_P=.3,WILD_N=[1,3],WILD_SPEED=.9,WILD_DMG=14,WILD_REP=.4,WILD_SCARE=2.5,WILD_STAY=40;   // 산짐승: 주마다 확률·마릿수·걸음·건물 상함·쫓으면 평판·놀라는 거리·머무는 시간(초)
+var CITY_LAND_K=90,CITY_JOIN=.55,CITY_PARK_K=1.8,CITY_VAN_PARK=.5;   // 도시: 땅값(칸당)·정착 배율·주차 필요 배율·차량 정원 1명당 줄어드는 주차 필요
+var CITY_CMP_P=.35,CITY_CMP_REP=2.5,CITY_CMP_WEEKS=2;   // 민원: 주마다 기본 확률·깎이는 평판·챙길 일에 남는 주

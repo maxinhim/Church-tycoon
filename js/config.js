@@ -4,7 +4,7 @@
    교회 입구는 ENT부터 EW칸 너비다.
    도로·주차 구역·부지는 울타리로 나뉘고, 주차 구역에서 부지로 들어오는 곳(ENT 열)에 교회 입구가 있다.
    지도 밖 BAND 칸까지 잔디를 그린다. 한 주는 현실 시간 WEEK초(48초, 하루 약 7초) */
-var G=2, COLS=64, ROWS=64, ENT=30, EW=2, PZ=54, RD=2, BAND=24, WEEK=48, SAVE_KEY='church-tycoon-iso-v5';
+var G=2, COLS=64, ROWS=64, ENT=30, EW=3, PZ=54, RD=2, BAND=24, WEEK=48, SAVE_KEY='church-tycoon-iso-v7';
 var HW=16, HH=8, ZH=30;
 function isEnt(x){return x>=ENT&&x<ENT+EW;}
 function entC(){return ENT+EW/2;}
@@ -12,6 +12,8 @@ var $=function(s){return document.querySelector(s);};
 var clamp=function(v,a,b){return Math.max(a,Math.min(b,v));};
 // 일반 숫자 (점수·인원 등)
 var fmtN=function(n){return Math.round(n).toLocaleString('ko-KR');};
+// 분위기 점수: 소수점 한 자리까지
+var fmtB=function(v){return (Math.round(v*10)/10).toFixed(1);};
 /* 돈은 만원 단위다 (게임 속 1 = 1만원). 1만원 미만은 '1234만원', 1만(=1억원)부터는 천만 단위에서 반올림한 '1.5억'.
    short를 주면 1억 미만 작은 글씨용 약식('1234만') */
 var fmt=function(n,short){ n=Math.round(n);var neg=n<0,a=Math.abs(n),u=short?'만':'만원',s;

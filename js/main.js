@@ -39,13 +39,13 @@ function frame(ts){
   var dt=Math.min(0.25,(ts-last)/1000||0);last=ts;
   stepFx(dt);stepWx(dt);stepAudio(dt);
   // 목회 고민 카드가 열려 있으면 시간이 멈춘다
-  if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg){var sim=dt*gameSpeed();while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
+  if(UI.speed>0&&!document.hidden&&!isPortrait()&&!S.dlg&&!UI.intro){var sim=dt*gameSpeed();while(sim>1e-6){var d=Math.min(0.1,sim);update(d);sim-=d;}}
   draw();syncPlace();syncGate();syncSelCard();hud(false);
   requestAnimationFrame(frame);
 }
 function init(){
   cv=$('#cv');ctx=cv.getContext('2d');
-  S=load();if(!S.cands||!S.cands.length)refreshCands();rebuildOcc();recalc();levelTick(true);
+  S=load();if(!S.cands)refreshCands();rebuildOcc();recalc();levelTick(true);
   // 속도 버튼만 (같은 줄 모양의 소리 버튼은 audio.js가 맡는다)
   document.querySelectorAll('.sp button[data-sp]').forEach(function(b){
     b.addEventListener('click',function(){
@@ -56,6 +56,14 @@ function init(){
   syncSpeed();
   document.querySelectorAll('#fab [data-fab]').forEach(function(b){b.addEventListener('click',function(){openGroup(b.dataset.fab);});});
   $('#bMenu').addEventListener('click',function(){setGear(false);openGroup('menu');});
+  // 설정 메뉴의 이동: 스테이지 고르기 · 메인 화면(인트로). 하던 게임은 저장된다 (intro.js)
+  $('#bStages').addEventListener('click',function(){setGear(false);showStageScreen();});
+  $('#bHome').addEventListener('click',function(){setGear(false);showIntro();});
+  // 위 자금·성도 수 칩을 누르면 현황 화면
+  document.querySelectorAll('#status .pill.money,#status .pill.mem').forEach(function(p){
+    p.addEventListener('click',function(){openGroup('status');});
+    p.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openGroup('status');}});
+  });
   $('#bGear').addEventListener('click',function(){setGear($('#gearMenu').hidden);});
   // 톱니바퀴 메뉴 바깥을 누르거나 Esc를 누르면 닫는다
   document.addEventListener('pointerdown',function(e){if(!$('#gearMenu').hidden&&!e.target.closest('#gear'))setGear(false);});
@@ -67,21 +75,21 @@ function init(){
   $('#lvup').addEventListener('click',function(){$('#lvup').hidden=true;});
   $('#clvl').addEventListener('click',levelInfo);
   $('#gpBtn').addEventListener('click',toggleGate);
-  $('#gpDeco').addEventListener('click',function(){closeGatePop();openScreen('gate');});
+  $('#gpDeco').addEventListener('click',function(){closeGatePop();openEntrDock();});
   $('#clock').addEventListener('click',wxExplain);
   $('#clock').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();wxExplain();}});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#gatePop').hidden)closeGatePop();});
   // 주일 정산 화면은 어디를 눌러도 그냥 사라진다 (재정 내역은 현황 › 재정에서 본다)
   $('#rcpt').addEventListener('click',function(){$('#rcpt').hidden=true;});
   if(!S.open&&qDone('f6'))setTimeout(function(){toast('준비가 되면 자물쇠가 달린 교회 입구(파란 아치)를 눌러 문을 여세요',4600);},600);
-  setupInput();setupPlace();setupSelCard();setupScreens();setupAudio();loadSprites();
+  setupInput();setupPlace();setupSelCard();setupScreens();setupAudio();loadSprites();setupIntro();
   if(window.ResizeObserver)new ResizeObserver(resize).observe($('#stage'));
   window.addEventListener('resize',resize);
   if(portraitMQ.addEventListener)portraitMQ.addEventListener('change',syncOrientation);else portraitMQ.addListener(syncOrientation);
   syncOrientation();lockLandscape();
   document.addEventListener('pointerdown',lockLandscape,{once:true});
   document.addEventListener('visibilitychange',function(){if(document.hidden)save();});
-  resize();renderPanel();hud(true);
+  resize();renderPanel();hud(true);syncEvBadge();
   if(S.over)showOver();
   if(S.dlg)showDlg();
   requestAnimationFrame(frame);

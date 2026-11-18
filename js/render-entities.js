@@ -122,6 +122,30 @@ function drawFlower(b){
 }
 // 벤치: 등받이가 뒤, 앉는 쪽이 정면
 function drawBench(b){
+  var st=b.def||'bench';
+  if(st==='bench_stone'){drawParts([
+    {r:fRect(b,.22,.36,.3,.6),z0:0,z1:.16,c:'#a9a294'},{r:fRect(b,.7,.36,.78,.6),z0:0,z1:.16,c:'#a9a294'},
+    {r:fRect(b,.18,.34,.82,.62),z0:.16,z1:.26,c:'#d8d1c2',t:'#ebe6da'}]);return;}
+  if(st==='bench_iron'){var ps=[];
+    [.2,.74].forEach(function(u){ps.push({r:fRect(b,u,.38,u+.06,.44),z0:0,z1:.26,c:'#2f343a'});});
+    for(var i=0;i<4;i++)ps.push({r:fRect(b,.18,.4+i*.05,.82,.43+i*.05),z0:.26,z1:.3,c:'#4a505a'});
+    [.2,.74].forEach(function(u){ps.push({r:fRect(b,u,.3,u+.06,.34),z0:.3,z1:.36,c:'#2f343a'});});
+    for(var j=0;j<3;j++)ps.push({r:fRect(b,.18,.3,.82,.33),z0:.36+j*.12,z1:.4+j*.12,c:'#2f343a'});
+    drawParts(ps);return;}
+  if(st==='bench_back'){drawParts([
+    {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
+    {r:fRect(b,.2,.4,.8,.62),z0:.14,z1:.2,c:'#a07a52'},
+    {r:fRect(b,.22,.3,.28,.36),z0:.2,z1:.6,c:'#6b4f32'},{r:fRect(b,.72,.3,.78,.36),z0:.2,z1:.6,c:'#6b4f32'},
+    {r:fRect(b,.2,.3,.8,.36),z0:.44,z1:.5,c:'#8a6844'},{r:fRect(b,.2,.3,.8,.36),z0:.56,z1:.6,c:'#8a6844'}]);return;}
+  if(st==='bench_round'){drawParts([
+    {r:fRect(b,.32,.36,.68,.62),z0:0,z1:.3,c:'#c9c2b6',t:'#e6e0d4'},
+    {r:fRect(b,.38,.4,.62,.58),z0:.3,z1:.32,c:'#b9b2a4',t:'#d8d1c2'}]);return;}
+  if(st==='bench_flower'){drawParts([
+    {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
+    {r:fRect(b,.2,.34,.8,.4),z0:.14,z1:.46,c:'#8a6844'},
+    {r:fRect(b,.2,.4,.8,.62),z0:.14,z1:.2,c:'#a07a52'},
+    {r:fRect(b,.04,.36,.2,.6),z0:0,z1:.3,c:'#b9694c',t:'#c97a58'},{r:fRect(b,.8,.36,.96,.6),z0:0,z1:.3,c:'#b9694c',t:'#c97a58'},
+    {r:fRect(b,.02,.34,.22,.62),z0:.3,z1:.46,c:'#5aa85c',t:'#7cc276'},{r:fRect(b,.78,.34,.98,.62),z0:.3,z1:.46,c:'#5aa85c',t:'#7cc276'}]);return;}
   drawParts([
     {r:fRect(b,.24,.47,.3,.55),z0:0,z1:.14,c:'#4f3e2c'},{r:fRect(b,.7,.47,.76,.55),z0:0,z1:.14,c:'#4f3e2c'},
     {r:fRect(b,.2,.34,.8,.4),z0:.14,z1:.46,c:'#8a6844'},
@@ -138,7 +162,7 @@ function drawSpire(b){
 /* 건물 레벨에 따른 모습 3단계 (bldlv.js bStage): Lv 1~3 천막·가건물, 4~6 보통 건물, 7~10 큰 시설(금빛 테두리·깃발) */
 function lvLook(b){var d=D[b.def];return !!(b.id&&d&&d.fill&&!d.cell&&typeof hasLv==='function'&&hasLv(b));}
 function drawEntity(b,cars){
-  if(cutOn(b)){drawCutaway(b);if(bStage(b)===3)drawGrand(b);return;}
+  if(cutOn(b)){drawCutaway(b);if(b.uses!=null&&bStage(b)===3)drawGrand(b);return;}
   if(lvLook(b)&&bStage(b)===1){drawTent(b);return;}
   drawEntity0(b,cars);
   if(lvLook(b)&&bStage(b)===3)drawGrand(b);
@@ -186,6 +210,7 @@ function drawEntity0(b,cars){
   if(k==='planter'){drawPlanter(b);return;}
   if(k==='gazebo'){drawGazebo(b);return;}
   if(k==='busstop'){drawBusStop(b);return;}
+  if(k==='city'){drawCityBld(b);return;}
   if(DECO_DRAW[k]){DECO_DRAW[k](b);return;}
   if(k==='bld')drawBld(b);else if(k==='lot')drawLot(b,cars||0);else if(k==='tree')drawTree(b);
   else if(k==='flower')drawFlower(b);else if(k==='bench')drawBench(b);else if(k==='spire')drawSpire(b);
@@ -194,19 +219,18 @@ function drawVisitor(v){
   var c=PJ.c,s=PJ.s,p=rotPt(v.x,v.y),q=P(p[0],p[1],v.z||0);
   var walking=v.state==='walk'||v.state==='leave';
   var bob=walking?Math.abs(Math.sin(S.clock*11+v.ph))*1.2*s:0;
-  var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);
-  c.fillStyle='rgba(0,0,0,.22)';c.beginPath();c.ellipse(q[0],q[1],bw*.9,bw*.38,0,0,6.283);c.fill();
-  c.fillStyle=v.pant;c.fillRect(q[0]-bw/2,q[1]-lg,bw,lg);
-  c.fillStyle=v.tint;c.fillRect(q[0]-bw/2,q[1]-lg-bh-bob,bw,bh+bob*.5);
-  c.fillStyle='#f0cfa8';c.beginPath();c.arc(q[0],q[1]-lg-bh-hr-bob,hr,0,6.283);c.fill();
-  var top=q[1]-lg-bh-hr*2-bob;
+  // 걷는 방향: 화면에서 아래로 가면 앞모습, 위로 가면 뒷모습, 왼쪽이면 좌우 뒤집기
+  if(v.hx!=null){var ddx=q[0]-v.hx,ddy=q[1]-v.hy;if(ddx*ddx+ddy*ddy>.04){v.hdx=ddx;v.hdy=ddy;}}
+  v.hx=q[0];v.hy=q[1];
+  var back=(v.hdy||0)<0,fl=back?(v.hdx||0)>0:(v.hdx||0)<0;
+  var top=chrPerson(c,q[0],q[1]-bob*.4,s,chrVisSpec(v.ph),back?'b':'f',walking?'walk':'stand',walking?((S.clock*7+v.ph*9)|0)%4:0,fl)[1];
   if(v.want&&v.state==='walk'){c.fillStyle=NC[v.want];c.beginPath();c.arc(q[0],top-3.2*Math.max(s,.6),Math.max(1.6,2.4*s),0,6.283);c.fill();c.strokeStyle='#fff';c.lineWidth=1;c.stroke();}
   // 기다리다 지쳐 화가 나면 머리 위에 화남 표시 (잠깐)
   if(v.angry>0){c.globalAlpha=Math.min(1,v.angry/.4);c.font=Math.max(11,15*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('😠',q[0],top-1);c.globalAlpha=1;}
   else if(v.state==='wait'){c.fillStyle='#fff';c.font='700 '+Math.max(9,11*s)+'px sans-serif';c.textAlign='center';c.textBaseline='bottom';c.fillText('…',q[0],top);}
   // 비·눈 오는 날엔 우산
   if(wxUmbrella()){
-    var ur=Math.max(4.5,8*s),uy=top-1.5*s,uc=['#d6453a','#3f6fe0','#f2c14e','#2f9e6e','#8a5bb5','#2b2b2b'][(v.ph*10|0)%6];
+    var bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),ur=Math.max(4.5,8*s),uy=top-1.5*s,uc=['#d6453a','#3f6fe0','#f2c14e','#2f9e6e','#8a5bb5','#2b2b2b'][(v.ph*10|0)%6];
     c.strokeStyle='#3d3d46';c.lineWidth=1;c.beginPath();c.moveTo(q[0]+bw*.3,q[1]-lg-bh*.4);c.lineTo(q[0]+bw*.3,uy);c.stroke();
     c.fillStyle=uc;c.beginPath();c.moveTo(q[0]+bw*.3-ur,uy+ur*.15);c.quadraticCurveTo(q[0]+bw*.3,uy-ur*1.05,q[0]+bw*.3+ur,uy+ur*.15);c.closePath();c.fill();
   }
@@ -216,27 +240,7 @@ function drawRoadCar(e){
 }
 /* 교회 입구: 주차 구역과 부지 사이 울타리의 ENT 칸. 문이 닫혀 있으면 철문이 가로막고, 열면 양쪽으로 젖혀진다 */
 function drawArch(){
-  var y=PZ,s=PJ.s;
-  if(entrStyled()){drawArchStyled();drawEntrBanner();archName();return;}
-  if(drawGateSpr()){drawEntrBanner();archName();return;}
-  box(rrect(ENT-.04,y-.06,ENT+.08,y+.06),0,1.25,'#f1ece2');
-  box(rrect(ENT+.92,y-.06,ENT+1.04,y+.06),0,1.25,'#f1ece2');
-  if(S.open){
-    box(rrect(ENT+.06,y,ENT+.1,y+.42),0,.62,'#3d4650');box(rrect(ENT+.9,y,ENT+.94,y+.42),0,.62,'#3d4650');
-  }else{
-    box(rrect(ENT+.08,y-.02,ENT+.92,y+.02),.04,.66,'#3d4650');
-    for(var i=1;i<8;i++)box(rrect(ENT+i*.11,y-.025,ENT+i*.11+.02,y+.025),.04,.7,'#59626b');
-  }
-  box(rrect(ENT-.06,y-.07,ENT+1.06,y+.07),1.1,1.3,'#3f5ea3');
-  var m=rotPt(ENT+.5,y);cross(m[0],m[1],1.3,.7);
-  archName();
-}
-// 입구 아치 위 교회 이름
-function archName(){
-  if(entrBanner())return;   // 현수막을 걸었으면 이름 대신 현수막 글씨 (entrance.js)
-  var s=PJ.s,m=rotPt(ENT+.5,PZ);
-  if(s>.42){var q=P(m[0],m[1],1.1),c=PJ.c;c.font='600 '+(8*s)+'px "IBM Plex Sans KR",sans-serif';c.textAlign='center';c.textBaseline='middle';
-    c.lineWidth=2.5;c.strokeStyle='rgba(20,30,60,.8)';c.strokeText(S.name,q[0],q[1]+10*s);c.fillStyle='#fff';c.fillText(S.name,q[0],q[1]+10*s);}
+  entrScene(S.entr.st,S.entr.sg,S.entr.lv,S.open,false,S.entr.dOn);
 }
 // 지도 밖까지 잔디를 이어 깔아 떠 있는 섬처럼 보이지 않게 한다. 도로도 양옆으로 이어진다
 function drawGround(){
@@ -261,11 +265,11 @@ function drawGround(){
   // 주차 구역: 아스팔트, 입구로 가는 보도(ENT 열)는 밝게
   var pz=rrect(0,PZ,COLS,ROWS-1);
   quad([[pz.x0,pz.y0,.003],[pz.x1,pz.y0,.003],[pz.x1,pz.y1,.003],[pz.x0,pz.y1,.003]],texPattern('t_park',1)||'#7a8187');
-  var wk=rrect(ENT,PZ,ENT+1,ROWS-1);
+  var wk=rrect(ENT,PZ,ENT+EW/U,ROWS-1);
   var tw=texPattern('t_walk',1);
   quad([[wk.x0,wk.y0,.004],[wk.x1,wk.y0,.004],[wk.x1,wk.y1,.004],[wk.x0,wk.y1,.004]],tw||'#d8d2c4');
   c.strokeStyle='rgba(120,110,95,.45)';c.lineWidth=1;c.beginPath();
-  if(!tw)for(y=PZ;y<ROWS-1;y+=.5){var w1=rotPt(ENT,y),w2=rotPt(ENT+1,y),e1=P(w1[0],w1[1],.005),e2=P(w2[0],w2[1],.005);c.moveTo(e1[0],e1[1]);c.lineTo(e2[0],e2[1]);}
+  if(!tw)for(y=PZ;y<ROWS-1;y+=.5){var w1=rotPt(ENT,y),w2=rotPt(ENT+EW/U,y),e1=P(w1[0],w1[1],.005),e2=P(w2[0],w2[1],.005);c.moveTo(e1[0],e1[1]);c.lineTo(e2[0],e2[1]);}
   c.stroke();
   if(PJ.s>.35&&!tg){
     c.fillStyle='#6a9c56';
@@ -448,12 +452,17 @@ function drawBirdbath(b){
 function drawFence(b){
   var d=D[b.def],st=d.style;
   if(st==='stone'){box(axRect(b,0,.4,1,.6),0,.32,'#a59d90','#b8b2a6');for(var i=0;i<4;i++){var p=b.face===0||b.face===1?rotPt(b.x+.5,b.y+.12+i*.25):rotPt(b.x+.12+i*.25,b.y+.5);dot(p[0],p[1],.2,Math.max(.6,1.3*PJ.s),i%2?'#8a8276':'#c9c2b6');}return;}
-  if(st==='brick'){box(axRect(b,0,.42,1,.58),0,.42,'#b9694c');box(axRect(b,0,.39,1,.61),.42,.48,'#d8cfc0');return;}
-  var post=st==='iron'?'#2f343a':'#f4f1ea',rail=st==='iron'?'#3d434a':'#ebe6dc',ph=st==='iron'?.62:.55;
+  if(st==='brick'){chBrickBox(axRect(b,0,.42,1,.58),0,.42,CH_BRICK,b.x*7+b.y);box(axRect(b,-.01,.38,1.01,.62),.42,.5,CH_WOOD_D,CH_WOOD);return;}
+  if(st==='picket'){
+    box(axRect(b,0,.47,1,.53),.14,.19,CH_WOOD_D);box(axRect(b,0,.47,1,.53),.38,.43,CH_WOOD_D);
+    for(var k=0;k<5;k++){var o2=.18+k*.15;box(axRect(b,o2,.475,o2+.05,.525),0,.48,CH_WOOD,CH_WOOD_L);}
+    [0,.92].forEach(function(o){chBrickBox(axRect(b,o,.44,o+.1,.56),0,.58,CH_BRICK,b.x*5+b.y+o*9,'#c9bfae');box(axRect(b,o-.02,.42,o+.12,.58),.58,.64,CH_STONE,'#ece6d8');});
+    return;
+  }
+  var post='#2f343a',rail='#3d434a',ph=.62;
   [0.04,0.5,0.92].forEach(function(o){box(axRect(b,o,.46,o+.06,.54),0,ph,post);});
   box(axRect(b,0,.47,1,.53),.14,.19,rail);box(axRect(b,0,.47,1,.53),.38,.43,rail);
-  if(st==='picket')for(var k=0;k<5;k++){var o2=.14+k*.16;box(axRect(b,o2,.47,o2+.05,.53),0,.48,post);}
-  if(st==='iron')for(var m=0;m<6;m++){var o3=.12+m*.14;box(axRect(b,o3,.485,o3+.025,.515),0,.56,post);}
+  for(var m=0;m<6;m++){var o3=.12+m*.14;box(axRect(b,o3,.485,o3+.025,.515),0,.56,post);}
 }
 // 쌍등: 등 두 개가 정면과 나란한 방향으로 달린다
 function drawLamp2(b){
@@ -487,6 +496,19 @@ function drawBin(b){
   var x=b.x+.5,y=b.y+.5;
   box(rrect(x-.14,y-.14,x+.14,y+.14),0,.4,'#3f7a52');
   box(rrect(x-.16,y-.16,x+.16,y+.16),.4,.46,'#2f5f40');
+}
+// 정수기: 흰 몸통 위에 파란 물통, 앞에 작은 꼭지
+function drawPurifier(b){
+  var x=b.x+.5,y=b.y+.5;
+  box(rrect(x-.17,y-.15,x+.17,y+.15),0,.62,'#eef3f6');
+  box(rrect(x-.12,y-.11,x+.12,y+.11),.62,.9,'#7fb8e0','#a9d4f2');
+  box(rrect(x-.05,y+.15,x+.05,y+.2),.34,.42,'#5f9fd0');
+  box(rrect(x-.13,y+.12,x+.13,y+.18),.1,.14,'#9aa6ae');
+}
+// 분리수거함: 파랑(종이)·노랑(캔)·초록(플라스틱) 세 칸
+function drawRecycle(b){
+  var x=b.x+.5,y=b.y+.5;
+  ['#4a78c7','#e3b341','#3f9a5a'].forEach(function(c,i){var x0=x-.3+i*.2;box(rrect(x0+.01,y-.13,x0+.19,y+.13),0,.42,c);box(rrect(x0,y-.14,x0+.2,y+.14),.42,.47,shade(c,.8));});
 }
 function drawBoard(b){
   box(axRect(b,.12,.46,.18,.54),0,1.0,'#6b4f3a');box(axRect(b,.82,.46,.88,.54),0,1.0,'#6b4f3a');
@@ -562,7 +584,7 @@ function drawCourt(b){
 }
 
 var DECO_DRAW={court:drawCourt,market:drawMarket,topiary:drawTopiary,canal:drawCanal,birdbath:drawBirdbath,fence:drawFence,lamp2:drawLamp2,bollard:drawBollard,
-  stonelamp:drawStoneLamp,bin:drawBin,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol,spr:drawSprFallback};
+  stonelamp:drawStoneLamp,bin:drawBin,purifier:drawPurifier,recycle:drawRecycle,board:drawBoard,bell:drawBell,bikerack:drawBikeRack,parasol:drawParasol,spr:drawSprFallback};
 
 /* ---------- 울타리: 도로 | 주차 구역 | 교회 부지 ----------
    부지 둘레와 부지·주차 구역 경계는 흰 나무 울타리, 주차 구역 둘레와 도로 쪽은 짙은 철망 울타리.
@@ -570,25 +592,31 @@ var DECO_DRAW={court:drawCourt,market:drawMarket,topiary:drawTopiary,canal:drawC
 var FENCE=null;
 function fenceSegs(){
   if(FENCE)return FENCE;
-  var out=[],x,y;
+  var out=[],x,y,ge=ENT+EW/U;   // 입구 틈: [ENT, ge)
   for(x=0;x<COLS;x++){
     out.push({x:x,y:0,ax:'x',st:'w'});
-    if(x!==ENT){out.push({x:x,y:PZ,ax:'x',st:'w'});out.push({x:x,y:ROWS-1,ax:'x',st:'m'});}
+    if(x>=ENT&&x+1<=ge+1e-6)continue;
+    var fa=(x<ge&&x+1>ge)?ge-x:0;   // 틈에 걸친 칸은 틈을 뺀 만큼만
+    out.push({x:x,y:PZ,ax:'x',st:'w',fa:fa});out.push({x:x,y:ROWS-1,ax:'x',st:'m',fa:fa});
   }
   for(y=0;y<ROWS-1;y++){var st=y<PZ?'w':'m';out.push({x:0,y:y,ax:'y',st:st});out.push({x:COLS,y:y,ax:'y',st:st});}
   return (FENCE=out);
 }
-function fenceRect(f){return f.ax==='x'?rrect(f.x,f.y-.04,f.x+1,f.y+.04):rrect(f.x-.04,f.y,f.x+.04,f.y+1);}
+function fenceRect(f){var a=f.fa||0;return f.ax==='x'?rrect(f.x+a,f.y-.04,f.x+1,f.y+.04):rrect(f.x-.04,f.y,f.x+.04,f.y+1);}
 function drawFenceSeg(f){
-  var w=f.st==='w',post=w?'#f4f1ea':'#2f4a3c',rail=w?'#e9e4d8':'#3b5a49',h=w?.42:.5;
-  var R=function(a,b,z0,z1,col,t){var r=f.ax==='x'?rrect(f.x+a,f.y-t,f.x+b,f.y+t):rrect(f.x-t,f.y+a,f.x+t,f.y+b);box(r,z0,z1,col);};
-  R(0,.06,0,h,post,.035);
-  R(0,1,h*.3,h*.3+.05,rail,.02);R(0,1,h*.78,h*.78+.05,rail,.02);
-  if(w)for(var i=1;i<5;i++)R(i*.2-.02,i*.2+.02,0,h*.9,post,.02);
-  else R(.5-.03,.5+.03,0,h,post,.03);
+  var w=f.st==='w',h=w?.5:.32,sd=f.x*7+f.y*3;
+  var fa=f.fa||0,R=function(a,b2,t){a=fa+a*(1-fa);b2=fa+b2*(1-fa);return f.ax==='x'?rrect(f.x+a,f.y-t,f.x+b2,f.y+t):rrect(f.x-t,f.y+a,f.x+t,f.y+b2);};
+  // 벽돌 기둥(돌 갓)은 칸마다 하나, 사이는 나무 널(부지)이나 낮은 벽돌 담에 나무 갓(도로 쪽)
+  if(w){
+    box(R(.1,.9,.02),h*.28,h*.28+.05,CH_WOOD_D);box(R(.1,.9,.02),h*.74,h*.74+.05,CH_WOOD_D);
+    for(var i=1;i<5;i++)box(R(i*.2-.02,i*.2+.025,.022),0,h*.9,CH_WOOD,CH_WOOD_L);
+  }else{
+    chBrickBox(R(.1,.9,.04),0,h,CH_BRICK,sd);box(R(.09,.91,.055),h,h+.05,CH_WOOD_D,CH_WOOD);
+  }
+  chBrickBox(R(0,.1,.055),0,h+(w?.08:.1),CH_BRICK,sd+5);box(R(-.01,.11,.075),h+(w?.08:.1),h+(w?.14:.16),CH_STONE,'#ece6d8');
 }
 // 도로 쪽 울타리의 사람 출입구 기둥
-function drawRoadGap(){var y=ROWS-1;box(rrect(ENT-.04,y-.05,ENT+.06,y+.05),0,.7,'#2f4a3c');box(rrect(ENT+.94,y-.05,ENT+1.04,y+.05),0,.7,'#2f4a3c');}
+function drawRoadGap(){var y=ROWS-1,w=EW/U;[ENT-.04,ENT+w-.1].forEach(function(px,n){chBrickBox(rrect(px,y-.07,px+.14,y+.07),0,.5,CH_BRICK,41+n);box(rrect(px-.02,y-.09,px+.16,y+.09),.5,.56,CH_STONE,'#ece6d8');});}
 /* ---------- 낡은 건물 표시 (상태 단계별) ----------
    1: 앞 모서리 처마 밑 거미줄 / 2: 지붕에서 하얀 연기 / 3: 검은 연기 (거미줄도 함께).
    연기는 몇 덩이만 천천히 올라가 화면을 많이 가리지 않는다 */
@@ -619,15 +647,11 @@ function drawWear(b){
    지붕을 걷어 내고 뒤쪽 두 벽만 높이, 앞쪽 두 벽은 낮게 그려 안이 보이게 한다. 기능에 맞는 내부(예배: 강대상·장의자 / 교제: 탁자 / 매장: 진열장·계산대),
    안에서 기다리는 관리자(발밑 고리: 기른 사람 금빛·청빙한 사람 푸른빛), 가동 중이면 이용자 몇 사람과 번갈아 뜨는 말풍선을 그린다.
    (legacy() 안에서 부른다: 좌표는 예전 칸 단위, r은 화면 방향으로 돌린 사각형이라 x1·y1 쪽이 앞이다) */
-function cutOn(b){var d=D[b.def];return !!(b.id&&b.uses!=null&&d&&d.kind==='bld'&&typeof mgrOf==='function'&&(b.fixed||mgrRole(b))&&mgrOf(b));}
-function drawFig(rx,ry,z,tint,pant,bob,ring){
-  var c=PJ.c,s=PJ.s,q=P(rx,ry,z),bw=Math.max(2.6,4.6*s),bh=Math.max(3.4,7*s),lg=Math.max(1.6,3*s),hr=Math.max(1.5,2.6*s);bob=(bob||0)*s;
-  if(ring){c.strokeStyle=ring;c.lineWidth=Math.max(1.2,1.8*s);c.beginPath();c.ellipse(q[0],q[1],bw*1.15,bw*.5,0,0,6.283);c.stroke();}
-  else{c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(q[0],q[1],bw*.9,bw*.38,0,0,6.283);c.fill();}
-  c.fillStyle=pant;c.fillRect(q[0]-bw/2,q[1]-lg,bw,lg);
-  c.fillStyle=tint;c.fillRect(q[0]-bw/2,q[1]-lg-bh-bob,bw,bh+bob*.5);
-  c.fillStyle='#f0cfa8';c.beginPath();c.arc(q[0],q[1]-lg-bh-hr-bob,hr,0,6.283);c.fill();
-  return [q[0],q[1]-lg-bh-hr*2-bob];
+function cutOn(b){var d=D[b.def];return !!(d&&d.kind==='bld');}
+var FIGHIT=[];   // 이번 프레임에 그린, 누를 수 있는 사람들의 화면 자리
+function drawFig(rx,ry,z,sp,bob,ring,pose,view,flip){
+  var q=P(rx,ry,z),s=PJ.s;
+  return chrPerson(PJ.c,q[0],q[1]-(bob||0)*s*.5,s,sp,view||'f',pose||'stand',0,!!flip,ring);
 }
 function drawBubble(at,txt){
   var c=PJ.c,s=Math.max(.7,PJ.s),w=13*s,h=9*s,x=at[0]-w/2,y=at[1]-h-4*s;
@@ -638,56 +662,91 @@ function drawBubble(at,txt){
 }
 var CUT_LOOK={worship:{fl:'#c9a877',mg:'#2f3550',say:['…','♪']},fellow:{fl:'#d8c39a',mg:'#3f7a52',say:['…','♥']},shop:{fl:'#d9cdb8',mg:'#c4503a',say:['…','!']}};
 function drawCutaway(b){
-  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,st=bStage(b),tent=st===1;
-  var wall=tent?'#efe6d2':d.wall,H=tent?.42:Math.min(.8,d.H*.72),LO=.14,T=.06,K=CUT_LOOK[d.cat]||CUT_LOOK.fellow,mg=mgrOf(b);
+  var d=D[b.def],dm=faceDims(d,b.face),x=b.x,y=b.y,w=dm.w,h=dm.h,st=b.uses!=null?bStage(b):2,big=!!b.fixed||(b.uses==null&&b.def==='main'),tent=st===1&&!big;
+  var wall=tent?'#efe6d2':d.wall,H=tent?.42:big?1.0:Math.min(.8,d.H*.72),HB=big?1.55:H,LO=.14,T=.06,K=CUT_LOOK[d.cat]||CUT_LOOK.fellow,mg=typeof mgrOf==='function'?mgrOf(b):null,LK=ROOM_LOOK[b.def],bid=b.id||7;
   box(rrect(x+.03,y+.03,x+w-.03,y+h-.03),0,.05,'#cfc8b8');
   var r=rrect(x+.1,y+.1,x+w-.1,y+h-.1),cx=(r.x0+r.x1)/2,W=r.x1-r.x0,Dp=r.y1-r.y0,fz=.06;
+  // 내부는 지도 방위(남쪽이 아래) 그대로 고정: 가구·사람은 r0(회전하지 않은 좌표)로 배치하고 WLD로 돌려서 그린다
+  var r0={x0:x+.1,y0:y+.1,x1:x+w-.1,y1:y+h-.1},cx0=(r0.x0+r0.x1)/2,W0=r0.x1-r0.x0,Dp0=r0.y1-r0.y0,ra=rotPt(0,0),rb=rotPt(0,1),fsx=(rb[0]-rb[1])-(ra[0]-ra[1]),fsy=(rb[0]+rb[1])-(ra[0]+ra[1]),fview=fsy<0?'b':'f',fflip=fview==='b'?fsx>0:fsx<0;
   var act=(b.inUse>0||b.run>0),nu=act?Math.max(1,Math.min(4,b.inUse||1)):0,figs=[],parts=[];
   var body=function(){
-    // 바닥, 뒤쪽 두 벽
-    quad([[r.x0,r.y0,fz],[r.x1,r.y0,fz],[r.x1,r.y1,fz],[r.x0,r.y1,fz]],K.fl);
-    box({x0:r.x0,y0:r.y0,x1:r.x1,y1:r.y0+T},.05,H,wall,shade(wall,.9));box({x0:r.x0,y0:r.y0+T,x1:r.x0+T,y1:r.y1},.05,H,wall,shade(wall,.9));
-    if(tent)quad([[r.x0,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H],[r.x0,r.y0+T+.005,H]],shade(d.roofc||'#c4503a',1));
-    var mx=cx,my=r.y0+.27,i,j,yy,xx;
-    if(d.cat==='worship'){
-      // 뒷벽의 십자가, 강대상, 가운데 통로를 둔 장의자
-      var wy=r.y0+T+.006,cz=H*.52;quad([[cx-.02,wy,cz-.16],[cx+.02,wy,cz-.16],[cx+.02,wy,cz+.14],[cx-.02,wy,cz+.14]],'#7a4f2a');quad([[cx-.09,wy,cz+.03],[cx+.09,wy,cz+.03],[cx+.09,wy,cz+.07],[cx-.09,wy,cz+.07]],'#7a4f2a');
-      parts.push({r:{x0:cx-.09,y0:r.y0+.36,x1:cx+.09,y1:r.y0+.46},z0:fz,z1:.3,c:'#8a5a2b',t:'#a8733c'});
-      mx=cx+Math.min(.26,W*.2);my=r.y0+.3;
-      for(yy=r.y0+.68,j=0;yy<r.y1-.16;yy+=.26,j++){
-        parts.push({r:{x0:r.x0+.14,y0:yy,x1:cx-.1,y1:yy+.08},z0:fz,z1:.17,c:'#9a6b3f',t:'#b98450'});parts.push({r:{x0:cx+.1,y0:yy,x1:r.x1-.14,y1:yy+.08},z0:fz,z1:.17,c:'#9a6b3f',t:'#b98450'});
-        if(figs.length<nu){figs.push([r.x0+.14+(cx-.24-r.x0)*(.3+.4*hh(b.id,j)),yy+.13,j]);if(figs.length<nu)figs.push([cx+.1+(r.x1-.24-cx)*(.3+.4*hh(j,b.id)),yy+.13,j+7]);}
+    // 바닥: 나무 마루(두 가지 색 판, 이음새 어긋남) · 매장은 체크무늬 타일
+    if(LK){if(LK[0]==='tile')chTileFloor(r,fz,LK[1],LK[2]);else chWoodFloor(r,fz,LK[1],bid);}
+    else if(d.cat==='shop')chTileFloor(r,fz,'#e9e0cc','#cdbf9f');else chWoodFloor(r,fz,K.fl,bid);
+    // 입구 표시: 정면 벽 가운데에 붉은 깔개와 나무 문틀(문짝은 없다)
+    if(b.door&&b.door.ent&&!d.prop){var ds=b.door.ent,dd=ds.d,ox=DIRS[dd][0],gx=(ds.x+.5)/G+DIRS[dd][0]*(.5/G)-DIRS[dd][0]*.16,gy=(ds.y+.5)/G+DIRS[dd][1]*(.5/G)-DIRS[dd][1]*.16;
+      var dr=function(ua,ub,t0,t1){return ox?rrect(gx+t0,gy+ua,gx+t1,gy+ub):rrect(gx+ua,gy+t0,gx+ub,gy+t1);};
+      box(dr(-.25,.25,-.14,.14),fz,fz+.02,'#9b2f2f','#b53a3a');
+      box(dr(-.25,.25,-.14,-.12),fz+.02,fz+.024,CH_GOLD);box(dr(-.25,.25,.12,.14),fz+.02,fz+.024,CH_GOLD);
+      box(dr(-.29,-.24,-.03,.03),fz,fz+.5,CH_WOOD_D,CH_WOOD);box(dr(.24,.29,-.03,.03),fz,fz+.5,CH_WOOD_D,CH_WOOD);
+      box(dr(-.31,.31,-.04,.04),fz+.46,fz+.54,CH_WOOD,CH_WOOD_L);box(dr(-.31,.31,-.045,.045),fz+.46,fz+.48,CH_GOLD);}
+    var wB=tent?null:((LK&&LK[3])||K.br||CH_BRICK),wS=function(q,z0,z1,sd){if(tent)box(q,z0,z1,wall,shade(wall,.9));else chBrickBox(q,z0,z1,wB,sd);};
+    wS({x0:r.x0,y0:r.y0,x1:r.x1,y1:r.y0+T},.05,HB,3);wS({x0:r.x0,y0:r.y0+T,x1:r.x0+T,y1:r.y1},.05,H,9);
+    if(!tent){
+      chStrip('L',r.y0+T,r.x0+T,r.x1,.2,.23,CH_WOOD_D);chStrip('R',r.x0+T,r.y0+T,r.y1,.2,.23,CH_WOOD_D);
+      if(d.cat==='worship'&&H>=.6){   // 색유리 창 (대예배당 뒷벽은 스크린이 차지한다)
+        var sc=['#5b82d6','#d6604f','#e3b341','#4fa37a'],wn=Math.max(1,Math.round(W/.8)),wi,wa,wz0=H*.38,wz1=H*.66;
+        if(!big)for(wi=0;wi<wn;wi++){wa=r.x0+W*(wi+.5)/wn;if(Math.abs(wa-cx)<.22)continue;chWindow('L',r.y0+T,wa,.2,wz0,wz1,[sc[wi%4],sc[(wi+1)%4],sc[(wi+2)%4],sc[(wi+3)%4]]);}
+        for(wa=r.y0+(big?1.2:.7),wi=0;wa<r.y1-.2;wa+=(big?.8:.7),wi++){if(big&&Math.abs(wa-(r.y0+Dp/3))<.2||big&&Math.abs(wa-(r.y0+Dp*2/3))<.2)continue;chWindow('R',r.x0+T,wa,.2,wz0,wz1,[sc[(wi+1)%4],sc[(wi+2)%4],sc[(wi+3)%4],sc[wi%4]]);}
       }
-    }else if(d.cat==='shop'){
-      // 뒷벽 진열장, 계산대
-      parts.push({r:{x0:r.x0+.14,y0:r.y0+T,x1:r.x1-.1,y1:r.y0+T+.1},z0:fz,z1:Math.min(H-.06,.46),c:'#8a6844',t:'#a57e54'});
-      var c1=Math.min(r.x1-.16,r.x0+.2+W*.6);parts.push({r:{x0:r.x0+.2,y0:r.y0+.42,x1:c1,y1:r.y0+.54},z0:fz,z1:.24,c:'#b5825a',t:'#e8dcc6'});
-      mx=(r.x0+.2+c1)/2;my=r.y0+.3;
-      for(i=0;i<nu;i++)figs.push([mx-.12+i*.2,r.y0+.7+(i%2)*.14,i]);
-    }else{
-      // 둘러앉는 탁자
-      for(yy=r.y0+.62,j=0;yy<r.y1-.2;yy+=.5)for(xx=r.x0+.3;xx<r.x1-.24;xx+=.56,j++){
-        parts.push({r:{x0:xx-.11,y0:yy-.09,x1:xx+.11,y1:yy+.09},z0:fz,z1:.17,c:'#b98450',t:'#d9b98a'});
-        if(figs.length<nu){figs.push([xx-.2,yy+.02,j]);if(figs.length<nu)figs.push([xx+.2,yy+.06,j+5]);}
-      }
-      parts.push({r:{x0:cx-.2,y0:r.y0+T,x1:cx+.2,y1:r.y0+T+.08},z0:fz,z1:.3,c:'#8a6844',t:'#a57e54'});
-      mx=r.x0+.26;my=r.y0+.34;
+      if(!big)box({x0:r.x0,y0:r.y0,x1:r.x0+.07,y1:r.y0+.07},.05,H+.04,CH_WOOD_D,CH_WOOD);
     }
-    for(i=figs.length;i<nu;i++)figs.push([r.x0+.2+hh(b.id,i)*(W-.4),r.y1-.2,i]);
-    parts.forEach(function(p){p.k=p.r.y1+p.r.x1;});parts.sort(function(a,c2){return a.k-c2.k;}).forEach(function(p){box(p.r,p.z0,p.z1,p.c,p.t);});
-    if(d.cat==='shop'){var cs=['#e0567f','#f2c14e','#4a78c7','#3d9b7a'];for(i=0;i<6;i++)dot(r.x0+.2+(W-.4)*i/5,r.y0+T+.1,.2+.14*(i%2),Math.max(1,1.8*PJ.s),cs[i%4]);}
-    // 관리자와 이용자: 가동 중이면 서로 번갈아 말한다 (말풍선)
-    var ph=Math.floor(S.clock*.9+b.id*.37),sway=act?Math.abs(Math.sin(S.clock*5+b.id))*.9:Math.sin(S.clock*1.6+b.id)*.25+.25;
-    var mt=drawFig(mx,my,fz,K.mg,'#3d4650',sway,mg.key==='me'?'#f2c230':mg.src==='in'?'#e3a521':'#3f7fd6'),ut=null;
-    var tc=['#5a8ac6','#d98a3a','#7a5bb5','#4f9a83','#c9627a','#8a6a46'];
-    figs.sort(function(a,c2){return (a[0]+a[1])-(c2[0]+c2[1]);}).forEach(function(f,fi){var t2=drawFig(f[0],f[1],fz,tc[(f[2]+b.id)%6],'#4a5560',Math.abs(Math.sin(S.clock*4+f[2]*1.7))*.5);if(fi===ph%Math.max(1,figs.length))ut=t2;});
-    if(act){if(ph%2===0)drawBubble(mt,K.say[0]);else if(ut)drawBubble(ut,K.say[1]);}
+    // 벽 윗면 나무 테두리
+    box({x0:r.x0,y0:r.y0,x1:r.x1,y1:r.y0+T},HB,HB+.04,'#a07a52','#c08a56');box({x0:r.x0,y0:r.y0+T,x1:r.x0+T,y1:r.y1},H,H+.04,'#a07a52','#c08a56');
+    var BIG_COLS=[];
+    if(big){   // 뒷벽 대형 스크린과 기둥·조명
+      var sw=Math.min(2.6,W0*.42),zs0=.5,zs1=HB-.22;
+      chStrip('L',r.y0+T,r.x0+T,r.x1,.2,.23,CH_WOOD_D);chStrip('R',r.x0+T,r.y0+T,r.y1,.2,.23,CH_WOOD_D);
+      if(ROT===0||ROT===3){   // 북쪽 벽(강대상 뒤)이 안쪽 벽일 때만 스크린과 양옆 기둥이 보인다
+        WLD=1;WLD_FR=r;
+        try{
+          chScreen(null,'L',r0.y0+T,cx0-sw/2,cx0+sw/2,zs0,zs1,S.name,'☩ 예배에 오신 것을 환영합니다');
+          for(var sp=0;sp<3;sp++){var spx=cx0-sw/2+sw*(sp+.5)/3;box({x0:spx-.03,y0:r0.y0+T,x1:spx+.03,y1:r0.y0+T+.05},HB-.16,HB-.08,'#15171b');chGlow(spx,r0.y0+T+.1,HB-.2,18);}
+          chColumn(cx0-sw/2-.28,r0.y0+.07,HB);chColumn(cx0+sw/2+.28,r0.y0+.07,HB);
+        }finally{WLD=0;WLD_FR=null;}
+      }
+      [[r.x0+.07,r.y0+.07,HB],[r.x1-.07,r.y0+.07,HB],[r.x0+.07,r.y0+Dp/3,H+.04],[r.x0+.07,r.y0+Dp*2/3,H+.04]].forEach(function(cl){chColumn(cl[0],cl[1],cl[2]);});
+      chSconce(r.x0+T+.05,r.y0+Dp/6,.78);chSconce(r.x0+T+.05,r.y0+Dp/2,.78);chSconce(r.x0+T+.05,r.y0+Dp*5/6,.78);
+      chSconce(r.x0+W*.2,r.y0+T+.05,.78);chSconce(r.x1-W*.2,r.y0+T+.05,.78);
+    }
+    if(tent)quad([[r.x0,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H-.07],[r.x1,r.y0+T+.005,H],[r.x0,r.y0+T+.005,H]],shade(d.roofc||'#c4503a',1));
+    var mx=cx0,my=r0.y0+.27,i,staff=null;
+    WLD=1;WLD_FR=r;
+    try{
+      if(ROOMS[b.def]){
+        var rc=rmCtx(b,d,r0,T,fz,parts,figs,nu),mp=ROOMS[b.def](rc);
+        if(mp){mx=rc.X(mp[0]);my=rc.Y(mp[1]);staff=1;}
+      }else{
+        var wm=chWorship({b:b,r:r0,T:T,fz:fz,cx:cx0,W:W0,Dp:Dp0,parts:parts,figs:figs,nu:nu,big:big});mx=wm[0];my=wm[1];staff=1;
+      }
+      for(i=figs.length;i<nu;i++)figs.push([r0.x0+.2+hh(b.id,i)*(W0-.4),r0.y1-.2,i]);
+      parts.forEach(function(p){var m=rrect(p.r.x0,p.r.y0,p.r.x1,p.r.y1);p.k=m.y1+m.x1+(p.o||0);});
+      parts.sort(function(a,c2){return a.k-c2.k;}).forEach(function(p){if(p.f){p.f();return;}box(p.r,p.z0,p.z1,p.c,p.t);if(p.cross&&(ROT===0||ROT===3))chPulpitCross(p.cross[0],(p.r.x0+p.r.x1)/2,p.cross[1],p.cross[2]);});
+    }finally{WLD=0;WLD_FR=null;}
+    // 사람 자리를 화면 좌표(돌린 좌표)로
+    figs.forEach(function(f){var m=rotPt(f[0],f[1]);f[0]=m[0];f[1]=m[1];});
+    var mm=rotPt(mx,my);mx=mm[0];my=mm[1];
+    // 담당자(기능마다 한 사람으로 고정, 대예배당은 담임목사)와 이용자: 가동 중이면 서로 번갈아 말한다 (말풍선)
+    // 관리자를 배치해야 하는 건물은 관리자가 있을 때만 담당자가 선다 (발밑 고리: 기른 사람 금빛 · 청빙 푸른빛)
+    var ph=Math.floor(S.clock*.9+bid*.37),sway=act?Math.abs(Math.sin(S.clock*5+bid))*.9:Math.sin(S.clock*1.6+bid)*.25+.25;
+    var need=b.uses!=null&&!big&&typeof mgrRole==='function'&&mgrRole(b),mt=null,ut=null;
+    if(staff&&(!need||mg))figs.push([mx,my,-1,0,big?CHR_SPECS.pastor:chrStaffSpec(d.cat),mg?(mg.key==='me'?'#f2c230':mg.src==='in'?'#e3a521':'#3f7fd6'):null]);
+    figs.sort(function(a,c2){return (a[0]+a[1])-(c2[0]+c2[1]);}).forEach(function(f,fi){
+      if(f[2]<0){mt=drawFig(f[0],f[1],fz+(f[3]||0),f[4],sway,f[5],'stand',fview,fflip);
+        // 누를 수 있는 사람: 담임목사, 예배당을 맡은 부교역자 (input.js pickFig → 행사 화면의 그 탭)
+        if(typeof ctx!=='undefined'&&PJ.c===ctx&&b.uses!=null&&(big||(d.cat==='worship'&&mg))){var fk=Math.max(.55,.78*PJ.s);FIGHIT.push({x:mt[0],y:mt[1],w:8*fk,h:CHR_H*fk,k:big?'pastor':'assoc'});}
+        return;}
+      var t2=drawFig(f[0],f[1],fz+(f[3]||0),chrVisSpec(f[2]*.173+bid*.071),Math.abs(Math.sin(S.clock*4+f[2]*1.7))*.5,null,'stand',fview,fflip);if(f[2]===ph%Math.max(1,nu))ut=t2;});
+    if(act){if(ph%2===0&&mt)drawBubble(mt,K.say[0]);else if(ut)drawBubble(ut,K.say[1]);}
     // 앞쪽 두 벽은 낮게
-    box({x0:r.x1-T,y0:r.y0,x1:r.x1,y1:r.y1},.05,LO,wall,shade(wall,.92));box({x0:r.x0,y0:r.y1-T,x1:r.x1-T,y1:r.y1},.05,LO,wall,shade(wall,.92));
+    wS({x0:r.x1-T,y0:r.y0,x1:r.x1,y1:r.y1},.05,LO,5);wS({x0:r.x0,y0:r.y1-T,x1:r.x1-T,y1:r.y1},.05,LO,11);
+    box({x0:r.x1-T,y0:r.y0,x1:r.x1,y1:r.y1},LO,LO+.04,'#a07a52','#c08a56');box({x0:r.x0,y0:r.y1-T,x1:r.x1-T,y1:r.y1},LO,LO+.04,'#a07a52','#c08a56');
+    if(big){chColumn(r.x0+.07,r.y1-.07,H);chColumn(r.x1-.07,r.y1-.07,H);chColumn(r.x1-.07,r.y0+Dp/2,H);}
   };
-  if(d.deco==='tower'&&!tent){
+  if(d.deco==='tower'&&!tent&&!big){
     var tr=towerRect(b.face,x,y,w,h),TH=d.towerH;
     var tower=function(){box(tr,.05,TH,'#f5f0e6');var mx2=(tr.x0+tr.x1)/2,my2=(tr.y0+tr.y1)/2;fr('L',tr,mx2-.1,mx2+.1,TH-.6,TH-.18,'#2d2a33');fr('R',tr,my2-.1,my2+.1,TH-.6,TH-.18,'#24222a');var ap=hip(tr,TH,.75,d.roofc);cross(ap[0],ap[1],ap[2],1.05);};
-    if(tr.x0+tr.x1+tr.y0+tr.y1<r.x0+r.x1+r.y0+r.y1){tower();body();}else{body();tower();}
+    // 탑이 앞쪽에 오면 안을 가리므로 낮은 밑동만 그린다
+    if(tr.x0+tr.x1+tr.y0+tr.y1<r.x0+r.x1+r.y0+r.y1){tower();body();}else{body();box(tr,.05,LO+.06,'#f5f0e6');}
   }else body();
 }

@@ -11,7 +11,7 @@ function effTags(d){
   if(d.park)t.push('주차 +'+d.park);
   if(d.vis)t.push('방문자 +'+Math.round(d.vis*100)+'%');
   if(d.rep&&t.length<2)t.push('평판 ↑');
-  if(d.beauty&&t.length<2)t.push(d.beauty>=1?'분위기 +'+d.beauty:'분위기 ↑');
+  if(d.beauty&&t.length<2)t.push(d.beauty>=1||d.kind==='floor'?'분위기 +'+fmtB(d.beauty):'분위기 ↑');
   if(d.cat==='club'&&t.length<2)t.push('외로움 ↓');
   if(d.fill&&t.length<2){var bn=null;for(var n in d.fill)if(!bn||d.fill[n]>d.fill[bn])bn=n;t.push(NK[bn]+' +'+d.fill[bn]);}
   if(d.income&&t.length<2)t.push('판매 ~'+d.income*SHOP_K);
@@ -25,7 +25,7 @@ function effText(d){
   if(d.kcap)p.push('돌봄 수용 +'+d.kcap);
   if(d.ccap)p.push('편의 수용 +'+d.ccap);
   if(d.fill){for(var n in d.fill)p.push('방문자 '+NK[n]+' +'+d.fill[n]);}
-  if(d.beauty)p.push('분위기 +'+d.beauty);
+  if(d.beauty)p.push('분위기 +'+fmtB(d.beauty)+(d.kind==='floor'?' (한 칸)':''));
   if(d.vis)p.push('방문자 +'+Math.round(d.vis*100)+'%');
   if(d.income)p.push('한 번 팔 때 약 '+d.income*SHOP_K);
   if(gripeFixes(d).length)p.push(gripeFixes(d).join('·')+'을(를) 풀어 줘요');
@@ -40,23 +40,24 @@ var SUBTABS={minis:[['events','행사'],['staff','사역자']]};
 var CLUB_SUBS=[['sport','운동','⚽'],['hobby','취미','🎨'],['music','음악','🎵']];
 // 기능이 섞인 분류는 기능별 하위 묶음(아이콘 칩)으로 나눈다. 건물의 묶음은 d.sub (buildings.js SUB_OF)
 var CAT_SUBS={club:CLUB_SUBS,
-  worship:[['service','예배','⛪'],['pray','기도·말씀','🙏']],
+  worship:[['service','예배','⛪'],['pray','기도·말씀','🙏'],['dept','부서실','🧸']],
   fellow:[['group','소그룹','🫂'],['hall','친교','🍽️']],
   shop:[['food','먹거리','🍙'],['cafe','카페','☕'],['book','서점','📚']],
-  care:[['kids','아이','🧸'],['neighbor','이웃 섬김','🤲'],['mind','상담·어르신','💬']],
+  care:[['neighbor','이웃 섬김','🤲'],['mind','상담·어르신','💬']],
   comfort:[['toilet','화장실','🚻'],['rest','쉼터','🪑'],['etc','기타','🗑️']]};
 function curSub(cat){var L=CAT_SUBS[cat];if(!L)return null;for(var i=0;i<L.length;i++)if(L[i][0]===UI.csub)return UI.csub;return L[0][0];}
 function inSub(d,cat){var cs=curSub(cat);return !cs||(d.sub||CAT_SUBS[cat][0][0])===cs;}
 function tabGroup(t){return (t==='staff'||t==='events')?'minis':(t==='finance'?'status':t);}
 function openGroup(g){
-  UI.lastBuilt=null;
+  UI.lastBuilt=null;var wasEntr=!!UI.entr;UI.entr=null;
   // 행사는 화면 전체를 쓴다 (screens.js)
+  if(g==='officers'&&!featOk('vol')){toast('봉사자 화면은 '+featWhy('vol')+' (직분자·리더·섬김이)',2200);sfx('error',.4);return;}
   if(g==='minis'){openScreen('events');return;}
   if(SCREENS[g]){openScreen(g);return;}
   if(UI.scr)closeScreen();
   // 지도에서 짓는 중에 건축 버튼을 누르면 짓기를 그만두고 목록으로
   if(g==='build'&&isPlacing()){endPlace();return;}
-  if(!UI.fold&&tabGroup(UI.tab)===g){closeDock();return;}
+  if(!UI.fold&&tabGroup(UI.tab)===g&&!wasEntr){closeDock();return;}
   // 건축이 아닌 패널로 옮기면 짓던 것(미리보기)은 취소한다
   if(g!=='build'){UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];}
   UI.sel=null;UI.selPiece=null;
@@ -69,7 +70,7 @@ function openGroup(g){
 // 닫으면 짓던 것도 함께 취소한다 (미리보기만 지도에 남지 않게)
 function closeDock(){
   if(UI.choose){var ck=UI.choose.kind;UI.choose=null;if(ck==='gdesign'){endPlace();return;}UI.fold=true;renderPanel();return;}
-  UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;UI.lastBuilt=null;
+  UI.entr=null;UI.fold=true;UI.tool=null;UI.ghost=null;UI.pc=null;UI.undo=[];UI.sel=null;UI.selPiece=null;UI.confirmNew=false;UI.lastBuilt=null;
   renderPanel();
 }
 function renderPanel(){
@@ -80,13 +81,15 @@ function renderPanel(){
   if(dock.hidden)return;
   var t=UI.tab,g=tabGroup(t);
   var dt=$('#dtitle'),cx=t==='build'&&UI.choose?chooseCtx():null;
-  if(cx)dt.innerHTML='<button class="bback" data-act="cback" aria-label="돌아가기">‹</button>'+cx.title;
-  else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1]));
+  if(UI.entr&&t==='build')dt.textContent='교회 입구';
+  else if(cx)dt.innerHTML='<button class="bback" data-act="cback" aria-label="돌아가기">‹</button>'+cx.title;
+  else if(t==='build'&&UI.bstep!=='cat')dt.innerHTML='<button class="bback" data-act="bback" aria-label="분류 목록으로">‹</button>'+(UI.tool==='demolish'?'철거':((CATS.filter(function(c){return c[0]===UI.cat;})[0]||[,''])[1])+(UI.cat==='floor'?floorSizeBtns():''));   // 바닥: 제목 오른쪽에 한 번에 까는 넓이 단추
   else dt.textContent=GROUP_TITLE[g];
   $('#dock').classList.toggle('bmode',t==='build');
   var cs=curSub(UI.cat);
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
-    (t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):'');
+    (UI.entr&&t==='build'?ENT_SUBS.map(function(s){return '<button role="tab" data-act="esub" data-v="'+s[0]+'" aria-selected="'+(UI.entr.sub===s[0])+'" aria-label="'+s[1]+'" class="csb'+(UI.entr.sub===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):
+    t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else renderMenu();
 }
@@ -155,6 +158,7 @@ function renderChooser(){
 function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&!x.hidden&&!x.retired;})[0];return d?iconCanvas(d):null;}
 function renderBuild(){
   panel.scrollTop=0;
+  if(UI.entr){renderEntr();return;}
   if(UI.choose){renderChooser();return;}
   if(UI.bstep==='cat'){
     panel.innerHTML='<div class="btiles" id="btiles"></div>';
@@ -244,6 +248,7 @@ function segBtns(act,val,items,off){
 function bad(t){return '<span style="color:var(--bad)">'+t+'</span>';}
 function renderDetail(){
   renderSelCard();
+  if(UI.entr&&UI.tab==='build'){renderEntrDetail();return;}
   if(isPlacing()){renderPbar();return;}
   var el=$('#detail');if(!el)return;
   if(UI.tab==='build'&&(UI.choose||UI.bstep!=='cat')&&UI.tool!=='demolish'&&$('#cards')){el.dataset.f='';focusCard();return;}
@@ -258,11 +263,11 @@ function srow(title,meta,desc,btns,extra){
 // 부교역자 청빙 후보 (직분자 화면). 사역팀은 teams.js
 function renderStaff(){
   var h='<div class="staff">';
-    h+='<p class="hint">부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 성도 '+ASSOC_PER+'명마다 한 자리가 늘어요. 6주마다 새 후보가 찾아오고, 청빙 비용은 사례비 4주치예요. 성도를 길러 신학교에 보내면 별 5개 부교역자를 얻을 수도 있어요.</p>';
+    h+='<p class="hint">부교역자 '+S.assoc.length+' / '+assocSlots()+'명 · 성도 '+ASSOC_PER+'명마다 한 자리가 늘어요. 6주마다 새 후보가 찾아오고, 청빙 비용은 없고 사례비는 월 단위(주마다 월 사례비 ÷ '+PAY_MONTH_DIV+')로 나가요. 성도를 길러 신학교에 보내면 별 5개 부교역자를 얻을 수도 있어요.</p>';
     S.cands.forEach(function(c,i){
       var full=S.assoc.length>=assocSlots();
-      h+=srow(c.name+' '+c.title+' 후보',FIELDS[c.field].name+' '+stars(c.skill)+' · 사례비 주 '+c.pay,FIELDS[c.field].desc+' (별마다)',
-        '<button class="btn pri" data-act="hireA" data-v="'+i+'"'+(full||S.money<c.fee?' disabled':'')+'>'+(full?'자리 없음':'청빙 '+fmt(c.fee))+'</button>');
+      h+=srow(c.name+' '+c.title+' 후보',FIELDS[c.field].name+' '+stars(c.skill)+' · 월 사례비 '+c.pay,FIELDS[c.field].desc+' (별마다)',
+        '<button class="btn pri" data-act="hireA" data-v="'+i+'"'+(full||S.money<c.fee?' disabled':'')+'>'+(full?'자리 없음':'청빙'+(c.fee?' '+fmt(c.fee):''))+'</button>');
     });
     h+='<div class="btns"><button class="btn" data-act="searchA"'+(S.money<100?' disabled':'')+'>다른 후보 찾기 · 100</button></div></div>';
     panel.innerHTML=h;
@@ -314,14 +319,14 @@ function moodWhy(k){
     L.push('필요는 성도 '+m+'명에 맞춰'+ek+' 늘어요 (말씀 × '+SPIRIT_NEED.w.r+', 기도 × '+SPIRIT_NEED.p.r+', 찬양 × '+SPIRIT_NEED.r.r+', 최소 '+SPIRIT_NEED.w.f+'·'+SPIRIT_NEED.p.f+'·'+SPIRIT_NEED.r.f+')');
   }else if(k==='seat'){cap('seat','좌석');L.push('좌석이 많은 곳: '+topCap('seats'));L.push('모자라면 남는 성도만큼 매주 떠나요. 예배당·예배실 칸·층 올리기로 늘려요');}
   else if(k==='fel'){cap('fel','교제 수용');L.push('교제 수용이 큰 곳: '+topCap('fcap'));L.push('교제실·소그룹실·카페·식당으로 늘려요');}
-  else if(k==='care'){cap('care','돌봄 수용');L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('돌봄실·어린이부실·유아방·경로 쉼터로 늘려요');}
+  else if(k==='care'){cap('care','돌봄 수용');L.push('돌봄 수용이 큰 곳: '+topCap('kcap'));L.push('부서실(영유아·유치부·초등부·중고등부)·경로 쉼터로 늘려요');}
   else if(k==='comf'){cap('comf','편의 수용');L.push('편의 수용이 큰 곳: '+topCap('ccap'));L.push('화장실·편의실·휴게실·벤치·식수대·쓰레기통으로 늘려요');}
   else if(k==='park'){cap('park','주차 자리');L.push('주차 자리가 많은 곳: '+topCap('park'));L.push('주차 구역에 주차장·주차 타워·자전거 거치대를 지어요');}
   else if(k==='past'){
     cap('past','돌볼 수 있는 성도');
     var st=teamEff(),o=S.off,as=Math.round(S.assoc.reduce(function(t,a){return t+35+(a.field==='visit'?12*asSkill(a):0);},0));
     L.push('담임 목사 25'+(st.care?' + 돌봄팀 '+Math.round(8*st.care):'')+(as?' + 부교역자 '+as:'')+(PA.cap?' + 세례교인·신학 수료 '+Math.round(PA.cap):'')+(o.deacon?' + 집사 '+6*o.deacon:'')+(o.kwonsa?' + 권사 '+10*o.kwonsa:'')+(o.elder?' + 장로 '+18*o.elder:''));
-    L.push('성도 화면에서 세례·직분 임명, 직분자 화면에서 부교역자 청빙, 행사 › 사역팀의 돌봄팀으로 늘려요');
+    L.push('성도 화면에서 세례·직분 임명, 봉사자 화면에서 부교역자 청빙, 행사 › 사역팀의 돌봄팀으로 늘려요');
   }
   if(w)L.unshift('만족도 비중 '+Math.round(w*100)+'%');
   return L.map(function(t){return '<li>'+t+'</li>';}).join('');
@@ -344,7 +349,7 @@ function chart(){
   return svg;
 }
 function renderMenu(){
-  panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="14" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
+  panel.innerHTML='<div class="field"><label for="churchName">교회 이름</label><input id="churchName" maxlength="'+NAME_MAX+'" value="'+S.name.replace(/"/g,'&quot;')+'"></div>'+
     (UI.confirmNew?'<div class="sec">난이도를 고르면 처음부터 시작해요 (지금 진행은 사라져요)</div><div class="diffs">'+Object.keys(DIFF).map(function(k){return '<button class="btn'+(k==='normal'?' pri':'')+'" data-act="newgame" data-v="'+k+'"><b>'+DIFF[k].name+'</b><small>'+DIFF[k].desc+'</small></button>';}).join('')+'<button class="btn" data-act="newgame">취소</button></div>':
       '<div class="btns"><button class="btn" data-act="newgame">새로 시작</button></div>')+'<p class="hint">지금 난이도: '+curDiff().name+'</p>'+
     '<div class="sec">조작법</div><ul class="how"><li>한 손가락으로 끌기: 지도 이동</li><li>두 손가락 벌리기·오므리기: 확대·축소 (PC는 마우스 휠)</li><li>오른쪽 회전 버튼: 90°씩 시점 회전</li><li>교회 문: 처음엔 닫혀 있고 입구(파란 아치)에 자물쇠가 떠 있어요. 입구를 누르면 문 열기·닫기 카드가 떠요. 닫으면 방문자가 오지 않고 주일 헌금이 크게 줄어요</li><li>방문자는 바닥 타일·길·계단·다리 위로만 걸어요. 새 건물은 입구까지 바닥을 깔거나, 건물을 눌러 \'입구까지 길 잇기\'를 쓰세요</li><li>도로 위 4줄은 주차 구역이에요. 주차장·주차 타워는 그곳에만, 그곳엔 주차장만 지을 수 있어요</li><li>매장(카페·식당·빵집·서점·나눔장터 등)은 방문자가 물건을 사면 수익이 생겨요 (건물 위 금색 숫자)</li><li>오른쪽 위 시계: 한 주는 48초(하루 약 7초), 주일이 끝나면 주간 정산 영수증이 떠요. 현황 › 재정에서 내역과 대출을 볼 수 있어요. 톱니바퀴에서 일시정지할 수 있어요 (빨리 감기 2~8배속은 테스트 모드에서만)</li><li>날씨: 날씨는 한 주에 한 번 바뀌고 비·눈은 2~3일만 와요. 시계에 오늘 날씨와 다음 날씨가 보이고, 누르면 효과를 알려 줘요. 비엔 야외 자리가 쉬고 실내 매장이 붐벼요. 폭우엔 벼락이 치니 십자가 첨탑(피뢰침)을 세우세요. 겨울엔 눈, 여름엔 폭염(물가 장식이 있으면 덜 지쳐요). 비가 그치면 무지개가 뜨기도 해요. 주일에 비·눈이 오면 출석이 줄어요(주차장이 넉넉하면 덜 줄어요)</li><li>대출: 신용 한도 안에서 빌리고, 매주 주일 정산 때 원금과 이자를 나눠 갚아요. 남은 원금은 언제든 한 번에 갚을 수 있어요</li><li>건축 목록의 카드에는 지으면 늘어나는 효과와 주간 유지비가 적혀 있어요</li><li>카드를 고르면 목록이 닫히고 지도에 미리보기가 놓입니다. 끌거나 지도를 눌러 옮기고, 둘레 화살표로 건물이 바라볼 방향(정면·출입구)을 고르면 건물이 그쪽으로 돌아가요. 왼쪽 위 초록 ✓로 짓고, 오른쪽 위 빨간 ✕로 그만둡니다 (PC: Enter·Esc·R)</li><li>조경은 짓고 나면 옆자리에 미리보기가 다시 놓여 ✓만 눌러 이어 지을 수 있어요. 큰 건물은 지은 주 안에 목록에서 전액 되돌릴 수 있어요</li><li>길: 시작할 곳을 누르고 화살표로 방향, 아래 띠에서 종류·경사·높이를 고른 뒤 ✓로 한 칸씩 잇습니다. 철골 계단 밑과 다리 아래로도 사람이 다닙니다</li><li>건물 키우기: 지은 건물을 누르고 투자하면 레벨이 올라 효과·정원·회전이 좋아지고 모습도 바뀌어요 (최대 Lv 10)</li><li>길·계단: 철골 계단과 데크(높은 평지 길)로 높은 곳을 이을 수 있고, 데크 위에도 건물·조경·바닥을 지을 수 있어요. 위에 무언가 놓인 데크는 먼저 치워야 철거돼요</li><li>바닥: 지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓를 누를 때마다 한 칸씩 깔아요</li><li>오른쪽 아래 동그란 버튼: 건축 · 행사(행사·사역자) · 현황. 같은 버튼을 다시 누르면 닫힙니다. 교회 이름·새로 시작은 위쪽 톱니바퀴 메뉴</li><li>행사 버튼: 행사 탭에서 특별행사·절기 행사를, 사역자 탭에서 부교역자 청빙·직분자 임명·사역팀을 다룹니다</li><li>건물은 시간이 지나면 낡아요. 낡아 갈수록 거미줄(80% 이하) → 하얀 연기(70% 이하) → 검은 연기(60% 이하)가 보이고 효율이 90% → 75% → 55%로 떨어져요. 빨간 ? 표시는 문 앞에 닿는 길이 없다는 뜻이에요</li><li>방문자는 머무는 동안 화장실·쉴 자리·마실 것·쓰레기통을 찾고, 다니는 길이 삭막하면 아쉬워해요. 못 찾으면 정착하기 어렵고, 지난주 불편이 많으면 성도 만족도도 내려가요. 현황 › 챙길 일에 무엇을 지으면 되는지 보여요</li><li>교회 문은 예배 공간(작은 예배실·예배당·예배실 칸 등)이 있어야 열 수 있어요. 성도 만족도에서 가장 큰 영성은 말씀·기도·찬양 공간과 성찬식·세례식 같은 성례로 채워지고, 성례는 시간이 지나면 줄어요. 새로 꾸민 효과도 몇 주가 지나면 익숙해져서, 계속 가꿔야 해요</li><li>건물 문은 정면 한 곳이에요. 옮기기·돌리기로 방향을 바꾸면 문도 따라 돌아요</li></ul>'+
@@ -355,7 +360,7 @@ function renderMenu(){
     '<li><a href="https://www.openrct2.org/about" target="_blank" rel="noopener">OpenRCT2</a> · 장르의 운영 구조를 이해하는 참고</li>'+
     '<li><a href="https://unity.com/blog/outlier-mars-attracts-interview" target="_blank" rel="noopener">욕구 기반 방문자 AI 개발 인터뷰</a> · 방문자 행동 설계 참고</li></ul>';
   var inp=$('#churchName');
-  inp.addEventListener('input',function(){S.name=inp.value.trim()||'새빛교회';$('#cname').textContent=S.name;});
+  inp.addEventListener('input',function(){S.name=fitName(inp.value);$('#cname').textContent=S.name;});
   inp.addEventListener('change',save);
 }
 

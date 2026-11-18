@@ -49,11 +49,6 @@ function drawSprEntity(b){
   var dm=faceDims(d,b.face);
   return drawSpr(id,b.x+dm.w/2,b.y+dm.h/2,(dm.w+dm.h)/2,b.id||b.x*31+b.y,mir);
 }
-// 교회 입구 아치 (열림·닫힘). 아치는 x축을 따라 서 있어서 앞뒤 같은 긴 것처럼 뒤집는다
-function drawGateSpr(){
-  var id=S.open?'gate_o':'gate_c';if(!sprOf(id))return false;
-  return drawSpr(id,ENT+.5,PZ,1,0,worldToScreenDir(2)%2===1);
-}
 /* ---------- 바닥 질감 ----------
    위에서 본 정사각형 질감을 땅 좌표에 맞춰 마름모로 눌러 반복한다 (이음새 없이 이어짐, 지도를 돌리면 함께 돈다).
    k: 질감 한 장이 덮는 칸 수. 작은 그림(건축 카드)에는 쓰지 않고 색으로 그린다 */

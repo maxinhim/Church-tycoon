@@ -5,8 +5,8 @@
                tr(교육 중이면 {to,t0,end,ready})}]
    · 사람 수는 언제나 S.members를 따른다(syncPeople): 늘면 새가족이 생기고, 줄면 가장 마음이 덜 붙은 사람부터 떠난다
    · 성장: 새가족 → 세례 → 양육반 → 제자반 → 직분(헌신성도·집사·장로/권사) / 교역(소그룹 리더·공동체 리더·간사·신학교 → 부교역자)
-           / 섬김(섬김이·사역팀장·사역부장·교회직원). 단계마다 호감 레벨이 되면 값을 내고 교육(게이지)을 하고, 다 차면 직접 임명한다
-   · 직분 수 S.off(집사·권사·장로·교회직원)와 합계 PA는 여기서 다시 센 값이다. 수치는 balance.js PP_* */
+           / 섬김(섬김이·사역팀장·사역부장·사역간사). 단계마다 호감 레벨이 되면 값을 내고 교육(게이지)을 하고, 다 차면 직접 임명한다
+   · 직분 수 S.off(집사·권사·장로·사역간사)와 합계 PA는 여기서 다시 센 값이다. 수치는 balance.js PP_* */
 var PP_MALE=['민준','도윤','지호','예준','현우','성민','동현','준혁','시온','요한','다니엘','은찬','재원','태영','상훈','영수','기현','정훈','바울','요셉'];
 var PP_FEMALE=['서연','하은','수빈','지우','유진','은지','혜린','다은','하람','은혜','소망','예린','지민','미영','순자','영희','한나','에스더','사랑','주은'];
 var PP_SKIN=['#f6d3b3','#eec39a','#e0ac80','#f9dcc4'],PP_HAIR=['#2b2522','#4a3426','#6b4a2e','#1f1f24','#8a8a8a','#b9b2a6'],PP_SHIRT=['#4f6db0','#d65a4a','#5c8a48','#d1a02e','#7b6aa5','#2f8f9d','#c9627a','#8a6a46','#efe8da'],PP_BG=['#cfe3ee','#e8dcc8','#d9ead3','#f3d9df','#e3dcf0','#f6e7b8'];
@@ -17,7 +17,7 @@ function ppPick(seed,k,arr){return arr[Math.floor(ppRand(seed,k)*arr.length)%arr
 function makePerson(){
   var g=Math.random()<.5?'m':'f',seed=Math.floor(Math.random()*1e6);
   return {id:S.ppId++,n:SURN[Math.floor(Math.random()*SURN.length)]+(g==='m'?PP_MALE:PP_FEMALE)[Math.floor(Math.random()*20)],g:g,seed:seed,lv:1,xp:0,node:'new',
-    gift:Object.keys(FIELDS)[Math.floor(Math.random()*5)],jw:S.week,vw:-99,gw:-99,tr:null};
+    gift:Object.keys(FIELDS)[Math.floor(Math.random()*5)],jw:S.week,vw:-99,gw:-99,tr:null,assignedSaints:[],cls:'saint'};
 }
 function ppById(id){var L=S.people||[];for(var i=0;i<L.length;i++)if(L[i].id===id)return L[i];return null;}
 function ppNode(p){return PP_TREE[p.node]||PP_TREE.new;}
@@ -25,10 +25,53 @@ function nodeName(id,g){var t=PP_TREE[id];return g==='f'&&t.nf?t.nf:t.n;}
 function nodeAct(id,g){var t=PP_TREE[id];return g==='f'&&t.actf?t.actf:t.act;}
 function nodeTr(id,g){var t=PP_TREE[id];return g==='f'&&t.trf?t.trf:t.tr;}
 function nodeDone(id,g){var t=PP_TREE[id];return g==='f'&&t.donef?t.donef:t.done;}
-function ppRankName(p){return nodeName(p.node,p.g);}
+function ppRankName(p){return p.ext?'청빙직원':nodeName(p.node,p.g);}
+/* 명단 구분: 성도(saint) → 제자반 수료하면 봉사자(volunteer) → 각 갈래 끝이거나 청빙직원이면 직원(staff).
+   부교역자가 되면 사람 명단(S.people)에서 S.assoc(직원)으로 옮겨 간다. 구분은 p.cls에 적고 단계가 바뀔 때마다 다시 정한다 */
+function ppClass(p){
+  if(p.ext||PP_STAFF_NODES.indexOf(p.node)>=0)return 'staff';
+  return ppDepth(p)>=PP_VOL_D?'volunteer':'saint';
+}
+function ppReclass(p,quiet){
+  var c=ppClass(p);
+  if(p.cls!==c){
+    if(p.cls&&!quiet){addLog(p.n+' 님이 '+(c==='volunteer'?'봉사자':c==='staff'?'직원':'성도')+' 명단으로 옮겨 갔어요');}
+    p.cls=c;if(c==='staff')p.assignedSaints=[];
+  }
+  return c;
+}
+function ppSaints(){return (S.people||[]).filter(function(p){return ppClass(p)==='saint';});}
+function ppVolunteers(){return (S.people||[]).filter(function(p){return ppClass(p)==='volunteer';});}
+function ppStaffPeople(){return (S.people||[]).filter(function(p){return ppClass(p)==='staff';});}
+// 소그룹 리더(리더 갈래)에게 맡긴 성도 칸: assignedSaints = 성도 id 목록. 칸 수는 그 단계의 cap
+function ppAssignWhy(leader,saint){
+  if(!leader||!saint)return '사람을 찾을 수 없어요';
+  if(ppTrack(leader)!=='B'||leader.node==='seminary')return '소그룹 리더가 아니에요';
+  if(ppClass(saint)!=='saint')return '성도만 맡길 수 있어요';
+  if((leader.assignedSaints||[]).length>=leadSlots(leader))return '맡을 자리가 없어요 (호감 Lv '+LEAD_SLOT_LV+'마다 한 칸)';
+  if((S.people||[]).some(function(q){return (q.assignedSaints||[]).indexOf(saint.id)>=0;}))return '이미 다른 리더가 맡고 있어요';
+  return '';
+}
+// 리더가 맡을 수 있는 성도 칸 수: 호감 Lv에 비례(단계의 cap까지). 소그룹 리더 앞 단계(예비신학생 등)는 맡지 않는다
+function leadSlots(p){if(!p||ppTrack(p)!=='B'||p.node==='seminary')return 0;return Math.min(ppNode(p).cap||0,1+Math.floor(p.lv/LEAD_SLOT_LV));}
+function ppAssignedAny(sid){return (S.people||[]).some(function(q){return (q.assignedSaints||[]).indexOf(sid)>=0;});}
+// 아직 어느 리더도 맡지 않은 성도 (호감 Lv 낮은 사람부터)
+function ppFreeSaints(){return ppSaints().filter(function(p){return !ppAssignedAny(p.id);}).sort(function(a,b){return a.lv-b.lv||a.id-b.id;});}
+// ⚡ 자동 배정: 빈 칸을 호감 Lv 낮은 성도부터 채운다. 채운 수
+// 리더가 맡은 성도 한 명이 매주 더 받는 호감 경험치
+function leadXp(l){return l?LEAD_SAINT_XP*(1+l.lv*LEAD_SAINT_LV):0;}
+// 매주: 리더가 맡은 성도에게 호감 경험치
+function leadWeek(){(S.people||[]).forEach(function(l){(l.assignedSaints||[]).forEach(function(i){var s=ppById(i);if(s)ppGain(s,leadXp(l));});});}
+function ppAutoAssign(lid){var l=ppById(lid),n=0;if(!l)return 0;ppFreeSaints().forEach(function(s){if(!ppAssignWhy(l,s)&&!ppAssign(lid,s.id))n++;});return n;}
+// 모든 리더의 빈 칸을 한꺼번에: 호감 Lv 높은 리더부터, 맡을 수 있는 성도를 호감 낮은 사람부터 채운다
+function leadOpen(l){return Math.max(0,leadSlots(l)-(l.assignedSaints||[]).length);}
+function ppAutoAssignAll(){var n=0;leaders().filter(function(l){return leadOpen(l)>0;}).sort(function(a,b){return b.lv-a.lv||a.id-b.id;}).forEach(function(l){n+=ppAutoAssign(l.id);});return n;}
+function ppAutoAllOk(){return ppFreeSaints().length>0&&leaders().some(function(l){return leadOpen(l)>0;});}
+function ppAssign(lid,sid){var l=ppById(lid),s=ppById(sid),why=ppAssignWhy(l,s);if(why)return why;l.assignedSaints.push(sid);return '';}
+function ppUnassign(lid,sid){var l=ppById(lid);if(l)l.assignedSaints=(l.assignedSaints||[]).filter(function(x){return x!==sid;});}
 function ppTrack(p){return ppNode(p).t||'';}
 function ppDepth(p){return ppNode(p).d||0;}
-// 세례 이상 / 직분자(집사·장로·권사·교회직원) / 제자반 다음 갈래에 들어선 사람
+// 세례 이상 / 직분자(집사·장로·권사·사역간사) / 제자반 다음 갈래에 들어선 사람
 function ppBaptized(p){return ppDepth(p)>=1;}
 function isOfficer(p){return p.node==='deacon'||p.node==='elder'||p.node==='cstaff';}
 function ppNeed(lv){return Math.round(PP_XP0+PP_XP_K*lv);}
@@ -54,6 +97,13 @@ function syncPeople(){
     var give=function(n,node,g){for(var k=0;k<2;k++)for(var i=0;i<S.people.length&&n>0;i++){var p=S.people[i];if(p.node==='new'&&(k||!g||p.g===g)){p.node=node;if(g)p.g=g;p.lv=Math.max(p.lv,PP_TREE[node].lv);n--;}}};
     give(S.off.elder||0,'elder','m');give(S.off.kwonsa||0,'elder','f');give(S.off.deacon||0,'deacon',null);
   }
+  // 슬롯 배열: 성도 칸(assignedSaints)·건물 보조 인력(supportStaff)·사역팀 봉사자(S.servants). 예전 저장에 없으면 채우고, 없는 사람은 비운다
+  var ids={};S.people.forEach(function(p){ids[p.id]=1;});
+  S.people.forEach(function(p){
+    ppReclass(p,true);
+    p.assignedSaints=(p.assignedSaints||[]).filter(function(i){return ids[i]&&ppClass(ppById(i))==='saint'&&ppTrack(p)==='B'&&ppClass(p)!=='staff';}).slice(0,leadSlots(p));
+  });
+  var supSeen={};(S.buildings||[]).forEach(function(b){b.supportStaff=(b.supportStaff||[]).filter(function(i){if(!ids[i]||supSeen[i]||!supEligible(ppById(i)))return false;supSeen[i]=1;return true;}).slice(0,supSlots(b));});
   // 직분 수와 합계 (MOD·영성·헌금이 읽는다)
   var o={deacon:0,kwonsa:0,elder:0,cstaff:0},a={bapt:0,grad:0,flat:0,sp:0,lv:0,cap:0,upk:0,dec:0};
   S.people.forEach(function(p){
@@ -85,36 +135,15 @@ function peopleWeek(){
   var x=S.mood>=50?PP_WEEK_XP:PP_WEEK_XP_LOW;
   (S.people||[]).forEach(function(p){ppGain(p,x);});
   (S.assoc||[]).forEach(function(a){asGain(a,.5);});
-  delegWeek();
+  leadWeek();
 }
-/* 부교역자·소그룹 리더에게 성도 돌봄 맡기기 (balance.js ASSOC_CARE*·LEAD_*·DELEG_*) */
-function delegState(){return S.deleg||(S.deleg={on:false,lv:DELEG_LV0,last:null});}
-function asCare(a){return Math.round(ASSOC_CARE0+ASSOC_CARE_K*asSkill(a));}
 function leaders(){return (S.people||[]).filter(function(p){return LEAD_NODES.indexOf(p.node)>=0;});}
-function leadCare(p){return Math.max(1,Math.round((PP_TREE[p.node].cap||0)*LEAD_CARE_K));}
-function leadCap(){return leaders().filter(function(p){return !mgrAt('p'+p.id);}).reduce(function(t,p){return t+leadCare(p);},0);}
-function delegCap(){return (S.assoc||[]).reduce(function(t,a){return t+(a.uid&&mgrAt('a'+a.uid)?0:asCare(a));},0)+leadCap();}
-// 맡길 수 있는 일꾼이 있는지 (부교역자나 소그룹 리더)
-function delegHelpers(){return (S.assoc||[]).length+leaders().length;}
-function delegPool(){var L=delegState().lv;return (S.people||[]).filter(function(p){return p.lv<L;});}
-function delegWeek(){
-  var d=delegState();d.last=null;
-  if(!d.on||!delegHelpers())return;
-  var cap=delegCap(),n=0,cost=0,up=0;
-  delegPool().sort(function(a,b){return a.lv-b.lv||a.vw-b.vw;}).forEach(function(p){
-    if(n>=cap)return;var did=false;
-    ['visit','gift'].forEach(function(k){if(ppCareWhy(p,k,true)||S.money-ppCareCost(k,true)<ASSOC_CARE_RES)return;var c0=ppCareCost(k,true),r=ppCare(p.id,k,true);did=true;cost+=c0;if(r)up++;});
-    if(did)n++;
-  });
-  d.last={n:n,cost:cost,up:up,w:S.week};
-  if(n)addLog('부교역자·소그룹 리더들이 성도 '+n+'명을 돌봤어요 · '+fmt(cost));
-}
 /* 심방·선물 */
-// cheap: 부교역자·리더가 맡아 할 때는 값이 DELEG_COST_K배, 경험치가 DELEG_XP_K배
 function ppCareCost(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.cost*DELEG_COST_K):c.cost;}
 function ppCareXp(kind,cheap){var c=kind==='gift'?PP_GIFT:PP_VISIT;return cheap?Math.round(c.xp*DELEG_XP_K):c.xp;}
 function ppCareWhy(p,kind,cheap){
   var c=kind==='gift'?PP_GIFT:PP_VISIT,last=kind==='gift'?p.gw:p.vw;
+  if(kind==='gift'&&!featOk('gift'))return '선물은 '+featWhy('gift');
   if(p.lv>=PP_LV_MAX)return '이미 가장 깊은 사이예요';
   if(S.week-last<c.cd)return (c.cd-(S.week-last))+'주 뒤에 다시 할 수 있어요';
   if(S.money<ppCareCost(kind,cheap))return '자금이 부족해요';
@@ -135,11 +164,6 @@ function ppCareAll(list,kind){
   list.slice().sort(byLow).forEach(function(p){if(!ppCareOk(p,kind))return;if(S.money<c.cost){o.poor++;return;}var r=ppCare(p.id,kind);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
   return o;
 }
-function asCheerAll(){
-  var o={done:0,poor:0,up:0};
-  S.assoc.map(function(a,i){return {a:a,i:i,lv:a.lv||1,id:i};}).sort(byLow).forEach(function(x){var w=asCheerWhy(x.a);if(w&&w!=='자금이 부족해요')return;if(S.money<ASSOC_CHEER.cost){o.poor++;return;}var r=asCheer(x.i);if(r===''||r.charAt(0)==='+'){o.done++;if(r)o.up++;}});
-  return o;
-}
 // 일괄 성장: 갈래가 하나뿐인 성도의 다음 단계 교육 시작(자금이 되는 만큼, 호감 레벨 낮은 사람부터), 교육이 끝난 성도 임명
 function ppSoleNext(p){var n=ppNexts(p);return n.length===1?n[0]:null;}
 function ppTrainOk(p,to){var w=ppTrainWhy(p,to);return !w||w==='자금이 부족해요';}
@@ -156,13 +180,14 @@ function ppAppointAll(list,to){
 /* 다음 단계: 갈래가 여럿이면 하나를 고른다. 교육을 시작하고(값), 다 차면 임명한다 */
 function ppNexts(p){return ppNode(p).next||[];}
 // 다음 단계 중 레벨이 된 것이 있는지 (카드 '가능' 표시용)
-function ppCanStep(p){return !p.tr&&ppNexts(p).some(function(id){return p.lv>=PP_TREE[id].lv;});}
+function ppCanStep(p){return !p.tr&&ppNexts(p).some(function(id){return p.lv>=PP_TREE[id].lv&&ppNodeOpen(id);});}
 function ppTrainWhy(p,to){
   var nx=ppNexts(p);if(!nx.length)return '더 오를 단계가 없어요';
   if(to==null)to=nx[0];
   if(nx.indexOf(to)<0)return '이 성도의 다음 단계가 아니에요';
   var st=PP_TREE[to];
   if(p.tr)return p.tr.ready?'임명을 기다리고 있어요':'교육 중이에요';
+  if(!ppNodeOpen(to))return '교회 Lv '+ppNodeLv(to)+'부터 할 수 있어요';
   if(p.lv<st.lv)return '호감 Lv '+st.lv+'부터 할 수 있어요';
   if(to==='assoc'&&S.assoc.length>=assocSlots())return '부교역자 자리가 없어요 (성도 '+ASSOC_PER+'명마다 한 자리)';
   if(S.money<st.cost)return '자금이 부족해요';
@@ -182,7 +207,7 @@ function ppLeftText(p){return p.tr&&!p.tr.ready?durText(Math.max(1/7,p.tr.end-ev
 function peopleTick(){
   var now=evNow(),n=0;
   (S.people||[]).forEach(function(p){if(p.tr&&!p.tr.ready&&now>=p.tr.end){p.tr.ready=true;n++;toast(p.n+' 성도의 '+nodeTr(p.tr.to,p.g)+'이(가) 끝났어요 · '+nodeDone(p.tr.to,p.g)+'을(를) 눌러 주세요',2800);}});
-  if(n){sfx('bell',.5,0);save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();}
+  if(n){sfx('done',.6,0);save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();}
 }
 // 임명: 교육이 끝난 사람을 다음 단계로. 부교역자면 성도 명단에서 사역자로 옮긴다. 돌려주는 글은 축하 문구(못 하면 null)
 function ppAppoint(id){
@@ -190,11 +215,12 @@ function ppAppoint(id){
   var to=p.tr.to,msg;
   if(to==='assoc'){
     if(S.assoc.length>=assocSlots())return null;
+    p.assignedSaints=[];   // 부교역자가 되면 맡던 성도는 모두 풀린다
     S.assoc.push({name:p.n,title:'부목사',field:p.gift,skill:5,pay:ASSOC_HOME_PAY,fee:0,home:true,g:p.g,seed:p.seed,lv:1,xp:0,cw:-99});
     S.people=S.people.filter(function(q){return q!==p;});S.members=Math.max(0,S.members-1);
     msg=p.n+' 부목사님이 사역을 시작해요 (별 5개 · '+FIELDS[p.gift].name+')';
   }else{
-    p.node=to;p.tr=null;
+    p.node=to;p.tr=null;ppReclass(p);
     if(to==='bapt'){S.evW=S.evW||{};S.evW.baptism=S.week;gainRep(.5);}
     else if(PP_TREE[to].d>=4)gainRep(Math.min(4,PP_TREE[to].d-3));
     msg=p.n+' 성도가 '+(to==='bapt'?'세례를 받았어요':to==='seminary'?'신학교를 마쳤어요':nodeName(to,p.g)+'(으)로 세워졌어요');
@@ -219,37 +245,19 @@ function ppThought(p){
   else pool=S.mood<45?PP_SAY.low:(S.mood>=60||p.lv>=4?PP_SAY.good:PP_SAY.ok);
   return pool[Math.floor(ppRand(p.seed,S.week+3)*pool.length)%pool.length];
 }
-/* 초상화: 씨앗 값으로 그리는 간단한 얼굴 (나중에 생성 이미지로 바꾼다) */
-function portraitSvg(o){
-  var s=o.seed||1,f=o.g==='f',skin=ppPick(s,1,PP_SKIN),hair=ppPick(s,2,PP_HAIR),shirt=ppPick(s,3,PP_SHIRT),bg=ppPick(s,4,PP_BG),st=Math.floor(ppRand(s,5)*3);
-  var h='<svg class="pt" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="'+bg+'"/>';
-  // 뒷머리(여성: 긴 머리·단발·묶음), 어깨, 목, 얼굴
-  if(f)h+=st===0?'<path d="M14 30c0-14 8-20 18-20s18 6 18 20v18H14z" fill="'+hair+'"/>':st===1?'<path d="M15 30c0-13 8-19 17-19s17 6 17 19v8H15z" fill="'+hair+'"/>':'<circle cx="32" cy="10" r="6" fill="'+hair+'"/>';
-  h+='<path d="M10 64c1-13 10-18 22-18s21 5 22 18z" fill="'+shirt+'"/><rect x="27" y="38" width="10" height="10" rx="3" fill="'+skin+'"/><circle cx="32" cy="28" r="13" fill="'+skin+'"/>';
-  // 앞머리
-  if(f)h+='<path d="M19 27c0-10 6-15 13-15s13 5 13 15c-4-6-9-9-13-9s-9 3-13 9z" fill="'+hair+'"/>';
-  else h+=st===0?'<path d="M19 26c0-9 6-14 13-14s13 5 13 14c-3-5-8-7-13-7s-10 2-13 7z" fill="'+hair+'"/>':st===1?'<path d="M19 25c1-9 7-13 13-13s12 4 13 13l-4-5H23z" fill="'+hair+'"/>':'<path d="M20 24c2-7 7-11 12-11s10 4 12 11c-4-3-8-4-12-4s-8 1-12 4z" fill="'+hair+'"/>';
-  h+='<circle cx="27" cy="29" r="1.6" fill="#2b2522"/><circle cx="37" cy="29" r="1.6" fill="#2b2522"/><path d="M28 34.5q4 3 8 0" stroke="#2b2522" stroke-width="1.4" fill="none" stroke-linecap="round"/>';
-  if(ppRand(s,6)<.22)h+='<g fill="none" stroke="#2b2522" stroke-width="1.2"><circle cx="27" cy="29" r="3.6"/><circle cx="37" cy="29" r="3.6"/><path d="M30.6 29h2.8"/></g>';
-  return h+'</svg>';
-}
+/* 성도 아이콘: 성별(g)에 맞는 생성 초상화(assets/portraits/icons/members, tools/members_icons.py)에서 씨앗(seed)으로 한 명을 고른다.
+   같은 사람은 언제나 같은 얼굴이다. 이름은 성별로 지으므로(PP_MALE·PP_FEMALE) 그림과 어긋나지 않는다 */
+var MEMBER_ICONS={f:23,m:25};
+function memberIcon(o){var g=o.g==='f'?'f':'m',n=MEMBER_ICONS[g];return 'assets/portraits/icons/members/member_'+g+(1+Math.floor(ppRand(o.seed||1,4)*n)%n)+'.png';}
+// 사람 한 명의 얼굴 그림 주소: 청빙한 사람은 청빙 카드 그림, 기른 사람은 성도 아이콘
+function personFace(p){return p.ext?hirePortrait(p.ext,'C'):memberIcon(p);}
+function portraitHtml(o){return '<img class="pt" alt="" src="'+memberIcon(o)+'">';}
 /* 부교역자의 레벨: 격려하면 오르고, 레벨마다 효과가 커진다 */
-function asNeed(lv){return PP_XP0+PP_XP_K*lv;}
+function asNeed(lv){return AS_XP0+AS_XP_K*lv;}
 function asGain(a,xp){
   if(a.lv==null){a.lv=1;a.xp=0;a.cw=-99;}
   a.xp+=xp;var up=0;while(a.lv<ASSOC_LV_MAX&&a.xp>=asNeed(a.lv)){a.xp-=asNeed(a.lv);a.lv++;up++;}
   if(a.lv>=ASSOC_LV_MAX)a.xp=Math.min(a.xp,asNeed(a.lv));return up;
 }
 // 효과에 쓰는 실력: 별 × (교회에서 기른 사람이면 ASSOC_HOME_K) × 레벨 보정
-function asSkill(a){return a.skill*(a.home?ASSOC_HOME_K:1)*(1+ASSOC_LV_K*((a.lv||1)-1));}
-function asCheerWhy(a){
-  if((a.lv||1)>=ASSOC_LV_MAX)return '이미 최고 레벨이에요';
-  if(S.week-(a.cw==null?-99:a.cw)<ASSOC_CHEER.cd)return (ASSOC_CHEER.cd-(S.week-a.cw))+'주 뒤에 다시 할 수 있어요';
-  if(S.money<ASSOC_CHEER.cost)return '자금이 부족해요';
-  return '';
-}
-function asCheer(i){
-  var a=S.assoc[i];if(!a)return '사역자를 찾을 수 없어요';
-  var why=asCheerWhy(a);if(why)return why;
-  S.money-=ASSOC_CHEER.cost;a.cw=S.week;var up=asGain(a,ASSOC_CHEER.xp);trustAct(1);recalc();save();return up?'+'+a.lv:'';
-}
+function asSkill(a){return a.skill*(a.home?ASSOC_HOME_K:1)*(1+ASSOC_LV_K*((a.lv||1)-1))*stMul(a);}

@@ -14,12 +14,13 @@ function mk(id,name,cat,w,h,cost,up,kind,wall,roofc,o){
   if(['bld','lot','floor','terrain','path','gate'].indexOf(kind)<0&&w===1&&h===1)d.cell=true;
   if(kind!=='floor'&&kind!=='terrain'&&kind!=='path'&&kind!=='gate'&&!d.cell){d.w*=G;d.h*=G;}
   // 한 칸짜리는 칸이 작아진 만큼 값도 줄인다: 바닥은 같은 길이의 길이 같은 값이 되게 절반, 칸 건물은 넓이대로 1/4
-  if(kind==='floor'){d.cost=Math.round(d.cost/G);d.beauty=d.beauty/3;}
+  // 바닥 분위기는 한 칸 값(소수점 한 자리)으로 적고, 칸이 많아 실제로는 FLOOR_BEAUTY_K배만 친다 (floorBeauty)
+  if(kind==='floor'){d.cost=Math.round(d.cost/G);}
   DEFS.push(d); return d;
 }
 mk('room','작은 예배실','worship',2,2,900,8,'bld','#efe8da','#4f6db0',{H:.95,roof:'gable',rh:.55,deco:'crossRidge',seats:24,fill:{word:48},cap:10,dur:5,desc:'작고 따뜻한 첫 예배 공간'});
 // 처음부터 지도 가운데에 서 있는 본당: 담임목사가 맡고, 철거·이동할 수 없다 (목록에 없다). 성능은 작은 예배실과 같고 레벨로 키운다
-mk('main','대예배당','worship',3,2,900,8,'bld','#efe8da','#3f5ea3',{hidden:true,H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:24,fill:{word:48},cap:10,dur:5,desc:'교회의 중심. 담임목사가 맡는 본당이라 옮기거나 철거할 수 없어요'});
+mk('main','대예배당','worship',5.5,3.5,900,8,'bld','#efe8da','#3f5ea3',{hidden:true,H:1.15,roof:'gable',rh:.7,stained:1,seats:24,fill:{word:48},cap:10,dur:5,desc:'교회의 중심. 담임목사가 맡는 본당이라 옮기거나 철거할 수 없어요'});
 mk('chapel','예배당','worship',3,2,2800,24,'bld','#efe8da','#3f5ea3',{H:1.15,roof:'gable',rh:.7,deco:'tower',towerH:2.2,stained:1,seats:70,fill:{word:60,fel:8},cap:28,dur:6,desc:'종탑이 있는 주일예배 공간'});
 mk('grand','대성전','worship',4,3,7600,60,'bld','#f2ece0','#34508f',{H:1.5,roof:'gable',rh:.95,deco:'tower',towerH:3.0,stained:1,seats:190,fill:{word:70,fel:10},cap:70,dur:7,desc:'수백 명이 모이는 큰 예배당'});
 mk('pray','기도실','worship',1,1,420,3,'bld','#ece5d6','#6a7fb0',{H:.8,roof:'hip',rh:.55,deco:'crossApex',seats:4,fill:{word:28,comf:12},cap:2,dur:4,desc:'조용히 머무는 작은 기도 공간'});
@@ -40,15 +41,23 @@ mk('youth','청년부실','fellow',2,2,1500,14,'bld','#e3eef2','#2f8f9d',{H:.95,
 mk('gym','체육관','club',4,3,4200,40,'bld','#e6e9ec','#5a6b7c',{sub:'sport',H:1.4,roof:'flat',bigwin:1,fcap:40,ccap:6,fill:{fel:60,comf:10},cap:30,dur:6,desc:'운동과 큰 행사를 함께하는 넓은 공간'});
 mk('pantry','구제창고','care',2,1,850,12,'bld','#c99a64','#8a5a2b',{H:.85,roof:'gable',rh:.5,deco:'barn',kcap:8,fill:{care:56},cap:4,dur:4,rep:0.5,desc:'이웃을 돕는 나눔. 평판이 천천히 오릅니다'});
 mk('counsel','상담실','care',1,1,650,8,'bld','#ece5d6','#7b6aa5',{H:.85,roof:'hip',rh:.5,kcap:4,fill:{care:44,word:10},cap:2,dur:6,rep:0.2,desc:'마음을 들어주는 작은 방'});
-mk('kids','어린이부실','care',2,2,1600,18,'bld','#f6e3b0','#e08a2c',{H:.95,roof:'gable',rh:.55,deco:'dots',kcap:16,ccap:4,fill:{care:20,comf:34,fel:14},cap:10,dur:6,desc:'아이들을 맡기고 마음 놓는 공간'});
-mk('nursery','유아방','care',2,1,900,10,'bld','#fbe7ef','#d9709a',{H:.8,roof:'gable',rh:.45,deco:'dots',kcap:8,ccap:2,fill:{care:30,comf:28},cap:6,dur:5,desc:'영아·유아를 돌보는 아늑한 방'});
+mk('kids','초등부실','worship',2,2,1600,18,'bld','#f6e3b0','#e08a2c',{H:.95,roof:'gable',rh:.55,deco:'dots',kcap:16,ccap:4,fill:{care:20,comf:34,fel:14,word:12},cap:10,dur:6,desc:'초등학생 아이들이 예배하고 어울리는 부서실. 부모가 마음 놓고 예배드려요'});
+mk('kinder','유치부실','worship',2,2,1200,12,'bld','#fff0c4','#f0a030',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:12,ccap:3,fill:{care:24,comf:30,fel:12,word:10},cap:8,dur:5,desc:'유치원 또래 아이들이 율동하며 예배하는 부서실'});
+mk('teens','중고등부실','worship',2,2,1800,16,'bld','#e6e2f6','#6a5bb5',{H:1.0,roof:'flat',deco:'dots',kcap:6,fcap:14,fill:{fel:34,word:24,care:10},cap:12,dur:6,desc:'중·고등학생들이 찬양하고 말씀 나누는 부서실'});
+mk('nursery','영유아실','worship',2,1,900,10,'bld','#fbe7ef','#d9709a',{H:.8,roof:'gable',rh:.45,deco:'dots',kcap:8,ccap:2,fill:{care:30,comf:28,word:8},cap:6,dur:5,desc:'영아·유아를 돌보며 부모가 함께 예배하는 아늑한 방'});
 mk('elder','경로 쉼터','care',2,2,1500,14,'bld','#efe7d8','#8a6b4a',{H:.9,roof:'hip',rh:.55,kcap:12,fill:{care:46,fel:12},cap:8,dur:6,rep:0.3,desc:'어르신들이 쉬고 이야기 나누는 곳. 평판이 천천히 오릅니다'});
 mk('clinic','의료 봉사실','care',2,1,1300,14,'bld','#f4f6f7','#4f9a83',{H:.85,roof:'flat',deco:'clinic',kcap:6,fill:{care:58},cap:4,dur:6,rep:0.6,desc:'이웃을 위한 무료 진료 봉사. 평판이 오릅니다'});
-mk('study','공부방','care',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:10},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
+mk('study','공부방','worship',2,2,1300,12,'bld','#f3eedb','#c08a2e',{H:.9,roof:'gable',rh:.5,deco:'dots',kcap:14,fill:{care:40,word:14},cap:10,dur:6,desc:'방과 후 아이들의 공부를 돕는 방'});
 mk('foodbank','무료 급식소','care',3,2,2600,26,'bld','#efe3cf','#9a5b2b',{H:1.0,roof:'gable',rh:.55,deco:'barn',kcap:22,fill:{care:52},cap:14,dur:5,rep:1.0,desc:'이웃에게 따뜻한 한 끼를 나누는 곳. 평판이 크게 오릅니다'});
-mk('playground','놀이터','care',2,2,900,4,'playground','#e0c48a','#e8892c',{kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
+mk('playground','놀이터','worship',2,2,900,4,'playground','#e0c48a','#e8892c',{nomgr:1,sub:'dept',kcap:6,fcap:6,fill:{care:24,fel:22},cap:8,dur:4,desc:'아이들이 뛰노는 놀이터. 가족 방문자가 좋아해요'});
 mk('wc','화장실','comfort',1,1,360,4,'bld','#dfe6ea','#6c8794',{H:.7,roof:'flat',deco:'wc',nolimit:1,ccap:12,fill:{comf:60},cap:2,dur:3,desc:'꼭 필요한 편의시설'});
 mk('lot','주차장','park',3,2,1100,6,'lot','#5b646d','#5b646d',{park:12,desc:'주차 12대. 방문자 유입과 성도 만족에 영향'});
+// 도시 스테이지의 이웃 건물: 짓지 못하고(hidden) 땅째 살 수만 있다 (stages.js cityBuy, 그림은 drawCityBld)
+mk('c_apt','아파트','city',4,5,0,0,'city','#e6e1d7','#9aa3ad',{hidden:true,H:3.4,desc:'이웃 아파트. 땅째 사면 그 자리를 쓸 수 있어요'});
+mk('c_office','오피스 빌딩','city',3,3,0,0,'city','#b9c7d3','#6f7f8f',{hidden:true,H:2.6,desc:'유리창이 반짝이는 사무실 건물'});
+mk('c_villa','빌라','city',2,3,0,0,'city','#e8d2bb','#a46b4a',{hidden:true,H:1.6,desc:'붉은 벽돌 빌라'});
+mk('c_mart','상가','city',3,2,0,0,'city','#f1ebe0','#c4503a',{hidden:true,H:1.0,desc:'1층 가게들이 줄지은 상가'});
+mk('c_house','주택','city',2,2,0,0,'city','#efe6d2','#7d5440',{hidden:true,H:.9,desc:'마당 있는 작은 주택'});
 mk('lots','소형 주차장','park',2,1,520,3,'lot','#5b646d','#5b646d',{park:4,desc:'주차 4대'});
 mk('info','안내실','comfort',1,1,500,5,'bld','#e8eef2','#3f5ea3',{H:.75,roof:'flat',deco:'info',ccap:6,fill:{comf:30,fel:10},cap:3,dur:3,vis:0.03,desc:'처음 온 사람을 맞이하는 안내 창구. 방문자 +3%'});
 mk('nurse','수유실','comfort',1,1,600,5,'bld','#f6eef0','#c77d8f',{H:.75,roof:'hip',rh:.45,ccap:4,kcap:2,fill:{comf:44,care:16},cap:2,dur:4,desc:'아기와 부모를 위한 조용한 방'});
@@ -80,6 +89,11 @@ mk('urn','돌 화분','garden',1,1,150,0,'planter','#b8b2a6','#5a9a4f',{beauty:1
 mk('basket','걸이 화분','garden',1,1,120,0,'planter','#3d4650','#e57a95',{beauty:0.8,desc:'쇠기둥에 매단 꽃바구니'});
 mk('lilypond','수련 물그릇','garden',1,1,320,0,'birdbath','#c9c2b6','#86bfe0',{beauty:1.6,desc:'수련이 떠 있는 둥근 돌 물그릇'});
 mk('bench','벤치','comfort',1,1,160,0,'bench','#8a6a46','#8a6a46',{prop:1,dir:'face',nolimit:1,ccap:2,beauty:0.4,fill:{comf:22,fel:10},cap:2,dur:4,desc:'잠깐 앉아 쉬어가는 자리'});
+mk('bench_stone','돌 벤치','comfort',1,1,220,0,'bench','#c9c2b6','#c9c2b6',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:0.6,fill:{comf:22,fel:10},cap:2,dur:4,desc:'화강암을 깎은 든든한 돌 벤치'});
+mk('bench_iron','철제 벤치','comfort',1,1,240,0,'bench','#2f343a','#2f343a',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:0.5,fill:{comf:22,fel:10},cap:2,dur:4,desc:'검은 철제 프레임의 시원한 벤치'});
+mk('bench_back','등받이 벤치','comfort',1,1,260,0,'bench','#8a6844','#8a6844',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:0.6,fill:{comf:26,fel:10},cap:2,dur:4,desc:'등받이가 있어 편하게 기대 쉬는 공원 벤치'});
+mk('bench_round','둥근 돌 의자','comfort',1,1,200,0,'bench','#d8d1c2','#d8d1c2',{prop:1,dir:'face',nolimit:1,ccap:1,hgt:.45,beauty:0.5,fill:{comf:14,fel:6},cap:1,dur:3,desc:'나무 그늘 아래 둥글게 놓은 돌 의자'});
+mk('bench_flower','꽃 벤치','comfort',1,1,300,0,'bench','#a07a52','#a07a52',{prop:1,dir:'face',nolimit:1,ccap:2,hgt:.45,beauty:1.1,fill:{comf:24,fel:12},cap:2,dur:4,desc:'양끝에 화분을 얹은 꽃 벤치'});
 mk('spire','십자가 첨탑','garden',1,1,700,2,'spire','#efe8da','#3f5ea3',{beauty:2,vis:0.08,rep:0.2,desc:'멀리서도 보이는 표지. 방문자 +8%'});
 mk('fountain','분수','garden',1,1,600,2,'fountain','#c9c2b6','#7fb7d9',{beauty:2,desc:'물소리가 들리는 작은 분수'});
 mk('wfount','물 분수','garden',1,1,250,2,'wfount','#c9c2b6','#7fb7d9',{beauty:1.2,water:true,cell:true,desc:'호수·강 위에 띄우는 분수. 물이 찬 칸에만 놓아요'});
@@ -107,9 +121,18 @@ mk('lantern','초롱 등','deco',1,1,140,0,'lamp','#7a5530','#f5e6a8',{beauty:0.
    hgt: 높이(칸), 눌러서 고를 때와 카드·미리보기에 쓴다 */
 mk('swing','그네 의자','comfort',1,1,380,1,'spr','#8a6a46','#a07a52',{prop:1,hgt:1.3,dir:'face',ccap:2,fcap:2,fill:{comf:20,fel:14},cap:2,dur:4,beauty:0.8,desc:'지붕 아래 둘이 앉아 이야기하는 그네 의자'});
 mk('library','작은 도서함','deco',1,1,260,0,'spr','#8a6844','#6b4f3a',{hgt:1.2,dir:'face',fill:{word:12,comf:8},cap:2,dur:3,beauty:0.5,vis:0.01,desc:'책을 빌려 읽고 나누는 작은 도서함. 방문자 +1%'});
+// 편의 › 기타: 식수대·정수기·분리수거함 (모두 한 칸 개방형 소품, 레벨 없음)
+mk('purifier','정수기','comfort',1,1,260,1,'purifier','#eef3f6','#5f9fd0',{prop:1,ccap:2,fill:{comf:18},cap:2,dur:2,beauty:0.2,desc:'시원한 물을 받아 마시는 정수기. 목마른 방문자가 쉬어 가요. 편의 수용 +2'});
+mk('recycle','분리수거함','comfort',1,1,120,0,'recycle','#4a78c7','#e3b341',{prop:1,ccap:2,beauty:0.2,desc:'종이·플라스틱·캔을 나눠 버리는 분리수거함. 쓰레기통처럼 쓰여요. 편의 수용 +2'});
 mk('drinkfount','식수대','comfort',1,1,180,0,'spr','#c9c2b6','#9aa3a8',{prop:1,hgt:1.1,dir:'face',ccap:2,fill:{comf:16},cap:2,dur:2,beauty:0.3,desc:'목을 축이는 돌 식수대. 편의 수용 +2'});
 mk('grill','바비큐 그릴','deco',1,1,300,1,'spr','#3d4650','#59626b',{hgt:1.4,dir:'face',fcap:3,fill:{fel:26,comf:6},cap:3,dur:4,beauty:0.3,desc:'함께 구워 먹으며 교제하는 그릴'});
 mk('lectern','야외 강대상','deco',1,1,350,0,'spr','#8a6844','#c9c2b6',{hgt:1.2,dir:'face',beauty:0.7,rep:0.05,desc:'야외 예배에 쓰는 작은 강대상. 평판이 조금 오릅니다'});
+/* 교회 소품: 코드로 그린다 (js/render-church.js) */
+mk('piano','그랜드 피아노','deco',1,1,900,3,'piano','#22252b','#f4efe6',{hgt:.9,dir:'face',beauty:1.2,desc:'찬양을 반주하는 검은 그랜드 피아노'});
+mk('speaker','음향 스피커','deco',1,1,260,2,'speaker','#22252b','#3b4048',{hgt:1.1,beauty:0.3,desc:'예배 소리를 또렷하게 전하는 스피커'});
+mk('mixer','음향 믹서','deco',1,1,380,2,'mixer','#2b2f36','#c9c2b6',{hgt:.6,dir:'face',beauty:0.4,desc:'예배 음향을 조절하는 믹서 데스크'});
+mk('drums','드럼 세트','deco',1,1,520,3,'drums','#a8433a','#f4efe6',{hgt:.9,dir:'face',beauty:0.6,desc:'찬양팀이 치는 드럼 세트'});
+mk('offering','헌금함','deco',1,1,140,0,'offering','#8a5a2b','#5e3a1c',{hgt:.6,beauty:0.3,desc:'감사 헌금을 넣는 나무 헌금함'});
 mk('vending','자판기','shop',1,1,420,2,'spr','#3d4650','#59626b',{hgt:1.5,dir:'face',ccap:2,fill:{comf:20},cap:2,dur:3,income:2,desc:'음료 자판기. 방문자가 음료를 사 마셔요'});
 mk('coffeecart','커피 카트','shop',1,1,650,3,'spr','#8a6844','#a07a52',{hgt:1.5,dir:'face',ccap:3,fcap:3,fill:{fel:20,comf:14},cap:3,dur:3,income:3,desc:'지붕 달린 작은 커피 카트. 방문자가 커피를 사 마셔요'});
 mk('flowercart','꽃 가판대','shop',1,1,600,3,'spr','#8a6844','#d9567a',{hgt:1.5,dir:'face',ccap:3,fill:{comf:24,fel:8},cap:3,dur:3,income:3,beauty:0.5,desc:'꽃을 파는 작은 수레 가판대'});
@@ -139,13 +162,13 @@ mk('guitar','기타·우쿨렐레 교실','club',2,2,900,7,'bld','#ece4d4','#c98
 mk('band','밴드연습실','club',2,2,1300,10,'bld','#3f4650','#c4503a',{sub:'music',H:.95,roof:'flat',deco:'sign',sign:'밴드',signc:'#c4503a',fcap:10,fill:{fel:36,word:8},cap:8,dur:5,desc:'드럼과 앰프가 있는 밴드 연습실. 찬양팀 청년들의 아지트'});
 mk('choir','합창실','club',3,2,1500,12,'bld','#efe9dc','#3f5ea3',{sub:'music',H:1.0,roof:'gable',rh:.5,deco:'sign',sign:'합창',signc:'#3f5ea3',fcap:16,fill:{fel:38,word:10},cap:14,dur:6,desc:'목소리를 맞추며 하나 되는 합창 모임'});
 mk('path','길·계단','path',1,1,40,0,'path','#d6c6a6','#9c8664',{short:'계단·다리도',desc:'방향과 경사를 골라 길·계단·다리를 한 칸씩 이어 짓습니다'});
-mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.04,desc:'단정한 회색 보도블록'});
-mk('f_brick','벽돌 바닥','floor',1,1,20,0,'floor','#b9694c','#8c4a33',{pat:'brick',beauty:0.05,desc:'따뜻한 붉은 벽돌'});
-mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',beauty:0.03,desc:'밟으면 소리 나는 자갈길'});
-mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.05,desc:'결이 보이는 나무 바닥'});
-mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.08,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
-mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.1,desc:'분홍 꽃이 핀 낮은 잔디'});
-mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'반값 환불',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 비용의 절반이 돌아옵니다'});
+mk('f_block','보도블록','floor',1,1,15,0,'floor','#c9c2b6','#a59d90',{pat:'grid',beauty:0.1,desc:'단정한 회색 보도블록'});
+mk('f_brick','벽돌 바닥','floor',1,1,20,0,'floor','#b9694c','#8c4a33',{pat:'brick',beauty:0.1,desc:'따뜻한 붉은 벽돌'});
+mk('f_gravel','자갈','floor',1,1,10,0,'floor','#c3b8a5','#8f8573',{pat:'dots',beauty:0.1,desc:'밟으면 소리 나는 자갈길'});
+mk('f_wood','나무 바닥','floor',1,1,25,0,'floor','#b88a58','#7d5732',{pat:'plank',beauty:0.1,desc:'결이 보이는 나무 바닥'});
+mk('f_step','디딤돌','floor',1,1,25,0,'floor','#7fae63','#a8a294',{pat:'stepping',beauty:0.2,desc:'잔디 위에 놓은 넓적한 디딤돌. 걸을 수 있어요'});
+mk('f_clover','꽃잔디','floor',1,1,20,0,'floor','#76a85a','#e57aa5',{pat:'flower',beauty:0.3,desc:'분홍 꽃이 핀 낮은 잔디'});
+mk('f_erase','바닥 지우기','floor',1,1,0,0,'floor','#7fae63','#5c8a48',{pat:'erase',short:'철거비',desc:'칠한 바닥을 걷어내고 잔디로 되돌립니다. 철거비가 들어요(바닥 값의 '+Math.round(FLOOR_DEMO_K*100)+'%)'});
 mk('ter_set','땅 높이','path',1,1,60,0,'terrain','#9b7752','#2f4a3c',{hidden:true,short:'한 층 30',desc:'칸을 눌러 고른 높이로 땅을 올리거나 내립니다. 위에 있는 건물·바닥도 함께 움직여요. 한 층 올리기 60, 내리기 30'});
 mk('ter_ramp','흙 경사로','path',1,1,80,0,'terrain','#b48d5f','#7a5530',{hidden:true,short:'오르내리는 길',desc:'한 층 높은 땅으로 걸어 오르는 흙 비탈. 화살표가 오르는 방향이고, 그쪽 땅이 낮으면 한 층 높여 줘요(값 포함)'});
 /* 꾸미기에 마음 쓰도록: 기능 건물(예배·교제·매장·돌봄·편의·주차)은 2배 값.
@@ -160,9 +183,12 @@ var D={}; DEFS.forEach(function(d){D[d.id]=d;});
 var SUB_OF={room:'service',chapel:'service',grand:'service',outdoor:'service',praise:'service',pray:'pray',bible:'pray',dawn:'pray',mission:'pray',
   cell:'group',youth:'group',hall:'hall',
   shop:'food',dining:'food',bakery:'food',market:'food',cafe:'cafe',coffeecart:'cafe',vending:'cafe',books:'book',bookstore:'book',flowercart:'book',
-  kids:'kids',nursery:'kids',study:'kids',playground:'kids',pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
-  wc:'toilet',wc2:'toilet',bench:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',info:'etc',nurse:'etc',busstop:'etc'};
+  pantry:'neighbor',foodbank:'neighbor',clinic:'neighbor',counsel:'mind',elder:'mind',
+  wc:'toilet',wc2:'toilet',nursery:'dept',kinder:'dept',kids:'dept',teens:'dept',study:'dept',playground:'dept',bench:'rest',bench_stone:'rest',bench_iron:'rest',bench_back:'rest',bench_round:'rest',bench_flower:'rest',lounge:'rest',gazebo:'rest',parasol:'rest',picnic:'rest',swing:'rest',bin:'etc',drinkfount:'etc',purifier:'etc',recycle:'etc',info:'etc',nurse:'etc',busstop:'etc'};
 for(var sk in SUB_OF)if(D[sk])D[sk].sub=SUB_OF[sk];
+/* 레벨이 없는 요소: 벤치·화장실·그릴처럼 건물이 아닌 것은 투자·레벨업이 없고, 회전만 NOLV_ROT배로 빨라진다 */
+var NOLV=['bench','bench_stone','bench_iron','bench_back','bench_round','bench_flower','wc','wc2','grill','picnic','parasol','gazebo','bin','drinkfount','purifier','recycle','swing','library','lectern','piano','speaker','mixer','drums','offering','board','bell','bikerack','busstop'];
+NOLV.forEach(function(id){if(D[id])D[id].nolv=1;});
 // 한 칸짜리 소품은 그림을 절반 크기로 그리므로 높이도 절반 (입구·출구는 제 높이)
 function heightOf(id){var d=D[id];return heightOfDef(d)*(d.cell&&d.kind!=='gate'?CELL_K:1);}
 function heightOfDef(d){

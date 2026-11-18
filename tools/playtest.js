@@ -28,7 +28,7 @@ const RULES = [
   const page = await browser.newPage({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2 });
   const errs = []; page.on('pageerror', e => errs.push(e.message));
   await page.addInitScript(seed => { let s = seed; Math.random = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }, SEED);
-  await page.goto(`http://127.0.0.1:${srv.address().port}/index.html`); await page.waitForTimeout(800);
+  await page.goto(`http://127.0.0.1:${srv.address().port}/index.html`); await page.waitForTimeout(800); await page.evaluate(() => { if (typeof introSkip === "function") introSkip(); });
   const log = [], rows = [], stat = { taps: 0, builds: 0, fails: 0, toasts: {}, poor: 0, idle: 0, links: 0 };
   let week = 0;
   const note = (t) => { log.push(`[${week}주] ${t}`); };

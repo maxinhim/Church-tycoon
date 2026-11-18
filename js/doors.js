@@ -4,7 +4,11 @@
    문 앞 길 칸 하나가 길찾기와 이어지는 자리다(doorNode).
    문: {x,y,d,l}  (x,y)=건물 칸, d=문이 바깥으로 향하는 방향(DIRS 순서), l=층(0이 1층). b.door = {ent, ext} (같은 자리) */
 var OPP=[1,0,3,2];
-function faceDims(d,face){var w=d.w/U,h=d.h/U;return (face===0||face===1)?{w:h,h:w}:{w:w,h:h};}
+// 방향을 갖는 것: 울타리·생울타리와, 놓는 방향이 곧 모양인 꾸미기(dir 'axis'이고 이용 효과가 없는 것: 다리·정원 문·격자 등).
+// 그 밖의 건물·소품은 방향이 없다 — 정면(문)은 언제나 남쪽(DIRS 2: 남쪽에서 볼 때 왼쪽 아래)
+function dirKept(d){return !!d&&(d.kind==='fence'||d.kind==='hedge'||(d.dir==='axis'&&!d.fill));}
+function fixFace(d,face){return dirKept(d)?(face==null?2:face):2;}
+function faceDims(d,face){var w=d.w/U,h=d.h/U;face=fixFace(d,face);return (face===0||face===1)?{w:h,h:w}:{w:w,h:h};}
 function bDims(b){return faceDims(D[b.def],b.face);}
 function needsDoor(b){return !!defOf(b).fill;}
 function bTiles(b){
@@ -32,7 +36,7 @@ function doorSpots(b){
 }
 // 정면(b.face) 1층 가운데 칸. 정면 벽 칸들 가운데 가운데 것
 function frontDoor(b){
-  var f=b.face==null?2:b.face,sp=doorSpots(b).filter(function(s){return s.l===0&&s.d===f;});
+  var f=fixFace(D[b.def],b.face),sp=doorSpots(b).filter(function(s){return s.l===0&&s.d===f;});
   if(!sp.length)return null;
   sp.sort(function(a,c){return (a.x+a.y)-(c.x+c.y);});
   return sp[(sp.length-1)>>1];
@@ -40,7 +44,7 @@ function frontDoor(b){
 function ensureDoors(b){
   if(!needsDoor(b)){if(b.door)delete b.door;return;}
   var pick=frontDoor(b);
-  pick=pick||{x:b.x,y:b.y,d:b.face==null?2:b.face,l:0};
+  pick=pick||{x:b.x,y:b.y,d:fixFace(D[b.def],b.face),l:0};
   b.door={ent:pick,ext:{x:pick.x,y:pick.y,d:pick.d,l:pick.l}};
 }
 function doorText(b){

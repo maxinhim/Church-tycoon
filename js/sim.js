@@ -9,15 +9,19 @@ function update(dt){
   // 초반에도 마당이 비어 보이지 않게 방문자는 넉넉히, 대신 한 사람의 정착 확률은 낮게
   // 교회 문이 닫혀 있으면 아무도 오지 않는다. 주일에는 성도들이 예배하러 온다
   if(S.open){
-    var rate=VIS_RATE*(0.4+trustIdx()/75)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003;
+    var spv=(S.cov&&S.cov.spirit!=null)?S.cov.spirit:.6,rate=(VIS_RATE*(0.4+trustIdx()/75)*(SPIRIT_VIS0+SPIRIT_VIS1*spv)*(1+A.vis)*MOD.vis*parkF*evM+S.members*0.0003)*stageVisK();
     S.spawnAcc+=rate*dt;
-    while(S.spawnAcc>=1){S.spawnAcc-=1;if(V.length<VIS_MAX)spawnV(false);}
+    // 새 방문자와 예배하러 온 성도는 한도를 따로 센다 (성도가 늘어 지도가 성도로 차도 새 방문자는 계속 온다 — 예전엔 성도가 자리를 다 차지해 성장이 멈췄다)
+    var nv=0,nm=0;if(S.spawnAcc>=1||S.memAcc>=1)V.forEach(function(v){if(v.member)nm++;else nv++;});
+    // 차량·배가 다니는 스테이지는 입구·나루에서 기다렸다가 타고 온다 (stageQueue)
+    while(S.spawnAcc>=1){S.spawnAcc-=1;if(nv<VIS_MAX){if(!stageQueue(false))spawnV(false);nv++;}}
     if(isSunday()){
       S.memAcc+=Math.min(S.members,A.seats)*0.25/(WEEK/7)*dt;
-      while(S.memAcc>=1){S.memAcc-=1;if(V.length<90)spawnV(true);}
+      while(S.memAcc>=1){S.memAcc-=1;if(nm<VIS_MEM_MAX){if(!stageQueue(true))spawnV(true);nm++;}}
     }
   }
   for(var i=0;i<V.length;i++)stepV(V[i],dt);
+  stageTick(dt);
   batchTick(dt);batchSunday();
   // 목표는 주중에도 이루는 즉시 보상 (0.5초마다 확인)
   S.goalAcc=(S.goalAcc||0)+dt;if(S.goalAcc>=.5){S.goalAcc=0;questTick();wishTick();evTick();peopleTick();}
@@ -48,13 +52,13 @@ function weekEnd(){
   var online=closed?Math.round(m*1.2):0;
   var visGive=Math.round(S.visitsWeek*VIS_GIVE*(0.5+trustIdx()/100));
   var sponsor=Math.round(Math.max(0,SPONSOR0-SPONSOR_DROP*S.week));
-  var opex=Math.round((110+m*2.6+A.up)*MOD.upkeep*dc.cost),pay=Math.round(assocPay());
+  var opex=Math.round((110+m*2.6+A.up+vehUp())*MOD.upkeep*dc.cost),pay=Math.round(payWeek());
   // 재정 화면에서 항목마다 어떻게 계산됐는지 보여 주려고 계산 재료를 함께 남긴다
   var loanList=S.loans.map(function(l){return {n:LOANS[l.k].name,p:Math.round(l.pay)};});
   var upTop=S.buildings.map(function(b){var d=defOf(b),u=d.up*(maintainable(b)?1+0.6*(100-condOf(b))/100:1);return {n:d.name,u:u,w:wearStage(b)};})
     .filter(function(o){return o.u>0;}).sort(function(a,b){return b.u-a.u;}).slice(0,3);
   var X={m:m,seats:Math.round(A.seats),full:full,mood:Math.round(mood),offerMod:MOD.offer,ppFlat:ppFlat,ppK:ppGiveK(),visits:S.visitsWeek,rep:Math.round(trustIdx()),week:S.week,
-    up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,assoc:Math.round(assocPay()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
+    up:Math.round(A.up),upMod:MOD.upkeep,dc:dc.cost,dn:dc.name,assoc:Math.round(payWeek()),upTop:upTop,loans:loanList,shopRate:SHOP_COST};
   var loan=payLoans();
   // 매장 재료비는 팔 때마다 바로 나갔다(S.weekSup). 정산 때는 나머지만 오간다
   var supply=S.weekSup||0;
@@ -81,13 +85,13 @@ function weekEnd(){
   // 평판: 40을 넘으면 넘은 만큼 빨리 식는다. 봉사·선교·행사·미디어로 꾸준히 채워야 80을 지킨다
   gainRep(A.rep+MOD.rep+(mood-REP_MOOD0)*0.02);
   if(S.rep>40)S.rep=clamp(S.rep-(S.rep-40)*REP_DECAY,0,100);
-  S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;
+  S.weekInc=0;S.weekShop=0;S.weekSup=0;S.visitsWeek=0;S.joinedWeek=0;S.week++;stWeek();stageWeek();
   // 일시 만족·행사·쿨다운·노후·직분 정리
   S.tempMood=Math.abs(S.tempMood)<0.5?0:S.tempMood*0.5;
   for(var id in S.ev){var st=S.ev[id];if(!st.run&&st.cd>0)st.cd--;}
   decayWeek();trafWeek();gripeWeek();wishWeek();S.fresh=(S.fresh||0)*FRESH_DECAY;S.tv=(S.tv||0)*TRUST_VIS_DECAY;
   peopleWeek();caresWeek();
-  if(S.week-S.candWeek>=6)refreshCands();
+  resumeWeek();
   var ev='';
   if(S.evtLeft>0){S.evtLeft--;if(S.evtLeft===0)S.evt=null;}
   else if(Math.random()<0.14){

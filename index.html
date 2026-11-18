@@ -1,12 +1,14 @@
 <meta charset="utf-8">
 <title>교회개척 타이쿤</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Jua&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/hud.css">
 <link rel="stylesheet" href="css/panel.css">
 <link rel="stylesheet" href="css/responsive.css">
 <link rel="stylesheet" href="css/screens.css">
+<link rel="stylesheet" href="css/cozy.css">
+<link rel="stylesheet" href="css/intro.css">
 
 <div id="stage"><canvas id="cv" aria-label="교회 부지 지도. 드래그로 이동, 두 손가락으로 확대"></canvas></div>
 <div id="ui">
@@ -41,14 +43,16 @@
         </div>
         <span class="glbl" id="sndLbl">소리</span>
         <div class="sp" role="group" aria-labelledby="sndLbl"><button id="bMusic" aria-pressed="true">음악</button><button id="bSfx" aria-pressed="true">효과음</button></div>
+        <span class="glbl" id="navLbl">이동</span>
+        <div class="gnav" role="group" aria-labelledby="navLbl"><button class="btn" id="bStages">🗺️ 스테이지 선택</button><button class="btn" id="bHome">🏠 메인 화면</button></div>
         <button class="btn" id="bMenu" aria-pressed="false">메뉴 (이름·새로 시작·조작법)</button>
       </div>
     </div>
     </div>
   </div>
   <div id="status" role="group" aria-label="자금과 성도 수">
-    <div class="pill money"><svg class="pic" viewBox="0 0 40 40" aria-hidden="true"><rect x="3" y="17" width="26" height="15" rx="2.5" fill="#6fbf3a" stroke="#3d7d1f" stroke-width="1.6" transform="rotate(-8 16 24)"/><rect x="8" y="12" width="26" height="15" rx="2.5" fill="#8ad64a" stroke="#3d7d1f" stroke-width="1.6" transform="rotate(5 21 19)"/><circle cx="21" cy="19.5" r="5.2" fill="#d6f3a6" stroke="#3d7d1f" stroke-width="1.4"/><path d="M21 15.8v7.4M23 17.4c-.5-.8-1.3-1-2-1-1.2 0-2 .6-2 1.5 0 2 4 1 4 3 0 .9-.9 1.5-2 1.5-.9 0-1.6-.3-2.1-1" fill="none" stroke="#3d7d1f" stroke-width="1.2" stroke-linecap="round"/></svg><b id="vMoney">0</b></div>
-    <div class="pill mem"><svg class="pic" viewBox="0 0 40 40" aria-hidden="true"><circle cx="14" cy="13" r="6" fill="#f4c7a1" stroke="#a8683c" stroke-width="1.5"/><path d="M3 34c0-7 5-12 11-12s11 5 11 12z" fill="#7aa7e8" stroke="#3f6cb8" stroke-width="1.5"/><circle cx="27" cy="15" r="5" fill="#f4c7a1" stroke="#a8683c" stroke-width="1.5"/><path d="M19 34c0-6 3.5-10 8.5-10S37 28 37 34z" fill="#f2a65a" stroke="#b86b1c" stroke-width="1.5"/></svg><b id="vMem">0</b></div>
+    <div class="pill money" role="button" tabindex="0" aria-label="현황 열기" title="현황"><span id="stBadge" class="fbadge" hidden></span><img class="pic" alt="" src="assets/ui/chip_money.png"><b id="vMoney">0</b></div>
+    <div class="pill mem" role="button" tabindex="0" aria-label="현황 열기" title="현황"><img class="pic" alt="" src="assets/ui/chip_mem.png"><b id="vMem">0</b></div>
     <div class="pill debt" id="sDebt" hidden><span class="k">빚</span><b id="vDebt">0</b></div>
   </div>
   <button id="alert" class="alertb" hidden aria-label="챙길 일"><span class="ex">!</span><i id="alN" class="aln"></i></button>
@@ -59,11 +63,11 @@
     <div id="panel"></div>
   </section>
   <nav id="fab" aria-label="기능">
-    <button class="fab" data-fab="build" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V10l7-5 7 5v11M9.5 21v-6h5v6"/></svg></span><span class="fl">건축</span></button>
-    <button class="fab" data-fab="minis" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9" r="2.5"/><path d="M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6M13.5 15.2c.9-.8 1.9-1.2 3-1.2 2.5 0 4.5 2.4 4.5 5.5"/></svg><span id="evBadge" class="fbadge" hidden></span></span><span class="fl">행사</span></button>
-    <button class="fab" data-fab="people" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4.2 3.3-7 7.5-7s7.5 2.8 7.5 7"/></svg><span id="ppBadge" class="fbadge" hidden></span></span><span class="fl">성도</span></button>
-    <button class="fab" data-fab="officers" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M12 6.6v4.8M9.6 9h4.8M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/></svg></span><span class="fl">직분자</span></button>
-    <button class="fab" data-fab="status" aria-pressed="false"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-6M21.5 20h-19"/></svg><span id="stBadge" class="fbadge" hidden></span></span><span class="fl">현황</span></button>
+    <button class="fab" data-fab="build" aria-pressed="false" aria-label="건축"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V10l7-5 7 5v11M9.5 21v-6h5v6"/></svg></span><span class="fl">건축</span></button>
+    <button class="fab" data-fab="minis" aria-pressed="false" aria-label="행사"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><circle cx="16.5" cy="9" r="2.5"/><path d="M2.5 20c0-3.3 2.5-6 5.5-6s5.5 2.7 5.5 6M13.5 15.2c.9-.8 1.9-1.2 3-1.2 2.5 0 4.5 2.4 4.5 5.5"/></svg><span id="evBadge" class="fbadge" hidden></span></span><span class="fl">행사</span></button>
+    <button class="fab" data-fab="people" aria-pressed="false" aria-label="성도"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4.2 3.3-7 7.5-7s7.5 2.8 7.5 7"/></svg><span id="ppBadge" class="fbadge" hidden></span></span><span class="fl">성도</span></button>
+    <button class="fab" data-fab="officers" aria-pressed="false" aria-label="봉사자"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.2"/><path d="M12 6.6v4.8M9.6 9h4.8M8.6 13.4L7 21l5-2.6 5 2.6-1.6-7.6"/></svg></span><span class="fl">봉사자</span></button>
+    <button class="fab" data-fab="roster" aria-pressed="false" aria-label="직원"><span class="fc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11M10 20V5M16 20v-6M21.5 20h-19"/></svg></span><span class="fl">직원</span></button>
   </nav>
 </div>
 <div id="place" hidden></div>
@@ -71,7 +75,7 @@
 <div id="selCard" class="glass" hidden role="dialog" aria-label="고른 건물"></div>
 <div id="rcpt" class="glass" hidden role="status"></div>
 <section id="scr" hidden aria-labelledby="scrTitle">
-  <header class="shead"><h2 id="scrTitle">행사</h2><div class="stabs" id="scrTabs" role="tablist"></div><span class="smoney"><i class="coin" aria-hidden="true"></i><b id="scrMoney">0</b></span>
+  <header class="shead"><h2 id="scrTitle">행사</h2><div class="stabs" id="scrTabs" role="tablist"></div><span class="sinfo" id="scrInfo" aria-live="off"></span><span class="smoney"><i class="coin" aria-hidden="true"></i><b id="scrMoney">0</b></span>
     <button class="sclose" data-act="scrclose" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header>
   <div id="scrBody" class="sbody"></div>
   <div id="scrDlg" hidden></div>
@@ -81,6 +85,8 @@
 <div id="dlg" hidden></div>
 <div id="cele" hidden></div>
 <div id="lvup" hidden><div class="lvray" aria-hidden="true"></div><div class="lvb" role="status"><div class="lvk">LEVEL UP</div><div class="lvl2">교회 Level <b id="lvN">2</b></div><span id="lvS"></span></div></div>
+<div id="stage-screen" hidden aria-label="스테이지 고르기"><div class="sthead"><h2>스테이지 선택</h2><p id="st-sub">목회할 곳을 고르고 시작 방법을 눌러 주세요</p></div><div id="stage-grid"></div></div>
+<div id="intro-screen" role="button" tabindex="0" aria-label="Church Tycoon — 눌러서 시작"><img class="intro-logo" src="assets/intro/intro_logo.png" alt="Church Tycoon" draggable="false"><span class="intro-btn" id="intro-btn"><img src="assets/intro/intro_btn.png" alt="Tap to Start" draggable="false"></span></div>
 <div id="rotate" role="alert">
   <div class="box">
     <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="5" width="20" height="38" rx="3.5"/><path d="M22 38h4"/><path d="M40 15a10 10 0 0 1-6 9.2M36.5 25.5l-2.5-1.3 1.3-2.7"/></svg>
@@ -93,6 +99,7 @@
 <script src="js/balance.js"></script>
 <script src="js/buildings.js"></script>
 <script src="js/state.js"></script>
+<script src="js/stages.js"></script>
 <script src="js/pathfinding.js"></script>
 <script src="js/visitors.js"></script>
 <script src="js/gripes.js"></script>
@@ -108,6 +115,7 @@
 <script src="js/teams.js"></script>
 <script src="js/bldlv.js"></script>
 <script src="js/people.js"></script>
+<script src="js/hiredata.js"></script>
 <script src="js/managers.js"></script>
 <script src="js/entrance.js"></script>
 <script src="js/sit.js"></script>
@@ -121,6 +129,9 @@
 <script src="js/sprite-data.js"></script>
 <script src="js/sprites.js"></script>
 <script src="js/render-entities.js"></script>
+<script src="js/render-church.js"></script>
+<script src="js/render-chars.js"></script>
+<script src="js/render-rooms.js"></script>
 <script src="js/render-scene.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/hud.js"></script>
@@ -130,9 +141,12 @@
 <script src="js/quests.js"></script>
 <script src="js/panel.js"></script>
 <script src="js/screens.js"></script>
+<script src="js/roster.js"></script>
 <script src="js/stscreen.js"></script>
 <script src="js/selcard.js"></script>
 <script src="js/place.js"></script>
 <script src="js/input.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/pixicons.js"></script>
+<script src="js/intro.js"></script>
 <script src="js/main.js"></script>

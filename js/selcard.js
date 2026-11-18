@@ -22,7 +22,12 @@ function renderSelCard(){
   var key=UI.sel?'b'+UI.sel:(UI.selPiece?'p'+UI.selPiece:'f'+UI.selFloor.x+','+UI.selFloor.y);
   if(key!==scKey){scKey=key;scMore=false;scArm=0;}
   var h='',row='',more='';
-  if(UI.sel){
+  if(UI.sel&&defOf(bById(UI.sel)).kind==='city'){
+    // 도시의 이웃 건물: 땅째 사기 (값은 칸 수 × CITY_LAND_K)
+    var cb=bById(UI.sel),cd=defOf(cb),cp=cityPrice(cb),cdm=bDims(cb);
+    h='<div class="sct"><b>'+cd.name+'</b><span>이웃 건물 · '+cdm.w+'×'+cdm.h+'칸</span></div><div class="scw scinfo">'+cd.desc+'</div>';
+    row+=scBtn('citybuy','부지 매입 '+fmtS(cp),S.money>=cp?'pri':'',null,'이 건물을 땅째 사기 '+fmt(cp));
+  }else if(UI.sel){
     var b=bById(UI.sel),bd=defOf(b);
     var sub=[],md=bMode(bd);
     if(bd.cap)sub.push((md==='batch'?(b.run>0?'가동 중 ':'모이는 중 '):'이용 ')+b.inUse+'/'+bCap(b)+'명');
@@ -35,12 +40,12 @@ function renderSelCard(){
     else if(wearStage(b)>=2)warn=WEAR_NAME[wearStage(b)]+' · 낡아서 효율이 '+Math.round(condFactor(b)*100)+'%로 줄었어요';
     var lvTag=hasLv(b)?'<i class="blv">Lv '+bLv(b)+'</i>'+(bd.tier===2?'<i class="btr">상위</i>':''):'';
     h='<div class="sct"><b>'+bd.name+'</b>'+lvTag+(sub.length?'<span>'+sub.join(' · ')+'</span>':'')+'</div>'+(warn?'<div class="scw">'+warn+'</div>':'');
+    h+=slotsHtml(b);   // 메인 관리자 | 보조 직분자 슬롯
     // 레벨 올리기: 투자 게이지와 버튼
     if(hasLv(b)&&bLv(b)<BLV_MAX){
       var iw=investWhy(b);
-      h+='<div class="sclv"><span class="bar"><i style="width:'+Math.round((b.bx||0)/BLV_XP*100)+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
+      h+='<div class="sclv"><span class="bar xp"><i data-w="'+Math.round((b.bx||0)/BLV_XP*100)+'" style="width:'+(UI.xpFrom&&UI.xpFrom.id===b.id?UI.xpFrom.w:Math.round((b.bx||0)/BLV_XP*100))+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
       row+=scBtn('invest','투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
-      if(bLv(b)<BLV_MAX-1)row+=scBtn('invest10','×10',iw?'':'',null,'자금이 되는 만큼 최대 10레벨 투자');
     }
     if(mr&&!S.freeMgr)row+=scBtn('mgr',mw?'👤 관리자':'👤 관리자 필요',mw?'':'pri',null,mw?'관리자 바꾸기':'관리자 배치·청빙');
     if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
@@ -66,8 +71,9 @@ function renderSelCard(){
   }else if(isWater(UI.selFloor.x,UI.selFloor.y)){
     // 물: 다리 놓기·물 분수·물 빼기
     var wf=UI.selFloor,wn=poolCells(wf.x,wf.y).filter(function(q){return isWater(q.x,q.y);}).length;
-    h='<div class="sct"><b>물</b><span>'+wn+'칸 · 다리로 건너요</span></div>';
-    row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기')+scBtn('wfount','물 분수 '+fmtS(D.wfount.cost),'',null,'이 칸에 물 분수 놓기');
+    h='<div class="sct"><b>물</b><span>'+wn+'칸 · '+(stg().noBridge?'배로만 건너요':'다리로 건너요')+'</span></div>';
+    if(!stg().noBridge)row+=scBtn('wbridge','다리 놓기','pri',null,'이 칸에 땅 높이의 아치 다리 놓기');
+    row+=scBtn('wfount','물 분수 '+fmtS(D.wfount.cost),'',null,'이 칸에 물 분수 놓기');
   }else{
     // 빈 땅·바닥 칸: 바닥 깔기·바꾸기 (땅 높이기·낮추기·경사로·물 채우기/빼기는 없다 — 지형은 시작 지도로만 정해진다)
     var sf=UI.selFloor,cur=floorSlot(sf.x,sf.y,sf.pid).get(),gh=th(sf.x,sf.y);
@@ -78,6 +84,7 @@ function renderSelCard(){
   if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
   h+='<div class="scb">'+row+'</div>'+(scMore?more:'');
   if(h!==scHtml){el.innerHTML=h;scHtml=h;}
+  var xi=el.querySelector('.xp i');if(xi&&xi.dataset.w!=null&&UI.xpFrom){var xw=xi.dataset.w;UI.xpFrom=null;setTimeout(function(){xi.style.width=xw+'%';},30);}
 }
 // 매 프레임: 고른 것 바로 위에 붙인다. 위쪽에 자리가 없으면 아래로
 function syncSelCard(){

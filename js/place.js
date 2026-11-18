@@ -23,14 +23,9 @@ function placeKind(){
    방향이 상관없는 것(나무·분수·파라솔 등)은 입구 아치 쪽을 보게 저절로 정한다 (문이 있으면 문도 그쪽) */
 // 조경·꾸미기와 편의 소품(벤치·쓰레기통 등)은 이어 놓기·방향 화살표로 놓는다
 function isDecoCat(d){return REPEAT_CATS.indexOf(d.cat)>=0||!!d.prop;}
-function isLineKind(d){return LINE_KINDS.indexOf(d.kind)>=0||d.dir==='axis';}
-function faceMatters(d){
-  // 이용하는 건물은 모두 바라보는 방향(정면 = 문)이 있다
-  if(d.fill&&d.dir!=='axis')return true;
-  if(d.dir)return d.dir==='face';
-  if(isDecoCat(d))return d.w!==d.h||FRONT_KINDS.indexOf(d.kind)>=0;
-  return !!d.fill||d.w!==d.h||d.towerH>0||['stage','busstop'].indexOf(d.kind)>=0;
-}
+function isLineKind(d){return dirKept(d);}
+// 정면이 따로 있는 것은 없다: 건물·소품의 방향 개념을 없앴다 (문은 언제나 남쪽)
+function faceMatters(d){return false;}
 // 돌릴 수 있는 것 (옮기기 카드의 이름에 씀)
 function turnable(d){return faceMatters(d)||isLineKind(d);}
 function arrowMode(d){
@@ -46,8 +41,8 @@ function gateFace(d,x,y){
 }
 // 지금 미리보기가 실제로 지어질 방향
 function plFace(){
-  var d=D[UI.tool];if(!d||!UI.ghost||movingId()||turnable(d))return UI.face;
-  return gateFace(d,UI.ghost.x,UI.ghost.y);
+  var d=D[UI.tool];if(!d||!UI.ghost)return 2;
+  return fixFace(d,UI.face);
 }
 function plScr(x,y,z){var r=rotPt(x,y);return toScreen(r[0],r[1],z);}
 // 한 칸 소품을 길 칸에 놓으면 그 칸이 막힌다. 막아서 문 앞까지 길이 끊기는 건물이 생기면 그 자리에는 놓지 못한다
@@ -104,7 +99,7 @@ function plBox(){
   var k=placeKind(),x,y,w,h,z0,H;
   if(k==='bld'){if(!UI.ghost)return null;var dm=faceDims(D[UI.tool],UI.face);x=UI.ghost.x;y=UI.ghost.y;w=dm.w;h=dm.h;z0=plLevelZ(D[UI.tool],x,y,UI.face);H=heightOf(UI.tool);}
   else if(k==='path'){var c=UI.pc;if(!c||c.x==null)return null;x=c.x;y=c.y;w=1;h=1;z0=c.l*LV;H=.35;}
-  else if(k==='floor'){if(!UI.ghost)return null;x=UI.ghost.x;y=UI.ghost.y;w=1;h=1;z0=ghostZ();H=.1;}
+  else if(k==='floor'){if(!UI.ghost)return null;var fz=floorSize(UI.ghost);x=UI.ghost.x;y=UI.ghost.y;w=fz[0];h=fz[1];z0=ghostZ();H=.1;}
   else{var st=selTarget();if(!st)return null;x=st.x;y=st.y;w=1;h=1;z0=st.z;H=st.H;}
   var L=1e9,R=-1e9,T=1e9,B=-1e9;
   [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(function(p){[z0,z0+H].forEach(function(z){var q=plScr(p[0],p[1],z);L=Math.min(L,q[0]);R=Math.max(R,q[0]);T=Math.min(T,q[1]);B=Math.max(B,q[1]);});});
@@ -193,21 +188,34 @@ function syncPlace(){
   // 조경 이어 짓기 중이면 ✓·✕ 사이에 되돌리기 (건물은 안내 띠가 없으므로 여기에만 있다)
   var un=root.querySelector('[data-pl="undo"]');un.hidden=!hasUn;
   if(!un.hidden)plMove(un,cl(mid,22,vw-22),cl(top,22,vh-22),32);
-  var can=k==='path'?plPathWhy()==='':(k==='floor'?!cellWhy(UI.ghost.x,UI.ghost.y,UI.tool):!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face));
+  var can=k==='path'?plPathWhy()==='':(k==='floor'?floorAreaOk():!placeWhy(D[UI.tool],UI.ghost.x,UI.ghost.y,UI.face));
   // 못 지을 때도 누를 수는 있게 두고(회색), 누르면 이유를 알려 준다
   ok.classList.toggle('off',!can);ok.setAttribute('aria-disabled',String(!can));
   // 바닥 타일: ✓ 왼쪽에 한 칸 값(바꾸면 바꾸는 값)
   var pr=root.querySelector('.ppr'),fc=tf?floorCostAt():null;pr.hidden=fc==null;
-  if(fc!=null){var t=fc.pre!=null?[fc.pre,fc.none?'':fmtS(fc.c)].filter(Boolean).join(' · '):(fc.swap?'바꾸기 ':'')+(fc.c<0?'+':'')+fmtS(Math.abs(fc.c));pr.hidden=!t;if(pr.textContent!==t)pr.textContent=t;pr.classList.toggle('off',!can);
+  if(fc!=null){var t=fc.pre!=null?[fc.pre,fc.none?'':fmtS(fc.c)].filter(Boolean).join(' · '):(fc.area?fc.n+'칸 ':fc.swap?'바꾸기 ':'')+(fc.c<0?'+':'')+fmtS(Math.abs(fc.c));pr.hidden=!t;if(pr.textContent!==t)pr.textContent=t;pr.classList.toggle('off',!can);
     pr.style.transform='translate('+Math.round(Math.max(60,cl(mid-half,22,vw-22)-23))+'px,'+Math.round(cl(top,22,vh-22))+'px) translate(-100%,-50%)';}
   ok.setAttribute('aria-label',fc!=null?(can?(fc.swap?'바꾸기':'깔기')+' '+fmtS(Math.abs(fc.c))+', 다음 칸으로':'여기에는 깔 수 없어요'):line?'이 칸 짓고 다음 칸으로':(can?(movingId()?'여기로 옮기기':D[UI.tool].name+' 짓기 · '+fmtS(D[UI.tool].cost)):'여기에는 지을 수 없어요'));
 }
+// 바닥 창 제목 오른쪽: 한 번에 까는 넓이 단추 (가로×세로)
+function floorSizeBtns(){
+  var z=UI.fsz||[1,1];
+  return '<span class="fszg" role="group" aria-label="한 번에 까는 넓이">'+FLOOR_SIZES.map(function(s){var on=s[0]===z[0]&&s[1]===z[1];
+    return '<button class="fszb'+(on?' on':'')+'" data-act="fsz" data-v="'+s[0]+'x'+s[1]+'" aria-pressed="'+on+'" title="가로 '+s[0]+' × 세로 '+s[1]+'칸">'+s[0]+'×'+s[1]+'</button>';}).join('')+'</span>';
+}
+// 고른 넓이에 깔 수 있는 칸이 하나라도 있고 자금이 되면 ''
+function floorAreaWhy(){
+  var g=UI.ghost;if(!g)return '';
+  if(floorSize(g)[0]*floorSize(g)[1]===1)return floorWhy(g.x,g.y,UI.tool,g.pid);
+  var pl=floorPlan(g,UI.tool);if(!pl.cells.length)return pl.skip||'깔 수 있는 칸이 없어요';
+  return S.money<pl.cost?'자금이 부족해요':'';
+}
+function floorAreaOk(){return !!UI.ghost&&!floorAreaWhy();}
 // 미리보기 칸에 바닥을 깔거나 바꿀 때 드는 값
-function floorCostAt(){
+function floorCostAt(){   // 고른 넓이(floorSize) 전체: 깔 칸 수·값(바뀌는 칸은 철거비 포함)
   var g=UI.ghost,d=D[UI.tool];if(!g||!d)return null;
-  var sl=floorSlot(g.x,g.y,g.pid),pv=sl&&sl.get();
-  if(UI.tool==='f_erase')return pv&&D[pv]?{c:-Math.floor(D[pv].cost*0.5),swap:false}:null;
-  return pv&&pv!==UI.tool?{c:floorSwapCost(pv,UI.tool),swap:true}:{c:d.cost,swap:false};
+  var pl=floorPlan(g,UI.tool);if(!pl.cells.length)return UI.tool==='f_erase'?null:{c:d.cost*pl.n,swap:0,n:pl.n,area:pl.n>1};   // 못 까는 자리여도 값은 보여 준다
+  return {c:pl.cost,swap:pl.swap,n:pl.cells.length,area:pl.n>1};
 }
 // 바닥 미리보기를 d 방향 다음 칸으로 (데크 위면 같은 높이의 다음 데크, 없으면 땅)
 function floorStep(g,d){
@@ -336,10 +344,11 @@ function plOk0(){
   if(k==='path'){UI.pbarOpen=false;var why=pcBuild();if(why){toast(why,1600);sfx('error',.4);}else{plLock=now+180;plBuzz();sfx('floor',.5);}renderDetail();hud(true);return;}
   // 바닥: 이 칸을 칠하고 화살표 방향으로 한 칸 나아간다
   if(k==='floor'){
-    var g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':paintFloor(g0.x,g0.y,UI.tool,g0.pid);
+    var g0=UI.ghost,fw=!g0?'자리를 먼저 고르세요':paintFloorArea(g0,UI.tool),fz=floorSize(g0);
     if(fw){toast(fw,1400);sfx('error',.4);return;}
     plLock=now+150;plBuzz();sfx('floor',.45,90);
-    UI.flast={x:g0.x,y:g0.y,pid:g0.pid};floorStep(g0,UI.fdir);
+    // 넓이만큼 화살표 쪽으로 건너가 이어 깐다 (가로 방향이면 가로 칸 수, 세로 방향이면 세로 칸 수)
+    UI.flast={x:g0.x,y:g0.y,pid:g0.pid};for(var fs=DIRS[UI.fdir][0]?fz[0]:fz[1];fs>0;fs--)floorStep(g0,UI.fdir);
     renderDetail();hud(true);return;
   }
   if(k!=='bld'||!UI.ghost)return;
@@ -418,9 +427,9 @@ function renderPbar(){
       '<div class="seg"><button class="btn" data-act="plevel" data-v="-1" aria-label="시작 높이 한 층 낮게"'+(c.l<=MINH?' disabled':'')+'>▼</button><span class="lvl">'+lv+'</span><button class="btn" data-act="plevel" data-v="1" aria-label="시작 높이 한 층 높게"'+(c.l>=MAXL?' disabled':'')+'>▲</button></div>'+
       (c.hist.length?'<button class="btn" data-act="pundo">되돌리기</button>':'')+'<button class="btn" data-act="pbar" aria-label="접기">⌃</button></div>';
   }else{
-    var fwy=UI.ghost?floorWhy(UI.ghost.x,UI.ghost.y,UI.tool,UI.ghost.pid):'';
-    var fsl=UI.ghost&&floorSlot(UI.ghost.x,UI.ghost.y,UI.ghost.pid),fpv=fsl&&fsl.get(),fnc=fpv&&fpv!==UI.tool&&d.cost?floorSwapCost(fpv,UI.tool):null;
-    h='<div class="ptx"><b>'+d.name+'</b>'+(d.cost?' <span class="pc">'+(fnc!=null?'바꾸기 '+(fnc<0?'+':'')+fmtS(Math.abs(fnc)):'한 칸 '+fmtS(d.cost))+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
+    var fwy=UI.ghost?floorAreaWhy():'';
+    var fca=floorCostAt(),ptag=fca?(fca.area?fca.n+'칸 '+fmtS(fca.c)+(fca.swap?' (바꾸는 '+fca.swap+'칸 철거비 포함)':''):(fca.swap?'바꾸기 ':'한 칸 ')+fmtS(fca.c)):(d.cost?'한 칸 '+fmtS(d.cost):'');
+    h='<div class="ptx"><b>'+d.name+'</b>'+(ptag?' <span class="pc">'+ptag+'</span>':'')+' · '+(fwy?bad(fwy):d.desc)+'<br><span class="pt">'+(floorSize(UI.ghost)[0]*floorSize(UI.ghost)[1]>1?'고른 넓이를 ✓로 한 번에 깔아요 · 깔린 다른 바닥은 새 바닥으로 바뀌고 철거비가 더해져요':'지도를 눌러 시작할 칸을 고르고, 화살표로 깔아 나갈 방향을 정한 뒤 ✓로 한 칸씩 깔아요')+'</span></div><div class="btns">'+undo+'<button class="btn pri" data-act="cancel">완료</button></div>';
   }
   // 내용이 같으면 다시 그리지 않는다 (누르는 도중 버튼이 바뀌어 눌림이 사라지지 않게)
   if(h!==plHtml){el.innerHTML=h;plHtml=h;}

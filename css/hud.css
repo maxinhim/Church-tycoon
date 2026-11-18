@@ -225,3 +225,20 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:14.5px;line-h
 .alh b{font-size:13px;color:#c0261b}
 .alx{border:0;background:transparent;font-size:15px;color:var(--muted);padding:2px 6px;cursor:pointer}
 .alrep{margin-top:8px;width:100%}
+/* 화면을 덜 가리게 작게: 챙길 일 단추 · 날짜 창 (맨 뒤에 둔 덮어쓰기) */
+.alertb{width:30px;height:30px;bottom:50px;left:12px;border-width:2px;box-shadow:0 0 0 2px #c0261b,0 3px 8px rgba(0,0,0,.4)}
+.alertb .ex{font-size:19px;text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.alertb .aln{right:-5px;top:-5px;min-width:15px;height:15px;border-radius:8px;font:800 9px/11px sans-serif;border-width:2px}
+#clock{padding:2px 6px 3px;min-width:92px;gap:1px;border-radius:8px}
+.ck1{gap:5px}.ck1 b{font-size:10.5px}.ck1 span{font-size:8px}
+.days{gap:1px}.days i{font-size:7.5px;line-height:10px;border-radius:3px}
+.ckw{font-size:8.5px}.ckw #wxNext{display:none}.wxi{width:10px;height:10px}
+.ckbar{height:2px}
+/* 건물 경험치 게이지: 굵고, 초록 액체가 차오르는 모양 */
+.sclv{gap:7px;font-size:11px;font-weight:700;color:var(--ink)}
+.sclv .bar.xp{height:13px;min-width:92px;border-radius:7px;background:linear-gradient(#1b2e24,#2c4a3a);box-shadow:inset 0 2px 3px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.35);position:relative;overflow:hidden}
+.sclv .bar.xp i{height:100%;border-radius:7px;background:linear-gradient(180deg,#c9ffb0 0,#6fe06a 30%,#2fbf4f 62%,#1c8f3a 100%);box-shadow:0 0 8px rgba(80,230,110,.75);transition:width .7s cubic-bezier(.2,.9,.3,1);position:relative;overflow:hidden}
+.sclv .bar.xp i::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 20% 70%,rgba(255,255,255,.55) 0 1.5px,transparent 2.5px),radial-gradient(circle at 60% 40%,rgba(255,255,255,.5) 0 1.2px,transparent 2.2px),radial-gradient(circle at 85% 75%,rgba(255,255,255,.5) 0 1.6px,transparent 2.6px);background-size:26px 13px}
+.sclv .bar.xp i::after{content:"";position:absolute;left:0;right:0;top:1px;height:4px;border-radius:4px;background:linear-gradient(rgba(255,255,255,.65),rgba(255,255,255,0))}
+@media (prefers-reduced-motion:no-preference){.sclv .bar.xp i::before{animation:xpBub 1.8s linear infinite}}
+@keyframes xpBub{from{background-position:0 0}to{background-position:26px -4px}}

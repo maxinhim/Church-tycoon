@@ -19,7 +19,7 @@ function levelTick(quiet){
     for(var k=from+1;k<=L;k++){gift+=lvGift(k);opened=opened.concat(lvUnlockNames(k),tierNames(k));}
     S.lvl=L;S.money+=gift;
     addLog('교회 Lv '+L+' · 축하금 +'+fmt(gift)+(opened.length?' · 새로 열림 '+opened.join(', '):''));
-    syncLevel(true);showLevelUp(L,from,gift,opened);save();
+    syncLevel(true);showLevelUp(L,from,gift,opened);save();if(typeof syncEvBadge==='function')syncEvBadge();if(UI.scr&&typeof renderScreen==='function')renderScreen();
   }
   else syncLevel();
 }
@@ -42,7 +42,7 @@ function showLevelUp(L,from,gift,opened){
   $('#lvN').textContent=L;
   $('#lvS').textContent='축하금 +'+fmt(gift||0)+(opened&&opened.length?' · 새로 열림 '+opened.slice(0,3).join(', ')+(opened.length>3?' 외 '+(opened.length-3):''):'')+(L-from>1?' · '+(L-from)+'단계 올랐어요':'')+(L>=LV_MAX?' · 최고 레벨!':'');
   el.hidden=false;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
-  sfx('bell',.9,0);setTimeout(function(){sfx('join',.8,0);},250);setTimeout(function(){sfx('coins',.6,0);},520);
+  sfx('levelup',.7,0);
   clearTimeout(lvTimer);lvTimer=setTimeout(function(){el.hidden=true;},2600);
   if(!REDUCED.matches)fireworks();
 }

@@ -6,10 +6,11 @@
    예배·교제 건물(일괄 가동)은 안에서 정원이 차기를 기다렸다가 함께 나온다(bldlv.js).
    */
 // member: 주일에 예배하러 오는 성도 (정착 판정 없음, 말씀이 가장 급하다). wallet: 매장에서 쓸 수 있는 돈
-function spawnV(member){
-  var needs={};NEEDS.forEach(function(n){needs[n]=22+Math.random()*34;});
+function spawnV(member,at){   // at: 나타날 노드(차량이 내려 준 곳). 없으면 교회 입구
+  var needs={};NEEDS.forEach(function(n){var r=n==='word'?VIS_WORD0:VIS_OTHER0;needs[n]=r[0]+Math.random()*(r[1]-r[0]);});   // 말씀이 가장 급하다 (예배를 보러 온다)
   if(member)needs.word=8+Math.random()*10;
-  V.push({x:ENT+0.5,y:ROWS-0.5,z:0,node:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
+  var ap=at!=null?nodePos(at):null;
+  V.push({x:ap?ap.x:entC(),y:ap?ap.y:ROWS-0.5,z:ap?ap.z:0,node:at!=null?at:gateNode(),needs:needs,state:'idle',t:0.2,path:null,pi:0,target:0,want:'',inside:0,wait:0,annoy:0,idleN:0,blocked:{},
     member:!!member,wallet:Math.round(member?36+Math.random()*120:20+Math.random()*96),
     life:VIS_LIFE[0]+Math.random()*VIS_LIFE[1],strolls:0,speed:(1.9+Math.random()*0.7)*G*VIS_SPEED,ph:Math.random()*6.28,
     tint:['#c75b4a','#4a78c7','#8a5bb5','#d19a2e','#3d9b7a','#b5587f','#e0e0e0'][(Math.random()*7)|0],
@@ -104,35 +105,47 @@ function finishVisit(v){
   v.inside=0;v.target=0;v.state='idle';v.t=0.3;v.idleN=0;
 }
 function goLeave(v){
-  var g=gateNode(),p=navPath(v.node,function(n){return n===g;});
+  // 차량·배를 타고 온 사람은 내린 곳으로 돌아가 다시 탄다
+  var g=v.ride&&dropNode()!=null?dropNode():gateNode(),p=navPath(v.node,function(n){return n===g;});
   if(!p){depart(v);return;}
   v.path=p;v.pi=0;v.state='leave';v.target=0;
   if(!p.length)depart(v);
 }
+/* 지금 교회에서 채울 수 있는 욕구인지: 그 욕구를 채워 주는 건물이 아직 하나도 열리지 않았으면(교회 Level 잠금) 방문자는 그것을 바라지 않는다.
+   말씀은 언제나 바란다. recalc 때 다시 본다 (gripes.js rebuildDecor가 NEED_ON을 비운다) */
+var NEED_ON={};
+function needOn(n){
+  if(n==='word')return true;
+  if(NEED_ON[n]!=null)return NEED_ON[n];
+  return (NEED_ON[n]=DEFS.some(function(d){return d.kind==='bld'&&!d.hidden&&!d.retired&&d.fill&&d.fill[n]&&!isLocked(d.id);}));
+}
+// 평균 욕구: 말씀에 더 큰 무게, 아직 채울 길이 없는 욕구는 뺀다
+function needAvg(v){var w=0,s=0;NEEDS.forEach(function(n){if(!needOn(n))return;var k=n==='word'?NEED_W_WORD:1;s+=k*v.needs[n];w+=k;});return s/w;}
 function depart(v){
   v.dead=true;gripeLeave(v);
-  var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4-v.annoy*5;
+  var avg=needAvg(v)-v.annoy*5;
   if(v.member){gainRep((avg-REP_MOOD0)*0.001);return;}
   gainRep((avg-REP_MOOD0)*0.003);
   S.visitsWeek++;
   // 교회가 클수록 한 사람이 정착하기 어렵다 (끝없는 성장 방지)
-  var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(v.needs.word>=45?1:0.25)/(1+S.members/200);
+  var sv=(S.cov&&S.cov.spirit!=null)?S.cov.spirit:.6;
+  var p=clamp((avg-42)/50,0,1)*JOIN_P*MOD.join*(SPIRIT_JOIN0+SPIRIT_JOIN1*sv)*(v.needs.word>=45?1:WORD_JOIN_LOW)/(1+S.members/200)*stageJoinK(v);
   if(Math.random()<p){S.members++;S.joinedWeek++;S.newSinceBap++;sfx('join',.45,300);F.push({x:entC(),y:PZ-1.2,t:1.6,text:'+1 성도',col:'#fff2b0'});}
 }
 // 욕구가 이만큼 차면 그 욕구는 됐다고 보고, 평균이 이만큼이면 돌아간다 (높을수록 건물을 더 많이 들른다)
 function decide(v){
-  var avg=NEEDS.reduce(function(s,n){return s+v.needs[n];},0)/4;
+  var avg=needAvg(v);
   if(v.life<=0||avg>=NEED_OK){goLeave(v);return;}
   // 둘레를 둘러보고(삭막한지·쓰레기통), 급한 일(화장실·쉴 자리·마실 것)이 있으면 그것부터
   gripeLook(v);
   if(v.urge&&urgeGo(v))return;
   if(v.strolls<VIS_STROLL_MAX&&Math.random()<VIS_STROLL&&stroll(v))return;
   // 가장 모자란 욕구부터 보되, 사람마다 조금씩 섞어 여러 종류의 건물을 고루 들른다
-  var nr={};NEEDS.forEach(function(n){nr[n]=v.needs[n]+Math.random()*30;});
+  var nr={};NEEDS.forEach(function(n){nr[n]=v.needs[n]+Math.random()*30-(n==='word'?VIS_WORD_FIRST:0);});
   var order=NEEDS.slice().sort(function(a,b){return nr[a]-nr[b];});
   for(var oi=0;oi<order.length;oi++){
     var n=order[oi];
-    if(v.needs[n]>=NEED_OK)continue;
+    if(v.needs[n]>=NEED_OK||!needOn(n))continue;
     var cands=S.buildings.filter(function(b){var d=defOf(b);return d.fill&&d.fill[n]&&bOpen(b)&&!(v.blocked[b.id]>S.clock)&&wxOpen(d);});
     // 지갑에 돈이 있으면 매장에 조금 더 끌린다
     // 모든 건물을 골고루: 거리보다 '이번 주에 얼마나 쓰였나(자리 대비)'와 '지금 붐비나'를 더 크게 본다.
@@ -140,7 +153,7 @@ function decide(v){
     var jit={},wq={};cands.forEach(function(b){jit[b.id]=Math.random()*4;});
     // 문 앞에서 기다리는 사람이 많은 곳은 피한다
     V.forEach(function(o){if(o.state==='wait'&&o.target)wq[o.target]=(wq[o.target]||0)+1;});
-    var cost=function(b){var d=defOf(b),cp=Math.max(1,bCap(b));return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5/bPerf(b)+(b.run>0?4:bMode(d)==='batch'?-b.inUse/cp*3:b.inUse/cp*4)+(wq[b.id]||0)*3-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)+jit[b.id];};
+    var cost=function(b){var d=defOf(b),cp=Math.max(1,bCap(b));return (Math.abs(b.x-v.x)+Math.abs(b.y-v.y))*.3/G+(b.weekUses||0)/cp*2.5/bPerf(b)+(b.run>0?4:bMode(d)==='batch'?-b.inUse/cp*3:b.inUse/cp*4)+(wq[b.id]||0)*3-(d.income&&v.wallet>=d.income*SHOP_K?3:0)-novelty(b)-(n==='word'&&d.cat==='worship'?VIS_WORD_PULL:0)+jit[b.id];};
     cands.sort(function(a,b){return cost(a)-cost(b);});
     for(var ci=0;ci<Math.min(3,cands.length);ci++){
       var b=cands[ci],es=entNodes(b).filter(function(n){return NAV.reach[n];}),p=es.length?navPath(v.node,function(m){return es.indexOf(m)>=0;}):null;

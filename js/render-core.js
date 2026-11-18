@@ -9,7 +9,10 @@ var ZB=0;
    legacy(fn): 예전 칸 단위로 짠 그림(건물·꾸미기·땅·울타리·입구)을 그대로 그린다. 그동안 COLS·ROWS·ENT·PZ·BAND도 예전 값이 된다.
    legacy 안에서는 지도 상태(occ·땅 높이)를 칸 좌표로 읽지 말 것 — 좌표가 예전 단위다 */
 var U=1,ZU=1,CELL_K=.5;
-function P(rx,ry,z){return [PJ.ox+(rx-ry)*HW*U*PJ.s, PJ.oy+(rx+ry)*HH*U*PJ.s-((z||0)*ZU+ZB)*ZH*PJ.s];}
+/* 월드 그리기(WLD): 켜면 P·quad·box에 주는 좌표를 '회전하지 않은 지도 좌표'로 본다 — 건물 내부 가구·사람을 화면 회전과 상관없이 방위가 고정되게 그릴 때 쓴다.
+   WLD_FR는 이때 화면 방향으로 돌린 방 사각형(가까운 벽 쪽 세로 장식은 그리지 않는다) */
+var WLD=0,WLD_FR=null;
+function P(rx,ry,z){if(WLD){var m=rotPt(rx,ry);rx=m[0];ry=m[1];}return [PJ.ox+(rx-ry)*HW*U*PJ.s, PJ.oy+(rx+ry)*HH*U*PJ.s-((z||0)*ZU+ZB)*ZH*PJ.s];}
 // 한 칸짜리 소품: 지금 칸 단위로, 높이는 CELL_K배로 그린다 (가로·세로는 칸이 작아서 저절로 CELL_K배)
 function cellDraw(b,fn){var k=ZU;ZU=D[b.def]&&D[b.def].kind==='gate'?1:CELL_K;try{fn();}finally{ZU=k;}}
 function legacy(fn){
@@ -33,7 +36,13 @@ function shade(hex,f){
   return (SC[k]='rgb('+(r|0)+','+(g|0)+','+(b|0)+')');
 }
 var EDGE='rgba(28,24,20,.32)';
+function wldNear(pts){   // 가까운(낮은) 벽에 걸린 세로 장식은 숨긴다
+  var F=WLD_FR,i,sx=true,sy=true,m,m0=rotPt(pts[0][0],pts[0][1]);if(!F||pts.length<3)return false;
+  for(i=1;i<pts.length;i++){m=rotPt(pts[i][0],pts[i][1]);if(Math.abs(m[0]-m0[0])>1e-6)sx=false;if(Math.abs(m[1]-m0[1])>1e-6)sy=false;}
+  return (sx&&!sy&&m0[0]>F.x1-.3)||(sy&&!sx&&m0[1]>F.y1-.3);
+}
 function quad(pts,fill,line){
+  if(WLD&&wldNear(pts))return;
   var c=PJ.c;c.beginPath();
   for(var i=0;i<pts.length;i++){var q=P(pts[i][0],pts[i][1],pts[i][2]);if(i)c.lineTo(q[0],q[1]);else c.moveTo(q[0],q[1]);}
   c.closePath();
@@ -41,6 +50,7 @@ function quad(pts,fill,line){
   if(line){c.strokeStyle=line;c.lineWidth=Math.max(.5,PJ.s*.9);c.stroke();}
 }
 function box(r,z0,z1,col,top){
+  if(WLD){var m=rrect(r.x0,r.y0,r.x1,r.y1);WLD=0;try{box(m,z0,z1,col,top);}finally{WLD=1;}return;}
   quad([[r.x0,r.y1,z0],[r.x1,r.y1,z0],[r.x1,r.y1,z1],[r.x0,r.y1,z1]],shade(col,.93),EDGE);
   quad([[r.x1,r.y0,z0],[r.x1,r.y1,z0],[r.x1,r.y1,z1],[r.x1,r.y0,z1]],shade(col,.74),EDGE);
   quad([[r.x0,r.y0,z1],[r.x1,r.y0,z1],[r.x1,r.y1,z1],[r.x0,r.y1,z1]],top||shade(col,1.07),EDGE);

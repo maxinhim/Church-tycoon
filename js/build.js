@@ -29,16 +29,16 @@ function bump(){
 }
 function build(id,x,y,face){
   if(D[id]&&D[id].kind==='floor')return !paintFloor(x,y,id);
-  var d=D[id];if(face==null)face=2;
+  var d=D[id];face=fixFace(d,face);
   if(S.money<d.cost||!canPlace(d,x,y,face)||tierWhy(id)||d.retired||d.hidden||propCutWhy(d,x,y))return false;
   S.money-=d.cost;
-  var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0,bw:S.week};setPlaceLevel(nb,d,x,y,face);
+  var nb={id:S.nextId++,def:id,x:x,y:y,face:face,inUse:0,uses:0,bw:S.week,supportStaff:[]};setPlaceLevel(nb,d,x,y,face);
   S.buildings.push(nb);addFresh(d.beauty);noteNew();
   rebuildOcc();bump();recalc();
   save();return true;
 }
 function demolish(id){
-  var b=bById(id);if(!b||b.fixed)return;
+  var b=bById(id);if(!b||b.fixed||defOf(b).kind==='city')return;   // 이웃 건물은 철거하지 못하고 땅째 산다
   var d=defOf(b);
   S.money+=Math.floor(d.cost*0.5);
   S.buildings=S.buildings.filter(function(x){return x.id!==id;});

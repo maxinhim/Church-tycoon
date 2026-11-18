@@ -98,3 +98,7 @@ h1{font-size:12.5px}
 #gearMenu .btn{white-space:nowrap;width:100%;height:28px}
 #gearMenu .sp button{height:28px;min-width:30px;font-size:12px}
 #gearMenu .sp{flex-wrap:nowrap}
+#clock{padding:2px 6px 3px;min-width:92px;gap:1px;border-radius:8px}
+.ck1 b{font-size:10.5px}.ck1 span{font-size:8px}
+.days i{font-size:7.5px;line-height:10px;border-radius:3px}
+.ckw{font-size:8.5px}.wxi{width:10px;height:10px}

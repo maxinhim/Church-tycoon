@@ -11,7 +11,7 @@ var NAV={reach:{},all:false},WALK=null;
 function gid(x,y){return y*COLS+x;}
 // 그 칸에 선 건물의 바닥 높이(층). 건물이 없으면 땅 높이
 function cellLevel(x,y){var id=occ&&occ[y]&&occ[y][x],b=id&&bById(id);return b?bLevel(b):th(x,y);}
-function gateNode(){return gid(ENT,ROWS-1);}
+function gateNode(){return gid(ENT+(EW>>1),ROWS-1);}
 var PN=100000;
 function isPieceNode(n){return n>=PN;}
 function nodePiece(n){return pieceById(n-PN);}
@@ -143,7 +143,10 @@ function refreshNav(){
   computeWalk();
   S.buildings.forEach(ensureDoors);
   // 이용 가능 여부는 문이 열려 있다고 보고 계산한다 (닫아 둔 동안 '?' 표시가 온 지도에 뜨지 않게)
-  NAV.all=true;NAV.reach=navReach(gateNode());NAV.all=false;
+  NAV.all=true;NAV.reach=navReach(gateNode());
+  // 차량·배가 내려 주는 곳에서 닿는 곳도 이용할 수 있다 (어촌: 강 건너 교회 쪽)
+  var dn=typeof dropNode==='function'?dropNode():null;if(dn!=null&&nodeOk(dn)){var r2=navReach(dn);for(var rk in r2)NAV.reach[rk]=r2[rk];}
+  NAV.all=false;
   // 둘러볼 수 있는 곳: 입구에서 닿는 교회 부지 안의 바닥·길·데크 노드
   NAV.walk=Object.keys(NAV.reach).map(Number).filter(function(n){return isPieceNode(n)||((n/COLS)|0)<PZ;});
   S.buildings.forEach(function(b){

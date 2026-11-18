@@ -1,10 +1,10 @@
 'use strict';
 /* ---------- 저장 ---------- */
-function save(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S));}catch(e){}}
-function load(){
+function save(){try{localStorage.setItem(stageKey(S&&S.stage,S&&S.test),JSON.stringify(S));}catch(e){}}   // 스테이지마다 따로 저장 (stages.js stageKey)
+function load(key){
   try{
-    var raw=localStorage.getItem(SAVE_KEY);
-    if(raw){var o=JSON.parse(raw),n=newState();
+    var raw=localStorage.getItem(key||SAVE_KEY);
+    if(raw){var o=JSON.parse(raw),n=newState(o.diff,o.stage||'rural');
       // 옛 저장에는 '마지막으로 새로 한 주'가 없다: 지금 주로 맞춰 곧바로 매너리즘에 걸리지 않게
       if(o.lastNew===undefined)o.lastNew=o.week||0;
       // Level 곡선이 바뀌기 전 저장: 새 곡선으로 한 번 다시 맞춘다 (이때만 내려갈 수 있다)
