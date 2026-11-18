@@ -661,3 +661,6 @@ Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin 
 3. 화면 연결(`catIcon`·`CAT_SUBS`·`IND.ic`·roster/teams/managers 이모지·`ENT_*`·`PP_TREE` 배지·`CARES`·`WEATHER`·place/selcard 버튼)은 시트를 다 받은 뒤 한 번에 한다. CLAUDE.md의 '화면을 가리지 않는다' 원칙에 따라 새 아이콘은 지금 자리의 크기를 유지한다.
 4. 시트 원본의 출처(Gemini 생성)는 README 에셋 항목에 적는다.
 5. (선택) 창 머리띠·카드 틀·게이지 같은 **틀 그림**은 늘려 쓰는 9-slice 처리가 필요해 Gemini보다 CSS가 낫다고 보고 프롬프트에서 뺐다. 필요하면 말해 달라.
+
+### 적용 현황 (21~29번)
+시트는 `docs/art/sheets/ui-buttons21~29`(21~24 jpeg, 25~29 png)이고 `python3 tools/ui_buttons.py 21 … 29`로 135개를 `assets/ui/`에 잘랐다(줄이 서로 닿은 시트는 같은 높이로 나눈다). **연결함:** 건축 분류 타일 `cat_*`·하위 칩 `sub_*`(panel.js) · 지표 `ind_*`(`indIcon`) · 날씨 `wx_*`(`wxIcon`) · 직원·섬김이·리더·건물 슬롯 동작 `act_*`(`aic()`, pixicons.js) · 단계 휘장 `node_*`(성도 단계 카드) · 고민 결과 `care_good/bad` · 짓기 모드 `btn_ok/no/undo`. **받아 두기만 함:** `ind_*_rdy/_lock/claim`, `entr_*`·`deco_*`(입구 카드는 실제 문을 그려 쓰므로 필요 없음), `br_*`, `care_<종류>` 18종, `ssn_*`, `btn_rot/dem/fix/invest/move/info/more/fold/deco`, `act_pay/mood/xp/like/fire/lock/resume`.
