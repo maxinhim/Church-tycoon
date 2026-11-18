@@ -11,8 +11,8 @@ import gemini_mark
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHEETS = os.path.join(ROOT, 'docs/art/sheets')
 OUT = os.path.join(ROOT, 'assets/ui')
-STARFIX = (13, 14, 15)   # Gemini 별 표시가 아이콘 안으로 들어온 시트: 잘라 내기 전에 별을 찾아 메운다 (tools/gemini_mark.py)
-DESPILL = (13, 14, 15)   # 아이콘 둘레의 그림자에 마젠타(보랏빛)가 번진 시트: 마젠타 기운(min(R,B)-G)을 눌러 회갈색 그림자로 만든다
+STARFIX = (13, 14, 15) + tuple(range(21, 30))   # Gemini 별 표시가 아이콘 안으로 들어온 시트: 잘라 내기 전에 별을 찾아 메운다 (tools/gemini_mark.py)
+DESPILL = (13, 14, 15) + tuple(range(21, 30))   # 아이콘 둘레의 그림자에 마젠타(보랏빛)가 번진 시트: 마젠타 기운(min(R,B)-G)을 눌러 회갈색 그림자로 만든다
 SOFTKEY = (10,)   # 배경이 마젠타가 아니라 분홍(테두리 색과 가까움)인 시트: 더 예민하게 가른다
 FABS = ['build', 'events', 'people', 'vol', 'staff']
 # 시트 번호 → (행 수, 열 수, 칸 이름 목록(행 우선, None은 쓰지 않음), 가장 긴 변 px)
@@ -32,6 +32,16 @@ SPEC = {
   13: (2, 4, ['stg_rural', 'stg_mount', 'stg_sea', 'stg_city', 'stg_rural_clear', 'stg_mount_clear', 'stg_sea_clear', 'stg_city_clear'], 144),
   14: (3, 3, ['veh_truck', 'veh_van', 'veh_bus', 'veh_ferry', 'veh_boat', 'veh_ship', 'fleet_driver', 'fleet_queue', 'fleet_pier'], 128),
   15: (3, 3, ['wild_boar', 'wild_deer', 'wild_racc', 'city_land', 'city_cmp', 'city_park', 'stage_goal', 'nav_stages', 'nav_home'], 128),
+  # UI 디자인 추가 그림 (docs/art/gemini-prompts.md 21~29번)
+  21: (3, 5, ['cat_worship', 'cat_fellow', 'cat_club', 'cat_shop', 'cat_care', 'cat_comfort', 'cat_park', 'cat_path', 'cat_garden', 'cat_deco', 'cat_floor', 'cat_dem'], 160),
+  22: (4, 5, ['sub_' + k for k in 'sport hobby music service pray dept group hall food cafe book neighbor mind toilet rest etc'.split()], 96),
+  23: (3, 6, ['ind_' + k for k in 'sp mood conv trust xp'.split()] + ['ind_claim'] + ['ind_' + k + '_rdy' for k in 'sp mood conv trust xp'.split()] + ['ind_claimed'] + ['ind_' + k + '_lock' for k in 'sp mood conv trust xp'.split()], 144),
+  24: (3, 5, ['act_' + k for k in 'post train cheer promo auto autosup mgr resume pay mood xp like fire lock'.split()], 96),
+  25: (3, 5, ['entr_' + k for k in 'brick concrete stone wood marble glass garden'.split()] + ['deco_' + k for k in 'lights flags planter lantern balloon flower'.split()], 144),
+  26: (4, 6, ['node_' + k for k in 'new bapt nurture disciple devoted deacon elder elderf sgl cml kanji seminary assoc server tlead dlead cstaff'.split()] + ['br_off', 'br_lead', 'br_serv'], 128),
+  27: (4, 6, ['care_' + k for k in 'job marriage kids health doubt burnout debt lonely addiction exam caregiving bereave postpartum sundaywork youthjob move accessibility retire good bad'.split()], 144),
+  28: (3, 5, ['wx_' + k for k in 'sun cloud rain storm wind snow heat'.split()] + ['ssn_' + k for k in 'spring summer autumn winter'.split()], 96),
+  29: (3, 5, ['btn_' + k for k in 'ok no rot undo dem fix invest move info more fold deco'.split()], 96),
 }
 
 def key(a, lo=70, hi=110):
@@ -70,6 +80,9 @@ def main():
         rgba = key(a, 18, 40) if n in SOFTKEY else key(a)
         fg = ndi.binary_opening(rgba[..., 3] > 90, iterations=3)
         rows = [r for r in runs(fg.sum(1) > 4, 10) if r[1] - r[0] > 40]
+        if len(rows) != R and rows:   # 줄이 서로 닿아 있으면 가장 바깥 높이를 같은 높이로 나눈다
+            y0a, y1a = rows[0][0], rows[-1][1]; h = (y1a - y0a) / R
+            rows = [(int(y0a + i * h), int(y0a + (i + 1) * h)) for i in range(R)]
         if len(rows) != R: print('시트', n, '행', len(rows), '!=', R, rows); sys.exit(1)
         k = 0
         for (y0, y1) in rows:

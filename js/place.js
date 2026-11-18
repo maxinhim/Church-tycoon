@@ -439,12 +439,12 @@ function renderPbar(){
 function setupPlace(){
   var root=$('#place'),arrow='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M12 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   root.innerHTML=[0,1,2,3].map(function(d){return '<button class="parr" data-pl="dir" data-v="'+d+'" aria-label="방향 '+(d+1)+'">'+arrow+'</button>';}).join('')+
-    '<button class="pok" data-pl="ok" aria-label="짓기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
-    '<button class="pun" data-pl="undo" data-act="undo" aria-label="방금 지은 것 되돌리기" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16M5 11.5h9a5 5 0 0 1 0 10h-2" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+    '<button class="pok" data-pl="ok" aria-label="짓기">'+aic('btn_ok','pbi')+'</button>'+
+    '<button class="pun" data-pl="undo" data-act="undo" aria-label="방금 지은 것 되돌리기" hidden>'+aic('btn_undo','pbi')+'</button>'+
     '<span class="ppr" aria-hidden="true" hidden></span>'+
     '<button class="parr pv" data-pl="up" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5l7 9H5z" fill="currentColor"/><path d="M12 13v6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>'+
     '<button class="parr pv" data-pl="down" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19l7-9H5z" fill="currentColor"/><path d="M12 5v6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>'+
-    '<button class="pno" data-pl="no" aria-label="그만두기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>';
+    '<button class="pno" data-pl="no" aria-label="그만두기">'+aic('btn_no','pbi')+'</button>';
   root.addEventListener('click',function(e){
     var b=e.target.closest('[data-pl]');if(!b)return;
     var a=b.dataset.pl;

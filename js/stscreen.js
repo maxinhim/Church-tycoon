@@ -7,7 +7,7 @@ function covPct(k){var c=S.cov||{};return Math.round((c[k]==null?1:c[k])*100);}
 function indCardHtml(k){
   var d=INDK[k],g=indProg(k),rdy=indReady(k);
   return '<button class="evc indc'+(rdy?' ready':'')+'" data-act="inopen" data-v="'+k+'" data-ind="'+k+'" aria-label="'+d.n+' 레벨 '+g.lv+(rdy?', 보상 받기 가능':'')+'">'+
-    '<span class="evr">'+ringSvg(g.p)+'<span class="evi" style="--c:'+d.col+'">'+indIcon(k,'indbig')+'</span></span>'+
+    '<span class="evr">'+ringSvg(g.p)+'<span class="evi ico" style="--c:'+d.col+'">'+indIcon(k,'indbig')+'</span></span>'+
     '<span class="evn">'+d.n+' <b class="inlv">Lv '+g.lv+'</b></span><span class="evp" data-evp>'+(rdy?'보상 받기':'점수 '+fmtN(g.sc))+'</span></button>';
 }
 // 위쪽 한 줄: 교회 Level과 합계 점수, 다음 Level까지
@@ -28,7 +28,7 @@ function indDlgHtml(k){
   var why=indWhy(k).map(function(t){return '<li>'+t+'</li>';}).join('');
   var btn=rdy?'<button class="btn pri big claim" data-act="inclaim" data-v="'+k+'">보상 받기 · +'+fmt(indReward(k))+'</button>':'';
   return '<div class="sdlg" role="dialog" aria-label="'+d.n+'"><button class="sx" data-act="inclose" aria-label="닫기">✕</button>'+
-    '<div class="sdh"><span class="evr big" data-ind="'+k+'">'+ringSvg(g.p)+'<span class="evi" style="--c:'+d.col+'">'+indIcon(k,'indbig')+'</span></span>'+
+    '<div class="sdh"><span class="evr big" data-ind="'+k+'">'+ringSvg(g.p)+'<span class="evi ico" style="--c:'+d.col+'">'+indIcon(k,'indbig')+'</span></span>'+
     '<div class="sdt"><h3>'+d.n+' <span class="rchip t0">Lv '+g.lv+'</span></h3><p>'+d.d+'</p></div></div>'+
     '<dl class="sdr">'+rows.map(function(r){return '<div><dt>'+r[0]+'</dt><dd>'+r[1]+'</dd></div>';}).join('')+'</dl>'+
     (items?'<div class="cov sdcov">'+items+'</div>':'')+
