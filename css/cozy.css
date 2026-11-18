@@ -622,3 +622,11 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .pok,.pno,.pun{background:none!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.3)!important;border-radius:50%;padding:0}
 .pok .pbi,.pno .pbi,.pun .pbi{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none}
 .pok.off{opacity:.6;filter:grayscale(1)}
+
+/* ---- 남은 아이콘 연결 (계절·고민 종류·선택 카드 버튼) ---- */
+.ssni{width:15px;height:15px;object-fit:contain;vertical-align:-3px;margin-right:3px}
+.care-i{width:20px;height:20px;object-fit:contain;vertical-align:-5px;margin-right:4px}
+.cri{position:relative}
+.cri .cri-r{position:absolute;right:-4px;bottom:-4px;line-height:0}
+.cri .cri-s{width:16px;height:16px;display:block;object-fit:contain}
+.btn.sm .aic{width:1.4em;height:1.4em;vertical-align:-.4em}

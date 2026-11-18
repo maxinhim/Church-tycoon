@@ -25,7 +25,7 @@ function hud(force){
 // 오른쪽 위 시계: 연·주, 요일 칸(지난 날은 흐리게, 오늘은 강조), 주일 정산까지 남은 날
 function syncClock(){
   var dt=dateText(),dta=dateText(null,true),di=dayIdx(),left=6-di;
-  $('#ckWeek').textContent=dt;
+  $('#ckWeek').innerHTML=aic('ssn_'+seasonKey(),'ssni')+dt;
   $('#ckLeft').textContent=(left?'주일까지 '+left+'일':'오늘은 주일')+(S.evt==='festival'?' · 축제':'');
   var w=ensureWx(),nd=wxWhen(),nk=wxUpcoming(),wk=w.cur+'|'+nk+'|'+nd;
   if(syncClock.k!==wk){syncClock.k=wk;

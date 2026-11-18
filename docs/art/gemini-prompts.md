@@ -664,3 +664,5 @@ Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin 
 
 ### 적용 현황 (21~29번)
 시트는 `docs/art/sheets/ui-buttons21~29`(21~24 jpeg, 25~29 png)이고 `python3 tools/ui_buttons.py 21 … 29`로 135개를 `assets/ui/`에 잘랐다(줄이 서로 닿은 시트는 같은 높이로 나눈다). **연결함:** 건축 분류 타일 `cat_*`·하위 칩 `sub_*`(panel.js) · 지표 `ind_*`(`indIcon`) · 날씨 `wx_*`(`wxIcon`) · 직원·섬김이·리더·건물 슬롯 동작 `act_*`(`aic()`, pixicons.js) · 단계 휘장 `node_*`(성도 단계 카드) · 고민 결과 `care_good/bad` · 짓기 모드 `btn_ok/no/undo`. **받아 두기만 함:** `ind_*_rdy/_lock/claim`, `entr_*`·`deco_*`(입구 카드는 실제 문을 그려 쓰므로 필요 없음), `br_*`, `care_<종류>` 18종, `ssn_*`, `btn_rot/dem/fix/invest/move/info/more/fold/deco`, `act_pay/mood/xp/like/fire/lock/resume`.
+
+추가 연결(브랜치 `feat/ui-icons-rest`): 계절 `ssn_*`(시계 날짜 앞) · 고민 종류별 `care_<종류>`(고민 칸 제목·결과 창, 결과 좋음/나쁨은 모서리 작은 표시) · 선택 카드 버튼 `btn_dem/invest/move/fix/undo/more/fold`·`act_mgr`. 아직 파일만: `ind_*_rdy/_lock/claim`, `br_*`, `btn_rot/info/deco`, `act_pay/mood/xp/like/fire/lock/resume`, `entr_*`·`deco_*`.
