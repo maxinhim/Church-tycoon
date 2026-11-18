@@ -54,17 +54,6 @@
    "by": 0.35,
    "glow": true
   },
-  "8": {
-   "id": "sunbed",
-   "fw": 0.95,
-   "by": 0.35,
-   "back": "sunbed_b"
-  },
-  "9": {
-   "id": "sunbed_b",
-   "fw": 0.95,
-   "by": 0.35
-  },
   "10": {
    "id": "library",
    "fw": 0.55,

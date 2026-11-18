@@ -1,0 +1,53 @@
+{
+ "scale": 1,
+ "inset": 3,
+ "uniform": true,
+ "sheet": "textures-stage.png",
+ "grid": [
+  3,
+  3
+ ],
+ "out": "assets/tex",
+ "cells": {
+  "0": {
+   "id": "t_cliff",
+   "tex": true,
+   "size": 128
+  },
+  "1": {
+   "id": "t_forest",
+   "tex": true,
+   "size": 128
+  },
+  "2": {
+   "id": "t_path",
+   "tex": true,
+   "size": 128
+  },
+  "3": {
+   "id": "t_river",
+   "tex": true,
+   "size": 128
+  },
+  "4": {
+   "id": "t_bank",
+   "tex": true,
+   "size": 128
+  },
+  "5": {
+   "id": "t_pier",
+   "tex": true,
+   "size": 128
+  },
+  "6": {
+   "id": "t_sidewalk",
+   "tex": true,
+   "size": 128
+  },
+  "7": {
+   "id": "t_asphalt",
+   "tex": true,
+   "size": 128
+  }
+ }
+}

@@ -156,7 +156,20 @@ function drawTerGhost(){
    윗면에는 잔디(또는 깔아 둔 바닥 타일)를 얹는다 */
 var TER_SIDE='#9b7752',TER_RAMP_C='#b48d5f';
 // 흙벽 한 면: 흙 색에 면의 밝기를 준다 (벽 타일 없음)
-function terFace(pts,front,tint){quad(pts,shade(tint||TER_SIDE,front),EDGE);return false;}
+var CLIFF_P=null;
+// 산촌의 산 절벽: 20번 시트의 바위 질감(한 장 = 가로 1.5칸 × 한 층)을 면에 눕혀 깔고 면의 밝기만 덮는다
+function terFace(pts,front,tint){
+  var im=!tint&&stageId()==='mount'&&sprOf('t_cliff');
+  if(im&&typeof ctx!=='undefined'&&PJ.c===ctx&&!(WLD&&wldNear(pts))){
+    if(!CLIFF_P){try{CLIFF_P=ctx.createPattern(im,'repeat');}catch(e){CLIFF_P=null;}}
+    if(CLIFF_P&&CLIFF_P.setTransform){
+      var q0=P(pts[0][0],pts[0][1],pts[0][2]),q1=P(pts[1][0],pts[1][1],pts[1][2]),qz=P(pts[0][0],pts[0][1],pts[0][2]+LV),w=im.width*.75;
+      CLIFF_P.setTransform(new DOMMatrix([(q1[0]-q0[0])/w,(q1[1]-q0[1])/w,(qz[0]-q0[0])/im.height,(qz[1]-q0[1])/im.height,q0[0],q0[1]]));
+      quad(pts,CLIFF_P,null);quad(pts,'rgba(20,12,4,'+clamp(1-front,0,.6)+')',EDGE);return false;
+    }
+  }
+  quad(pts,shade(tint||TER_SIDE,front),EDGE);return false;
+}
 function terCells(){
   var out={};
   for(var k in S.hgt||{})out[k]=1;

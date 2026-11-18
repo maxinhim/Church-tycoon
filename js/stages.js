@@ -318,8 +318,17 @@ function stageEntities(E){
 }
 // 화면 위 방향(오른쪽으로 가면 1)
 function scrDir(dx,dy){var a=rotPt(0,0),b=rotPt(dx,dy);return (b[0]-a[0])-(b[1]-a[1])>=0?1:-1;}
+/* Gemini 스프라이트(18번 시트): 앞모습 그림은 ↙를, 뒷모습 그림은 ↗를 향한다. 화면에서 ↘는 앞모습 뒤집기, ↖는 뒷모습 뒤집기 */
+function scrHead(dx,dy){var a=rotPt(0,0),b=rotPt(dx,dy);return [(b[0]-a[0])-(b[1]-a[1])>=0?1:-1,(b[0]-a[0])+(b[1]-a[1])>=0?1:-1];}
+function drawHeadSpr(key,x,y,z,hx,hy,bob){
+  var id='sv_'+key,bk=id+'_b';if(!sprOf(id)||!sprOf(bk))return false;
+  var c=PJ.c;c.save();if(bob)c.translate(0,bob);
+  drawSpr(hy>0?id:bk,x,y,1,0,hy>0?hx>0:hx<0,z);c.restore();return true;
+}
 function drawVeh(v,x,y,z,p){
-  var d=VEH[v.k];if(d.w==='water'){drawBoat(x,y,z,scrDir(p.dx,p.dy)*(v.ph==='back'?-1:1),v.n,v.k);return;}
+  var d=VEH[v.k],bk=v.ph==='back'?-1:1,hd=scrHead(p.dx*bk,p.dy*bk);
+  if(d.w==='water'){var bb=Math.sin(S.clock*2.2+x)*1.2*Math.max(.5,PJ.s);if(drawHeadSpr(v.k,x,y,z,hd[0],hd[1],bb)){if(v.n)vehBadge(x,y,z+.95,v.n);return;}drawBoat(x,y,z,scrDir(p.dx,p.dy)*bk,v.n,v.k);return;}
+  if(drawHeadSpr(v.k,x,y,z,hd[0],hd[1],0)){if(v.n)vehBadge(x,y,z+.95,v.n);return;}
   var along=Math.abs(p.dx)>Math.abs(p.dy),L=v.k==='bus'?1.5:1.1,W=.62,r=along?rrect(x-L/2,y-W/2,x+L/2,y+W/2):rrect(x-W/2,y-L/2,x+W/2,y+L/2);
   var col=v.k==='bus'?'#e8b23a':v.k==='truck'?'#7fa35a':'#f4f1ea',run=vehRun(v);
   box(r,z+.12,z+.62,col,shade(col,1.08));
@@ -333,6 +342,7 @@ function drawVeh(v,x,y,z,p){
   if(v.n)vehBadge(x,y,z+.95,v.n);
 }
 function drawBoat(x,y,z,dir,n,k){
+  if(k==='fish'&&drawHeadSpr('fish',x,y,z,dir,dir,Math.sin(S.clock*2.2+x)*1.2*Math.max(.5,PJ.s)))return;
   var m=rotPt(x,y),q=P(m[0],m[1],z),c=PJ.c,s=Math.max(.5,PJ.s),L=(k==='ship'?26:k==='ferry'?16:20)*s,H=(k==='ship'?7:5)*s,bob=Math.sin(S.clock*2.2+x)*1.2*s;
   c.save();c.translate(q[0],q[1]+bob);c.scale(dir<0?-1:1,1);
   c.fillStyle='rgba(255,255,255,.35)';c.beginPath();c.ellipse(0,H*.4,L*.62,H*.45,0,0,6.283);c.fill();   // 물결
@@ -356,6 +366,8 @@ function drawQueue(x,y,n){
   vehBadge(x,y,groundZ(x,y)+1.3,n);
 }
 function drawWild(a){
+  var gz=groundZ(a.x,a.y),wh=scrHead(a.fx||1,a.fy||0);
+  if(drawHeadSpr(a.k,a.x,a.y,gz,wh[0],wh[1],-Math.abs(Math.sin(S.clock*12+a.ph))*1.2*Math.max(.6,PJ.s))){if(a.st==='come'){var m0=rotPt(a.x,a.y),q0=P(m0[0],m0[1],gz),c0=PJ.c;c0.fillStyle='#d6261a';c0.font='900 '+Math.round(12*Math.max(.7,PJ.s))+'px sans-serif';c0.textAlign='center';c0.textBaseline='bottom';c0.fillText('!',q0[0],q0[1]-24*Math.max(.6,PJ.s));}return;}
   var L=WILD_KIND[a.k],c=PJ.c,s=Math.max(.6,PJ.s)*L.w,m=rotPt(a.x,a.y),q=P(m[0],m[1],groundZ(a.x,a.y)),fl=scrDir(a.fx||1,a.fy||0)<0,step=Math.sin(S.clock*12+a.ph)*1.5;
   c.save();c.translate(q[0],q[1]);c.scale(fl?-1:1,1);
   c.fillStyle='rgba(0,0,0,.2)';c.beginPath();c.ellipse(0,0,9*s,3*s,0,0,6.283);c.fill();

@@ -1,0 +1,38 @@
+{
+ "sheet": "sheet-city.jpeg",
+ "grid": [
+  3,
+  2
+ ],
+ "out": "assets/decor",
+ "scale": 0.7,
+ "inset": 4,
+ "cells": {
+  "0": {
+   "id": "c_apt",
+   "fw": 1.0,
+   "by": 1
+  },
+  "1": {
+   "id": "c_office",
+   "fw": 1.0,
+   "by": 1
+  },
+  "2": {
+   "id": "c_villa",
+   "fw": 1.0,
+   "by": 1
+  },
+  "4": {
+   "id": "c_mart",
+   "fw": 1.0,
+   "by": 1
+  },
+  "5": {
+   "id": "c_house",
+   "fw": 1.0,
+   "by": 1
+  }
+ },
+ "uniform": true
+}

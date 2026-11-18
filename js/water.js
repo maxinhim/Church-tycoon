@@ -97,7 +97,9 @@ function drawWaterCell(x,y){
       c.beginPath();c.moveTo(pa[0],pa[1]);c.lineTo(pb[0],pb[1]);c.stroke();c.lineCap='butt';
     }
   }
-  quad(pts,'rgba(64,146,204,.6)',null);
+  var rt=texPattern('t_river',2);
+  if(rt){c.save();c.globalAlpha=.5;quad(pts,rt,null);c.restore();quad(pts,'rgba(64,146,204,.42)',null);}   // 20번 시트의 강물 질감 위에 푸른 물빛
+  else quad(pts,'rgba(64,146,204,.6)',null);
   // 잔물결
   var w=(tm*.25+r0)%1,m=rotPt((x0+x1)/2+(r0-.5)*.4,(y0+y1)/2+(hh(y,x)-.5)*.4),q=P(m[0],m[1],z);
   c.strokeStyle='rgba(235,248,255,'+(.5*(1-w)).toFixed(3)+')';c.lineWidth=Math.max(.5,PJ.s);

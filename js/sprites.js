@@ -18,9 +18,9 @@ function loadSprites(){
 }
 function sprOf(id){return SPR[id]&&SPR_DATA[id]?SPR[id]:null;}
 // (cx,cy): 바닥 가운데 (회전 전 좌표), n: 바닥 칸 수(너비), sid: 흔들림 위상, mir: 좌우 뒤집기
-function drawSpr(id,cx,cy,n,sid,mir){
+function drawSpr(id,cx,cy,n,sid,mir,z){
   var im=sprOf(id);if(!im)return false;
-  var sd=SPR_DATA[id],c=PJ.c,s=PJ.s,p=rotPt(cx,cy),g=P(p[0],p[1],0);
+  var sd=SPR_DATA[id],c=PJ.c,s=PJ.s,p=rotPt(cx,cy),g=P(p[0],p[1],z||0);
   var dw=sd.fw*n*2*HW*U*s,dh=dw*sd.h/sd.w,by=g[1]+sd.by*n*HH*U*s;
   // 서 있는 것만 바닥 그림자 (납작한 화단·연못은 그림자 없이)
   if(sd.by<.4){c.fillStyle='rgba(20,40,10,.16)';c.beginPath();c.ellipse(g[0]+2*s,by-1*s,dw*.32,dw*.13,0,0,6.283);c.fill();}
