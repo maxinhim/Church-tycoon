@@ -12,7 +12,7 @@ function selCardOn(){return UI.fold&&!isPlacing()&&!S.over&&!!((UI.sel&&bById(UI
 function scBtn(act,label,cls,v,aria){return '<button class="btn sm'+(cls?' '+cls:'')+'" data-act="'+act+'"'+(v!=null?' data-v="'+v+'"':'')+(aria?' aria-label="'+aria+'"':'')+'>'+label+'</button>';}
 function scDem(label,cost){
   var armed=performance.now()<scArm;
-  return scBtn('scdem',armed?'정말 철거? +'+fmtS(cost):label+' +'+fmtS(cost),'bad');
+  return scBtn('scdem',aic('btn_dem')+(armed?'정말 철거? +'+fmtS(cost):label+' +'+fmtS(cost)),'bad');
 }
 function renderSelCard(){
   var el=$('#selCard');if(!el)return;
@@ -45,16 +45,16 @@ function renderSelCard(){
     if(hasLv(b)&&bLv(b)<BLV_MAX){
       var iw=investWhy(b);
       h+='<div class="sclv"><span class="bar xp"><i data-w="'+Math.round((b.bx||0)/BLV_XP*100)+'" style="width:'+(UI.xpFrom&&UI.xpFrom.id===b.id?UI.xpFrom.w:Math.round((b.bx||0)/BLV_XP*100))+'%"></i></span><span>Lv '+(bLv(b)+1)+'까지 '+(b.bx||0)+'/'+BLV_XP+'</span></div>';
-      row+=scBtn('invest','투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
+      row+=scBtn('invest',aic('btn_invest')+'투자 '+fmtS(investCost(b)),iw?'':'pri',null,'레벨 올리기 투자 '+fmtS(investCost(b)));
     }
-    if(mr&&!S.freeMgr)row+=scBtn('mgr',mw?'👤 관리자':'👤 관리자 필요',mw?'':'pri',null,mw?'관리자 바꾸기':'관리자 배치·청빙');
-    if(canMove(b))row+=scBtn('move',turnable(D[b.def])?'옮기기·돌리기':'옮기기','pri');
+    if(mr&&!S.freeMgr)row+=scBtn('mgr',aic('act_mgr')+(mw?'관리자':'관리자 필요'),mw?'':'pri',null,mw?'관리자 바꾸기':'관리자 배치·청빙');
+    if(canMove(b))row+=scBtn('move',aic('btn_move')+(turnable(D[b.def])?'옮기기·돌리기':'옮기기'),'pri');
     var lp=b.door&&!usable(b)?linkPlan(b):null,lk=lp&&!lp.why&&lp.tiles.length>0;
     // 길을 이을 수 없으면 이유를 보여 주고, 이을 수 있는 쪽으로 문을 옮기는 버튼을 낸다
     if(lp&&lp.why){h=h.replace('<div class="scw">'+warn+'</div>','<div class="scw">'+lp.why+'</div>');}
     if(lk)row+=scBtn('link','길 잇기 · '+lp.tiles.length+'칸','pri',null,'입구까지 길 잇기: 바닥 종류 고르기');
-    var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast','되돌리기 +'+fmtS(lb.cost));
-    if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair','수리 '+fmtS(repairCost(b)));
+    var lb=UI.lastBuilt;if(canUnbuild(lb)&&lb.bid===b.id)row+=scBtn('undoLast',aic('btn_undo')+'되돌리기 +'+fmtS(lb.cost));
+    if(maintainable(b)&&condOf(b)<100)row+=scBtn('repair',aic('btn_fix')+'수리 '+fmtS(repairCost(b)));
     // 길 잇기를 누르면: 어떤 바닥으로 이을지 고르는 줄 (칸 수 × 한 칸 값)
     // 펼친 줄
     var eff=effText(bd);if(eff)more+='<div class="sce">'+eff+'</div>';
@@ -81,7 +81,7 @@ function renderSelCard(){
     row+=scBtn('choose',cur?'바닥 바꾸기':'바닥 깔기','pri','fswap','이 칸에 깔 바닥 고르기');
     if(cur)row+=scDem('철거',Math.floor(D[cur].cost*.5));
   }
-  if(more)row+=scBtn('scmore',scMore?'접기':'⋯','',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
+  if(more)row+=scBtn('scmore',scMore?aic('btn_fold'):aic('btn_more'),'',null,scMore?'접기':'더 보기: 층·입구·출구·철거');
   h+='<div class="scb">'+row+'</div>'+(scMore?more:'');
   if(h!==scHtml){el.innerHTML=h;scHtml=h;}
   var xi=el.querySelector('.xp i');if(xi&&xi.dataset.w!=null&&UI.xpFrom){var xw=xi.dataset.w;UI.xpFrom=null;setTimeout(function(){xi.style.width=xw+'%';},30);}
