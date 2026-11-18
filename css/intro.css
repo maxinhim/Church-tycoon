@@ -28,7 +28,7 @@
 .stcard:not(.lock){border-color:#e0703f;box-shadow:0 .9vh 0 #b8502a,0 2vh 2.4vh rgba(120,60,20,.25)}
 .stpic{position:relative;flex:1;min-height:0;border-radius:1.6vh;overflow:hidden;background:#cfe6c4;border:.3vh solid rgba(47,111,98,.35)}
 .stpic svg,.stphoto{position:absolute;inset:0;width:100%;height:100%;display:block}
-.stphoto{background:url(../assets/intro/intro_bg.webp) 62% 46%/190% auto no-repeat}
+.stphoto{background:url(../assets/intro/intro_bg.webp) 62% 46%/190% auto no-repeat}   /* 예전 농촌 카드(이제는 stage_rural.webp를 쓴다) */
 .stno{font-family:var(--f-cozy,sans-serif);font-size:min(2.6vh,1.3vw);letter-spacing:.08em;color:#e0703f;margin-top:.5vh}
 .stcard b{font-family:var(--f-cozy,sans-serif);font-weight:400;font-size:min(4.6vh,2.3vw);line-height:1.1}
 .stcard small{font-size:min(2.8vh,1.4vw);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -69,3 +69,11 @@
 .stcard:not(.lock):hover,.stcard:not(.lock):active{transform:none}
 .stcard:not(.lock):active{box-shadow:0 .9vh 0 #b8502a,0 2vh 2.4vh rgba(120,60,20,.25)}
 .stcard.lock{cursor:default}
+
+/* ---------- 스테이지 카드 그림(Gemini)과 엠블럼 ---------- */
+.stpic .stimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 55%;display:block}
+.stpic .stemb{position:absolute;top:min(.9vh,.6vw);right:min(.9vh,.6vw);width:min(8.6vh,4.4vw);height:auto;filter:drop-shadow(0 .45vh .4vh rgba(40,25,10,.4));pointer-events:none;z-index:1}
+.stpic .stemb.clear{animation:stEmb 2.4s ease-in-out infinite alternate}
+@keyframes stEmb{from{transform:scale(1)}to{transform:scale(1.07)}}
+@media (prefers-reduced-motion:reduce){.stpic .stemb.clear{animation:none}}
+.stcard .stgoal i .stgi{width:1.5em;height:1.5em;vertical-align:-.4em;margin:-.2em 0 -.2em -.25em}

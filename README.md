@@ -33,6 +33,7 @@
 - 조경·꾸미기·건물·바닥 그림 조각(`assets/`)은 Google Gemini로 생성한 이미지(`docs/art/sheets/`)를 잘라 썼습니다. 생성 프롬프트는 `docs/art/gemini-prompts.md`에 있습니다.
 - 인트로 화면 그림(`assets/intro/`: 마을 배경·'Church Tycoon' 로고·'Tap to Start' 단추)은 Google Gemini로 생성한 이미지 두 장(`docs/art/sheets/intro-bg.webp`·`intro-ui.webp`)에서 `python3 tools/intro_assets.py`로 떼어 냈습니다 (`docs/art/gemini-prompts.md`의 '인트로 화면' 참고). 스테이지 고르기의 잠긴 스테이지 예시 그림은 코드로 그린 SVG입니다
 - 메인 화면 버튼 그림(`assets/ui/`: 아래 기능 버튼·HUD 버튼·챙길 일·심방/선물/고민)은 Google Gemini로 생성한 시트 다섯 장(`docs/art/sheets/ui-buttons1~5.jpeg`, 프롬프트는 `docs/art/gemini-prompts.md`)을 `tools/ui_buttons.py`로 잘라 썼습니다.
+- 스테이지 그림(`assets/intro/stage_*.webp` 스테이지 카드 그림 4장, `assets/ui/`의 스테이지 엠블럼·차량·배·산짐승·도시 아이콘·'차량' 탭, `assets/portraits/icons/npc/` 마을 인물 4명)은 Google Gemini로 생성한 시트(`docs/art/sheets/stage-*.jpeg`·`ui-buttons13~16.jpeg`·`npc-sheet.jpeg`, 프롬프트는 `docs/art/gemini-prompts.md` 12~17번)를 `tools/ui_buttons.py`·`tools/stage_assets.py`로 잘라 썼습니다. Gemini가 그림 오른쪽 아래에 덧입힌 별 표시는 `tools/gemini_mark.py`로 지웠습니다.
 - 배경 음악·효과음(`assets/audio/`)은 OpenGameArt.org의 CC0 음원입니다. 곡·효과음마다 만든 사람과 주소는 `docs/audio.md`에 있습니다.
 - 폰트: Google Fonts (Gowun Batang, IBM Plex Sans KR)
 - 참고 자료: Kenney 아이소메트릭 에셋(CC0), OpenGameArt(라이선스 확인 필요), OpenRCT2

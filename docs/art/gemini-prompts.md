@@ -510,7 +510,15 @@ Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin 
 - 받은 뒤: 칸마다 정사각으로 잘라 `assets/tex/t_cliff.png`·`t_forest.png`·`t_path.png`·`t_river.png`·`t_bank.png`·`t_pier.png`·`t_walk.png`·`t_asphalt.png`로 둔다.
 
 ### 받은 뒤 순서 (12~20번)
-1. 시트마다 `docs/art/sheets/`에 원본을 둔다(`stage-<id>.webp`, `ui-buttons13~16.jpeg`, `npc-sheet.png`, `sprites-stage.png`, `sheet-city.png`, `textures-stage.png`).
+1. 시트마다 `docs/art/sheets/`에 원본을 둔다(`stage-<id>.jpeg`, `ui-buttons13~16.jpeg`, `npc-sheet.jpeg`, `sprites-stage.jpeg`, `sheet-city.jpeg`, `textures-stage.png`).
 2. 13~16번은 `tools/ui_buttons.py`의 `SPEC`에 위 줄을 적고 `python3 tools/ui_buttons.py`로 `assets/ui/`에 자른다. 12번·17번은 크기·표시를 정리하는 작은 도구를 새로 만든다.
 3. 화면 연결(`renderStages`의 카드 그림·엠블럼, `VEH_IC`, `stageWarnings`, 설정 메뉴 아이콘 등)은 그림을 받은 뒤 한 번에 한다. 연결 전까지 게임은 지금의 코드 그림·이모지로 그대로 동작한다.
 4. 18~20번은 받아도 게임을 바로 바꾸지 않는다: 슬라이스·등록(19번, 18번의 소품)은 자동으로 쓰이고, 차량·배·짐승(18번)과 질감(20번)은 코드 연결 뒤에 쓰인다.
+
+### 받은 결과와 적용 현황 (12~17번 적용함, 18~20번은 받아 두기만 함)
+GitHub `assets/UIimg/`에 올라온 파일을 `docs/art/sheets/`로 옮겨(`git mv`) 이름을 맞췄다: `12-1~12-4.jpeg` → `stage-rural·mount·sea·city.jpeg`, `13~16.jpeg` → `ui-buttons13~16.jpeg`, `17.jpeg` → `npc-sheet.jpeg`, `18.jpeg` → `sprites-stage.jpeg`, `19.jpeg` → `sheet-city.jpeg`, `20.png` → `textures-stage.png`.
+- **12** 스테이지 카드 그림 4장(1584×672): 그대로 쓸 만하다. Gemini 별 표시(그림 오른쪽·아래에서 121·120px)를 `tools/gemini_mark.py`로 지우고 가로 1200px로 줄여 `assets/intro/stage_<id>.webp`(100KB 안팎)로 만든다(`python3 tools/stage_assets.py cards`). 카드 그림 + 오른쪽 위 엠블럼으로 쓴다(`stagePic`).
+- **13·14·15** 아이콘 시트: 글자 없이 깨끗하게 나왔다. `tools/ui_buttons.py`의 `SPEC` 13~15번으로 26개를 잘랐다(`python3 tools/ui_buttons.py 13 14 15`). 그림자에 번진 마젠타(보랏빛)는 `DESPILL`로 회갈색 그림자로 바꾸고, 15번 시트의 별이 '이사 아이콘' 안으로 들어와 `STARFIX`로 지웠다.
+- **16** 탭: **요청한 한 장이 아니라 탭 15개 전체 시트**로 나왔다('차량'은 3행 2열, 원래 '재정' 자리). '차량' 탭만 선택된 모양(바깥 크림색 띠)이라 `tools/stage_assets.py tab`이 띠를 깎아 다른 탭과 같은 평소 모양(256×79)으로 만들었다. 나머지 14개 탭은 쓰지 않는다.
+- **17** 인물: **4명이 아니라 마을 사람 24명(6열×4행)** 시트로 나왔다(2행 2열은 빈칸). 요청한 네 명을 골랐다 — 이장님 1행 1열 · 사공 1행 2열 · 이웃 아주머니 1행 5열 · 이웃 아저씨 2행 1열 — `assets/portraits/icons/npc/npc_chief·boatman·neighbor_f·neighbor_m.png`(256×256). 나머지 20명은 여분(쓰지 않음).
+- **18~20** (선택): `sprites-stage.jpeg`·`sheet-city.jpeg`·`textures-stage.png`가 올라와 있지만 아직 자르거나 게임에 연결하지 않았다.

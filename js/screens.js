@@ -21,7 +21,7 @@ var TAB_FEAT={'events:assoc':'hire','events:vol':'vol','roster:hire':'hire','off
 function tabFeat(scr,tab){return TAB_FEAT[scr+':'+tab]||'';}
 function tabLocked(scr,tab){var f=tabFeat(scr,tab);return !!f&&!featOk(f);}
 /* Gemini 그림(assets/ui, tools/ui_buttons.py): 탭 이름 → 그림 이름. 선택됨·잠김은 CSS 필터 */
-var TAB_IMG={'행사':'event','담임목사':'pastor','부교역자':'assoc','봉사자':'vol','전체':'all','지표':'ind','재정':'fin','퀘스트':'quest','직분자':'off','리더':'lead','섬김이':'serv','청빙직원':'hirestaff','직원':'staff','청빙':'hire','인력':'pool'};
+var TAB_IMG={'행사':'event','담임목사':'pastor','부교역자':'assoc','봉사자':'vol','전체':'all','지표':'ind','재정':'fin','퀘스트':'quest','직분자':'off','리더':'lead','섬김이':'serv','청빙직원':'hirestaff','직원':'staff','청빙':'hire','인력':'pool','차량':'fleet'};
 function tabImg(label,on){var f=TAB_IMG[label];if(!f)return '';return ' tabi" style="--tbi:url(../assets/ui/tab_'+f+'.png)';}
 /* 행사·사역팀 아이콘 그림(assets/ui/ev_*·tm_*.png). 목록에 없는 것은 이모지로 */
 var ICO_EV=' smallgroup bible creed training communion street bazaar service retreat revival easter vbs thanks christmas pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast ',ICO_TM=' evang praise care newcomer edu prayer admin media mission ';

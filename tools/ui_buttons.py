@@ -5,10 +5,14 @@ import os, sys
 import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import gemini_mark
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHEETS = os.path.join(ROOT, 'docs/art/sheets')
 OUT = os.path.join(ROOT, 'assets/ui')
+STARFIX = (13, 14, 15)   # Gemini 별 표시가 아이콘 안으로 들어온 시트: 잘라 내기 전에 별을 찾아 메운다 (tools/gemini_mark.py)
+DESPILL = (13, 14, 15)   # 아이콘 둘레의 그림자에 마젠타(보랏빛)가 번진 시트: 마젠타 기운(min(R,B)-G)을 눌러 회갈색 그림자로 만든다
 SOFTKEY = (10,)   # 배경이 마젠타가 아니라 분홍(테두리 색과 가까움)인 시트: 더 예민하게 가른다
 FABS = ['build', 'events', 'people', 'vol', 'staff']
 # 시트 번호 → (행 수, 열 수, 칸 이름 목록(행 우선, None은 쓰지 않음), 가장 긴 변 px)
@@ -24,6 +28,10 @@ SPEC = {
   9: (3, 5, ['ev_' + k for k in 'pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel'.split()], 128),
   10: (3, 4, ['ev_' + k for k in 'offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast'.split()], 128),
   11: (3, 3, ['tm_' + k for k in 'evang praise care newcomer edu prayer admin media mission'.split()], 128),
+  # 스테이지 1~4 추가 그림 (docs/art/gemini-prompts.md 13~15번). 16번(차량 탭)·12번(스테이지 카드)·17번(인물)은 tools/stage_assets.py
+  13: (2, 4, ['stg_rural', 'stg_mount', 'stg_sea', 'stg_city', 'stg_rural_clear', 'stg_mount_clear', 'stg_sea_clear', 'stg_city_clear'], 144),
+  14: (3, 3, ['veh_truck', 'veh_van', 'veh_bus', 'veh_ferry', 'veh_boat', 'veh_ship', 'fleet_driver', 'fleet_queue', 'fleet_pier'], 128),
+  15: (3, 3, ['wild_boar', 'wild_deer', 'wild_racc', 'city_land', 'city_cmp', 'city_park', 'stage_goal', 'nav_stages', 'nav_home'], 128),
 }
 
 def key(a, lo=70, hi=110):
@@ -50,12 +58,15 @@ def runs(v, gap=6):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
+    only = [int(a) for a in sys.argv[1:]]   # 번호를 주면 그 시트만 (예: python3 tools/ui_buttons.py 13 14 15)
     for n, (R, C, names, mx) in SPEC.items():
+        if only and n not in only: continue
         f = os.path.join(SHEETS, 'ui-buttons%d.jpeg' % n)
         if not os.path.exists(f): f = f[:-5] + '.png'
         im = Image.open(f).convert('RGB')
         if im.width > 1700: im = im.resize((1400, round(1400 * im.height / im.width)), Image.LANCZOS)   # 큰 시트는 줄여서 처리
         a = np.array(im)
+        if n in STARFIX: a, _star = gemini_mark.remove_star(a, force=True)
         rgba = key(a, 18, 40) if n in SOFTKEY else key(a)
         fg = ndi.binary_opening(rgba[..., 3] > 90, iterations=3)
         rows = [r for r in runs(fg.sum(1) > 4, 10) if r[1] - r[0] > 40]
@@ -85,6 +96,10 @@ def main():
                 orig = a[max(0, y0 - pad):y1 + pad, max(0, x0 - pad):x1 + pad][..., :3]
                 sub[..., :3] = np.where(inner[..., None], orig, sub[..., :3])
                 sub[..., 3] = np.where(inner, 255, sub[..., 3])
+                if n in DESPILL:
+                    rgb = sub[..., :3].astype(int); sp = (np.minimum(rgb[..., 0], rgb[..., 2]) - rgb[..., 1]) > 18; cap = rgb[..., 1] + 18
+                    for c3 in (0, 2): rgb[..., c3] = np.where(sp, np.minimum(rgb[..., c3], cap), rgb[..., c3])
+                    sub[..., :3] = rgb.astype(np.uint8)
                 cell = Image.fromarray(sub)
                 # 이웃 칸의 가는 테두리 조각이 가장자리에 남으면 잘라 낸다(바깥 열·행의 불투명 화소가 가장 두꺼운 열의 30%보다 적을 때)
                 al = np.array(cell)[..., 3] > 128

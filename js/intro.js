@@ -64,7 +64,7 @@ function stageArt(id){
 function stageGoalHtml(s){
   if(!s.open||typeof QID==='undefined'||!QID[STAGE_GOAL])return '';
   var q=QID[STAGE_GOAL],done=stageClears()[s.id]!=null;
-  return '<span class="stgoal'+(done?' done':'')+'"><i aria-hidden="true">'+(done?'✓':'🎯')+'</i>목표 · '+q.n+'</span>';
+  return '<span class="stgoal'+(done?' done':'')+'"><i aria-hidden="true">'+(done?'✓':uiImg('stage_goal','stgi'))+'</i>목표 · '+q.n+'</span>';
 }
 // 스테이지마다 일반 저장이 있는지 (테스트 저장은 치지 않는다)와 저장된 진행(주·성도 수)
 function stageSaved(id){try{return !!localStorage.getItem(stageKey(id));}catch(e){return false;}}
@@ -77,13 +77,20 @@ function stBtn(s,mode,label,on,arm){
   return '<button class="stb '+mode+(on?'':' off')+(arm?' arm':'')+'" data-stage="'+s.id+'" data-mode="'+mode+'"'+(on?'':' aria-disabled="true"')+
     ' aria-label="'+s.n+' '+(arm?'정말 처음부터 — 한 번 더 누르면 저장된 게임 대신 새로 시작해요':label)+'">'+(arm?'정말 새로?':label)+'</button>';
 }
+// 스테이지 카드 그림(Gemini, 12번 시트 → assets/intro/stage_<id>.webp)과 엠블럼(13번 시트 → assets/ui/stg_<id>[_clear].png)이 있는 스테이지. 선교지는 아직 SVG
+var STAGE_IMG={rural:1,mount:1,sea:1,city:1};
+function stagePic(s){
+  if(!STAGE_IMG[s.id])return stageArt(s.id);
+  var clr=stageClears()[s.id]!=null;
+  return '<img class="stimg" alt="" src="assets/intro/stage_'+s.id+'.webp"><img class="stemb'+(clr?' clear':'')+'" alt="" src="assets/ui/stg_'+s.id+(clr?'_clear':'')+'.png">';
+}
 function renderStages(){
   var el=document.getElementById('stage-grid');if(!el)return;
   var arm=UI.stArm&&performance.now()<UI.stArm.t?UI.stArm.id:null;
   el.innerHTML=STAGES.map(function(s,i){
     var op=!!s.open,sv=op&&stageSaved(s.id),inf=sv?stageSaveInfo(s.id):'';
     return '<div class="stcard'+(op?'':' lock')+'" data-card="'+s.id+'" role="group" aria-label="스테이지 '+(i+1)+' '+s.n+(op?'':' (잠김 · 테스트로만)')+'">'+
-      '<span class="stpic">'+(s.id==='rural'?'<span class="stphoto"></span>':stageArt(s.id))+(op?'':'<span class="stlock" aria-hidden="true"><i>🔒</i>잠김</span>')+stageGoalHtml(s)+'</span>'+
+      '<span class="stpic">'+stagePic(s)+(op?'':'<span class="stlock" aria-hidden="true"><i>🔒</i>잠김</span>')+stageGoalHtml(s)+'</span>'+
       '<span class="stno">STAGE '+(i+1)+(inf?'<em class="stsv">'+inf+'</em>':'')+'</span><b>'+s.n+'</b><small>'+s.d+'</small>'+
       '<span class="stbtns">'+stBtn(s,'new','처음부터',op,arm===s.id)+stBtn(s,'cont','이어하기',sv)+stBtn(s,'test','테스트',true)+'</span></div>';}).join('');
 }
