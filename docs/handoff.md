@@ -10,8 +10,8 @@
 - main 직접 푸시 금지. 기능마다 브랜치 → PR. PR·병합은 사용자가 말할 때만.
 
 ## 지금 상태
-- `main`: PR #5(코드 단면·스테이지 2~4·인트로)와 PR #6(스테이지 1~4 Gemini 그림 적용·프롬프트 12~20번·이 메모)까지 병합됨. 테스트 아티팩트 Version 38이 이 내용.
-- 열린 작업 브랜치·PR 없음. 새 작업은 main에서 새 브랜치를 따서 시작한다.
+- `main`: PR #5(코드 단면·스테이지 2~4·인트로), #6(스테이지 1~4 그림), #8(UI 아이콘 21~29번 시트 적용), 그다음 PR(남은 아이콘 연결)까지 병합됨. 테스트 아티팩트는 Version 38 이후 다시 올리지 않았다.
+- 열린 작업 브랜치·PR 없음. 새 작업은 main에서 새 브랜치를 따서 시작한다. 사용자가 이제 브랜치·PR·병합을 직접 한다(Compare & pull request → Merge).
 
 ## 남은 일 (사용자가 말하면)
 - 18~20번 그림(`docs/art/sheets/sprites-stage.jpeg`·`sheet-city.jpeg`·`textures-stage.png`)은 받아만 두고 자르거나 연결하지 않았다. 지도 위 차량·배·산짐승 스프라이트, 도시 이웃 건물 5종, 질감 8종.
@@ -19,10 +19,12 @@
 - 테스트 게임은 누를 때마다 새로 시작한다(이어하기 없음).
 - `docs/art/sheets`에서 옛 시트 20개(sheet-E~H, W1~W3)를 지웠다(기록에는 있음, 삭제 커밋 `f534ce9`).
 
-- UI 디자인 Gemini 프롬프트 21~29번(분류 타일·하위 묶음 칩·현황 지표·직원 동작·입구·단계 휘장·고민·날씨·공용 버튼)을 `docs/art/gemini-prompts.md` 맨 아래에 적었다(브랜치 `docs/ui-gemini-prompts`). 시트를 받으면 `docs/art/sheets/ui-buttons21~29.jpeg`로 두고 `tools/ui_buttons.py` `SPEC`에 칸 이름을 적어 자른 뒤 화면에 연결한다.
+- UI 아이콘 21~29번(`docs/art/gemini-prompts.md` 맨 아래, 시트 `docs/art/sheets/ui-buttons21~29`, `python3 tools/ui_buttons.py 21 … 29`로 135개를 `assets/ui/`에 자름)은 대부분 화면에 연결했다: 건축 분류 `cat_*`·하위 칩 `sub_*`, 지표 `ind_*`, 날씨 `wx_*`·계절 `ssn_*`, 동작 `act_*`(`aic()`, pixicons.js), 단계 휘장 `node_*`, 고민 종류 `care_*`, 짓기·선택 카드 버튼 `btn_*`.
+- 파일만 있고 아직 안 붙인 것: 지표 `ind_*_rdy/_lock/claim`, 갈래 휘장 `br_*`, `btn_rot/info/deco`, `act_pay/mood/xp/like/fire/lock/resume`, 입구 `entr_*`·`deco_*`(입구 카드는 실제 문을 그려 쓰므로 불필요). 새 화면 요소가 생길 때 쓴다.
 
 ## 환경 함정
 - 저장소 주소는 `maxinhim/Church-tycoon`(옛 `church-tycoon`은 옮겨짐). GraphQL이 막혀 `gh pr`는 안 되고 `gh api repos/maxinhim/Church-tycoon/...`(REST)를 쓴다.
+- 이미 푸시한 브랜치를 rebase하면 force push가 막힌다 → 새 브랜치 이름으로 푸시한다.
 - 얕은 클론이면 main과 공통 조상이 안 보인다 → `git fetch --unshallow origin`.
 - `git fetch origin main`은 추적 ref를 안 바꾼다 → `git fetch origin main:refs/remotes/origin/main`.
 - Gemini 그림 오른쪽 아래 별 표시는 `tools/gemini_mark.py`가 지운다(가장자리에서 121·120px).
