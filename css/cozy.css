@@ -607,3 +607,18 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 #gearMenu .gnav .btn{display:flex;align-items:center;gap:7px}
 #gearMenu .gni{width:22px;height:22px;flex:none}
 .btn.sm .sci{width:1.5em;height:1.5em;vertical-align:-.4em;margin:-.2em .25em -.2em -.2em}
+
+/* ---- Gemini 아이콘 21~29번 (assets/ui) ---- */
+.aic{width:1.25em;height:1.25em;vertical-align:-.28em;object-fit:contain;margin-right:.1em}
+.btile .gi{width:34px;height:34px;object-fit:contain;display:block;margin:0 auto}
+#panel.build .btile .gi{width:30px;height:30px}
+.subtabs .csb i img{width:18px;height:18px;object-fit:contain;display:block}
+.subtabs .csb i{display:inline-grid;place-items:center}
+.ind img.indi{width:18px;height:18px;object-fit:contain}
+.evi.ico img.indbig{width:100%;height:100%;object-fit:contain;display:block}
+.wxi{object-fit:contain}
+.cri .cri-i{width:34px;height:34px;object-fit:contain;display:block}
+.sg-foot .nodei{width:20px;height:20px;vertical-align:-5px;object-fit:contain}
+.pok,.pno,.pun{background:none!important;border:0!important;box-shadow:0 3px 6px rgba(0,0,0,.3)!important;border-radius:50%;padding:0}
+.pok .pbi,.pno .pbi,.pun .pbi{width:100%;height:100%;display:block;object-fit:contain;pointer-events:none}
+.pok.off{opacity:.6;filter:grayscale(1)}

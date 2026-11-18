@@ -1577,7 +1577,7 @@ async function rosterChecks(browser, url) {
   const b = await page.evaluate(() => {
     const o = {}, bid = S.buildings.find(x => x.def === 'room').id; document.querySelector('.rcard.ex').click();
     document.querySelector('[data-act="rospick"]').click(); o.pick = document.querySelectorAll('.rpk').length >= 1;
-    document.querySelector('.rpk[data-v="' + bid + '"]').click(); o.placed = !!mgrOf(bById(bid)) && /김시온/.test(mgrOf(bById(bid)).name) && /📍/.test(document.querySelector('.rcard.on .rc-at').textContent);
+    document.querySelector('.rpk[data-v="' + bid + '"]').click(); o.placed = !!mgrOf(bById(bid)) && /김시온/.test(mgrOf(bById(bid)).name) && !!document.querySelector('.rcard.on .rc-at img[src*="act_post"]');
     const e = rosEnt(UI.rosSel), k0 = e.k, st = e.o.st; st.xp = ST_TRAIN.xp; const m0 = S.money; renderScreen();
     document.querySelector('[data-act="rostrain"]').click(); o.train = st.tr === 1 && S.money === m0 - rosCost(0) && st.xp === 0 && rosEnt(UI.rosSel).k > k0 && /영구/.test(document.getElementById('scrToast').textContent);
     st.mo = 40; const m1 = S.money; renderScreen(); document.querySelector('[data-act="roscheer"]').click(); o.cheer = st.mo === 90 && S.money === m1 - ST_CHEER.cost && st.xp === ST_CHEER.xp;
@@ -1616,7 +1616,7 @@ async function slotChecks(browser, url) {
     o.split = Math.abs(l.width / (l.width + r.width) - .4) < .05 && document.querySelectorAll('.lcard').length === 2;
     document.querySelector('.lcard[data-v="' + L.id + '"]').click();
     const n = leadSlots(L), emp = () => document.querySelectorAll('.lead-slots .lslot.empty').length;
-    o.grid = document.querySelectorAll('.lead-slots .lslot').length === n && emp() === n && getComputedStyle(document.querySelector('.lslot.empty')).borderTopStyle === 'dashed' && !!document.querySelector('[data-act="ldauto"]') && /⚡/.test(document.querySelector('[data-act="ldauto"]').textContent);
+    o.grid = document.querySelectorAll('.lead-slots .lslot').length === n && emp() === n && getComputedStyle(document.querySelector('.lslot.empty')).borderTopStyle === 'dashed' && !!document.querySelector('[data-act="ldauto"]') && !!document.querySelector('[data-act="ldauto"] img[src*="act_auto"]');
     document.querySelector('.lslot.empty').click(); const pk = [...document.querySelectorAll('.lead-pick [data-act="ldpick"]')];
     o.pick = pk.length > 0 && pk.every(b => ppById(+b.dataset.v) && ppClass(ppById(+b.dataset.v)) === 'saint');
     const s0 = +pk[0].dataset.v; pk[0].click(); o.put = L.assignedSaints.length === 1 && L.assignedSaints[0] === s0 && emp() === n - 1 && !!document.querySelector('.lead-slots .lslot.full img') && ppAssignedAny(s0);
@@ -2115,7 +2115,7 @@ async function gripeChecks(browser, url) {
     const wo1 = ids(); wsub[1].click(); const wo2 = ids(); document.querySelector('#subtabs [data-v="dept"]').click(); const dep = ids(); UI.cat = 'care'; renderPanel(); const careKids = !!document.querySelector('#subtabs [data-v="kids"]');
     UI.cat = 'shop'; renderPanel(); const ssub = [...document.querySelectorAll('#subtabs [data-act="csub"]')].map(x => x.dataset.v).join(); const sh1 = ids();
     document.querySelector('#subtabs [data-act="csub"][data-v="cafe"]').click(); const sh2 = ids();
-    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray,dept' && dep.includes('nursery') && dep.includes('kinder') && dep.includes('kids') && dep.includes('teens') && !dep.includes('room') && !careKids && wsub.every(x => !!x.querySelector('i') && x.querySelector('i').textContent.length > 0) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
+    o.subs = wsub.map(x => x.dataset.v).join() === 'service,pray,dept' && dep.includes('nursery') && dep.includes('kinder') && dep.includes('kids') && dep.includes('teens') && !dep.includes('room') && !careKids && wsub.every(x => !!x.querySelector('i') && !!x.querySelector('i img')) && wo1.includes('room') && !wo1.includes('pray') && !wo1.includes('main') && wo2.includes('pray') && !wo2.includes('room') &&
       ssub === 'food,cafe,book' && sh1.includes('shop') && !sh1.includes('coffeecart') && sh2.includes('coffeecart') && !sh2.includes('shop') && ['worship', 'fellow', 'shop', 'care', 'comfort', 'club'].every(c => DEFS.filter(d => d.cat === c && !d.hidden).every(d => CAT_SUBS[c].some(x => x[0] === d.sub)));
     }
     UI.cat = 'path'; renderPanel(); o.club = o.club && !document.querySelector('#subtabs [data-act="csub"]');
@@ -2307,7 +2307,7 @@ async function earlyChecks(browser, url) {
       S.qxp = 0; recalc(); indTick(); ni.claim = ni.claim && S.il.xp.lv === lvx;
       // 맨 윗줄: 이름·Lv 옆에 지표 칩 다섯 칸(아이콘 + Lv + 게이지), 시계와 겹치지 않고, 평판은 어디에도 안 나옴. 누르면 현황 화면
       hud(true); const ch = document.querySelectorAll('#inds .ind'), tr = document.getElementById('top').getBoundingClientRect(), ck = document.getElementById('clock').getBoundingClientRect();
-      ni.chips = ch.length === 5 && [...ch].every(c => /^Lv \d+$/.test(c.querySelector('b').textContent) && c.querySelector('svg') && c.querySelector('.ig i')) && tr.top < 20 && tr.right <= ck.left + 1 && !document.getElementById('vRep') && !/평판/.test(document.getElementById('status').textContent + document.getElementById('top').textContent);
+      ni.chips = ch.length === 5 && [...ch].every(c => /^Lv \d+$/.test(c.querySelector('b').textContent) && c.querySelector('img.indi') && c.querySelector('.ig i')) && tr.top < 20 && tr.right <= ck.left + 1 && !document.getElementById('vRep') && !/평판/.test(document.getElementById('status').textContent + document.getElementById('top').textContent);
       S.qxp = 400; recalc(); S.il.xp.lv = 1; S.il.xp.cl = 1; indTick(); hud(true); ni.chips = ni.chips && document.querySelector('#inds [data-ind="xp"]').classList.contains('rdy');
       ch[1].click(); ni.chips = ni.chips && UI.scr === 'status' && UI.scrSel && UI.scrSel.id === 'mood' && /만족도/.test(document.getElementById('scrDlg').textContent) && /교제 공간/.test(document.getElementById('scrDlg').textContent);
       document.querySelector('#scrDlg [data-act="inclose"]').click(); document.querySelector('#scrBody .indc[data-v="xp"]').click();

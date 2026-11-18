@@ -23,7 +23,7 @@
 #top{padding:3px 8px 3px 10px;gap:8px}
 .inds{gap:5px}
 .ind{min-width:40px}
-.ind svg.indi{width:12px;height:12px}
+.ind svg.indi,.ind img.indi{width:14px;height:14px}
 .ind b{font-size:10.5px}
 .qchip{max-width:170px;padding:2px 6px 3px}
 .qchip span{font-size:9.5px}

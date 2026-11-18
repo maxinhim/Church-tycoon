@@ -339,7 +339,7 @@ function careResHtml(){
   var r=careRes;if(!r)return '';
   var rows=r.eff.map(function(t){var good=/호감 \+/.test(t);return '<li class="'+(good?'g':'b')+'"><i aria-hidden="true">'+(good?'▲':'▼')+'</i>'+t+'</li>';}).join('');
   var chips=[];if(r.cost)chips.push('<span class="b">자금 −'+fmt(r.cost)+'</span>');if(r.mood)chips.push('<span class="'+(r.mood>0?'g':'b')+'">교회 분위기 '+(r.mood>0?'+':'−')+Math.abs(r.mood)+'</span>');
-  return '<div class="sdlg cres '+(r.ok?'ok':'no')+'" role="dialog" aria-label="선택 결과"><div class="crh"><span class="cri">'+(r.ok?'👍':'😔')+'</span><div><b>'+(r.ok?'지혜로운 선택이었어요':'아쉬운 선택이었어요')+'</b><small>'+r.w+' · '+r.t+'</small></div></div>'+
+  return '<div class="sdlg cres '+(r.ok?'ok':'no')+'" role="dialog" aria-label="선택 결과"><div class="crh"><span class="cri">'+aic(r.ok?'care_good':'care_bad','cri-i')+'</span><div><b>'+(r.ok?'지혜로운 선택이었어요':'아쉬운 선택이었어요')+'</b><small>'+r.w+' · '+r.t+'</small></div></div>'+
     '<p class="crp">“'+r.pick+'”</p><p class="crs">'+r.story+'</p>'+(rows?'<ul class="cre">'+rows+'</ul>':'')+(chips.length?'<div class="crc">'+chips.join('')+'</div>':'')+
     '<div class="sdb"><button class="btn pri big" data-act="evclose">확인</button></div></div>';
 }

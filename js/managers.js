@@ -202,21 +202,21 @@ function slotsHtml(b){
   var main,sup='',mw=mgrOf(b),L=b.supportStaff||[];
   if(b.fixed&&mw)main='<span class="slt full fix" title="담임목사" aria-label="메인 관리자 담임목사"><img alt="" src="'+mgrFace(mw)+'"></span>';
   else if(mw)main='<button class="slt full" data-act="mgr" aria-label="메인 관리자 '+mw.name+' — 바꾸기" title="'+mw.name+' · 누르면 바꿔요"><img alt="" src="'+mgrFace(mw)+'"></button>';
-  else main='<button class="slt empty" data-act="mgr" aria-label="메인 관리자 빈 칸 — 배치">👤</button>';
+  else main='<button class="slt empty" data-act="mgr" aria-label="메인 관리자 빈 칸 — 배치">'+aic('act_mgr')+'</button>';
   for(var i=0;i<n;i++){
     var p=L[i]&&ppById(L[i]);
     sup+=p?'<button class="slt full" data-act="supdel" data-v="'+p.id+'" aria-label="보조 '+p.n+' 빼기, 성능 +'+pctS(supBuff(p))+'" title="'+p.n+' · 성능 +'+pctS(supBuff(p))+' · 누르면 빼요"><img alt="" src="'+personFace(p)+'"></button>':
       '<button class="slt empty" data-act="supopen" aria-label="보조 인력 빈 칸 — 직분자 배치">＋</button>';
   }
   return '<div class="scs"><div class="scs-g"><small>메인</small><div class="scs-r">'+main+'</div></div>'+(n?'<i class="scs-sep" aria-hidden="true"></i>'+
-    '<div class="scs-g"><small>보조 '+L.length+'/'+n+(L.length?' · +'+pctS(supK(b)-1):'')+'</small><div class="scs-r">'+sup+'</div></div><button class="btn sm scs-auto" data-act="supauto" aria-label="직분자 자동 배치" title="⚙️ 직분자 자동 배치">⚙️</button>':'')+'</div>';
+    '<div class="scs-g"><small>보조 '+L.length+'/'+n+(L.length?' · +'+pctS(supK(b)-1):'')+'</small><div class="scs-r">'+sup+'</div></div><button class="btn sm scs-auto" data-act="supauto" aria-label="직분자 자동 배치" title="직분자 자동 배치">'+aic('act_autosup')+'</button>':'')+'</div>';
 }
 /* 보조 인력 화면: 칸을 눌러 열고(UI.supB = 건물 id), 직분자 카드를 눌러 세우거나 뺀다 */
 function supScrB(){var b=UI.supB&&bById(UI.supB);return b&&supSlots(b)?b:null;}
 function supHtml(){
   var b=supScrB();if(!b)return '<p class="sempty">보조 인력을 둘 건물을 지도에서 골라 주세요.</p>';
   var L=(S.people||[]).filter(supEligible).sort(function(a,c){return c.lv-a.lv||a.id-c.id;}),n=supSlots(b),k=(b.supportStaff||[]).length;
-  var h='<div class="sbulk mgrh"><span><b>'+defOf(b).name+'</b> · 보조 직분자 '+k+' / '+n+'칸 · 직분자 갈래(헌신성도·집사·장로·권사)를 세워요</span><button class="btn pri" data-act="supauto">⚙️ 직분자 자동 배치</button></div>';
+  var h='<div class="sbulk mgrh"><span><b>'+defOf(b).name+'</b> · 보조 직분자 '+k+' / '+n+'칸 · 직분자 갈래(헌신성도·집사·장로·권사)를 세워요</span><button class="btn pri" data-act="supauto">'+aic('act_autosup')+' 직분자 자동 배치</button></div>';
   if(!L.length)return h+'<p class="sempty">아직 직분자 갈래 성도가 없어요. 성도 화면에서 제자반 뒤 직분자 갈래로 세워 주세요.</p>';
   return h+'<div class="lp-g sup-lp">'+L.map(function(p){
     var at=supOf(p.id),here=at===b.id,ob=at&&!here?bById(at):null;

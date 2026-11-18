@@ -319,7 +319,7 @@ function stageCardHtml(st){
   return '<div class="sgc'+(cares?' care':'')+'">'+
     '<div class="sgb-row">'+btn+'</div>'+
     '<button class="sg-art" data-act="ppopen" data-v="'+rep.id+'" aria-label="'+rep.n+' 자세히"><img alt="" src="'+personFace(rep)+'">'+(careOf(rep)?'<span class="pcare">!</span>':'')+'</button>'+
-    '<div class="sg-foot"><b>'+nodeName(st.node,g)+' <em>'+L.length+'명</em></b><span>대표 '+rep.n+' · ♥'+rep.lv+(run?' · 교육 중 '+run+'명':'')+(cares?' · 고민 '+cares+'명':'')+'</span>'+
+    '<div class="sg-foot"><b>'+aic('node_'+(st.node==='elder'&&g==='f'?'elderf':st.node),'nodei')+' '+nodeName(st.node,g)+' <em>'+L.length+'명</em></b><span>대표 '+rep.n+' · ♥'+rep.lv+(run?' · 교육 중 '+run+'명':'')+(cares?' · 고민 '+cares+'명':'')+'</span>'+
     (why?'<small class="sg-why">'+why+'</small>':'')+'</div></div>';
 }
 function stageBar(){
@@ -370,7 +370,7 @@ function ofCanPick(p){var k=UI.ofPick;if(!k)return false;return k.t==='sup'?supE
 // 사람이 지금 맡은 곳 한 줄
 function ofWhere(p){
   var t=ppTrack(p);
-  if(t==='A'){var b=supOf(p.id)&&bById(supOf(p.id));return b?'📍 '+defOf(b).name:'대기';}
+  if(t==='A'){var b=supOf(p.id)&&bById(supOf(p.id));return b?aic('act_post')+' '+defOf(b).name:'대기';}
   if(t==='C'){var k=teamOf(p.id);return k?STAFF[k].ic+' '+STAFF[k].name:'대기';}
   if(t==='B'){var sl=leadSlots(p);return sl?'성도 '+(p.assignedSaints||[]).length+' / '+sl:'성도 칸 없음';}
   return '갈래 고르기 전';
@@ -387,7 +387,7 @@ function ofBigHtml(p){
   st.push(['호감 레벨','♥ '+p.lv+' <small>('+Math.floor(p.xp)+' / '+need+')</small>']);
   if(t==='A'){var bb=supBuff(p),b=supOf(p.id)&&bById(supOf(p.id));
     st.push(['보조 버프','건물 성능 +'+pctS(bb)+' <small>(단계 +'+pctS(SUP_BUFF[p.node]||SUP_BUFF.devoted)+' · 호감 +'+pctS(p.lv*SUP_BUFF_LV)+')</small>']);
-    st.push(['근무',b?'📍 '+defOf(b).name:'<em>대기</em>']);if(b)btn='<button class="btn sm" data-act="ofsupdel" data-v="'+b.id+':'+p.id+'">빼기</button>';}
+    st.push(['근무',b?aic('act_post')+' '+defOf(b).name:'<em>대기</em>']);if(b)btn='<button class="btn sm" data-act="ofsupdel" data-v="'+b.id+':'+p.id+'">빼기</button>';}
   else if(t==='B'){var sl=leadSlots(p);
     st.push(['성도 칸',(p.assignedSaints||[]).length+' / '+sl+(sl<(ppNode(p).cap||0)?' <small>(호감 Lv '+(Math.floor(p.lv/LEAD_SLOT_LV)+1)*LEAD_SLOT_LV+'에 한 칸 더)</small>':'')]);
     st.push(['돌봄 효과','맡은 성도마다 ♥ +'+tN(leadXp(p))+'/주']);}
@@ -444,8 +444,8 @@ function leadRightHtml(sel){
   for(var i=0;i<sl;i++)slots+=leadSlotHtml(mine[i],sel);
   var nx=sl<(ppNode(sel).cap||0)?'호감 Lv '+(Math.floor(sel.lv/LEAD_SLOT_LV)+1)*LEAD_SLOT_LV+'에 한 칸 더':'최대 칸이에요';
   var r='<div class="lead-h"><div><b>'+sel.n+' '+ppRankName(sel)+'</b><small>맡은 성도 '+mine.length+' / '+sl+' · '+(sl?'성도마다 매주 ♥ +'+tN(leadXp(sel))+' · '+nx:'소그룹 리더가 되면 성도를 맡아요')+'</small></div>'+
-    '<div class="lead-hb"><button class="btn pri" data-act="ldauto"'+(sl&&mine.length<sl&&free.length?'':' disabled')+'>⚡ 자동 배정</button>'+
-    '<button class="btn pri claim" data-act="ldautoall"'+(ppAutoAllOk()?'':' disabled')+' title="모든 리더의 빈 칸에 맡을 수 있는 성도를 한꺼번에">⚡ 전체 자동 배치</button></div></div>';
+    '<div class="lead-hb"><button class="btn pri" data-act="ldauto"'+(sl&&mine.length<sl&&free.length?'':' disabled')+'>'+aic('act_auto')+' 자동 배정</button>'+
+    '<button class="btn pri claim" data-act="ldautoall"'+(ppAutoAllOk()?'':' disabled')+' title="모든 리더의 빈 칸에 맡을 수 있는 성도를 한꺼번에">'+aic('act_auto')+' 전체 자동 배치</button></div></div>';
   r+=sl?'<div class="lead-slots">'+slots+'</div>':'<p class="sempty">이 단계는 성도를 맡지 않아요.</p>';
   if(UI.leadPick&&sl&&mine.length<sl)r+='<div class="lead-pick"><b>담당할 성도를 고르세요 <small>(호감 Lv 낮은 순)</small></b>'+(free.length?'<div class="lp-g">'+free.map(function(s){
     return '<button class="lp" data-act="ldpick" data-v="'+s.id+'" aria-label="'+s.n+' 호감 Lv '+s.lv+'"><img alt="" src="'+personFace(s)+'"><span>'+s.n+'</span><small>♥'+s.lv+'</small></button>';}).join('')+'</div>':'<p class="sempty">맡길 성도가 없어요 (제자반 전 성도만 맡길 수 있어요)</p>')+'</div>';

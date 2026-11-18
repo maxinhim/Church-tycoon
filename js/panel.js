@@ -88,8 +88,8 @@ function renderPanel(){
   $('#dock').classList.toggle('bmode',t==='build');
   var cs=curSub(UI.cat);
   $('#subtabs').innerHTML=SUBTABS[g]?SUBTABS[g].map(function(s){return '<button role="tab" data-act="subtab" data-v="'+s[0]+'" aria-selected="'+(t===s[0])+'" class="'+(t===s[0]?'on':'')+'">'+s[1]+'</button>';}).join(''):
-    (UI.entr&&t==='build'?ENT_SUBS.map(function(s){return '<button role="tab" data-act="esub" data-v="'+s[0]+'" aria-selected="'+(UI.entr.sub===s[0])+'" aria-label="'+s[1]+'" class="csb'+(UI.entr.sub===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):
-    t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true">'+s[2]+'</i>'+s[1]+'</button>';}).join(''):'');
+    (UI.entr&&t==='build'?ENT_SUBS.map(function(s){return '<button role="tab" data-act="esub" data-v="'+s[0]+'" aria-selected="'+(UI.entr.sub===s[0])+'" aria-label="'+s[1]+'" class="csb'+(UI.entr.sub===s[0]?' on':'')+'"><i aria-hidden="true"><img alt="" src="assets/ui/sub_'+s[0]+'.png"></i>'+s[1]+'</button>';}).join(''):
+    t==='build'&&!UI.choose&&UI.bstep!=='cat'&&CAT_SUBS[UI.cat]&&UI.tool!=='demolish'?CAT_SUBS[UI.cat].map(function(s){return '<button role="tab" data-act="csub" data-v="'+s[0]+'" aria-selected="'+(cs===s[0])+'" aria-label="'+s[1]+'" class="csb'+(cs===s[0]?' on':'')+'"><i aria-hidden="true"><img alt="" src="assets/ui/sub_'+s[0]+'.png"></i>'+s[1]+'</button>';}).join(''):'');
   panel.className=(t==='build')?'build':'scroll';
   if(t==='build')renderBuild();else if(t==='finance')renderFinance();else if(t==='staff')renderStaff();else if(t==='events')renderEvents();else renderMenu();
 }
@@ -155,7 +155,7 @@ function renderChooser(){
 }
 /* 건축 패널은 두 단계: ① 분류 목록(타일) → ② 고른 분류의 건물 카드 한 줄(가로로 끌어 넘김, ‹ 뒤로로 ①).
    짓다가 취소하면 ②로 돌아오고, 직전에 고른 카드가 보이게 그 자리로 넘겨 둔다 (UI.lastPick[분류]) */
-function catIcon(cat){var d=DEFS.filter(function(x){return x.cat===cat&&!x.hidden&&!x.retired;})[0];return d?iconCanvas(d):null;}
+function catIcon(cat){var im=new Image();im.alt='';im.className='gi';im.src='assets/ui/cat_'+cat+'.png';return im;}
 function renderBuild(){
   panel.scrollTop=0;
   if(UI.entr){renderEntr();return;}
@@ -166,7 +166,7 @@ function renderBuild(){
     CATS.concat([['__dem','철거']]).forEach(function(c){
       var el=document.createElement('button');el.className='btile'+(c[0]==='__dem'?' warn':'');
       el.dataset.act=c[0]==='__dem'?'dem':'cat';if(c[0]!=='__dem')el.dataset.v=c[0];
-      var ic=c[0]==='__dem'?null:catIcon(c[0]);
+      var ic=catIcon(c[0]==='__dem'?'dem':c[0]);
       if(ic)el.appendChild(ic);else el.insertAdjacentHTML('beforeend','<span class="bic" aria-hidden="true">'+(c[0]==='__dem'?'⚒':'')+'</span>');
       el.insertAdjacentHTML('beforeend','<span class="nm">'+c[1]+'</span>');
       bt.appendChild(el);

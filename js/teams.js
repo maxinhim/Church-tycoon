@@ -112,7 +112,7 @@ function teamsHtml(){
   if(!featOk('teams'))return '<p class="sempty">🔒 사역팀은 '+featWhy('teams')+'</p>';
   var fr=teamFree().length,used=Object.keys(STAFF).reduce(function(n,k){return n+teamServants(k).length;},0);
   return '<div class="sbulk tbar"><span class="tinfo">섬김이 '+used+'명 배치 · 대기 '+fr+'명 · 빈칸을 누르고 왼쪽 섬김이를 고르세요</span>'+
-    '<button class="btn" data-act="tmreset"'+(used?'':' disabled')+'>모두 빼기</button><button class="btn pri" data-act="tmauto"'+(fr?'':' disabled')+'>⚡ 자동 배정</button></div>'+
+    '<button class="btn" data-act="tmreset"'+(used?'':' disabled')+'>모두 빼기</button><button class="btn pri" data-act="tmauto"'+(fr?'':' disabled')+'>'+aic('act_auto')+' 자동 배정</button></div>'+
     '<div class="tmg6">'+Object.keys(STAFF).map(teamCardHtml).join('')+'</div>';
 }
 function teamDlgHtml(k){

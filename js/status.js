@@ -18,7 +18,7 @@ var IND=[
    ic:'<path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6L12 16.8 6.7 19.7l1.1-6L3.4 9.5l6-.8z"/>'}
 ];
 var INDK={};IND.forEach(function(d){INDK[d.k]=d;});
-function indIcon(k,cls){return '<svg class="'+(cls||'indi')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+INDK[k].ic+'</svg>';}
+function indIcon(k,cls){return '<img class="'+(cls||'indi')+'" alt="" src="assets/ui/ind_'+k+'.png">';}
 // 항목 하나를 채운 양 (기본 + 건물 자리, 필요의 SERVE_CAP배까지만)
 function served(k){var i=satInfo(k);return Math.min(i.base+i.have,SERVE_CAP*i.need);}
 function avgHeart(){var L=S.people||[];if(!L.length)return 1;var t=0;L.forEach(function(p){t+=p.lv;});return t/L.length;}

@@ -26,3 +26,6 @@ function pixSvg(rows){
     if(old){var t=document.createElement('template');t.innerHTML=pixSvg(PIX[k]);fc.replaceChild(t.content.firstChild,old);}
   });
 })();
+
+/* Gemini 아이콘(21~29번 시트, assets/ui)을 글자 앞에 붙이는 작은 그림 */
+function aic(n,cls){return '<img class="'+(cls||'aic')+'" alt="" src="assets/ui/'+n+'.png">';}

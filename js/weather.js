@@ -137,18 +137,7 @@ function strike(){
   if(t){var d2=bDims(t);WX.bolt={x:t.x+d2.w/2,y:t.y+d2.h/2,z:bLevel(t)*LV+bHeight(t),t:0.35};}
   else WX.bolt={x:Math.random()*COLS,y:Math.random()*PZ,z:0,t:0.35};
 }
-function wxIcon(k){
-  var sun='<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7L7 17M17 7l1.7-1.7"/>';
-  var cloud='<path d="M7 18h10.5a3.8 3.8 0 0 0 .4-7.6A5.5 5.5 0 0 0 7.3 9.2 4.4 4.4 0 0 0 7 18z"/>';
-  var cl2='<path d="M7 15h10.5a3.6 3.6 0 0 0 .4-7.2A5.3 5.3 0 0 0 7.3 6.6 4.2 4.2 0 0 0 7 15z"/>';
-  var m={sun:sun,cloud:cloud,
-    rain:cl2+'<path d="M8.5 18l-1 2.8M12.5 18l-1 2.8M16.5 18l-1 2.8"/>',
-    storm:cl2+'<path d="M12.5 15.5l-2.5 4h3l-2 3.5"/>',
-    wind:'<path d="M3 9h11a2.6 2.6 0 1 0-2.6-2.6M3 13.5h15a2.8 2.8 0 1 1-2.8 2.8M3 18h7"/>',
-    snow:'<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.6 4.5L12 6.6l2.4-2.1M9.6 19.5L12 17.4l2.4 2.1"/>',
-    heat:sun+'<path d="M19.5 3.5v5" stroke="#d6453a"/>'};
-  return '<svg class="wxi wx-'+k+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(m[k]||sun)+'</svg>';
-}
+function wxIcon(k){return '<img class="wxi wx-'+k+'" alt="" src="assets/ui/wx_'+(WEATHER[k]?k:'sun')+'.png">';}
 
 /* ---------- 날씨 그리기 (화면 효과는 저장하지 않는다) ---------- */
 var WX={k:{},flash:0,bolt:null,drops:[],flakes:[],leaves:[],last:''};

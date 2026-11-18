@@ -54,7 +54,7 @@ function rosCardHtml(e,on){
     '<img alt="" src="'+rosArt(e)+'"><span class="rc-rk">'+e.rank+'</span><span class="hc-grade g'+sk+' rc-gr">'+HC_GRADE[sk]+'</span>'+
     '<span class="rc-info"><span class="rc-n">'+e.name+'</span>'+hcStars(sk)+'<small class="rc-story">'+(e.story||(e.ex?'새 사역지에서 열심히 섬기고 있어요.':'우리 교회에서 자라났어요.'))+'</small>'+
     '<small class="rc-k">'+rosPerf(e)+'</small><small class="rc-pay">월 '+(e.pay?fmtS(e.pay):'없음')+'</small></span>'+
-    '<span class="rc-at'+(at?'':' idle')+'">'+(at?'📍 '+at:'대기')+'</span></button>';
+    '<span class="rc-at'+(at?'':' idle')+'">'+(at?aic('act_post')+' '+at:'대기')+'</span></button>';
 }
 function rosCost(n){return Math.round(ST_TRAIN.cost*(1+ST_TRAIN.grow*n));}
 function rosWhyTrain(e){
@@ -83,7 +83,7 @@ function rosDetailHtml(e){
   var h='<div class="rd '+(e.ex?'ex':'in')+'"><div class="rd-art"><img alt="" src="'+rosArt(e)+'"></div>'+
     '<div class="rd-h"><h3>'+e.name+'</h3><span class="rchip '+(e.ex?'ex':'in')+'">'+e.rank+'</span><span class="rorg">'+(e.ex?'청빙':'양육')+'</span></div>'+
     '<p class="say">“'+story+'”</p>'+
-    '<dl class="rd-s"><div><dt>근무지</dt><dd>'+(at?'📍 '+at:'<em>대기 중</em>')+'</dd></div>'+
+    '<dl class="rd-s"><div><dt>근무지</dt><dd>'+(at?aic('act_post')+' '+at:'<em>대기 중</em>')+'</dd></div>'+
     '<div><dt>등급</dt><dd><span class="hc-grade g'+rosSkill(e)+' sm">'+HC_GRADE[rosSkill(e)]+'</span> '+hcStars(rosSkill(e))+'</dd></div>'+
     '<div><dt>월 사례비</dt><dd>'+(e.pay?fmt(e.pay):'없음')+'</dd></div>'+
     '<div><dt>성능</dt><dd>'+(e.k!=null?kText(e.k):'—')+'</dd></div>'+
@@ -91,10 +91,10 @@ function rosDetailHtml(e){
     '<div><dt>훈련 경험</dt><dd>'+Math.floor(s.xp)+'</dd></div>'+
     '<div class="mo"><dt>사기</dt><dd><span class="bar"><i style="width:'+Math.round(s.mo)+'%"></i></span>'+Math.round(s.mo)+'</dd></div></dl>'+
     '<div class="rd-b">'+
-    '<button class="btn pri" data-act="rospick"'+(e.role?'':' disabled')+'>📍 근무지 '+(at?'변경':'배치')+'</button>'+
-    '<button class="btn" data-act="rostrain"'+(tw?' disabled':'')+' title="'+tw+'">📖 직무 교육<small>'+(s.tr>=ST_TRAIN.max?'최대':fmtS(rosCost(s.tr))+' · 경험 '+ST_TRAIN.xp)+'</small></button>'+
-    '<button class="btn" data-act="roscheer"'+(cw?' disabled':'')+' title="'+cw+'">🎁 특별 격려<small>'+fmtS(ST_CHEER.cost)+' · 사기 +'+ST_CHEER.mo+'</small></button>'+
-    '<button class="btn" data-act="rospromo"'+(pw?' disabled':'')+' title="'+pw+'">🎓 직급 승급<small>'+(nx?e.rank+' → '+nx+' · '+fmtS(ST_RANK.cost[r]):'—')+'</small></button></div>'+
+    '<button class="btn pri" data-act="rospick"'+(e.role?'':' disabled')+'>'+aic('act_post')+' 근무지 '+(at?'변경':'배치')+'</button>'+
+    '<button class="btn" data-act="rostrain"'+(tw?' disabled':'')+' title="'+tw+'">'+aic('act_train')+' 직무 교육<small>'+(s.tr>=ST_TRAIN.max?'최대':fmtS(rosCost(s.tr))+' · 경험 '+ST_TRAIN.xp)+'</small></button>'+
+    '<button class="btn" data-act="roscheer"'+(cw?' disabled':'')+' title="'+cw+'">'+aic('act_cheer')+' 특별 격려<small>'+fmtS(ST_CHEER.cost)+' · 사기 +'+ST_CHEER.mo+'</small></button>'+
+    '<button class="btn" data-act="rospromo"'+(pw?' disabled':'')+' title="'+pw+'">'+aic('act_promo')+' 직급 승급<small>'+(nx?e.rank+' → '+nx+' · '+fmtS(ST_RANK.cost[r]):'—')+'</small></button></div>'+
     (e.as?'<button class="btn rd-x" data-act="rosdismiss">사임시키기</button>':'');
   var why=!e.role?'건물 관리자는 부교역자와 청빙직원만 맡을 수 있어요 (장로·권사는 봉사자 › 직분자 탭에서 건물 보조 인력으로)':(tw&&cw&&pw?'':'');
   if(why)h+='<p class="swhy">'+why+'</p>';
