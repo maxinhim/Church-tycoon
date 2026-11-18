@@ -292,12 +292,13 @@ function stageWeek(){
 // 챙길 일
 function stageWarnings(w){
   var s=stg();
-  if(s.wild&&WILD.some(function(a){return a.st==='come';}))w.push('🐗 산짐승 '+WILD.filter(function(a){return a.st==='come';}).length+'마리가 내려왔어요 · 눌러서 쫓아내요');
+  var wl=WILD.filter(function(a){return a.st==='come';});
+  if(s.wild&&wl.length)w.push(uiImg('wild_'+wl[0].k,'wic')+'산짐승 '+wl.length+'마리가 내려왔어요 · 눌러서 쫓아내요');
   if(s.trans){var q=Math.floor((S.pq||0)+(S.pqm||0));
-    if(s.trans==='water'&&q>=6)w.push('⛵ 나루에 '+q+'명이 배를 기다려요 · 직원 › 차량에서 배를 늘리고 운전자를 세워요');
-    else if(s.trans==='road'&&opCap()<=0&&(S.lvl||1)>=2)w.push('🚐 '+(s.walk?'협곡 길이 멀어 걸어 오는 사람이 적어요':'차를 가져와 주차할 곳을 찾는 사람이 많아요')+' · 직원 › 차량에서 승합차를 마련해요');
-    var idle=vehs().filter(function(v){return !vehRun(v);}).length;if(idle)w.push('🚐 운전자가 없는 차량 '+idle+'대 · 봉사자나 부교역자를 운전자로 세워요');}
-  if(s.city&&S.cmp)w.push('📢 민원('+S.cmp.t+') · '+S.cmp.x);
+    if(s.trans==='water'&&q>=6)w.push(uiImg('fleet_pier','wic')+'나루에 '+q+'명이 배를 기다려요 · 직원 › 차량에서 배를 늘리고 운전자를 세워요');
+    else if(s.trans==='road'&&opCap()<=0&&(S.lvl||1)>=2)w.push(uiImg('veh_van','wic')+(s.walk?'협곡 길이 멀어 걸어 오는 사람이 적어요':'차를 가져와 주차할 곳을 찾는 사람이 많아요')+' · 직원 › 차량에서 승합차를 마련해요');
+    var idle=vehs().filter(function(v){return !vehRun(v);}).length;if(idle)w.push(uiImg('fleet_driver','wic')+'운전자가 없는 차량 '+idle+'대 · 봉사자나 부교역자를 운전자로 세워요');}
+  if(s.city&&S.cmp)w.push(npcImg(S.cmp.w%2?'neighbor_f':'neighbor_m')+uiImg(S.cmp.t==='주차'?'city_park':'city_cmp','wic')+'민원('+S.cmp.t+') · '+S.cmp.x);   // 이웃 얼굴 + 민원 아이콘
 }
 
 /* ---------- 그리기 ---------- */
@@ -388,23 +389,25 @@ function drawCityBld(b){
 }
 
 /* ---------- 직원 화면 › 차량 탭 (차량·배가 다니는 스테이지에만) ---------- */
-var VEH_IC={truck:'🛻',van:'🚐',bus:'🚌',ferry:'🛶',boat:'⛵',ship:'🚢'};
+/* Gemini 그림(assets/ui, 13~15번 시트) 도우미: 이름만 주면 <img>. 차량 'veh_<종류>', 도우미 'fleet_*', 산짐승 'wild_*', 도시 'city_*' */
+function uiImg(name,cls){return '<img class="'+(cls||'uii')+'" alt="" src="assets/ui/'+name+'.png">';}
+function npcImg(name,cls){return '<img class="'+(cls||'wface')+'" alt="" src="assets/portraits/icons/npc/npc_'+name+'.png">';}   // 이장님 chief · 사공 boatman · 이웃 neighbor_f·neighbor_m (17번 시트)
 var VEH_PH={load:'태우는 중',go:'가는 중',drop:'내리는 중',back:'돌아오는 중'};
 function tabShown(scr,t){if(scr==='roster'&&t==='fleet')return !!stg().trans;return true;}
 function fleetHtml(){
   var s=stg(),wat=s.trans==='water',q=Math.floor((S.pq||0)+(S.pqm||0));
-  var h='<div class="flt-h"><span>'+(wat?'⛵ 나루':'🚐 입구')+'에서 기다리는 사람 <b>'+q+'명</b></span><span>운행 중 정원 <b>'+opCap()+'명</b></span><span>주간 유지비 <b>'+fmt(vehUp())+'</b></span></div>';
+  var h='<div class="flt-h"><span>'+uiImg(wat?'fleet_pier':'fleet_queue','fhi')+(wat?'나루':'입구')+'에서 기다리는 사람 <b>'+q+'명</b></span><span>'+uiImg(wat?'veh_boat':'veh_van','fhi')+'운행 중 정원 <b>'+opCap()+'명</b></span><span>주간 유지비 <b>'+fmt(vehUp())+'</b></span></div>';
   h+='<p class="shint">'+(wat?'강을 건너려면 배를 타야 해요. 나루에서 기다리는 사람을 태워 교회 앞 나루에 내려 줘요.':s.walk?'협곡 길은 멀어서 걸어 오는 사람이 적고 덜 정착해요. 차량이 입구에서 태워 오면 방문자가 늘어요.':'차량이 입구에서 태워 오면 주차 걱정이 줄고 방문자가 조금 늘어요.')+' 봉사자나 부교역자를 <b>운전자</b>로 세워야 움직여요.</p>';
   var L=vehs();
   h+=L.length?'<div class="flt-g">'+L.map(vehCardHtml).join('')+'</div>':'<p class="sempty">아직 차량이 없어요. 아래에서 마련해 보세요.</p>';
-  h+='<div class="flt-buy">'+vehKinds().map(function(k){var d=VEH[k];return '<button class="btn'+(S.money>=d.cost?' pri':'')+'" data-act="rosvbuy" data-v="'+k+'"><i aria-hidden="true">'+VEH_IC[k]+'</i> '+d.n+' 마련 · 정원 '+d.cap+'명 · '+fmtS(d.cost)+'<small>유지비 주 '+fmtS(d.up)+'</small></button>';}).join('')+'</div>';
+  h+='<div class="flt-buy">'+vehKinds().map(function(k){var d=VEH[k];return '<button class="btn'+(S.money>=d.cost?' pri':'')+'" data-act="rosvbuy" data-v="'+k+'">'+uiImg('veh_'+k,'bvi')+'<span class="bvt">'+d.n+' 마련 · 정원 '+d.cap+'명 · '+fmtS(d.cost)+'<small>유지비 주 '+fmtS(d.up)+'</small></span></button>';}).join('')+'</div>';
   if(UI.vPick){var v=L.filter(function(x){return x.id===UI.vPick;})[0];if(v)h+=drvPickHtml(v);else UI.vPick=null;}
   return h;
 }
 function vehCardHtml(v){
   var d=VEH[v.k],dr=drvOf(v.drv),run=vehRun(v);
-  return '<div class="vcard'+(run?' run':'')+'"><div class="vc-ic" aria-hidden="true">'+VEH_IC[v.k]+'</div><div class="vc-b"><b>'+d.n+'</b><span>정원 '+d.cap+'명 · '+(run?VEH_PH[v.ph]+(v.n?' · '+v.n+'명 탑승':''):'운전자 없음 · 멈춰 있어요')+'</span>'+
-    '<span class="vc-d">'+(d.free?(d.w==='water'?'마을 사공이 몰아요':'이장님이 몰아 줘요'):dr?'🧑‍✈️ '+dr.name+' <small>'+dr.sub+' · 속도 ×'+(1+dr.lv*VEH_DRV_LV).toFixed(2)+'</small>':'<em>운전자를 세워 주세요</em>')+'</span></div>'+
+  return '<div class="vcard'+(run?' run':'')+'"><div class="vc-ic" aria-hidden="true">'+uiImg('veh_'+v.k,'vci')+'</div><div class="vc-b"><b>'+d.n+'</b><span>정원 '+d.cap+'명 · '+(run?VEH_PH[v.ph]+(v.n?' · '+v.n+'명 탑승':''):'운전자 없음 · 멈춰 있어요')+'</span>'+
+    '<span class="vc-d">'+(d.free?npcImg(d.w==='water'?'boatman':'chief','vc-face')+(d.w==='water'?'마을 사공이 몰아요':'이장님이 몰아 줘요'):dr?(dr.face?'<img class="vc-face" alt="" src="'+dr.face+'">':uiImg('fleet_driver','fhi'))+dr.name+' <small>'+dr.sub+' · 속도 ×'+(1+dr.lv*VEH_DRV_LV).toFixed(2)+'</small>':'<em>운전자를 세워 주세요</em>')+'</span></div>'+
     '<div class="vc-a">'+(d.free?'':'<button class="btn sm'+(dr?'':' pri')+'" data-act="rosvdrv" data-v="'+v.id+'">'+(dr?'운전자 바꾸기':'운전자 세우기')+'</button><button class="btn sm" data-act="rosvsell" data-v="'+v.id+'">팔기 +'+fmtS(Math.floor(d.cost*.5))+'</button>')+'</div></div>';
 }
 function drvPickHtml(v){

@@ -400,6 +400,17 @@ async function stageChecks(browser, url) {
     const vis = sub => DEFS.filter(d => d.cat === 'comfort' && !d.hidden && !d.retired && d.sub === sub).map(d => d.id);
     const rest = vis('rest'), etc = vis('etc');
     o.comfort = rest.filter(id => D[id].kind === 'bench').join() === 'bench,bench_back,bench_flower' && ['drinkfount', 'purifier', 'recycle', 'bin'].every(id => etc.includes(id)) && GRIPES.drink.ids.includes('purifier');
+    // 스테이지 그림(Gemini): 목표 칩 · 어촌 차량 탭(차량·배 그림, 구매 단추, 무료 배의 사공 얼굴, 탭 그림) · 산촌 챙길 일의 산짐승 그림 · 도시 민원(이웃 얼굴·아이콘)과 부지 매입 단추
+    { const art = {}; art.goal = /stage_goal\.png/.test(stageGoalHtml(STAGES[0]));
+      enterStage('sea'); S.dlg = null; S.unlockAll = true; S.money = 99999; vehBuy('boat'); openScreen('roster', 'fleet');
+      const tb = document.querySelector('#scrTabs [data-v="fleet"]'), body = document.getElementById('scrBody');
+      art.fleet = !!tb && /tab_fleet\.png/.test(tb.style.cssText) && body.querySelectorAll('.vc-ic img.vci').length === S.veh.length && body.querySelectorAll('.flt-buy img.bvi').length === 3 - 1 && /npc_boatman/.test(body.innerHTML) && /fleet_pier/.test(body.querySelector('.flt-h').innerHTML) && !/[🛻🚐🚌🛶⛵🚢]/u.test(body.querySelector('.flt-g').textContent + body.querySelector('.flt-buy').textContent);
+      closeScreen(); S.pq = 9; art.pier = warnings().some(t => /fleet_pier\.png/.test(t) && /나루/.test(t));
+      enterStage('mount'); S.dlg = null; S.week = 5; S.pq = 0; WILD.length = 0; wildRaid(); art.wild = warnings().some(t => /wild_(boar|deer|racc)\.png/.test(t) && /산짐승/.test(t));
+      enterStage('city'); S.dlg = null; S.unlockAll = true; S.money = 99999; QUESTS.forEach(q => { S.qd[q.id] = 1; }); let tr = 0; S.cmp = null; while (!S.cmp && tr++ < 80) cityWeek();
+      art.cmp = !!S.cmp && warnings().some(t => /npc_neighbor_[fm]\.png/.test(t) && /city_(cmp|park)\.png/.test(t) && /민원/.test(t));
+      const ap = S.buildings.find(b => b.def === 'c_apt'); UI.sel = ap.id; UI.fold = true; renderSelCard(); art.land = !!document.querySelector('#selCard [data-act="citybuy"] img.sci'); UI.sel = null; renderSelCard();
+      enterStage('rural'); o.art = Object.values(art).every(Boolean); if (!o.art) o.artDbg = JSON.stringify(art); }
     { const ok = build('purifier', 12, 12, 2) && build('recycle', 14, 12, 2); const pb = S.buildings.filter(b => b.def === 'purifier' || b.def === 'recycle'); draw(); o.comfort = o.comfort && ok && pb.length === 2 && !hasLv(pb[0]) && !mgrRole(pb[0]); }
     return o;
   });
@@ -410,10 +421,16 @@ async function stageChecks(browser, url) {
   check(r.sea && r.ferry && r.fleet, '어촌: 강이 입구와 교회를 가르고(다리 금지) 나룻배로만 태워 옴 · 직원 › 차량 탭에서 배를 마련 ' + JSON.stringify([r.sea, r.ferry, r.fleet]));
   check(r.city && r.cityK && r.cmp, '도시: 이웃 건물이 가득하고 땅째 사면 그 자리를 쓸 수 있음(철거는 안 됨) · 주차가 더 필요하고 정착이 어려움 · 민원 ' + JSON.stringify([r.city, r.cityK, r.cmp]));
   check(r.noFleet, '농촌에는 차량 탭이 없음');
+  check(r.art, '스테이지 그림 연결: 목표 칩 아이콘 · 차량 탭(차량·배 그림, 구매 단추, 사공 얼굴, 탭 그림) · 챙길 일의 나루·산짐승·민원(이웃 얼굴) 그림 · 부지 매입 단추 ' + (r.artDbg || ''));
   check(r.test, '테스트 게임: 100억·성도 50명·갈래마다 봉사자 20명·직원 20명(청빙직원 10)·부교역자 20명·모든 기능, 선교지에도 들어가고 저장은 따로');
   check(r.floorB, '바닥 타일 분위기: 한 칸 값은 소수점 한 자리로 보이고(카드·설명), 실제로는 FLOOR_BEAUTY_K배만 침');
   check(r.leadAll, '리더 › 전체 자동 배치: 모든 리더의 빈 칸에 맡을 수 있는 성도가 한꺼번에 배치됨');
   check(r.comfort, '편의: 쉼터 벤치는 세 가지(벤치·등받이·꽃), 기타에 식수대·정수기·분리수거함·쓰레기통 — 정수기·분리수거함은 지을 수 있고 레벨·관리자 없음');
+  { const names = ['intro/stage_rural.webp', 'intro/stage_mount.webp', 'intro/stage_sea.webp', 'intro/stage_city.webp', ...['rural', 'mount', 'sea', 'city'].flatMap(k => ['ui/stg_' + k + '.png', 'ui/stg_' + k + '_clear.png']),
+      ...'truck van bus ferry boat ship'.split(' ').map(k => 'ui/veh_' + k + '.png'), ...'driver queue pier'.split(' ').map(k => 'ui/fleet_' + k + '.png'), ...'boar deer racc'.split(' ').map(k => 'ui/wild_' + k + '.png'),
+      'ui/city_land.png', 'ui/city_cmp.png', 'ui/city_park.png', 'ui/stage_goal.png', 'ui/nav_stages.png', 'ui/nav_home.png', 'ui/tab_fleet.png', ...'chief boatman neighbor_f neighbor_m'.split(' ').map(k => 'portraits/icons/npc/npc_' + k + '.png')];
+    const bad = await page.evaluate(async list => (await Promise.all(list.map(n => new Promise(res => { const i = new Image(); i.onload = () => res(i.naturalWidth > 20 ? '' : n); i.onerror = () => res(n); i.src = 'assets/' + n; })))).filter(Boolean), names);
+    check(bad.length === 0, '스테이지 그림 파일 ' + names.length + '개가 모두 있고 읽힘' + (bad.length ? ' → 없음: ' + bad.join(', ') : '')); }
   check(errs.length === 0, '스테이지: 오류 없음' + (errs.length ? ' → ' + errs[0] : ''));
   await ctx.close();
 }
@@ -1499,7 +1516,7 @@ async function introChecks(browser, url) {
     S.lvl = 4; closeScreen(); syncEvBadge(); o.fabOpen = !fab.classList.contains('lock'); fab.click(); o.offScr = UI.scr === 'officers' && UI.scrTab === 'dis' && [...document.querySelectorAll('#scrTabs [role="tab"]')].map(t => t.dataset.v).join() === 'dis,off,B,C' && !document.querySelector('#scrTabs [data-v="B"]').classList.contains('lock'); S.lvl = 1; closeScreen(); return o; });
   // 설정 메뉴의 이동: 스테이지 선택(게임을 저장하고 카드로) · 메인 화면(Tap to Start로)
   const nav = {};
-  nav.menu = await page.evaluate(() => { S.dlg = null; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.open = true; S.money = 4321; closeScreen(); document.getElementById('bGear').click(); const ok = !document.getElementById('gearMenu').hidden && !!document.getElementById('bStages') && !!document.getElementById('bHome');
+  nav.menu = await page.evaluate(() => { S.dlg = null; QUESTS.forEach(q => { S.qd[q.id] = 1; }); S.open = true; S.money = 4321; closeScreen(); document.getElementById('bGear').click(); const ok = !document.getElementById('gearMenu').hidden && !!document.getElementById('bStages') && !!document.getElementById('bHome') && ['bStages', 'bHome'].every(id => { const im = document.querySelector('#' + id + ' img.gni'); return !!im && im.complete && im.naturalWidth > 50; });
     document.getElementById('bStages').click(); const st = document.getElementById('stage-screen'), c = st.querySelector('[data-stage="rural"][data-mode="cont"]');
     return ok && document.getElementById('gearMenu').hidden && UI.intro === true && !st.hidden && getComputedStyle(st).display !== 'none' && !c.classList.contains('off') && JSON.parse(localStorage.getItem(SAVE_KEY)).money === 4321 && /성도/.test(st.querySelector('[data-card="rural"] .stsv').textContent); });
   { const t1 = await page.evaluate(() => S.t); await page.waitForTimeout(300); nav.paused = await page.evaluate(t => S.t === t, t1); }

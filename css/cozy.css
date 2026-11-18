@@ -594,3 +594,16 @@ h1,h2,h3,.btn,.fab .fl,.stabs button,.subtabs button,.evn,.card .nm,.btile .nm,.
 .vc-a .btn{white-space:nowrap}
 /* 리더 탭: 자동 배정(이 리더) · 전체 자동 배치(모든 리더) */
 .lead-hb{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.lead-hb .btn{white-space:nowrap}
+
+/* ---------- 스테이지 그림(Gemini, assets/ui · assets/portraits/icons/npc) ---------- */
+.fhi{width:1.7em;height:1.7em;vertical-align:-.5em;margin:-.3em .3em -.3em 0}
+.vc-ic .vci{display:block;width:46px;height:46px;filter:drop-shadow(0 2px 0 rgba(0,0,0,.18))}
+.flt-buy .btn{flex-direction:row!important;align-items:center!important;gap:8px}
+.flt-buy .bvi{width:36px;height:36px;flex:none}
+.flt-buy .bvt{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+.vc-face{width:1.9em;height:1.9em;border-radius:50%;object-fit:cover;vertical-align:-.65em;margin:-.3em .4em -.3em 0;background:#efe6d2;border:2px solid #c9bfa8}
+.qwarn li .wic{width:1.55em;height:1.55em;vertical-align:-.45em;margin:-.2em .25em -.2em 0}
+.qwarn li .wface{width:1.75em;height:1.75em;border-radius:50%;object-fit:cover;vertical-align:-.55em;margin:-.2em .25em -.2em 0;border:2px solid #c9bfa8;background:#efe6d2}
+#gearMenu .gnav .btn{display:flex;align-items:center;gap:7px}
+#gearMenu .gni{width:22px;height:22px;flex:none}
+.btn.sm .sci{width:1.5em;height:1.5em;vertical-align:-.4em;margin:-.2em .25em -.2em -.2em}

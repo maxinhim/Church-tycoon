@@ -321,3 +321,204 @@ Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin 
 ### 받은 뒤 연결 메모
 - 탭: `#scrTabs button`의 `data-v`(탭 이름)에 맞춰 배경 그림을 입힌다. 같은 이름의 탭이 화면마다 다르게 쓰이니(`봉사자` = 행사 탭·성도 탭·하단 화면) 화면 + 탭 이름으로 고른다.
 - 행사 아이콘: `EVENTS[id].ic`(지금은 이모지)를 `assets/ui/ev_<id>.png`로 바꾼다. id 목록은 위 14·14·12개의 영문 id (`smallgroup bible creed training communion street bazaar service retreat revival easter vbs thanks christmas` / `pbook pstudy pmemo ppray psem pconf pdeg abook astudy amemo asem adeg minedu minfel` / `offvow offsem offret leadtea leadsch leadmt servtool servws servthx volpray volpic volfeast`).
+
+
+## 스테이지 1~4 추가 그림 (3차) — 스테이지 카드 · 엠블럼 · 차량 · 산짐승 · 도시 · 인물 · 질감
+스테이지 1~4에서 아직 임시 그림(이모지·코드로 그린 그림·SVG)인 요소를 모두 모았다. **12~17번은 필요한 것**(화면 그림·아이콘·인물), **18~20번은 선택**(지도 위 요소와 질감 — 지금도 코드로 그려서 게임은 완성돼 있고, 받으면 더 예뻐지는 것)이다.
+- 프롬프트는 **코드 블록 통째로** 복사해 Gemini에 붙여 넣는다. 공통 화풍 문장과 글자 금지 문장이 모두 풀어 적혀 있다(참조 없음). 해상도 선택지가 있으면 2K 이상.
+- 글자가 필요 없는 그림은 맨 앞과 맨 뒤에 `ABSOLUTELY NO TEXT OF ANY KIND`가 있다. 그래도 글자가 나오면 그 시트만 다시 돌린다(글자가 들어간 건 16번 탭 하나뿐).
+- 마젠타 배경 시트는 아이콘·테두리에 **분홍·보라 계열을 쓰지 않게** 해 두었다(10번 시트에서 배경과 가까운 분홍 때문에 가르기 어려웠다). 시트 맨 오른쪽 아래 구석은 Gemini의 별 표시가 들어오는 자리라 비워 두게 했다.
+- 받은 시트는 `docs/art/sheets/`에 두고, 출처(Gemini 생성)는 README의 에셋 항목에 적는다.
+
+| 번호 | 무엇 | 장수 | 어디에 쓰나 |
+|---|---|---|---|
+| 12 | 스테이지 카드 그림 (농촌·산촌·어촌·도시) | 4장 | 스테이지 고르기 카드 그림 |
+| 13 | 스테이지 엠블럼 4종 + 목표 달성판 4종 | 1장 | 카드 번호 줄·목표 달성 표시 |
+| 14 | 차량·배 6종 + 운전자·대기 줄·나루 | 1장 | 직원 › 차량 탭, 챙길 일 |
+| 15 | 산짐승 3종 · 도시(부지·민원·주차) · 목표 · 이동 아이콘 | 1장 | 챙길 일·알림, 목표 칩, 설정 메뉴 |
+| 16 | 직원 화면 '차량' 탭 | 1장 | 탭 버튼 |
+| 17 | 스테이지 인물 4명 (이장님·사공·이웃 둘) | 1장 | 차량 카드의 운전자, 민원 알림 |
+| 18 | (선택) 지도 위 차량·배·산짐승·정수기·분리수거함 앞뒤 스프라이트 | 1장 | 지도 |
+| 19 | (선택) 도시 이웃 건물 5종 | 1장 | 지도 |
+| 20 | (선택) 바닥·벽 질감 8종 (산·강·도시) | 1장 | 지형 |
+
+### 12) 스테이지 카드 그림 4장 (글자 없음, 한 장씩 따로 만든다)
+스테이지 고르기 카드의 그림이다(지금은 농촌만 인트로 배경을 잘라 쓰고, 산촌·어촌·도시는 코드로 그린 간단한 SVG). 카드 그림은 가로로 아주 긴 띠(화면에 따라 약 2.4:1~2.8:1)로 잘려 보이므로 **21:9로 달라고 하고 주인공을 가운데 띠에 둔다**. 왼쪽 아래에는 '목표' 칩이 얹힌다. 네 장은 같은 화풍·같은 시간대(노을빛)로 맞춘다.
+- 받은 뒤: `docs/art/sheets/stage-<id>.webp`(`rural`·`mount`·`sea`·`city`)로 두고, 오른쪽 아래 표시를 잘라 가로 1200px로 줄여 `assets/intro/stage_<id>.webp`로 만든다.
+
+**12-1) 농촌**
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style storybook illustration with a cozy, warm, friendly feeling, hand-painted soft shading, clean confident dark-brown outlines, rich but gentle colors, soft golden-hour light from the upper left, a three-quarter bird's-eye view looking slightly down like a diorama, the same look as a cheerful village title-screen artwork. Composition: a very wide banner (aspect ratio 21:9, as wide as possible). Keep the lower-left corner (about 55% of the width and 25% of the height) calm and low in detail (plain grass, water or road) because a label will be placed over it later. Keep the main subject inside the middle 60% of the image height because the picture will be cropped on small screens. Keep the very bottom-right corner of the image free of important details. Tiny cheerful Korean villagers in cute chibi proportions add life but are never the main subject.
+SCENE: a peaceful Korean farming village in spring. A small wooden church with a steep brown roof, a little bell tower and a cross stands on a gentle green hill at the center-right. A winding cobblestone path leads from the lower left up to the church door. Pink cherry blossom trees, terraced rice paddies and vegetable plots, a couple of traditional tile-roofed houses with stone walls in the distance, soft green mountains and warm clouds behind. A few villagers greet each other on the path, one farmer in a straw hat carries a basket.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it.
+```
+
+**12-2) 산촌**
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style storybook illustration with a cozy, warm, friendly feeling, hand-painted soft shading, clean confident dark-brown outlines, rich but gentle colors, soft golden-hour light from the upper left, a three-quarter bird's-eye view looking slightly down like a diorama, the same look as a cheerful village title-screen artwork. Composition: a very wide banner (aspect ratio 21:9, as wide as possible). Keep the lower-left corner (about 55% of the width and 25% of the height) calm and low in detail (plain grass, water or road) because a label will be placed over it later. Keep the main subject inside the middle 60% of the image height because the picture will be cropped on small screens. Keep the very bottom-right corner of the image free of important details. Tiny cheerful Korean villagers in cute chibi proportions add life but are never the main subject.
+SCENE: a deep mountain village basin in early autumn. Steep rocky green and orange hills with terraced slopes and dark green pine trees surround a flat grassy basin in the center where a small wooden church with a cross stands. A narrow winding road squeezes through a tight canyon between cliffs from the lower left into the basin, and a small old green pickup truck carrying three smiling villagers drives along it. Soft mist hangs between the mountains. A cute wild boar and a young deer peek out of the bushes on the right slope (friendly and cute, not scary). Distant misty peaks and a pale sun.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it.
+```
+
+**12-3) 어촌**
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style storybook illustration with a cozy, warm, friendly feeling, hand-painted soft shading, clean confident dark-brown outlines, rich but gentle colors, soft golden-hour light from the upper left, a three-quarter bird's-eye view looking slightly down like a diorama, the same look as a cheerful village title-screen artwork. Composition: a very wide banner (aspect ratio 21:9, as wide as possible). Keep the lower-left corner (about 55% of the width and 25% of the height) calm and low in detail (plain grass, water or road) because a label will be placed over it later. Keep the main subject inside the middle 60% of the image height because the picture will be cropped on small screens. Keep the very bottom-right corner of the image free of important details. Tiny cheerful Korean villagers in cute chibi proportions add life but are never the main subject.
+SCENE: a fishing village on a wide blue river at sunset. A broad river flows across the middle of the image from left to right and there is NO bridge anywhere. On the near (lower) bank stand a wooden pier with lanterns, hanging fishing nets, a few small fishing boats and a small wooden ferry boat carrying villagers. On the far (upper) bank a small white church with a cross and a tiny bell tower sits among fishing-village houses with tile roofs. Seagulls in the sky, a small lighthouse on a distant headland, golden sunlight sparkling on the water.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it.
+```
+
+**12-4) 도시**
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style storybook illustration with a cozy, warm, friendly feeling, hand-painted soft shading, clean confident dark-brown outlines, rich but gentle colors, soft golden-hour light from the upper left, a three-quarter bird's-eye view looking slightly down like a diorama, the same look as a cheerful village title-screen artwork. Composition: a very wide banner (aspect ratio 21:9, as wide as possible). Keep the lower-left corner (about 55% of the width and 25% of the height) calm and low in detail (plain grass, water or road) because a label will be placed over it later. Keep the main subject inside the middle 60% of the image height because the picture will be cropped on small screens. Keep the very bottom-right corner of the image free of important details. Tiny cheerful Korean villagers in cute chibi proportions add life but are never the main subject.
+SCENE: a small church squeezed between big buildings in a busy Korean city in the late afternoon. In the center a small brick church with a cross and a tiny bell tower, a tiny front yard and a narrow parking lot with three parked cars. Around it stand tall cream-colored apartment blocks, glass office towers, a row of small shops with colorful awnings (all signs blank) and a red-brick villa. A white church minivan picks up a few people at the entrance. Neighbors lean out of apartment windows and look curious. A small tree-lined street, street lamps, warm sunset glow reflected on the glass. The city feels dense but friendly, not gloomy.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no signboards or shop signs with writing (leave every sign blank), no banners with writing, no watermark, no signatures, no logos. Pictures only. If any writing would appear, remove it.
+```
+
+### 13) 스테이지 엠블럼 4종 + 목표 달성판 4종 (글자 없음)
+카드 번호 줄 옆에 붙는 동그란 엠블럼이다. 윗줄은 평소, 아랫줄은 그 스테이지의 목표(성도 100명)를 이뤘을 때 바뀌는 금빛 월계관판.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling, the same look as the church-member portrait icons: clean confident dark-brown outlines, soft cel shading, gentle gradients, rounded chunky shapes, a thick cream-colored border around each button and a short soft drop shadow underneath. Palette: sage green, teal, butter yellow, warm cream, soft coral red for alerts. Each button is a rounded square (or circle where noted) about 256x256 px, icon centered with a clear silhouette that stays readable when shrunk to 48 px. Solid flat magenta (#FF00FF) background between buttons, no gradients, no watermark, no extra text outside the buttons. A sheet of 8 round stage emblem badges (each a circle about 224x224 px with a thick colored rim, a cream inner border and a pastel inner disc), arranged 4 columns by 2 rows on a flat solid magenta (#FF00FF) background, leaving at least 24 px of magenta between badges. Each badge shows exactly one emblem pictogram and nothing else.
+Row 1 (normal state): (1) farming village: a golden rice-ear bundle in front of a tiny wooden church with a cross, rim golden-orange, disc pale warm yellow; (2) mountain village: two green mountain peaks with a winding road and a pine tree, rim forest green, disc pale mint; (3) fishing village: a ship's anchor with two blue waves and a tiny sailboat, rim ocean blue, disc pale sky blue; (4) city: a skyline of three tall buildings with a small cross on one rooftop, rim slate blue-gray, disc pale warm gray.
+Row 2 (cleared state): the same four emblems in the same order, each with a golden laurel wreath around the inside of the rim, a small gold star on top and a few tiny sparkles, slightly brighter colors.
+Do not use pink, magenta, violet or rose colors anywhere on the icons (the background is magenta and must be removed cleanly); use only warm browns, creams, greens, teals, blues, golds, grays, tans and reds. The very bottom-right corner of the image (about 8% of its width and height) must stay completely empty magenta.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it.
+```
+- 받은 뒤 연결: `tools/ui_buttons.py`의 `SPEC`에 `13: (2, 4, ['stg_rural', 'stg_mount', 'stg_sea', 'stg_city', 'stg_rural_clear', 'stg_mount_clear', 'stg_sea_clear', 'stg_city_clear'], 144)`을 적고 시트를 `ui-buttons13.jpeg`로 둔다.
+
+### 14) 차량·배 6종 + 운전자·대기 줄·나루 (글자 없음)
+직원 › 차량 탭의 차량 카드·구매 단추와 챙길 일 줄에 쓴다(지금은 🛻🚐🚌🛶⛵🚢 이모지). 길을 달리는 것은 노란 원판, 물 위의 것은 하늘색 원판, 나머지 셋은 연두 원판.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling, the same look as the church-member portrait icons: clean confident dark-brown outlines, soft cel shading, gentle gradients, rounded chunky shapes, a thick cream-colored border around each button and a short soft drop shadow underneath. Palette: sage green, teal, butter yellow, warm cream, soft coral red for alerts. Each button is a rounded square (or circle where noted) about 256x256 px, icon centered with a clear silhouette that stays readable when shrunk to 48 px. Solid flat magenta (#FF00FF) background between buttons, no gradients, no watermark, no extra text outside the buttons. A sheet of 9 round icons (each a circle about 224x224 px with a thick teal rim and cream inner border), arranged 3 columns by 3 rows on a flat solid magenta (#FF00FF) background, leaving at least 24 px of magenta between icons. Each icon shows exactly one pictogram and nothing else.
+Row 1 (road vehicles, butter-yellow disc): (1) village truck: a small old green pickup truck seen from the front right with a tiny wooden crate on its back; (2) church van: a white minivan with a small cross on its side door; (3) mini bus: a yellow minibus with a small cross flag on its roof.
+Row 2 (boats, sky-blue disc): (4) village ferry: a small flat wooden ferry rowboat with a long pole and a hanging lantern; (5) small boat: a small white motorboat with a blue stripe and a little canopy; (6) chug boat: a chubby small passenger boat with a tiny chimney puffing smoke and a small cross flag.
+Row 3 (helpers, mint-green disc): (7) driver: a driver's cap resting on top of a steering wheel; (8) waiting line: three small people waiting in a row, one of them waving; (9) pier: a wooden pier with a lantern and a coiled rope.
+Do not use pink, magenta, violet or rose colors anywhere on the icons (the background is magenta and must be removed cleanly); use only warm browns, creams, greens, teals, blues, golds, grays, tans and reds. The very bottom-right corner of the image (about 8% of its width and height) must stay completely empty magenta.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it.
+```
+- 받은 뒤 연결: `SPEC`에 `14: (3, 3, ['veh_truck', 'veh_van', 'veh_bus', 'veh_ferry', 'veh_boat', 'veh_ship', 'fleet_driver', 'fleet_queue', 'fleet_pier'], 128)`. 연결 위치는 `stages.js`의 `VEH_IC`(차량 카드 `.vc-ic`·구매 단추·차량 탭 머리 줄).
+
+### 15) 산짐승 3종 · 도시 아이콘 3종 · 목표 · 이동 아이콘 (글자 없음)
+산짐승은 챙길 일 줄·알림, 도시 아이콘은 부지 매입 카드·민원 알림·주차 표시, 목표 깃발은 스테이지 목표 칩(지금은 🎯), 이동 아이콘 둘은 설정 메뉴의 '스테이지 선택'·'메인 화면' 단추(지금은 🗺️🏠)에 쓴다.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it. Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling, the same look as the church-member portrait icons: clean confident dark-brown outlines, soft cel shading, gentle gradients, rounded chunky shapes, a thick cream-colored border around each button and a short soft drop shadow underneath. Palette: sage green, teal, butter yellow, warm cream, soft coral red for alerts. Each button is a rounded square (or circle where noted) about 256x256 px, icon centered with a clear silhouette that stays readable when shrunk to 48 px. Solid flat magenta (#FF00FF) background between buttons, no gradients, no watermark, no extra text outside the buttons. A sheet of 9 round icons (each a circle about 224x224 px with a thick teal rim and cream inner border), arranged 3 columns by 3 rows on a flat solid magenta (#FF00FF) background, leaving at least 24 px of magenta between icons. Each icon shows exactly one pictogram and nothing else.
+Row 1 (wild animals, warm tan disc, cute chibi style, never scary, dark brown noses): (1) wild boar: a chubby brown boar with small tusks, three-quarter front view; (2) deer: a young roe deer with big ears and a white rump; (3) raccoon dog: a fluffy raccoon dog with a dark face mask and a bushy tail.
+Row 2 (city, soft blue-gray disc): (4) land purchase: a small fenced plot of land with a golden key lying on it and an empty blank price tag; (5) neighbor complaint: a sheet of paper with a frowning face and a small megaphone; (6) parking: a small car seen from above inside a parking space marked with white painted lines (no letters).
+Row 3: (7) stage goal, golden-yellow disc: a small flag planted on a green hilltop with a golden star above it; (8) stage select, teal disc: a folded paper map with a red location pin; (9) main screen, warm cream disc: a cozy small house with a door and a chimney.
+Do not use pink, magenta, violet or rose colors anywhere on the icons (the background is magenta and must be removed cleanly); use only warm browns, creams, greens, teals, blues, golds, grays, tans and reds. The very bottom-right corner of the image (about 8% of its width and height) must stay completely empty magenta.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it.
+```
+- 받은 뒤 연결: `SPEC`에 `15: (3, 3, ['wild_boar', 'wild_deer', 'wild_racc', 'city_land', 'city_cmp', 'city_park', 'stage_goal', 'nav_stages', 'nav_home'], 128)`. 연결 위치: `stageWarnings`(챙길 일 줄)·`stageGoalHtml`(목표 칩)·`index.html`의 `#bStages`·`#bHome`.
+
+### 16) 직원 화면 '차량' 탭 (글자 포함 — 한글이 틀리면 글자 없이 다시)
+7번 탭과 같은 모양의 탭 하나. 선택·잠김 모양은 CSS 필터로 만들므로 평소 모양 하나만 받는다.
+```
+Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling, the same look as the church-member portrait icons: clean confident dark-brown outlines, soft cel shading, gentle gradients, rounded chunky shapes, a thick cream-colored border around each button and a short soft drop shadow underneath. Palette: sage green, teal, butter yellow, warm cream, soft coral red for alerts. Each button is a rounded square (or circle where noted) about 256x256 px, icon centered with a clear silhouette that stays readable when shrunk to 48 px. Solid flat magenta (#FF00FF) background between buttons, no gradients, no watermark, no extra text outside the buttons. A sheet with exactly 1 small tab button (about 256x96 px, a rounded tab shape with a flat bottom edge like a folder tab), centered on a flat solid magenta background with wide empty margins on every side. STATE: IDLE: a sage-green tab with a soft shadow. The tab has a small simple pictogram of a little white church minivan on the left and a bold, clearly readable Korean label on the right in a rounded friendly font, dark brown text with a cream outline. The Korean label must be exactly: 차량. If Hangul comes out wrong, redraw the same tab with no text at all. No other text anywhere, no watermark.
+```
+- 받은 뒤 연결: `SPEC`에 `16: (1, 1, ['tab_fleet'], 256)`, `screens.js`의 `TAB_IMG`에 `'차량':'fleet'`.
+
+### 17) 스테이지 인물 4명 (성도 초상화와 같은 화풍, 글자 없음)
+무료 차량·배의 운전자 표시(이장님·사공)와 도시 민원 알림(이웃 아주머니·아저씨)에 쓴다. 성도 초상화(`assets/portraits/icons/members/`)와 한 화가가 그린 것처럼 보여야 한다.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it. A character sheet of 4 small head-and-shoulders portrait icons of Korean villagers and neighbors, arranged in a grid of 3 columns by 2 rows on a single landscape image (each cell is a 256x256 square; 6 cells, only 4 are used). Every portrait is centered in its own square cell with a wide empty margin of at least 24 px between cells so the faces can be cut apart cleanly. The entire background of the image, including all gaps, is one flat solid pure magenta (#FF00FF) with no gradient, no shadow, no texture, no frame, no circle and no text.
+Style: polished high-quality 2D anime-style illustration with a cozy, warm, friendly storybook feeling, the same look as the church-member portrait icons: clean confident outlines, soft cel shading, smooth gradients on skin, large expressive eyes, slightly rounded cute proportions, warm natural colors, soft light from the upper left. The same art style, line weight and face proportions in all portraits. Each portrait shows only the head and shoulders, facing the viewer, face filling about 60% of the cell height, no hands, no props, no background scenery, no watermark, no logos, no letters. Natural East Asian skin tones. Do not use pink, magenta or violet anywhere (the background is magenta).
+Row 1: (1) the village head: a Korean man in his sixties with a sun-tanned broad smile, short gray hair under a straw hat and a neat green work vest; (2) the ferryman: a Korean man in his sixties with a weathered tanned face, a white towel around his neck and a faded blue shirt, a calm friendly smile; (3) a neighbor woman: a Korean woman in her fifties with short permed hair and a tidy blouse, a slightly worried pouting expression, still polite.
+Row 2: (4) a neighbor man: a Korean man in his fifties with round glasses and a polo shirt, a mildly annoyed but polite expression; cells 5 and 6 stay completely empty magenta, no object, no shadow, no text.
+The very bottom-right corner of the image (about 8% of its width and height) must stay completely empty magenta.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it.
+```
+- 받은 뒤 연결: `assets/portraits/icons/npc/npc_chief.png`·`npc_boatman.png`·`npc_neighbor_f.png`·`npc_neighbor_m.png`로 자른다(`tools/members_icons.py`와 같은 방식). 연결 위치: 차량 탭의 무료 차량 운전자 줄(`vc-d`)과 도시 민원 알림(`CITY_CMP`).
+
+### 18) (선택) 지도 위 차량·배·산짐승·편의 소품 — 앞·뒤 스프라이트 (글자 없음, 아이소메트릭 픽셀)
+지금은 코드로 그린 단순한 상자 모양이다. 같은 칸에서 방향이 바뀌므로 **앞모습(↘ 오른쪽 아래를 향함)과 뒷모습(↖ 왼쪽 위를 향함) 두 장**을 받고 나머지 두 방향은 좌우 뒤집어 쓴다(위의 '방향 처리'). 한 시트에 6열 × 4행, 맨 오른쪽 아래 칸은 비운다.
+- 연결: 정수기·분리수거함은 시트를 잘라 등록하면 `drawSprEntity`가 바로 쓴다. 차량·배·산짐승은 `drawVeh`·`drawBoat`·`drawWild`가 그림을 고르도록 코드를 바꿔야 한다.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pixel-art objects only. If any writing would appear, remove it.
+Create a single landscape sprite sheet image (aspect ratio 3:2, as high resolution as possible) for an isometric church-village management game.
+
+LAYOUT
+- Exactly 6 columns x 4 rows of equal cells (24 cells).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground tile, no cast shadow on the background.
+- Each cell contains exactly ONE object, horizontally centered, its base resting in the lower third of the cell, with at least 10% empty magenta margin on every side. Nothing may touch or cross a grid line.
+
+STYLE
+- Crisp late-1990s isometric pixel art, like a cheerful classic park and garden management simulation.
+- True 2:1 dimetric isometric projection: every object stands on the same imaginary ground tile shaped like a diamond twice as wide as it is tall, viewed from the same camera angle (looking down from the south).
+- Light comes from the upper left. Clean 1-pixel dark outlines, saturated but natural palette, light dithering, hard pixel edges, no blur, no anti-aliasing halo, no magenta tint on the objects.
+- No text, no letters, no numbers, no logos, no UI, no ground tile, no floor, no cast shadow on the background.
+- All objects share one consistent scale (a ground tile is the diamond the object stands on): a small village truck is about 1.0 tile long, a church minivan 1.1, a mini bus 1.6, a village ferry boat 1.3, a small motorboat 1.5, a chug passenger boat 2.0, a fishing boat 1.5, a wild boar 0.55, a roe deer 0.7, a raccoon dog 0.4, a water purifier and a recycling station about 0.4 tile wide.
+- FRONT view = the object faces toward the lower-right corner of its cell (we see its front and one side). BACK view = the same object faces toward the upper-left corner (we see its rear and the other side). The front and back drawings of one object must match in colors, size and details. No people inside the vehicles.
+
+CONTENTS (left to right, top to bottom)
+Row 1: village truck FRONT (small old green pickup with a wooden crate); village truck BACK; church minivan FRONT (white with a small red cross on the side door); church minivan BACK; mini bus FRONT (yellow with a small cross flag on the roof); mini bus BACK.
+Row 2: village ferry FRONT (flat wooden ferry with a pole and a hanging lantern); village ferry BACK; small motorboat FRONT (white with a blue stripe and a small canopy); small motorboat BACK; chug passenger boat FRONT (chubby, with a small chimney and a cross flag); chug passenger boat BACK.
+Row 3: fishing boat FRONT (small blue wooden boat with a furled sail and a net); fishing boat BACK; wild boar FRONT (chubby brown boar with small tusks); wild boar BACK; roe deer FRONT; roe deer BACK.
+Row 4: raccoon dog FRONT (dark face mask, bushy tail); raccoon dog BACK; stone-gray water purifier with a blue water tank (one view only, facing the lower-right); three-bin recycling station in blue, yellow and green (one view only, facing the lower-right); two empty cells.
+The bottom-right cell (row 4, column 6) must stay completely empty: only the flat magenta background, no object, no shadow, no text.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pixel-art objects only. If any writing would appear, remove it.
+```
+
+### 19) (선택) 도시 이웃 건물 5종 (글자 없음, 아이소메트릭 픽셀)
+도시 스테이지의 이웃 건물(`c_apt`·`c_office`·`c_villa`·`c_mart`·`c_house`)이다. 지금은 코드로 그린 상자에 창문 띠. **시트를 잘라 등록하면 `drawSprEntity`가 바로 쓴다**(바닥 면적에 맞춰 크기가 정해지므로 받은 뒤 크기를 확인한다). 문은 모두 남쪽(왼쪽 아래 면) 가운데 1층.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pixel-art buildings only. If any writing would appear, remove it.
+Create a single landscape sprite sheet image (aspect ratio 3:2, as high resolution as possible) for an isometric city-and-church management game.
+
+LAYOUT
+- Exactly 3 columns x 2 rows of equal large cells (6 cells).
+- Cells are separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- The background of every cell is one flat solid magenta color (#FF00FF). No gradient, no texture, no ground tile, no cast shadow on the background.
+- Each cell contains exactly ONE building, horizontally centered, its base resting in the lower third of the cell, with at least 8% empty magenta margin on every side. Nothing may touch or cross a grid line.
+
+STYLE
+- Crisp late-1990s isometric pixel art, like a cheerful classic park and garden management simulation.
+- True 2:1 dimetric isometric projection: every object stands on the same imaginary ground tile shaped like a diamond twice as wide as it is tall, viewed from the same camera angle (looking down from the south).
+- Light comes from the upper left. Clean 1-pixel dark outlines, saturated but natural palette, light dithering, hard pixel edges, no blur, no anti-aliasing halo, no magenta tint on the objects.
+- No text, no letters, no numbers, no logos, no UI, no ground tile, no floor, no cast shadow on the background.
+- Every building stands on a rectangular footprint made of isometric ground tiles (width x depth) and has its main entrance door centered on the ground floor of the face that looks toward the lower-left. All shop and building signboards are left completely blank. Windows, balconies and roof details are drawn crisply; no people.
+- All five buildings share one consistent scale.
+
+CONTENTS (left to right, top to bottom)
+Row 1: (1) apartment block: footprint 4 x 5 tiles, 8 floors (about 3.4 tiles tall), cream-white walls with blue-gray stripes, rows of balconies, a rooftop water tank and a glass stair tower; (2) office building: footprint 3 x 3 tiles, 6 floors (about 2.6 tiles tall), a glass curtain wall in blue with thin gray frames and a small rooftop antenna; (3) villa: footprint 2 x 3 tiles, 4 floors (about 1.6 tiles tall), red-brick walls with white window frames and a covered parking space on the ground floor.
+Row 2: (4) shop row: footprint 3 x 2 tiles, 2 floors (about 1.0 tile tall), colorful striped awnings over three blank-signed shop fronts, a flat roof; (5) detached house: footprint 2 x 2 tiles, 2 floors (about 0.9 tile tall), brown tiled hip roof, a small front yard with a low wall and a gate; (6) empty cell.
+The bottom-right cell (row 2, column 3) must stay completely empty: only the flat magenta background, no object, no shadow, no text.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pixel-art buildings only. If any writing would appear, remove it.
+```
+- 받은 뒤: `docs/art/sheets/sheet-city.png`와 칸 설정(`sheet-city.json`)으로 `tools/slice_sheet.py`를 돌려 `assets/decor/c_apt.png` 등을 만들고 `sprite-data.js`에 등록한다(내가 만든다).
+
+### 20) (선택) 바닥·벽 질감 8종 (글자 없음, 이음새 없는 타일)
+산촌 산의 절벽(지금은 흙색 한 가지)·강·나루·도시 포장에 쓸 질감이다. 위에서 정면으로 본 정사각형 한 장이 반복해 깔려도 이음매가 안 보여야 한다. 마젠타 배경은 쓰지 않고 칸 전체를 질감으로 채운다.
+- 연결: 바닥 질감(`t_block` 등 `FLOOR_TEX`·`TEXP`) 방식과 같고, 절벽·강에 입히려면 `terFace`·`drawWaterCell` 코드를 바꿔야 한다.
+```
+ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it.
+Create a single square texture sheet image (aspect ratio 1:1, as high resolution as possible) of 8 seamless, tileable ground and wall textures for a cozy 2D game.
+
+LAYOUT
+- Exactly 3 columns x 3 rows of equal square cells (9 cells), separated by straight 2-pixel pure black (#000000) grid lines, including a border around the whole sheet.
+- Every used cell is filled edge to edge with its texture: NO magenta, no frame, no margin, no object, no shadow, no perspective. Each texture is seen perfectly flat and straight-on and must repeat seamlessly when tiled, so its left edge matches its right edge and its top edge matches its bottom edge.
+
+STYLE
+- Polished hand-painted 2D game texture in a cozy storybook look, soft cel shading, gentle clean dark-brown linework only where natural, warm natural colors, soft light from the upper left. Medium detail, no tiny noise.
+
+CONTENTS (left to right, top to bottom)
+Row 1: (1) mountain cliff rock wall seen straight on: layered brown and gray rock strata with small cracks and a few mossy green patches; (2) forest floor seen from above: pine needles, green moss and small pebbles; (3) mountain path seen from above: packed brown earth with small pebbles and faint wheel ruts.
+Row 2: (4) river water seen from above: teal-blue water with gentle ripples and a few soft white highlights; (5) riverbank seen from above: light sand mixed with smooth round pebbles; (6) wooden pier planks seen from above: weathered gray-brown boards with nail dots and slightly uneven gaps.
+Row 3: (7) city sidewalk seen from above: light gray concrete paver slabs with thin joints; (8) asphalt seen from above: dark gray asphalt with faint fine cracks and no road markings; (9) empty cell.
+The bottom-right cell (row 3, column 3) must stay completely empty: a plain flat gray, no object, no text.
+Final reminder: ABSOLUTELY NO TEXT OF ANY KIND: no letters, no Hangul, no Latin characters, no numbers, no captions, no labels, no ribbons with writing, no signs, no watermark, no signatures, no logos. Pictograms only. If any writing would appear, remove it.
+```
+- 받은 뒤: 칸마다 정사각으로 잘라 `assets/tex/t_cliff.png`·`t_forest.png`·`t_path.png`·`t_river.png`·`t_bank.png`·`t_pier.png`·`t_walk.png`·`t_asphalt.png`로 둔다.
+
+### 받은 뒤 순서 (12~20번)
+1. 시트마다 `docs/art/sheets/`에 원본을 둔다(`stage-<id>.jpeg`, `ui-buttons13~16.jpeg`, `npc-sheet.jpeg`, `sprites-stage.jpeg`, `sheet-city.jpeg`, `textures-stage.png`).
+2. 13~16번은 `tools/ui_buttons.py`의 `SPEC`에 위 줄을 적고 `python3 tools/ui_buttons.py`로 `assets/ui/`에 자른다. 12번·17번은 크기·표시를 정리하는 작은 도구를 새로 만든다.
+3. 화면 연결(`renderStages`의 카드 그림·엠블럼, `VEH_IC`, `stageWarnings`, 설정 메뉴 아이콘 등)은 그림을 받은 뒤 한 번에 한다. 연결 전까지 게임은 지금의 코드 그림·이모지로 그대로 동작한다.
+4. 18~20번은 받아도 게임을 바로 바꾸지 않는다: 슬라이스·등록(19번, 18번의 소품)은 자동으로 쓰이고, 차량·배·짐승(18번)과 질감(20번)은 코드 연결 뒤에 쓰인다.
+
+### 받은 결과와 적용 현황 (12~17번 적용함, 18~20번은 받아 두기만 함)
+GitHub `assets/UIimg/`에 올라온 파일을 `docs/art/sheets/`로 옮겨(`git mv`) 이름을 맞췄다: `12-1~12-4.jpeg` → `stage-rural·mount·sea·city.jpeg`, `13~16.jpeg` → `ui-buttons13~16.jpeg`, `17.jpeg` → `npc-sheet.jpeg`, `18.jpeg` → `sprites-stage.jpeg`, `19.jpeg` → `sheet-city.jpeg`, `20.png` → `textures-stage.png`.
+- **12** 스테이지 카드 그림 4장(1584×672): 그대로 쓸 만하다. Gemini 별 표시(그림 오른쪽·아래에서 121·120px)를 `tools/gemini_mark.py`로 지우고 가로 1200px로 줄여 `assets/intro/stage_<id>.webp`(100KB 안팎)로 만든다(`python3 tools/stage_assets.py cards`). 카드 그림 + 오른쪽 위 엠블럼으로 쓴다(`stagePic`).
+- **13·14·15** 아이콘 시트: 글자 없이 깨끗하게 나왔다. `tools/ui_buttons.py`의 `SPEC` 13~15번으로 26개를 잘랐다(`python3 tools/ui_buttons.py 13 14 15`). 그림자에 번진 마젠타(보랏빛)는 `DESPILL`로 회갈색 그림자로 바꾸고, 15번 시트의 별이 '이사 아이콘' 안으로 들어와 `STARFIX`로 지웠다.
+- **16** 탭: **요청한 한 장이 아니라 탭 15개 전체 시트**로 나왔다('차량'은 3행 2열, 원래 '재정' 자리). '차량' 탭만 선택된 모양(바깥 크림색 띠)이라 `tools/stage_assets.py tab`이 띠를 깎아 다른 탭과 같은 평소 모양(256×79)으로 만들었다. 나머지 14개 탭은 쓰지 않는다.
+- **17** 인물: **4명이 아니라 마을 사람 24명(6열×4행)** 시트로 나왔다(2행 2열은 빈칸). 요청한 네 명을 골랐다 — 이장님 1행 1열 · 사공 1행 2열 · 이웃 아주머니 1행 5열 · 이웃 아저씨 2행 1열 — `assets/portraits/icons/npc/npc_chief·boatman·neighbor_f·neighbor_m.png`(256×256). 나머지 20명은 여분(쓰지 않음).
+- **18~20** (선택): `sprites-stage.jpeg`·`sheet-city.jpeg`·`textures-stage.png`가 올라와 있지만 아직 자르거나 게임에 연결하지 않았다.

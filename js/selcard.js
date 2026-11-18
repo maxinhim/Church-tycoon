@@ -26,7 +26,7 @@ function renderSelCard(){
     // 도시의 이웃 건물: 땅째 사기 (값은 칸 수 × CITY_LAND_K)
     var cb=bById(UI.sel),cd=defOf(cb),cp=cityPrice(cb),cdm=bDims(cb);
     h='<div class="sct"><b>'+cd.name+'</b><span>이웃 건물 · '+cdm.w+'×'+cdm.h+'칸</span></div><div class="scw scinfo">'+cd.desc+'</div>';
-    row+=scBtn('citybuy','부지 매입 '+fmtS(cp),S.money>=cp?'pri':'',null,'이 건물을 땅째 사기 '+fmt(cp));
+    row+=scBtn('citybuy',uiImg('city_land','sci')+'부지 매입 '+fmtS(cp),S.money>=cp?'pri':'',null,'이 건물을 땅째 사기 '+fmt(cp));
   }else if(UI.sel){
     var b=bById(UI.sel),bd=defOf(b);
     var sub=[],md=bMode(bd);
