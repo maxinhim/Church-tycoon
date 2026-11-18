@@ -19,6 +19,8 @@
 - 테스트 게임은 누를 때마다 새로 시작한다(이어하기 없음).
 - `docs/art/sheets`에서 옛 시트 20개(sheet-E~H, W1~W3)를 지웠다(기록에는 있음, 삭제 커밋 `f534ce9`).
 
+- UI 디자인 Gemini 프롬프트 21~29번(분류 타일·하위 묶음 칩·현황 지표·직원 동작·입구·단계 휘장·고민·날씨·공용 버튼)을 `docs/art/gemini-prompts.md` 맨 아래에 적었다(브랜치 `docs/ui-gemini-prompts`). 시트를 받으면 `docs/art/sheets/ui-buttons21~29.jpeg`로 두고 `tools/ui_buttons.py` `SPEC`에 칸 이름을 적어 자른 뒤 화면에 연결한다.
+
 ## 환경 함정
 - 저장소 주소는 `maxinhim/Church-tycoon`(옛 `church-tycoon`은 옮겨짐). GraphQL이 막혀 `gh pr`는 안 되고 `gh api repos/maxinhim/Church-tycoon/...`(REST)를 쓴다.
 - 얕은 클론이면 main과 공통 조상이 안 보인다 → `git fetch --unshallow origin`.
